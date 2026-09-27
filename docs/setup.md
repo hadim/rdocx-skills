@@ -114,15 +114,21 @@ The Linux files are built on Ubuntu 22.04 runners: they need glibc 2.35 or later
 
 ## Moving the pin
 
-1. `bump REF` with an upstream tag, branch or full commit hash: it records the commit, the release name,
-   and empties the hashes. To see a ref's suite results before deciding, run the build workflow by hand on it.
-2. `install --build`, then `test`. Every strict xfail that now passes means a gap is closed: remove its
-   marker and its entry in `tests/gaps.py`, and update both skills' `references/gaps.md` and tables. Every
-   new failure is a regression: keep the previous pin, or narrow what the skills claim.
-3. Commit the lock, the tests and the skill changes together, and push to `main`: the build workflow
-   publishes the release.
-4. `lock --write --release`, review the diff, commit and push: from then on `install` downloads and
-   verifies the new files everywhere.
+Each commit of `main` is a version of the plugin (it has no version number), so `main` always holds a lock
+whose release exists and whose hashes are recorded, together with the tests and skills that match it:
+
+1. Build the candidate: Actions, build, Run workflow, with `ref` set to an upstream tag, branch or full commit
+   hash. It publishes the release `rdocx-<commit12>`, with the suite's results on three platforms in its
+   notes (gaps closed, other failures). The weekly run does the same for upstream `main` HEAD.
+2. On a branch: `bump REF` (the commit, the release name, empty hashes), then `lock --write --release`,
+   `install` and `test`. Every strict xfail that now passes means a gap is closed: remove its marker and its
+   entry in `tests/gaps.py`, and update both skills' `references/gaps.md` and tables. Every new failure is a
+   regression: keep the previous pin, or narrow what the skills claim.
+3. Commit the lock, the tests and the skill changes together, and merge into `main`.
+
+A bump pushed to `main` before its release exists still works: the build workflow runs on the change of the
+lock and publishes the release; `lock --write --release` then fills the hashes in a second commit. Until
+then, `install` has nothing to download and the skills fall back to the built-in ones.
 
 ## Later: upstream releases
 

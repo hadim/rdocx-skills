@@ -59,4 +59,15 @@ new pin fixes it, the suite fails on purpose so that the skills are updated. Run
 /plugin install rdocx@rdocx-skills
 ```
 
+The plugin holds no binaries. The first time a skill runs, it calls `scripts/rdocx_env.py install`, which
+downloads the pinned rdocx and rpptx CLIs and wheels for the machine (Linux x86_64 or arm64 with glibc 2.35
+or later, macOS arm64; about 70 MB) from this repository's GitHub release, checks their SHA-256 against
+`rdocx.lock.json`, and installs them under `~/.local/share/rdocx-skills/` (`RDOCX_HOME`): nothing
+system-wide, nothing from PyPI. To do it ahead of time, run `python3 scripts/rdocx_env.py install` from a
+clone of this repository.
+
+The plugin has no version number: each commit of `main` is a version, with the skills, the tests and the
+pinned rdocx build moving together. Third-party marketplaces do not update by themselves: turn on
+auto-update for `rdocx-skills` in `/plugin` (Marketplaces), or run `/plugin marketplace update rdocx-skills`.
+
 License: MIT. rdocx itself is MIT or Apache-2.0.

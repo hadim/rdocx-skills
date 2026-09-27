@@ -1,6 +1,11 @@
 {
   "name": "rdocx-skills",
-  "owner": {"name": "Hadrien Mary"},
+  "owner": {
+    "name": "Hadrien Mary"
+  },
+  "metadata": {
+    "description": "The rdocx plugin: Word and PowerPoint skills built on the hash-pinned rdocx and rpptx CLIs and Python bindings."
+  },
   "plugins": [
     {
       "name": "rdocx",
