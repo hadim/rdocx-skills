@@ -119,6 +119,16 @@ jobs:
       - name: Compare the build with the lock
         run: python scripts/rdocx_env.py lock || rm -rf dist
 
+      - name: Poppler, for the PDF text and raster checks
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo apt-get update -q > /dev/null && sudo apt-get install -y -q --no-install-recommends poppler-utils > /dev/null
+          else
+            brew install --quiet poppler
+          fi
+
       - name: Acceptance suite
         continue-on-error: true
         run: |
