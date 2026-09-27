@@ -1,0 +1,11 @@
+{
+  "name": "rdocx-skills",
+  "owner": {"name": "Hadrien Mary"},
+  "plugins": [
+    {
+      "name": "rdocx",
+      "source": "./",
+      "description": "Word and PowerPoint files with rdocx and rpptx: read, write, edit, comments, tracked changes, redlines, rendering."
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+# pptx recipes (each block is run by the test suite on the pinned build)
+
+Conventions, as set up in SKILL.md: `R=${RDOCX_HOME:-~/.local/share/rdocx-skills}/current/bin`, `SKILL` is
+this skill's folder, and Python blocks run with `PYTHONPATH="$SKILL/scripts" $R/python`, so that
+`import pptx_ops` works. `deck.pptx` is the input; outputs go to new files. Blocks run in order in one
+folder.
+
+## Read the deck
+
+```bash
+$R/rpptx outline --notes deck.pptx
+$R/rpptx text --json deck.pptx > deck.json
+$R/python "$SKILL/scripts/pptx_ops.py" shapes deck.pptx --slide 2
+```
+
+```python
+import pptx_ops, rpptx
+prs = rpptx.Presentation("deck.pptx")
+for k, slide in enumerate(prs.slides):
+    title = slide.shapes.title.text if slide.shapes.title else ""
+    texts = [sh.text for _, sh in pptx_ops.walk(slide.shapes) if sh.has_text_frame and sh.text]
+    print(k + 1, title, len(texts), (slide.notes_text or "")[:40])    # notes_text is None without notes
+```
+
+## Counted replacements, all or nothing
+
+```bash
+$R/rpptx replace deck.pptx -p "2 April 2025" -v "9 April 2025" --expect 1 -o dated.pptx
+```
+
+```python
+import pptx_ops
+pptx_ops.replace_batch("deck.pptx", "edited.pptx", [
+    ("EUR 230,000", "EUR 236,000", 2),
+    ("seven weeks", "eight weeks", 1),
+])
+```
+
+## Edit a run without losing its formatting
+
+```python
+import pptx_ops, rpptx
+prs = rpptx.Presentation("deck.pptx")
+k = next(i for i, sh in enumerate(prs.slides[5].shapes) if sh.has_text_frame and sh.text.startswith("Works:"))
+prs.slides[5].shapes[k].text_frame.paragraphs[0].runs[0].text = "Works: EUR 188,000"
+run = prs.slides[5].shapes[k].text_frame.paragraphs[0].runs[0]      # re-fetch after Run.text
+assert run.font.size is not None
+pptx_ops.save_atomic(prs, "run-edited.pptx", "deck.pptx")
+```
+
+## Move, resize, restyle a shape; add a shape, a picture and a connector
+
+```python
+import io, pptx_ops, rpptx
+from rpptx.dml.color import RGBColor
+from rpptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
+from rpptx.util import Inches, Pt
+prs = rpptx.Presentation("deck.pptx")
+s = prs.slides[3]
+box = next(i for i, sh in enumerate(s.shapes) if sh.has_text_frame and sh.text.startswith("Option B is recommended"))
+prs.slides[3].shapes[box].top = prs.slides[3].shapes[box].top + Inches(0.2)
+badge = prs.slides[3].shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(8), Inches(0.4), Inches(1.5), Inches(0.5))
+badge.fill.solid(); badge.fill.fore_color.rgb = RGBColor(0x7B, 0x1E, 0x3A); badge.line.width = Pt(0.75)
+badge.text_frame.text = "Decision"
+png = io.BytesIO(pptx_ops.solid_png(400, 200, (220, 220, 220)))     # or open("photo.png", "rb")
+prs.slides[3].shapes.add_picture(png, Inches(7), Inches(5.2), width=Inches(2))
+prs.slides[3].shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(7), Inches(1), Inches(8), Inches(1))
+pptx_ops.save_atomic(prs, "shapes.pptx", "deck.pptx")
+```
+
+## Slides: notes, order, visibility, new slide
+
+```python
+import pptx_ops, rpptx
+prs = rpptx.Presentation("deck.pptx")
+prs.slides[2].notes_text = "Mention the photo record for each defect."
+prs.slides.move(5, 4)                         # costs before the programme
+prs.slides[6].hidden = True
+prs.slides.add_slide(prs.slide_layouts[1])
+new = prs.slides[len(prs.slides) - 1]
+new.shapes.title.text = "Questions"
+pptx_ops.save_atomic(prs, "reordered.pptx", "deck.pptx")
+```
+
+## Replace a picture, keeping its frame
+
+```python
+import io, pptx_ops, rpptx
+prs = rpptx.Presentation("deck.pptx")
+i = next(k for k, sh in enumerate(prs.slides[0].shapes) if int(sh.shape_type or 0) == 13)
+w, h = pptx_ops.image_size(prs.slides[0].shapes[i].image.blob)
+prs.slides[0].shapes[i].replace_image(io.BytesIO(pptx_ops.solid_png(w, h, (60, 100, 140))))   # same aspect ratio
+pptx_ops.save_atomic(prs, "picture.pptx", "deck.pptx")
+```
+
+## Comments
+
+```bash
+$R/rpptx comment add deck.pptx --slide 4 --author "Reviewer" --text "Source for the costs?" --date 2026-09-27T12:00:00Z -o c1.pptx
+ID=$($R/rpptx comment list --json c1.pptx | $R/python -c 'import json,sys; print(json.load(sys.stdin)["comments"][0]["id"])')
+$R/rpptx comment reply c1.pptx --id "$ID" --author "Author" --text "Framework rates, 2025." --date 2026-09-27T12:05:00Z -o c2.pptx
+$R/rpptx comment resolve c2.pptx --id "$ID" -o c3.pptx
+$R/rpptx comment list c3.pptx
+```
+
+## Check the fit, then render
+
+```bash
+$R/python "$SKILL/scripts/pptx_ops.py" overflow deck.pptx
+slides=$(mktemp -d)                           # render into a new folder each time
+$R/rpptx render deck.pptx -o "$slides" --slide 5 --dpi 80
+$R/rpptx convert deck.pptx --to pdf -o deck.pdf   # a new path: convert --to pdf overwrites
+$R/rpptx validate deck.pptx
+```
+
+```python
+import rpptx
+prs = rpptx.Presentation("deck.pptx")
+tight = [(f.slide_index + 1, f.name) for f in prs.text_layout(width_factor=0.95) if f.overflow]
+print(tight)                                  # frames that would overflow in a 5 % narrower box
+```
+
+## A deck from a .potx template
+
+```python
+import pptx_ops, rpptx, zipfile
+with zipfile.ZipFile("deck.pptx") as src, zipfile.ZipFile("deck.potx", "w") as dst:   # a .potx for this example
+    for info in src.infolist():
+        data = src.read(info.filename)
+        if info.filename == "[Content_Types].xml":
+            data = data.replace(b"presentation.main+xml", b"template.main+xml")
+        dst.writestr(info, data)
+prs = rpptx.Presentation("deck.potx")
+prs.slides[0].shapes.title.text = "From the template"
+pptx_ops.save_atomic(prs, "from-template.pptx")
+pptx_ops.fix_template_content_type("from-template.pptx")   # rpptx keeps the template type (gap)
+with zipfile.ZipFile("from-template.pptx") as z:
+    assert b"presentationml.presentation.main+xml" in z.read("[Content_Types].xml")
+```
