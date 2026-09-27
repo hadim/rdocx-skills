@@ -70,12 +70,6 @@ jobs:
             ~/.local/share/rdocx-skills/target
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
-      # tests/test_installer.py installs from the dist folder, which must then match the lock's hashes: a build here
-      # is not bit-reproducible, so a folder that differs is removed and those tests skip.
-      - name: Compare the build with the lock
-        if: steps.release.outcome == 'failure'
-        run: python scripts/rdocx_env.py lock || rm -rf dist
-
       - name: Poppler, for the PDF text and raster checks
         run: sudo apt-get update -q > /dev/null && sudo apt-get install -y -q --no-install-recommends poppler-utils > /dev/null
 

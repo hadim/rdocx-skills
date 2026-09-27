@@ -124,5 +124,5 @@ API you needed, and `references/gaps.md` does not list it:
   document, its text, names or paths.
 - Ask the user before writing it to their folder; then write it as `rdocx-findings/YYYY-MM-DD-<slug>.md` in
   the working folder (what, expected, observed, the script, the pinned commit from `rdocx_env.py status`),
-  or give it in the reply if they prefer. The findings are triaged into the plugin's tests and upstream
-  tickets; do not open tickets yourself.
+  or give it in the reply if they prefer. The findings are triaged into the plugin's tests and gap lists;
+  do not open upstream issues yourself.

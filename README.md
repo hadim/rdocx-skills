@@ -36,7 +36,7 @@ python3 scripts/rdocx_env.py bump v0.15.0 # move the pin to an upstream tag or c
 the serialisation traits of a Google Docs export edited in Word, a 7-slide deck), the two acceptance
 matrices (identity attributes and producer traits by operation), a document with a token in every story
 (cells, content controls, tracked changes, text boxes, headers and footers, notes), the helper scripts and
-every recipe of the skills. Each known gap is a strict expected failure tied to its upstream ticket (`tests/gaps.py`): when a
+every recipe of the skills. Each known gap is a strict expected failure (`tests/gaps.py`): when a
 new pin fixes it, the suite fails on purpose so that the skills are updated. Run it before moving the pin.
 
 ## Layout
@@ -49,7 +49,7 @@ new pin fixes it, the suite fails on purpose so that the skills are updated. Run
 | `.github/` | CI on every push, and the build workflow that publishes the releases |
 | `rdocx.lock.json` | the pinned build |
 | `tests/` | acceptance suite, fixture generators, gap registry |
-| `findings/` | gaps met in real use, as neutral reproductions, before they become tests and upstream tickets |
+| `findings/` | gaps met in real use, as neutral reproductions, before they become tests and gap entries |
 | `docs/` | setup and maintenance |
 
 ## Install as a plugin

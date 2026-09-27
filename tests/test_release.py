@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import verified_dist
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import rdocx_env  # noqa: E402
@@ -18,15 +20,6 @@ import rdocx_env  # noqa: E402
 LOCK = rdocx_env.load_lock()
 PLAT = rdocx_env.platform_key()
 WANT = rdocx_env.expected(LOCK, PLAT)
-
-
-def verified_dist():
-    for folder in rdocx_env.dist_candidates(LOCK, PLAT):
-        staged, sums = rdocx_env.stage(folder, sorted(WANT))
-        shutil.rmtree(staged, ignore_errors=True)
-        if rdocx_env.check(sums, WANT)[0]:
-            return folder
-    return None
 
 
 def repo_copy(root, lock=LOCK):
@@ -47,7 +40,7 @@ def cmd(repo, home, release, *args):
 @pytest.fixture(scope="module")
 def release(tmp_path_factory):
     """A release folder as the build workflow publishes it: `<platform>.<file>` and SHA256SUMS."""
-    folder = verified_dist() if WANT else None
+    folder = verified_dist()
     if folder is None:
         pytest.skip(f"no verified build for {PLAT} to serve as a release")
     out = tmp_path_factory.mktemp("release")

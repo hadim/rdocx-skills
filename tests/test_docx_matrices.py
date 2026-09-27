@@ -1,6 +1,6 @@
 """The two acceptance matrices, as tests: every operation on a document carrying one identity attribute
 (Word and Google Docs write them on every save) or one producer serialisation trait must behave exactly as
-on the control. A new trait met in a real file becomes a row here, not a new ticket."""
+on the control. A new trait met in a real file becomes a row here."""
 import os
 import re
 import zipfile

@@ -29,8 +29,7 @@ def pytest_collection_modifyitems(config, items):
             key = mark.args[0]
             if key not in GAPS:
                 raise pytest.UsageError(f"{item.nodeid}: unknown gap key {key!r}")
-            summary, ticket = GAPS[key]
-            item.add_marker(pytest.mark.xfail(strict=True, reason=f"gap {key} ({ticket}): {summary}"))
+            item.add_marker(pytest.mark.xfail(strict=True, reason=f"gap {key}: {GAPS[key]}"))
 
 
 def tool(name):
@@ -49,6 +48,22 @@ def rdocx_cli():
 @pytest.fixture(scope="session")
 def rpptx_cli():
     return tool("rpptx")
+
+
+def verified_dist():
+    """A dist folder of this machine whose files match the lock (the repository's dist/, RDOCX_DIST, or the
+    release files downloaded into RDOCX_HOME/dist), or None."""
+    sys.path.insert(0, str(TESTS.parent / "scripts"))
+    import rdocx_env
+
+    lock, plat = rdocx_env.load_lock(), rdocx_env.platform_key()
+    want = rdocx_env.expected(lock, plat)
+    for folder in rdocx_env.dist_candidates(lock, plat) if want else ():
+        staged, sums = rdocx_env.stage(folder, sorted(want))
+        shutil.rmtree(staged, ignore_errors=True)
+        if rdocx_env.check(sums, want)[0]:
+            return folder
+    return None
 
 
 def digest(data):

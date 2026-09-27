@@ -1,5 +1,6 @@
-"""scripts/rdocx_env.py: a fresh install from the verified dist folder, then each kind of change `status` must
-catch and `install` must repair. Skipped when this machine's dist folder is not present."""
+"""scripts/rdocx_env.py: a fresh install from a verified dist folder of this machine (the repository's dist/,
+or the release files downloaded into RDOCX_HOME/dist), then each kind of change `status` must catch and
+`install` must repair. Skipped when there is none."""
 import hashlib
 import json
 import os
@@ -9,24 +10,28 @@ from pathlib import Path
 
 import pytest
 
+from conftest import verified_dist
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import rdocx_env  # noqa: E402
 
 LOCK = rdocx_env.load_lock()
 PLAT = rdocx_env.platform_key()
-DIST = ROOT / "dist" / LOCK["commit"] / PLAT
+DIST = verified_dist()
 
 
 def env_cmd(home, *args):
     env = dict(os.environ, RDOCX_HOME=str(home))
     env.pop("RDOCX_DIST", None)
+    if DIST is not None:  # <root>/<commit>/<platform>
+        env["RDOCX_DIST"] = str(DIST.parents[1])
     return subprocess.run([sys.executable, ROOT / "scripts" / "rdocx_env.py", *args], env=env, capture_output=True, text=True)
 
 
 @pytest.fixture(scope="module")
 def home(tmp_path_factory):
-    if not DIST.is_dir() or not rdocx_env.expected(LOCK, PLAT):
+    if DIST is None:
         pytest.skip(f"no verified dist folder for {PLAT}")
     home = tmp_path_factory.mktemp("rdocx-home")
     res = env_cmd(home, "install")

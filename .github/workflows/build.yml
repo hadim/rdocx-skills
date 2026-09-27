@@ -114,11 +114,6 @@ jobs:
           path: dist/${{ needs.plan.outputs.commit }}/${{ matrix.platform }}/
           if-no-files-found: error
 
-      # tests/test_installer.py installs from the dist folder, which must then match the lock's hashes: builds are
-      # not bit-reproducible, so a folder that differs is removed and those tests skip.
-      - name: Compare the build with the lock
-        run: python scripts/rdocx_env.py lock || rm -rf dist
-
       - name: Poppler, for the PDF text and raster checks
         env:
           HOMEBREW_NO_AUTO_UPDATE: "1"

@@ -96,4 +96,4 @@ does not list it: reduce it to a neutral reproduction (a short script that build
 python-pptx if needed, and prints the wrong result next to the expected one; never the user's deck, its
 text, names or paths). Ask the user before writing it to their folder; then write it as
 `rdocx-findings/YYYY-MM-DD-<slug>.md` in the working folder (what, expected, observed, the script, the
-pinned commit from `rdocx_env.py status`), or give it in the reply. Do not open tickets yourself.
+pinned commit from `rdocx_env.py status`), or give it in the reply. Do not open upstream issues yourself.

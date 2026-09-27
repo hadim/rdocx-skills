@@ -18,15 +18,15 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - `.github/workflows/`: `ci.yml` (suite on every push and PR), `build.yml` (builds one upstream commit on
   three runners and publishes the release `rdocx-<commit12>`).
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
-- `findings/`: gaps met in real use, waiting for triage (see `findings/README.md`).
+- `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin.
 
 ## Rules
 
-- English everywhere, ASCII in code. Findings in the style of `findings/*.md`: what fails, a neutral
+- English everywhere, ASCII in code. Findings as `findings/README.md` describes them: what fails, a neutral
   reproduction that builds its own input, the real output, an acceptance criterion.
-- Upstream tickets are not this repository's business: the maintainer files them. Here a gap only narrows
-  what the skills claim, and closes when a pin moves past it.
+- Gaps live here as strict xfails (`tests/gaps.py`) and narrow what the skills claim; the suite run on each
+  new build says which ones closed. Which upstream issue or pull request fixes a gap is not tracked here.
 - Never weaken a test to make it pass. A behaviour change of rdocx is either a fix (remove the gap marker) or
   a regression (keep the test red and the previous pin, or narrow the skills).
 - Every claim in the skills is backed by a test or a recipe block that runs. Changing a claim means changing
@@ -50,8 +50,6 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
-- `tests/gaps.py` still carries the ticket labels of the 27/09 batch (`lot6-NN`, `filed 27/09`,
-  `not filed yet`); they are informational and not maintained here.
 
 ## Next steps
 
