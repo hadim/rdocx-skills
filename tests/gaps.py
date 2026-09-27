@@ -23,6 +23,7 @@ GAPS = {
     "compare-own-save-noise": "compare() of a file against its rdocx-edited copy reports rdocx's re-serialisation",
     "empty-comments-reserialised": "a no-op save rewrites an empty comments.xml and compare() then refuses",
     "ignorable-undeclared": "a save leaves an mc:Ignorable prefix undeclared in comments.xml",
+    "ignorable-dropped": "an edit that rewrites document.xml, a header or a footer drops the root's mc:Ignorable",
     "compare-packed-fields": "compare() refuses a file against its copy after update_page_fields on packed fields",
     # docx: comparison options
     "compare-granularity": "compare() works at whole-run granularity; word granularity is not exposed",
@@ -31,6 +32,8 @@ GAPS = {
     # docx: layout
     "line-gap": "single line height leaves out the font's line gap (Calibri 1.000 em, Word 1.221 em)",
     "picture-line-spacing": "a line holding an inline picture is multiplied by proportional spacing",
+    "tab-stops": "text after a custom tab stop starts 36 pt before the stop, and a right stop is laid out as a left one",
+    "toc-numbered-entries": "rebuild_toc writes number, tab, title for a numbered heading, with no stop for that tab",
     # docx: API
     "split-run-index": "Document.split_run counts paragraphs only, so it splits the wrong one after a table",
     "save-not-atomic": "save() writes the target in place instead of a temporary file and a rename",
@@ -75,4 +78,7 @@ GAPS = {
     "pptx-pdf-background": "the PDF export drops solid slide backgrounds that the PNG export draws",
     "pptx-gradient-optional-attrs": "a gradient whose a:lin has no ang (python-pptx writes one) refuses the file",
     "pptx-hyperlinks": "no hyperlink API on runs or shapes",
+    "pptx-line-pitch": "a:spcPct line spacing multiplies the font size: 100 % is 1.0 em (LibreOffice 1.2 em), lines overlap",
+    "pptx-line-breaks": "with rtl set on the paragraph, lines break at word boundaries: before a comma, a space or a hyphen",
+    "pptx-duplicate-ppr": "a paragraph with two a:pPr makes the whole file refuse to open",
 }

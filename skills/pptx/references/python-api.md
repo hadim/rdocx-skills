@@ -24,7 +24,7 @@ handle, the shape an `add_*` just returned included. Write `prs.slides[i].shapes
 | `slides`, `slide_layouts`, `slide_width`, `slide_height`, `comment_authors` | |
 | `slides.add_slide(layout)`, `slides.move(from_, to)`, `slides.remove(slide)`, `slide_layouts.index(layout)` | no `duplicate` (gap) |
 | `add_comment_author(*, id, name, user_id, provider_id, initials=None)` | id is a GUID in braces |
-| `text_layout(*, width_factor=1.0)` → list of `TextFrameLayout` (`slide_index`, `shape_id`, `name`, `overflow`, `autofit`, `font_scale`, `frame`, `usable`, `height`, `lines`: `text`, `font_size`, `baseline`, `bounds`, `paragraph_index`) | rpptx's own line breaks; `width_factor=0.95` asks whether text fits a narrower frame |
+| `text_layout(*, width_factor=1.0)` → list of `TextFrameLayout` (`slide_index`, `shape_id`, `name`, `overflow`, `autofit`, `font_scale`, `frame`, `usable`, `height`, `lines`: `text`, `font_size`, `baseline`, `bounds`, `paragraph_index`) | rpptx's own line breaks; `width_factor=0.95` asks whether text fits a narrower frame; lines under percentage spacing are too short and breaks can fall before a comma, a space or a hyphen (gaps pptx-line-pitch, pptx-line-breaks) |
 | `to_pdf()`, `to_notes_pdf()`, `render_slide_to_png(i, dpi=150)`, `render_all_slides(dpi)`, `render_all_notes(dpi)` | zero-based slide index |
 
 ## Slide

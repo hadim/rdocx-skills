@@ -5,6 +5,8 @@ import os
 import zipfile
 
 import pptx
+import pptx.enum.text
+import pptx.util
 import pytest
 import rpptx
 from PIL import Image
@@ -319,6 +321,51 @@ def test_text_layout_finds_the_overflowing_box(deck_pptx):
     assert [(f.slide_index, f.shape_id) for f in frames if f.overflow] == [(4, 19)]
 
 
+def arial_box(path, paragraphs, width_pt=300, spacing=None):
+    """One slide with one text box of 14 pt Arial paragraphs, fixed size, wrapped; `spacing` sets a:spcPct.
+    python-pptx's template sets rtl="0" in its text styles."""
+    p = pptx.Presentation()
+    box = p.slides.add_slide(p.slide_layouts[6]).shapes.add_textbox(EMU, EMU, width_pt * 12700, 100 * 12700)
+    box.text_frame.word_wrap, box.text_frame.auto_size = True, pptx.enum.text.MSO_AUTO_SIZE.NONE
+    for i, text in enumerate(paragraphs):
+        para = box.text_frame.paragraphs[0] if i == 0 else box.text_frame.add_paragraph()
+        r = para.add_run()
+        r.text, r.font.size, r.font.name = text, pptx.util.Pt(14), "Arial"
+        if spacing is not None:
+            para.line_spacing = spacing
+    p.save(path)
+    return path
+
+
+@pytest.mark.gap("pptx-line-pitch")
+def test_line_pitch_at_100_percent_covers_the_glyphs(tmp_path):
+    """a:spcPct 100 %: rpptx multiplies the font size (14.0 pt), below the glyphs' 1.117 em (15.6 pt), so lines
+    overlap and a frame reported as fitting overflows; LibreOffice lays 100 % at 1.2 em (16.8 pt)."""
+    lines = rpptx.Presentation(arial_box(tmp_path / "s.pptx", ["One", "Two"], spacing=1.0)).text_layout()[0].lines
+    assert lines[1].baseline - lines[0].baseline >= 14 * 1.117
+
+
+def test_line_pitch_margin_flags_a_frame_that_overflows_elsewhere(tmp_path):
+    """Six 14 pt lines at 100 % in a 100 pt box (92.8 pt usable): LibreOffice lays them 100.9 pt high. The margin
+    that gaps.md gives (height x 1.2 against the usable height) flags the frame whatever `overflow` says."""
+    frame = rpptx.Presentation(arial_box(tmp_path / "s.pptx", ["Line"] * 6, spacing=1.0)).text_layout()[0]
+    assert frame.usable.height < 93 and frame.height * 1.2 > frame.usable.height
+
+
+@pytest.mark.gap("pptx-line-breaks")
+def test_no_line_starts_with_a_comma_a_space_or_a_hyphen(tmp_path):
+    """Frame widths from 150 to 350 pt; at 273 pt rpptx breaks '...still in service' / ', or ...', where UAX #14
+    forbids a break before a comma and LibreOffice breaks after 'in'. A paragraph whose direction is set (rtl="0"
+    in python-pptx's text styles) goes through a breaker that breaks at every word boundary."""
+    text = "Repainted in 3 weeks while still in service, or re-coated next spring"
+    prs = rpptx.Presentation(arial_box(tmp_path / "b.pptx", [text]))
+    starts = set()
+    for width in range(150, 351, 5):
+        prs.slides[0].shapes[0].width = width * 12700
+        starts |= {line.text[:1] for line in prs.text_layout()[0].lines[1:]}
+    assert not starts & {",", " ", "-"}
+
+
 def test_render_png_and_pdf(deck_pptx, rpptx_cli, tmp_path):
     prs = rpptx.Presentation(deck_pptx)
     png = prs.render_slide_to_png(1, 30)
@@ -356,6 +403,25 @@ def test_noop_save_round_trip(deck_pptx, tmp_path, rpptx_cli):
     assert set(a) == set(b)
     assert run([rpptx_cli, "validate", tmp_path / "n.pptx"]).returncode == 0
     assert len(pptx.Presentation(tmp_path / "n.pptx").slides) == 7
+
+
+@pytest.mark.gap("pptx-duplicate-ppr")
+def test_open_a_paragraph_with_two_ppr(tmp_path):
+    """a:p children pPr, r, pPr, r: not schema-valid (one pPr, first), met in decks; python-pptx and LibreOffice
+    read both runs. rpptx accepts a pPr after a run but refuses the whole file on a second one."""
+    p = pptx.Presentation()
+    p.slides.add_slide(p.slide_layouts[6]).shapes.add_textbox(EMU, EMU, 4 * EMU, EMU)
+    p.save(tmp_path / "a.pptx")
+    para = '<a:p><a:pPr algn="l"/><a:r><a:t>One. </a:t></a:r><a:pPr algn="l"/><a:r><a:t>Two.</a:t></a:r></a:p>'
+    with zipfile.ZipFile(tmp_path / "a.pptx") as z:
+        items = [(i, z.read(i.filename)) for i in z.infolist()]
+    with zipfile.ZipFile(tmp_path / "b.pptx", "w") as z:
+        for info, data in items:
+            if info.filename == "ppt/slides/slide1.xml":
+                data = data.replace(b"<a:p/>", para.encode())
+            z.writestr(info, data)
+    assert pptx.Presentation(tmp_path / "b.pptx").slides[0].shapes[0].text_frame.text == "One. Two."
+    assert rpptx.Presentation(tmp_path / "b.pptx").slides[0].shapes[0].text == "One. Two."
 
 
 @pytest.mark.gap("cli-convert-overwrites")

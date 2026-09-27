@@ -91,7 +91,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Comments, replies, resolution | `docx_ops.py comment`; `rdocx comment list/reply/resolve/remove` | `docx_ops.comment_on_text`, `reply_to(date=)`, `resolve_comment`, `remove_comment`; `StoryRunRange` for table cells | CLI comments are undated (gap) |
 | Tracked changes | `rdocx revision list/accept/reject --id/--author/--start-date/--end-date` | `doc.revisions`, `accept_all()`, `reject_all()`, `accept_revision_id(id)`, by author, by dates | listing covers the main story only (gap) |
 | Redline of two versions | `rdocx compare A B --author N --timestamp T -o OUT` | `a.compare(b, author, timestamp)` | whole-run granularity, refusals (gaps): check the result |
-| Table of contents | `docx_ops.py toc IN OUT` | `docx_ops.rebuild_toc(doc)` | plain `rebuild_toc()` fails on a fresh open of a Word file (gap) |
+| Table of contents | `docx_ops.py toc IN OUT` | `docx_ops.rebuild_toc(doc)` | plain `rebuild_toc()` fails on a fresh open of a Word file; numbered headings get their title pushed right (gaps) |
 | Page fields | | `doc.update_layout_backed_fields()`, `update_page_fields()` | |
 | PDF | `rdocx convert F --to pdf -o NEW.pdf` | `doc.to_pdf()` | text layer garbled with Calibri ligatures (gap) |
 | PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100` | `doc.render_pages(dpi=, pages=[0, 1])` | CLI pages one-based, Python zero-based |

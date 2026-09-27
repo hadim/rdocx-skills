@@ -8,7 +8,9 @@ import subprocess
 import docx
 import pytest
 import rdocx
-from docx.oxml.ns import qn
+from docx.enum.style import WD_STYLE_TYPE
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls, qn
 from docx.shared import Pt
 from PIL import Image
 
@@ -99,6 +101,89 @@ def test_cli_toc_rebuild(rdocx_cli, tmp_path, report_docx):
     doc.save(tmp_path / "e.docx")
     res = run([rdocx_cli, "toc", "rebuild", tmp_path / "e.docx", "-o", tmp_path / "t.docx", "--json"])
     assert res.returncode == 0, res.stderr
+
+
+def arial_document():
+    """python-docx's template (Letter, left and right margins 1.25 in: text from x 90 to x 522 pt), in Arial."""
+    d = docx.Document()
+    fonts = d.styles["Normal"].element.get_or_add_rPr().get_or_add_rFonts()
+    for key in list(fonts.attrib):
+        del fonts.attrib[key]
+    for a in ("w:ascii", "w:hAnsi", "w:cs", "w:eastAsia"):
+        fonts.set(qn(a), "Arial")
+    return d
+
+
+def pdf_words(pdf, tmp_path):
+    """(x_min, x_max, text) of every word of the PDF's first page, in reading order, from its text layer."""
+    (tmp_path / "words.pdf").write_bytes(pdf)
+    out = subprocess.run(["pdftotext", "-bbox", "-f", "1", "-l", "1", tmp_path / "words.pdf", "-"],
+                         capture_output=True, text=True).stdout
+    boxes = re.findall(r'xMin="([\d.]+)" yMin="[\d.]+" xMax="([\d.]+)" yMax="[\d.]+">([^<]*)</word>', out)
+    return [(float(a), float(b), w) for a, b, w in boxes]
+
+
+@pytest.mark.gap("toc-numbered-entries")
+@pytest.mark.gap("tab-stops")
+@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+def test_toc_entry_of_a_numbered_heading_keeps_its_title_on_the_left(tmp_path):
+    """The TOC 1 style carries one right dot-leader tab at the text width and no other stop. The rebuilt entry is
+    number, tab, title, tab, page, with no stop for the first tab: the title goes to the right stop (LibreOffice
+    draws it right-aligned there). Needs both gaps closed: rdocx also lays custom stops 36 pt early."""
+    d = arial_document()
+    toc1 = d.styles.add_style("toc 1", WD_STYLE_TYPE.PARAGRAPH)
+    toc1.element.set(qn("w:styleId"), "TOC1")
+    toc1.base_style = d.styles["Normal"]
+    toc1.element.get_or_add_pPr().append(parse_xml(
+        f'<w:tabs {nsdecls("w")}><w:tab w:val="right" w:leader="dot" w:pos="8640"/></w:tabs>'))
+    numbering = d.part.numbering_part.element
+    numbering.insert(0, parse_xml(
+        f'<w:abstractNum {nsdecls("w")} w:abstractNumId="90"><w:lvl w:ilvl="0"><w:start w:val="1"/><w:numFmt '
+        'w:val="decimal"/><w:lvlText w:val="%1."/><w:lvlJc w:val="left"/></w:lvl></w:abstractNum>'))
+    numbering.append(parse_xml(f'<w:num {nsdecls("w")} w:numId="90"><w:abstractNumId w:val="90"/></w:num>'))
+    p = d.add_paragraph()
+    field_run(p, kind="begin")
+    field_run(p, instr=' TOC \\o "1-1" \\h \\z \\u ')
+    field_run(p, kind="separate")
+    field_run(p, text="placeholder")
+    field_run(d.add_paragraph(), kind="end")
+    for title in ("Scope", "Method"):
+        h = d.add_paragraph(title, style="Heading 1")
+        h._p.get_or_add_pPr().append(parse_xml(
+            f'<w:numPr {nsdecls("w")}><w:ilvl w:val="0"/><w:numId w:val="90"/></w:numPr>'))
+    d.save(tmp_path / "toc.docx")
+    doc = rdocx.Document.open(tmp_path / "toc.docx")
+    assert doc.rebuild_toc().entry_count == 2
+    title = next(w for w in pdf_words(doc.to_pdf(), tmp_path) if w[2].startswith("Scope"))
+    assert title[0] < 90 + 432 / 2  # left half of the line; today x 486, the right stop minus 36 pt
+
+
+def tabbed(path, align, leader="none"):
+    """One paragraph "Title<TAB>12" with one custom stop at w:pos 3000 (x 240 pt)."""
+    d = arial_document()
+    p = d.add_paragraph()
+    p._p.get_or_add_pPr().append(parse_xml(
+        f'<w:tabs {nsdecls("w")}><w:tab w:val="{align}" w:leader="{leader}" w:pos="3000"/></w:tabs>'))
+    for text in ("Title", "\t", "12"):
+        p.add_run(text)
+    d.save(path)
+    return rdocx.Document.open(path).to_pdf()
+
+
+@pytest.mark.gap("tab-stops")
+@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+def test_text_after_a_right_tab_ends_at_the_stop(tmp_path):
+    """Today "12" starts 36 pt before the stop (x 204), so it ends 23.8 pt short; LibreOffice ends it at 240.1."""
+    number = next(w for w in pdf_words(tabbed(tmp_path / "r.docx", "right", "dot"), tmp_path) if w[2].endswith("12"))
+    assert abs(number[1] - 240) <= 1
+
+
+@pytest.mark.gap("tab-stops")
+@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+def test_text_after_a_left_tab_starts_at_the_stop(tmp_path):
+    """Today "12" starts at x 204, 36 pt before the stop; LibreOffice starts it at 240.1."""
+    number = next(w for w in pdf_words(tabbed(tmp_path / "l.docx", "left"), tmp_path) if w[2].endswith("12"))
+    assert abs(number[0] - 240) <= 1
 
 
 # ---------------------------------------------------------------- layout

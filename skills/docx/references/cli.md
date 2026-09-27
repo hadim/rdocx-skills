@@ -76,7 +76,8 @@ rdocx toc rebuild F -o OUT [--json]
 ```
 Rebuilds existing TOC fields from the headings and rdocx's pagination (prints `Entries: N`). Fails on a
 fresh open when the TOC field runs carry `w:rsid*`, as Word writes them (gap toc-rsid-field-runs);
-`docx_ops.py toc IN OUT` works around it.
+`docx_ops.py toc IN OUT` works around it. The entry of a numbered heading has its title pushed to the right
+margin when the TOC style has no stop before the page number (gap toc-numbered-entries).
 
 ## Rendering and conversion
 

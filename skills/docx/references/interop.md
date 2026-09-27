@@ -21,8 +21,9 @@ the next one must still open what you save. What matters when you edit with rdoc
 ## Rules
 
 - **Edit in place, never rebuild.** Opening, editing and saving with rdocx keeps every part you did not touch
-  byte for byte, and everything it does not model inside the parts it rewrites. Rebuilding a document from
-  its text loses styles, numbering, fields, comments, bookmarks and producer data.
+  byte for byte, and everything it does not model inside the parts it rewrites, except the root's
+  `mc:Ignorable` of a rewritten document, header or footer part (gap ignorable-dropped). Rebuilding a
+  document from its text loses styles, numbering, fields, comments, bookmarks and producer data.
 - **Do not round-trip through python-docx or LibreOffice** to finish an rdocx edit: each rewrites the whole
   package its own way. When a gap forces python-docx for one step, do that step on the file rdocx saved,
   and verify with rdocx afterwards.

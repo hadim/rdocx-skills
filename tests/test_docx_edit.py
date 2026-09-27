@@ -481,6 +481,24 @@ def test_save_keeps_ignorable_prefixes_declared(report_docx, tmp_path):
     assert all(f"xmlns:{p}=" in root for p in ignorable)
 
 
+@pytest.mark.gap("ignorable-dropped")
+@pytest.mark.parametrize("story", ["body", "footer"])
+def test_edit_keeps_the_root_ignorable(tmp_path, story):
+    """python-docx's document and footer roots declare w14 and wp14 and list them in mc:Ignorable. An edit that
+    rewrites the part drops the attribute and keeps the declarations (and any w14:paraId in the part)."""
+    d = docx.Document()
+    d.add_paragraph("Body alpha.")
+    d.sections[0].footer.paragraphs[0].text = "Footer beta."
+    d.save(tmp_path / "a.docx")
+    name = {"body": "word/document.xml", "footer": "word/footer1.xml"}[story]
+    assert b'mc:Ignorable="w14 wp14"' in part(tmp_path / "a.docx", name)
+    doc = rdocx.Document.open(tmp_path / "a.docx")
+    assert doc.try_replace_text({"body": "alpha", "footer": "beta"}[story], "gamma") == 1
+    doc.save(tmp_path / "b.docx")
+    root = part(tmp_path / "b.docx", name).decode().split(">", 2)[1]
+    assert "xmlns:w14=" in root and 'mc:Ignorable="w14 wp14"' in root
+
+
 @pytest.mark.gap("save-not-atomic")
 def test_save_replaces_the_file_atomically(tmp_path):
     path = simple(tmp_path / "a.docx", "Alpha")
