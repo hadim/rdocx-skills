@@ -17,6 +17,7 @@ python3 scripts/rdocx_env.py test --runxfail      # show how each known gap fail
 | `test_pptx.py` | reading, creating, editing, comments, notes, text fit, rendering, round trip |
 | `test_skill_scripts.py` | the helpers shipped in `skills/*/scripts` |
 | `test_installer.py` | `scripts/rdocx_env.py`: a fresh install, then each change `status` must catch and `install` repair |
+| `test_release.py` | `scripts/rdocx_env.py` and the releases: download and check, a changed file refused, `lock --write --release`, `bump` |
 | `test_docs_snippets.py` | every block of `skills/*/references/recipes.md`, run in order, then checks on their outputs |
 
 Fixtures are generated at run time by `fixtures/make_fixture_docx.py` and `fixtures/make_fixture_pptx.py`

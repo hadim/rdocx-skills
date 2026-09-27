@@ -22,11 +22,12 @@ $R/rpptx outline deck.pptx
 $R/python my_script.py                     # the Python that has rpptx and rdocx; `import pptx_ops` works
 ```
 
-`install` checks the SHA-256 of every file against `rdocx.lock.json` before installing, and exits 0 once
-the build is installed and verified. Repeat the `R=` and `export` lines in each new shell. Never `pip
+`install` downloads the pinned build from this plugin's release when it is not already here, checks the
+SHA-256 of every file against `rdocx.lock.json` before installing, and exits 0 once the build is installed
+and verified. Repeat the `R=` and `export` lines in each new shell. Never `pip
 install rpptx` from PyPI or download a binary without its hash in the lock.
 
-**If `install` exits 2** (no verified build for this machine): tell the user in one line that the pinned
+**If `install` exits 2** (no verified build for this machine, for example no network access): tell the user in one line that the pinned
 rpptx build is not available here, do the task with the built-in `pptx` skill, and offer to build it for
 next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in the background). Details:
 `../../docs/setup.md`.

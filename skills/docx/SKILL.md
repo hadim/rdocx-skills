@@ -22,12 +22,13 @@ $R/rdocx text --json report.docx
 $R/python my_script.py                     # the Python that has rdocx and rpptx; `import docx_ops` works
 ```
 
-`install` checks the SHA-256 of every file against `rdocx.lock.json` (an upstream commit and its hashes)
-before installing, and exits 0 once the build is installed and verified (again: "already installed").
+`install` downloads the pinned build from this plugin's release when it is not already here, checks the
+SHA-256 of every file against `rdocx.lock.json` (an upstream commit and its hashes) before installing, and
+exits 0 once the build is installed and verified (again: "already installed").
 Shell variables do not persist between commands in most agent shells: repeat the `R=` and `export` lines.
 Never `pip install rdocx` from PyPI or download a binary without its hash in the lock.
 
-**If `install` exits 2** (no verified build for this machine): tell the user in one line that the pinned
+**If `install` exits 2** (no verified build for this machine, for example no network access): tell the user in one line that the pinned
 rdocx build is not available here, do the task with the built-in `docx` skill, and offer to build it for
 next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in the background). Details:
 `../../docs/setup.md`.

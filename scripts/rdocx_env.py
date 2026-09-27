@@ -8,13 +8,18 @@ commit and, per platform, the SHA-256 of the two CLIs, of the two wheels, and of
                                         unchanged local build of the pinned commit (only where the lock has
                                         no hashes for this platform, or with --allow-local), and `current`
                                         points at it
-  rdocx_env.py install [--allow-local]  install from a dist folder whose files match the lock
-  rdocx_env.py install --build          build the pinned commit from source if no verified dist is found
+  rdocx_env.py install [--allow-local]  install from a dist folder whose files match the lock, else download
+                                        them from the release named in the lock and check them the same way
+  rdocx_env.py install --build          build the pinned commit from source if neither is available
   rdocx_env.py install --from DIR       install from DIR (for example files staged from another machine)
   rdocx_env.py build [--target linux-aarch64]
                                         build the pinned commit into dist/<commit>/<platform>/, print SHA-256
   rdocx_env.py lock [--write] [--platform P]
                                         compare (or record) a platform's dist hashes with the lock
+  rdocx_env.py lock --write --release [--platform P]
+                                        download the release's files, hash them here, record every platform
+  rdocx_env.py bump REF                 pin an upstream tag, branch or full commit: new commit and release
+                                        name, hashes emptied until the release is built and recorded
   rdocx_env.py paths                    print RDOCX=..., RPPTX=..., RDOCX_PY=... for eval in a shell
   rdocx_env.py test [PYTEST ARGS]       run tests/ on the installed build, from a separate environment that
                                         holds the hash-pinned test dependencies
@@ -29,9 +34,15 @@ for the platform or with --allow-local; `lock --write` records them after review
 CLIs, the wrapper, every file of the two packages (and refuses any other file there), the interpreter
 link, pyvenv.cfg and the start-up files (.pth, sitecustomize) recorded at install.
 
+Releases: the build workflow of this repository publishes, per upstream commit, a release `rdocx-<first 12
+characters of the commit>` whose assets are `<platform>.<file>` plus a SHA256SUMS listing them. A downloaded
+file is trusted only through the lock: it lands in RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the
+same staging and hash check as any dist folder.
+
 Environment: RDOCX_HOME (default ~/.local/share/rdocx-skills), RDOCX_SRC (a local clone of rdocx; default:
 a sibling `rdocx` folder of this repository), RDOCX_DIST (a folder holding <commit>/<platform>/),
-CARGO_BUILD_JOBS (fewer parallel jobs on small machines).
+RDOCX_RELEASE_URL (a mirror of the release assets, instead of the lock's `release`), CARGO_BUILD_JOBS (fewer
+parallel jobs on small machines).
 """
 import argparse
 import gzip
@@ -45,6 +56,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -160,11 +172,90 @@ def source_candidates():
             yield Path(root)
 
 
+def write_lock(lock):
+    LOCK_PATH.write_text(json.dumps(lock, indent=2) + "\n")
+
+
+def record(lock, plat, folder, sums):
+    """Record the artifacts of `plat` (staged in `folder`, with their `sums`), every file their wheels install,
+    and the package versions read from the wheel names."""
+    files = {}
+    for name in sums:
+        if name.endswith(".whl"):
+            files.update(wheel_files(Path(folder) / name))
+            package, version = name.split("-")[:2]
+            lock.setdefault("versions", {})[package] = version
+    lock.setdefault("artifacts", {})[plat] = sums
+    lock.setdefault("installed_files", {})[plat] = files
+    say(f"recorded {len(sums)} artifacts and {len(files)} installed files for {plat}")
+
+
 def wheel_files(wheel):
     """{path installed by the wheel: sha256} for every file of the wheel outside its .dist-info folder."""
     with zipfile.ZipFile(wheel) as z:
         return {n: hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist()
                 if not n.endswith("/") and ".dist-info/" not in n}
+
+
+# ---------------------------------------------------------------- releases
+def release_tag(commit):
+    return f"rdocx-{commit[:12]}"
+
+
+def release_base(lock):
+    """Base URL of the pinned commit's release assets (RDOCX_RELEASE_URL overrides the lock's `release`)."""
+    return (os.environ.get("RDOCX_RELEASE_URL") or lock.get("release") or "").rstrip("/")
+
+
+def fetch(url, dest):
+    """Download `url` to `dest` through a temporary sibling. Nothing is trusted here: callers check hashes."""
+    tmp = Path(f"{dest}.part")
+    with urllib.request.urlopen(url, timeout=120) as src, open(tmp, "wb") as out:
+        shutil.copyfileobj(src, out)
+    os.replace(tmp, dest)
+
+
+def release_listing(base):
+    """{platform: {file: sha256}} from the release's SHA256SUMS, whose lines name assets `<platform>.<file>`."""
+    tmp = Path(tempfile.mkdtemp(prefix="rdocx-release-"))
+    try:
+        fetch(f"{base}/SHA256SUMS", tmp / "SHA256SUMS")
+        listing = {}
+        for line in (tmp / "SHA256SUMS").read_text().splitlines():
+            digest, asset = line.split()
+            plat, _, name = asset.partition(".")
+            if not (re.fullmatch(r"[0-9a-f]{64}", digest) and re.fullmatch(r"[a-z]+-[a-z0-9_]+", plat)
+                    and re.fullmatch(r"[A-Za-z0-9_+-][A-Za-z0-9._+-]*", name)):
+                die(f"unexpected line in {base}/SHA256SUMS: {line!r}")
+            listing.setdefault(plat, {})[name] = digest
+        return listing
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def download_release(lock, plat, names):
+    """Download `names` of `plat` into HOME/dist/<commit>/<plat>/, a dist folder like any other."""
+    base, out = release_base(lock), HOME / "dist" / lock["commit"] / plat
+    out.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        say(f"download {base}/{plat}.{name}")
+        fetch(f"{base}/{plat}.{name}", out / name)
+    return out
+
+
+def resolve_ref(upstream, ref):
+    """The commit of an upstream tag (peeled) or branch; a full commit hash is taken as is."""
+    if re.fullmatch(r"[0-9a-f]{40}", ref):
+        return ref
+    out = subprocess.run(["git", "ls-remote", upstream, ref, f"{ref}^{{}}"], capture_output=True, text=True,
+                         env=GIT_ENV)
+    if out.returncode:
+        die(f"git ls-remote {upstream} failed: {out.stderr.strip()}")
+    refs = {name: oid for oid, name in (line.split("\t") for line in out.stdout.splitlines())}
+    for name in (f"refs/tags/{ref}^{{}}", f"refs/tags/{ref}", f"refs/heads/{ref}"):
+        if name in refs:
+            return refs[name]
+    die(f"{ref} is neither a tag nor a branch of {upstream}; give a full 40-character commit hash")
 
 
 # ---------------------------------------------------------------- verified source export
@@ -478,7 +569,11 @@ def main():
     p.add_argument("--target", choices=sorted(TRIPLES), help="cross-build for another Linux platform")
     p = sub.add_parser("lock")
     p.add_argument("--write", action="store_true")
-    p.add_argument("--platform", help="platform of the dist folder to check or record (default: this machine)")
+    p.add_argument("--platform", help="platform of the dist folder to check or record (default: this machine; "
+                                      "with --release: every platform of the release)")
+    p.add_argument("--release", action="store_true", help="record the files of the release named in the lock")
+    p = sub.add_parser("bump")
+    p.add_argument("ref", help="upstream tag, branch or full commit hash")
     sub.add_parser("paths")
     p = sub.add_parser("test")
     p.add_argument("--allow-local", action="store_true", help="accept an unchanged local build of the pinned commit")
@@ -505,6 +600,42 @@ def main():
         env = dict(os.environ, RDOCX_BIN_DIR=str(install_dir(lock) / "bin"), PYTHONDONTWRITEBYTECODE="1")
         sys.exit(subprocess.run([str(py), "-m", "pytest", "-p", "no:cacheprovider", str(REPO / "tests"), *extra],
                                 env=env).returncode)
+    if args.cmd == "bump":
+        commit = resolve_ref(lock["upstream"], args.ref)
+        if commit == lock["commit"]:
+            say(f"{args.ref} is {commit}, already pinned")
+            return
+        lock.update(commit=commit, ref=args.ref, versions={}, artifacts={}, installed_files={})
+        if lock.get("release"):
+            lock["release"] = f"{lock['release'].rstrip('/').rsplit('/', 1)[0]}/{release_tag(commit)}"
+        write_lock(lock)
+        say(f"pinned {args.ref} = {commit}; no hashes recorded yet. Next: `install --build` and `test` here, then "
+            f"push: the build workflow publishes the release {release_tag(commit)}; then `lock --write --release`.")
+        return
+    if args.cmd == "lock" and args.release:
+        if not args.write:
+            die("--release records hashes: use it with --write")
+        base = release_base(lock)
+        if not base:
+            die("the lock names no release")
+        listing = release_listing(base)
+        if args.platform:
+            listing = {args.platform: listing.get(args.platform) or die(f"no {args.platform} files in {base}")}
+        for p, want in sorted(listing.items()):
+            folder = download_release(lock, p, sorted(want))
+            staged, sums = stage(folder, sorted(want))
+            try:
+                ok, report = check(sums, want)
+                if not ok:
+                    die(f"{p}: the downloaded files do not match the release's SHA256SUMS\n" + "\n".join(report))
+                record(lock, p, staged, sums)
+            finally:
+                shutil.rmtree(staged, ignore_errors=True)
+        others = sorted(set(lock.get("artifacts", {})) - set(listing))
+        if others:
+            say(f"note: {', '.join(others)} keep hashes that do not come from this release")
+        write_lock(lock)
+        return
     if args.cmd == "lock":
         plat = args.platform or plat
         folder = next(dist_candidates(lock, plat), None)
@@ -513,14 +644,8 @@ def main():
         staged, sums = stage(folder, artifact_names(folder))
         try:
             if args.write:
-                files = {}
-                for name in sums:
-                    if name.endswith(".whl"):
-                        files.update(wheel_files(staged / name))
-                lock.setdefault("artifacts", {})[plat] = sums
-                lock.setdefault("installed_files", {})[plat] = files
-                LOCK_PATH.write_text(json.dumps(lock, indent=2) + "\n")
-                say(f"recorded {len(sums)} artifacts and {len(files)} installed files for {plat} in {LOCK_PATH}")
+                record(lock, plat, staged, sums)
+                write_lock(lock)
             else:
                 ok, report = check(sums, expected(lock, plat))
                 print("\n".join(report) or "no hashes recorded for this platform")
@@ -547,12 +672,21 @@ def main():
                     install_from(lock, plat, folder)
                     break
             else:
-                if not args.build:
+                folder = None
+                if expected(lock, plat) and release_base(lock):
+                    try:
+                        folder = download_release(lock, plat, sorted(expected(lock, plat)))
+                    except OSError as e:
+                        say(f"no download from {release_base(lock)}: {e}")
+                if folder is not None:
+                    install_from(lock, plat, folder)  # refuses any file that does not match the lock
+                elif not args.build:
                     die(f"no verified build for {plat} at {lock['commit'][:12]}; rerun with --build to compile it "
                         "(10 to 30 minutes), or install --from a folder of prebuilt files", code=2)
-                out, sums = build(lock, plat)
-                install_from(lock, plat, out, local_sums=sums)
-                allow_local = True
+                else:
+                    out, sums = build(lock, plat)
+                    install_from(lock, plat, out, local_sums=sums)
+                    allow_local = True
         if not status(lock, plat, allow_local=allow_local):
             sys.exit(1)
 

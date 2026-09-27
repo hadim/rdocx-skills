@@ -2,6 +2,8 @@
   "upstream": "https://github.com/tensorbee/rdocx",
   "source": "git",
   "commit": "9a7ed714103cb66583035e4964b88e3fc913bf6b",
+  "ref": "main",
+  "release": "https://github.com/hadim/rdocx-skills/releases/download/rdocx-9a7ed714103c",
   "versions": {
     "rdocx": "0.14.0",
     "rpptx": "0.12.1"
