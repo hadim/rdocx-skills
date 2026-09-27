@@ -1,0 +1,70 @@
+# The acceptance suite on linux-x86_64: the pinned files from this repository's release, checked against the
+# lock, or a build of the pinned commit when no release exists yet (right after a bump).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Pinned commit
+        id: pin
+        run: echo "commit=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["commit"])')" >> "$GITHUB_OUTPUT"
+
+      - name: Rust toolchain named by rdocx's rust-toolchain.toml
+        env:
+          COMMIT: ${{ steps.pin.outputs.commit }}
+        run: .github/scripts/rust-toolchain.sh "$COMMIT"
+
+      - name: Restore the cargo registry and the build folder
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            ~/.local/share/rdocx-skills/target
+          key: rdocx-build-${{ runner.os }}-${{ runner.arch }}-${{ steps.pin.outputs.commit }}
+          restore-keys: rdocx-build-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install the pinned build (release download, else build)
+        run: python scripts/rdocx_env.py install --build
+
+      - name: Save the cargo registry and the build folder
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            ~/.local/share/rdocx-skills/target
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      # tests/test_installer.py installs from the dist folder, which must then match the lock's hashes: a build here
+      # (no release yet) is not bit-reproducible, so a folder that differs is removed and those tests skip.
+      - name: Compare the build with the lock
+        run: if [ -d dist ]; then python scripts/rdocx_env.py lock || rm -rf dist; fi
+
+      - name: Acceptance suite
+        run: python scripts/rdocx_env.py test --allow-local
