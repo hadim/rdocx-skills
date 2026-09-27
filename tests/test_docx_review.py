@@ -10,7 +10,7 @@ import pytest
 import rdocx
 
 from builders import wrapped_run_docx
-from conftest import STAMP, part, run
+from conftest import STAMP, digest, part, run
 
 
 def two_paragraphs(path, first="Alpha paragraph with some words here.", second="Beta paragraph."):
@@ -137,7 +137,7 @@ def test_comment_cli_refuses_to_overwrite_its_input(rdocx_cli, tmp_path):
     before = src.read_bytes()
     res = run([rdocx_cli, "comment", "add", src, "--start-paragraph", "0", "--start-run", "0", "--end-paragraph", "0",
                "--end-run", "1", "--author", "R", "--text", "x", "-o", src])
-    assert res.returncode != 0 and src.read_bytes() == before
+    assert res.returncode != 0 and digest(src.read_bytes()) == digest(before)
 
 
 # ---------------------------------------------------------------- tracked changes

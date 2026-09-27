@@ -12,7 +12,7 @@ from docx.oxml.ns import qn
 from docx.shared import Pt
 from PIL import Image
 
-from conftest import part, run
+from conftest import digest, part, run
 
 
 def spaced(path, font, size, line, lines=3, picture=None):
@@ -208,7 +208,7 @@ def test_convert_refuses_to_overwrite_its_input(rdocx_cli, report_docx, copy_of,
     src = copy_of(report_docx)
     before = src.read_bytes()
     run([rdocx_cli, "convert", src, "--to", fmt, "-o", src])
-    assert src.read_bytes() == before
+    assert digest(src.read_bytes()) == digest(before)
 
 
 @pytest.mark.gap("cli-convert-overwrites")
@@ -241,7 +241,7 @@ def test_image_convert_of_one_page_refuses_its_input(rdocx_cli, tmp_path):
     d.save(tmp_path / "a.docx")
     before = (tmp_path / "a.docx").read_bytes()
     res = run([rdocx_cli, "convert", tmp_path / "a.docx", "--to", "png", "-o", tmp_path / "a.docx"])
-    assert res.returncode == 1 and (tmp_path / "a.docx").read_bytes() == before
+    assert res.returncode == 1 and digest((tmp_path / "a.docx").read_bytes()) == digest(before)
 
 
 def test_render_refuses_to_write_over_earlier_pages(rdocx_cli, report_docx, tmp_path):

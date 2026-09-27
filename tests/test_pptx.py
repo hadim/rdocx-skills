@@ -11,7 +11,7 @@ from PIL import Image
 from rpptx.dml.color import RGBColor
 from rpptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 
-from conftest import STAMP, parts, run
+from conftest import STAMP, digest, parts, run
 
 EMU = 914400
 
@@ -363,7 +363,7 @@ def test_convert_refuses_to_overwrite_its_input(rpptx_cli, deck_pptx, copy_of):
     src = copy_of(deck_pptx)
     before = src.read_bytes()
     run([rpptx_cli, "convert", src, "--to", "pdf", "-o", src])
-    assert src.read_bytes() == before
+    assert digest(src.read_bytes()) == digest(before)
 
 
 @pytest.mark.gap("cli-convert-overwrites")
@@ -371,7 +371,7 @@ def test_thumbnail_refuses_to_overwrite_its_input(rpptx_cli, deck_pptx, copy_of)
     src = copy_of(deck_pptx)
     before = src.read_bytes()
     run([rpptx_cli, "thumbnail", src, "-o", src])
-    assert src.read_bytes() == before
+    assert digest(src.read_bytes()) == digest(before)
 
 
 def test_image_convert_and_render_refuse_an_existing_output(rpptx_cli, deck_pptx, tmp_path):

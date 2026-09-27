@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
 sys.path.insert(0, str(ROOT / "skills" / "pptx" / "scripts"))
 import docx_ops  # noqa: E402
 import pptx_ops  # noqa: E402
-from conftest import BIN  # noqa: E402
+from conftest import BIN, digest  # noqa: E402
 
 
 anchored = docx_ops.anchored_text
@@ -112,7 +112,7 @@ def test_comment_on_text_anchors_exactly_or_refuses(tmp_path, wrapper, anchor):
     try:
         cid = docx_ops.comment_on_text(doc, anchor, "x", "Reviewer")
     except docx_ops.EditError as e:
-        assert "comment-runposition-sdt" in str(e) and doc.to_bytes() == before
+        assert "comment-runposition-sdt" in str(e) and digest(doc.to_bytes()) == digest(before)
     else:
         assert anchored(doc.to_bytes(), cid) == anchor
 
@@ -123,7 +123,7 @@ def test_comment_on_text_in_the_report_content_control(report_docx):
     try:
         cid = docx_ops.comment_on_text(doc, "74 out of 100", "x", "Reviewer")
     except docx_ops.EditError:
-        assert doc.to_bytes() == before
+        assert digest(doc.to_bytes()) == digest(before)
     else:
         assert anchored(doc.to_bytes(), cid) == "74 out of 100"
 

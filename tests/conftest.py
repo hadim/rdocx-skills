@@ -1,6 +1,7 @@
 """Shared fixtures of the acceptance suite. Run it with `python3 scripts/rdocx_env.py test`, which uses the
 pinned, verified build; or directly with a Python that has rdocx and rpptx, with RDOCX_BIN_DIR pointing at
 the folder that holds the two CLIs."""
+import hashlib
 import os
 import shutil
 import subprocess
@@ -48,6 +49,12 @@ def rdocx_cli():
 @pytest.fixture(scope="session")
 def rpptx_cli():
     return tool("rpptx")
+
+
+def digest(data):
+    """SHA-256 of file contents, to compare them in an assert: on a failure pytest diffs two byte strings in full
+    when it runs in CI (CI=true), which takes minutes for a document and its PDF."""
+    return hashlib.sha256(data).hexdigest()
 
 
 def run(cmd, check=False, **kw):
