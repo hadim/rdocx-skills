@@ -44,9 +44,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - Pinned: tensorbee/rdocx `9a7ed714` (`main`, sprint S75), rdocx 0.14.0, rpptx 0.12.1. Release
   `rdocx-9a7ed714103c` built by `build.yml` for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners, glibc
   2.35) and macos-arm64 (macos-14), with provenance attestations; the lock records its hashes.
-- Suite: 373 passed, 85 strict xfails (55 gap keys) on macos-arm64 and in a Linux container. `ci.yml` on
-  linux-x86_64: release download in 8 s, 366 passed, 7 skipped (`test_installer.py` needs a local dist
-  folder), 85 strict xfails, 2 minutes in all.
+- Suite: 373 passed, 85 strict xfails (55 gap keys), nothing skipped, on macos-arm64 and on linux-x86_64
+  in `ci.yml` (release download in 8 s, about 2 minutes in all).
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
