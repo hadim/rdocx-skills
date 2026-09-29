@@ -13,7 +13,7 @@ Lengths are EMU integers; build them with `rdocx.Pt(12)`, `rdocx.Inches(1)`, `rd
 
 | Space | Used by | Counts |
 |---|---|---|
-| body index | `find_content_index(handle or text)`, `find_content_indices(text)`, `insert_paragraph`, `remove_content`, `split_run(bi, ...)`, `pop_content`, `insert_content`, `clone_content` and `move_content` destinations, `split_run(i, ...)`, `RunPosition.body_index`, `LayoutFragment.body_index`, `StoryItem.direct_body_index`, `rdocx text --json` `body_index`, `rdocx comment add --start-paragraph` | top-level children of the body: paragraphs, tables, content-control blocks (the TOC is one block) |
+| body index | `find_content_index(handle or text)`, `find_content_indices(text)`, `insert_paragraph`, `remove_content`, `pop_content`, `insert_content`, `clone_content` and `move_content` destinations, `split_run(i, ...)`, `RunPosition.body_index`, `LayoutFragment.body_index`, `StoryItem.direct_body_index`, `rdocx text --json` `body_index`, `rdocx comment add --start-paragraph` | top-level children of the body: paragraphs, tables, content-control blocks (the TOC is one block) |
 | flow index | `doc.paragraphs[i]` | every paragraph outside tables, those inside content-control blocks (TOC entries) included, and the cell paragraphs of a table inside such a block |
 | story path | `doc.story_items`, `StoryItem.index_path`, `Hyperlink.index_path`, `set_story_text(item, ...)` | per story (body, table cell, text box, header, footer, footnote, ...): like the body index plus items for pictures, content controls and fields |
 
