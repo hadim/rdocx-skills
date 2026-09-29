@@ -68,6 +68,24 @@ prs.slides[3].shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(7), Inches(1),
 pptx_ops.save_atomic(prs, "shapes.pptx", "deck.pptx")
 ```
 
+## Grow a table, fill a group
+
+```python
+import pptx_ops, rpptx
+from rpptx.enum.shapes import MSO_SHAPE
+from rpptx.util import Inches
+prs = rpptx.Presentation("deck.pptx")
+t = next(k for k, sh in enumerate(prs.slides[3].shapes) if sh.has_table)
+n = len(prs.slides[3].shapes[t].table.rows)
+prs.slides[3].shapes[t].table.rows.add_row(n - 1)        # before the last row, formatted like its neighbour
+prs.slides[3].shapes[t].table.cell(n - 1, 0).text = "Contingency"
+g = len(prs.slides[3].shapes)
+prs.slides[3].shapes.add_group_shape()
+prs.slides[3].shapes[g].shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(7), Inches(6), Inches(2), Inches(0.4))
+prs.slides[3].shapes[g].shapes.add_textbox(Inches(7), Inches(6.5), Inches(2), Inches(0.4)).text_frame.text = "Legend"
+pptx_ops.save_atomic(prs, "grown.pptx", "deck.pptx")
+```
+
 ## Slides: notes, order, visibility, new slide
 
 ```python
@@ -132,8 +150,7 @@ with zipfile.ZipFile("deck.pptx") as src, zipfile.ZipFile("deck.potx", "w") as d
         dst.writestr(info, data)
 prs = rpptx.Presentation("deck.potx")
 prs.slides[0].shapes.title.text = "From the template"
-pptx_ops.save_atomic(prs, "from-template.pptx")
-pptx_ops.fix_template_content_type("from-template.pptx")   # rpptx keeps the template type (gap)
+pptx_ops.save_atomic(prs, "from-template.pptx")            # saved as .pptx: a presentation
 with zipfile.ZipFile("from-template.pptx") as z:
     assert b"presentationml.presentation.main+xml" in z.read("[Content_Types].xml")
 ```

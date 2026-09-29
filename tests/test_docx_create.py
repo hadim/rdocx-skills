@@ -61,14 +61,14 @@ def test_new_document_has_normal_and_heading1():
     assert {"Normal", "Heading1"} <= {s.style_id for s in rdocx.Document().styles}
 
 
-@pytest.mark.gap("new-document-styles")
 def test_new_document_has_the_usual_styles():
     """Today a new Document holds only Normal and Heading1: other styles come from a template file."""
-    assert {"Heading2", "Title", "ListParagraph", "Caption", "TableGrid"} <= {s.style_id for s in rdocx.Document().styles}
+    assert {"Heading2", "Heading9", "Title", "Subtitle", "NoSpacing", "Quote", "ListParagraph", "Caption",
+            "TableGrid"} <= {s.style_id for s in rdocx.Document().styles}
 
 
 def test_new_document_has_no_title_or_author(rdocx_cli, tmp_path):
-    """No core properties API (gap docx-core-properties): `validate` warns about the missing title and author."""
+    """A new document has no title or author (set them with `core_properties`): `validate` warns, exit 0."""
     rdocx.Document().save(tmp_path / "n.docx")
     res = run([rdocx_cli, "validate", tmp_path / "n.docx"])
     assert res.returncode == 0 and "title" in (res.stdout + res.stderr).lower()

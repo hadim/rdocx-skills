@@ -1,46 +1,46 @@
 {
-  "upstream": "https://github.com/tensorbee/rdocx",
+  "upstream": "https://github.com/hadim/rdocx",
   "source": "git",
-  "commit": "9a7ed714103cb66583035e4964b88e3fc913bf6b",
-  "ref": "main",
-  "release": "https://github.com/hadim/rdocx-skills/releases/download/rdocx-9a7ed714103c",
+  "commit": "f2fa36d1d18aaa431784b90fad261e922445dcb9",
+  "ref": "integration/open-prs-2026-09-29-2",
+  "release": "https://github.com/hadim/rdocx-skills/releases/download/rdocx-f2fa36d1d18a",
   "versions": {
     "rdocx": "0.14.0",
     "rpptx": "0.12.1"
   },
   "artifacts": {
-    "linux-x86_64": {
-      "rdocx": "8a81649f40d7fdb4f50ab073e8dffcc81c687c3cd33db3ac58ce78339ab95345",
-      "rdocx-0.14.0-cp39-abi3-manylinux_2_35_x86_64.whl": "af2470141b75c8553dbb997d5a18dd511ee07cca8e58a16cc2cb88ead1adb4fb",
-      "rpptx": "be002c32446ca22ee3546a8d57a830ce29a2112745aa54bba302bf9c5ca62842",
-      "rpptx-0.12.1-cp39-abi3-manylinux_2_35_x86_64.whl": "efb605142bfde33d767af39db0f92ff0110c77c1fe4bd9817ea52efbff79094c"
-    },
     "linux-aarch64": {
-      "rdocx": "4edeb979c1166301755560a8c2e2185f3620295c94072133c9f92019d156a934",
-      "rdocx-0.14.0-cp39-abi3-manylinux_2_35_aarch64.whl": "2b3227271638db34a25a4d7dfc57be3620603e378494718a8fb6e8aa1dde949c",
-      "rpptx": "a36e4c8db30a890c8c56c46dea38554204e027760a1452d1342e2d1810a2dac0",
-      "rpptx-0.12.1-cp39-abi3-manylinux_2_35_aarch64.whl": "13336fe332d01c8567303acc07f24424bd5a3c9d4051848015859ed4a9e6c75f"
+      "rdocx": "01168c699b068927ef085c872c47af17abf399e417550bf7d50442a513e25d85",
+      "rdocx-0.14.0-cp39-abi3-manylinux_2_35_aarch64.whl": "340afef6a0347dea3788f51495eae5a83857eaa6faa848215d9522ec11e9b2ac",
+      "rpptx": "b70b0ec020afc10941778efcda538543a1cfd91b51038cffcd7943e1591f3f24",
+      "rpptx-0.12.1-cp39-abi3-manylinux_2_35_aarch64.whl": "c0ccc497285596b65ceb5a83281b93322fa4a73c6acfc294fb2f93228b251672"
+    },
+    "linux-x86_64": {
+      "rdocx": "3d57ea06c5d0afad13504ea631bda9e4ff8a5b76c4337fdee2821e63538cd2ca",
+      "rdocx-0.14.0-cp39-abi3-manylinux_2_35_x86_64.whl": "aa1c279f04288cfa3f95ff9468619e0412a63b853bcc7004fc39761d5a88956e",
+      "rpptx": "44ab307d433990c804a949bb94028ba1fcf55d087a5d0f33f4c5d2629bb51349",
+      "rpptx-0.12.1-cp39-abi3-manylinux_2_35_x86_64.whl": "b0bc42f536a7bee3db2fd68215dc249eea5d5ce675667c2849dd465117bf604e"
     },
     "macos-arm64": {
-      "rdocx": "871c920c3e2175bb7b412212b70d1300f5ef698a38da2643e20ffbcd3ae4f4eb",
-      "rdocx-0.14.0-cp39-abi3-macosx_11_0_arm64.whl": "9ae2ab06295ebaf92b096ee575de3f5a9a37c2b374286e6378b41f10881f2f69",
-      "rpptx": "57b5a00f9d140cb815d0f5b9dfe592fcfab6fac1d57523dcd8e8b8298fa3d8db",
-      "rpptx-0.12.1-cp39-abi3-macosx_11_0_arm64.whl": "ebeec6d5d4744ed83776a290592e5c723ef4af24d440d5b7057a46b3bceb8995"
+      "rdocx": "5672514833b7ea8ccbad9dbf4d413451c8dbaa7ed11a7b28046643dc309f719e",
+      "rdocx-0.14.0-cp39-abi3-macosx_11_0_arm64.whl": "cec59720288b50858c74b9850f9f829f876528dd649452933b35c41d04f2441a",
+      "rpptx": "bffecdcbe1a00b62512edddad0a3ce96281997ce42d783ac85659d15b239bf16",
+      "rpptx-0.12.1-cp39-abi3-macosx_11_0_arm64.whl": "162226f66a5d410e1a7c82a740f42d80894218b36bb8e3ac1e0b82d7f8137f2c"
     }
   },
   "installed_files": {
-    "linux-x86_64": {
-      "rdocx/__init__.py": "8601ab8932b2fa0366f7636b3797048081320cd3408db94046e0db43cc94066f",
-      "rdocx/_rdocx.abi3.so": "54229763aecc81e1a8ad1c5576e8cd97f65ea3968cd3dcd6419fc1f58480933c",
-      "rdocx/_rdocx.pyi": "f9ec269ecb9425d4f814929fcf65494f0802d59a305241a00e2109fa479bb74f",
+    "linux-aarch64": {
+      "rdocx/__init__.py": "9db7596c76c2ac4ba13e3c435f6ffff73ffcbe7cc744e5dfc1b95bba9ec12c1a",
+      "rdocx/_rdocx.abi3.so": "da0a2eef1b8a4aa1425c8d9fd768ccc1d623918b667f8dbe7264e5227cf1f5a1",
+      "rdocx/_rdocx.pyi": "c8bdbfe2a6f90a4e833ad117a6035e0410629c77fa35c5f489014d63fbcd3a17",
       "rdocx/enum/__init__.py": "97f8a6e38c9b5952ce725a2128a9b37801fd80336a728cf905352d4245f7cb4a",
-      "rdocx/enum/table.py": "99d45db009200509cc7281fcdc5fab78f6c7293a9358fb99c777884281fad162",
+      "rdocx/enum/table.py": "8dadd199bc69df4be7fd77c79bae20e49787cd96ac6ffe72b71b72ab608e5fd7",
       "rdocx/enum/text.py": "4183b61c2248579c8ba9bf5367cdeb5a5c64382245b1854dc94add193d557bcc",
       "rdocx/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "rdocx/shared.py": "bca1fe264cfd6fe25788ba1acc3c57acb3b7bbdcc4974e67d888fbfe4d52a9c6",
-      "rpptx/__init__.py": "5c29baba1f3f25f481c26e023af69963830549f9797103ae4a01ba9d825188da",
-      "rpptx/_rpptx.abi3.so": "5ab3b01f80316e0da221f399aba618be9a3729685e17d0e2d8de1df748967b98",
-      "rpptx/_rpptx.pyi": "4cbaa5979605780b57130c483a048684bb100d9510410997fbc8de0cd0e6e05d",
+      "rpptx/__init__.py": "35a3c91e0e431ccdee8b51cea7c5a74bcc30ca2c725ae6114b70f1fa4509eb74",
+      "rpptx/_rpptx.abi3.so": "da76d0a8d091798b17d530bd6ff0df96532e44e4c611528e1be79572e40528fe",
+      "rpptx/_rpptx.pyi": "41b09432b40951da82b73b5e5c85d62027ab5360d58143858653a4194527b8f1",
       "rpptx/dml/__init__.py": "cbb750cffaf7e86cafdbaf0cfc54b8a285d0fd29d6926fa498c802fbc00f7e84",
       "rpptx/dml/color.py": "d0b6f08f49033aeb3e16cc81e4bdf434dfd868f9a7513e51b345132b7d889758",
       "rpptx/enum/__init__.py": "c2d02a540ebe1383012a1700cd9b8876e8b739981f0348ad21afce51acdbad11",
@@ -50,18 +50,18 @@
       "rpptx/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "rpptx/util.py": "99f7d06d97a3762eb13418f0591a5f454eec195de2aae296505539285cae9c37"
     },
-    "linux-aarch64": {
-      "rdocx/__init__.py": "8601ab8932b2fa0366f7636b3797048081320cd3408db94046e0db43cc94066f",
-      "rdocx/_rdocx.abi3.so": "1ea0b184e69e3de39c913b4edeee7cf9b29246ed6cf39d59f10de90f3d9c6764",
-      "rdocx/_rdocx.pyi": "f9ec269ecb9425d4f814929fcf65494f0802d59a305241a00e2109fa479bb74f",
+    "linux-x86_64": {
+      "rdocx/__init__.py": "9db7596c76c2ac4ba13e3c435f6ffff73ffcbe7cc744e5dfc1b95bba9ec12c1a",
+      "rdocx/_rdocx.abi3.so": "86730b3c450020d83b21807fe13f1cb8e00d5bf4462b598d1258b6c20ef9090a",
+      "rdocx/_rdocx.pyi": "c8bdbfe2a6f90a4e833ad117a6035e0410629c77fa35c5f489014d63fbcd3a17",
       "rdocx/enum/__init__.py": "97f8a6e38c9b5952ce725a2128a9b37801fd80336a728cf905352d4245f7cb4a",
-      "rdocx/enum/table.py": "99d45db009200509cc7281fcdc5fab78f6c7293a9358fb99c777884281fad162",
+      "rdocx/enum/table.py": "8dadd199bc69df4be7fd77c79bae20e49787cd96ac6ffe72b71b72ab608e5fd7",
       "rdocx/enum/text.py": "4183b61c2248579c8ba9bf5367cdeb5a5c64382245b1854dc94add193d557bcc",
       "rdocx/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "rdocx/shared.py": "bca1fe264cfd6fe25788ba1acc3c57acb3b7bbdcc4974e67d888fbfe4d52a9c6",
-      "rpptx/__init__.py": "5c29baba1f3f25f481c26e023af69963830549f9797103ae4a01ba9d825188da",
-      "rpptx/_rpptx.abi3.so": "477f9b284f666ebdb66ac7dad9a75597387165c023af246479470746a45f045f",
-      "rpptx/_rpptx.pyi": "4cbaa5979605780b57130c483a048684bb100d9510410997fbc8de0cd0e6e05d",
+      "rpptx/__init__.py": "35a3c91e0e431ccdee8b51cea7c5a74bcc30ca2c725ae6114b70f1fa4509eb74",
+      "rpptx/_rpptx.abi3.so": "5e65956218896869fedf920b2a7925615b5c005b244a3f8f1d931bf53653809e",
+      "rpptx/_rpptx.pyi": "41b09432b40951da82b73b5e5c85d62027ab5360d58143858653a4194527b8f1",
       "rpptx/dml/__init__.py": "cbb750cffaf7e86cafdbaf0cfc54b8a285d0fd29d6926fa498c802fbc00f7e84",
       "rpptx/dml/color.py": "d0b6f08f49033aeb3e16cc81e4bdf434dfd868f9a7513e51b345132b7d889758",
       "rpptx/enum/__init__.py": "c2d02a540ebe1383012a1700cd9b8876e8b739981f0348ad21afce51acdbad11",
@@ -72,17 +72,17 @@
       "rpptx/util.py": "99f7d06d97a3762eb13418f0591a5f454eec195de2aae296505539285cae9c37"
     },
     "macos-arm64": {
-      "rdocx/__init__.py": "8601ab8932b2fa0366f7636b3797048081320cd3408db94046e0db43cc94066f",
-      "rdocx/_rdocx.abi3.so": "ef957c9720e363da72dce3c3e2cd78bda1bf743c006424d48bfc983bae8d5360",
-      "rdocx/_rdocx.pyi": "f9ec269ecb9425d4f814929fcf65494f0802d59a305241a00e2109fa479bb74f",
+      "rdocx/__init__.py": "9db7596c76c2ac4ba13e3c435f6ffff73ffcbe7cc744e5dfc1b95bba9ec12c1a",
+      "rdocx/_rdocx.abi3.so": "80fa2d58b58de046fdb194d5a8187651d7a59f066aa6e4085f1a03b90c16a783",
+      "rdocx/_rdocx.pyi": "c8bdbfe2a6f90a4e833ad117a6035e0410629c77fa35c5f489014d63fbcd3a17",
       "rdocx/enum/__init__.py": "97f8a6e38c9b5952ce725a2128a9b37801fd80336a728cf905352d4245f7cb4a",
-      "rdocx/enum/table.py": "99d45db009200509cc7281fcdc5fab78f6c7293a9358fb99c777884281fad162",
+      "rdocx/enum/table.py": "8dadd199bc69df4be7fd77c79bae20e49787cd96ac6ffe72b71b72ab608e5fd7",
       "rdocx/enum/text.py": "4183b61c2248579c8ba9bf5367cdeb5a5c64382245b1854dc94add193d557bcc",
       "rdocx/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "rdocx/shared.py": "bca1fe264cfd6fe25788ba1acc3c57acb3b7bbdcc4974e67d888fbfe4d52a9c6",
-      "rpptx/__init__.py": "5c29baba1f3f25f481c26e023af69963830549f9797103ae4a01ba9d825188da",
-      "rpptx/_rpptx.abi3.so": "f016b721d4b8b4c183ab35458b5113aadee88a04b0e0d793fe223a1acafa64a0",
-      "rpptx/_rpptx.pyi": "4cbaa5979605780b57130c483a048684bb100d9510410997fbc8de0cd0e6e05d",
+      "rpptx/__init__.py": "35a3c91e0e431ccdee8b51cea7c5a74bcc30ca2c725ae6114b70f1fa4509eb74",
+      "rpptx/_rpptx.abi3.so": "e5bb95ab24de842dba67a608af6f54b0ad0242d9045618697dd25689a4c233e1",
+      "rpptx/_rpptx.pyi": "41b09432b40951da82b73b5e5c85d62027ab5360d58143858653a4194527b8f1",
       "rpptx/dml/__init__.py": "cbb750cffaf7e86cafdbaf0cfc54b8a285d0fd29d6926fa498c802fbc00f7e84",
       "rpptx/dml/color.py": "d0b6f08f49033aeb3e16cc81e4bdf434dfd868f9a7513e51b345132b7d889758",
       "rpptx/enum/__init__.py": "c2d02a540ebe1383012a1700cd9b8876e8b739981f0348ad21afce51acdbad11",

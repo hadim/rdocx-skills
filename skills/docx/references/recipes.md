@@ -8,14 +8,14 @@ folder: a later block may read a file an earlier one wrote.
 ## Read the text and find where things are
 
 ```bash
-$R/rdocx text --json report.docx > report.json        # body and tables, accepted view of tracked changes
-$R/python "$SKILL/scripts/docx_ops.py" text report.docx > all-stories.txt   # plus headers, footers, notes, text boxes
+$R/rdocx text --json report.docx > report.json        # body and tables, then the other stories in "stories"
+$R/python "$SKILL/scripts/docx_ops.py" text report.docx > all-stories.txt   # every paragraph with its part and style
 $R/python "$SKILL/scripts/docx_ops.py" count report.docx "footbridge"
 $R/rdocx layout --json report.docx > layout.json
 ```
 
-Plain `rdocx text` is fine for a quick look at a clean file; it drops tracked insertions and content-control
-blocks, so do not use it on a document under review.
+Plain `rdocx text` shows the same accepted view (tracked insertions in, deletions out): the body, then each
+other part (text boxes, headers, footers, notes, comments) under a `--- kind (part) ---` line.
 
 ```python
 import docx_ops, rdocx
@@ -48,8 +48,8 @@ docx_ops.replace_batch("report.docx", "edited.docx", [
 ```
 
 `replace_batch` raises `docx_ops.EditError`, and writes nothing, when a count differs or when occurrences
-stay out of reach of the replacement (content controls, tracked insertions, footnotes, endnotes); the
-message says where they are. `rdocx replace` does not make that second check. The command line equivalent:
+stay out of reach of the replacement (a match across the edge of a content control, a tracked insertion or
+a simple field). The message says where they are. `rdocx replace` does not make that second check. The command line equivalent:
 `$R/python "$SKILL/scripts/docx_ops.py" replace IN OUT --edit OLD NEW COUNT --edit ...`.
 
 ## A new paragraph after an anchor, with the anchor's formatting
@@ -87,7 +87,7 @@ docx_ops.save_atomic(doc, "restructured.docx", "report.docx")
 ```python
 import docx_ops, rdocx
 doc = rdocx.Document.open("report.docx")
-i, start, _ = docx_ops.locate(doc, "safety of path users")      # flow index, offset, body index
+i, start, _ = docx_ops.locate(doc, "safety of path users")      # flow index, run offset, body index
 first, last = docx_ops.isolate(doc, i, start, start + len("safety of path users"))
 for k in range(first, last):
     doc.paragraphs[i].runs[k].font.bold = True
@@ -99,10 +99,8 @@ docx_ops.save_atomic(doc, "bold.docx", "report.docx")
 ```python
 import docx_ops, rdocx
 doc = rdocx.Document.open("report.docx")
-ids = {s.style_id for s in doc.styles}
-assert "Caption" in ids                                  # rdocx stores any string: check the id first
 i = next(k for k, p in enumerate(doc.paragraphs) if p.text.startswith("The overall condition index"))
-doc.paragraphs[i].style = "Caption"
+doc.paragraphs[i].style = "caption"                      # an id or a name, KeyError when the document has neither
 doc.paragraphs[i].paragraph_format.space_after = rdocx.Pt(12)
 doc.paragraphs[i].paragraph_format.keep_with_next = True
 j = next(k for k, p in enumerate(doc.paragraphs) if p.numbering)
@@ -144,9 +142,6 @@ note.add_picture(new, "a1.png", width=rdocx.Inches(3), height=rdocx.Inches(3 * h
 docx_ops.save_atomic(note, "picture-added.docx")
 ```
 
-`add_picture` fails on a file that has a content control and a default namespace on its root, as Google Docs
-exports do (gap add-picture-sdt-default-ns): for those, fall back to python-docx for that step.
-
 ## Comments: on exact text, on a table cell, reply, resolve
 
 ```python
@@ -162,9 +157,9 @@ doc.add_comment(rdocx.StoryRunRange(start=rdocx.StoryRunPosition(item=cell, run_
 docx_ops.save_atomic(doc, "commented.docx", "report.docx")
 ```
 
-`comment_on_text` splits runs so that the comment covers exactly the anchor, dates it, and refuses (nothing
-changed) when the paragraph holds a content control or a tracked insertion before the anchor (gap
-comment-runposition-sdt). `add_comment` without `date=` writes an undated comment.
+`comment_on_text` splits runs so that the comment covers exactly the anchor, also inside or after a content
+control or a tracked insertion, dates it, and refuses (nothing changed) if rdocx would anchor it anywhere
+else, or if the anchor sits inside a simple field, a smart tag or a custom XML element. `add_comment` without `date=` writes an undated comment.
 
 ```bash
 $R/rdocx comment list --json commented.docx
@@ -174,19 +169,17 @@ $R/python "$SKILL/scripts/docx_ops.py" comment report.docx commented-cli.docx --
 ## Redline two versions, then accept or reject
 
 ```bash
-$R/python -c 'import rdocx; rdocx.Document.open("report.docx").save("v1.docx")'
+cp report.docx v1.docx
 $R/rdocx replace v1.docx -p "three points lower" -v "two points lower" --expect 1 -o v2.docx
-$R/rdocx compare v1.docx v2.docx --author "Reviewer" --timestamp 2026-09-27T12:00:00Z -o redline.docx --json
+$R/rdocx compare v1.docx v2.docx --author "Reviewer" --timestamp 2026-09-27T12:00:00Z --granularity word -o redline.docx --json
 $R/rdocx revision list --json redline.docx
 $R/rdocx revision accept redline.docx --author "Reviewer" -o accepted.docx --json
 ```
 
-The first line passes the original through rdocx: a file with an empty comments part (every Google Docs
-export) is otherwise refused against its rdocx-edited version (gap empty-comments-reserialised). Compare
-first, then rebuild the TOC or refresh fields: the other order is refused. A one-word change shows as its
-whole run deleted and re-inserted, and the redline may carry a section property change with no visible
-difference (gap compare-own-save-noise). `revision list` shows the main story only; the `resolved` count of
-`revision accept --json` covers headers, footers and notes too.
+The redline holds only the edit, in every story (`revision list` shows each revision's story), and
+`--granularity word` marks only the changed words (the default, `run`, deletes and re-inserts the whole
+run). In Python: `v1.compare(v2, "Reviewer", timestamp, granularity="word")`. Compare first, then rebuild
+the TOC: the other order is refused (gap compare-rebuilt-toc).
 
 ## Table of contents and page fields
 
@@ -197,7 +190,7 @@ $R/python "$SKILL/scripts/docx_ops.py" toc report.docx toc.docx
 ```python
 import docx_ops, rdocx
 doc = rdocx.Document.open("report.docx")
-rep = docx_ops.rebuild_toc(doc)
+rep = doc.rebuild_toc()
 fields = doc.update_layout_backed_fields()
 docx_ops.save_atomic(doc, "fields.docx", "report.docx")
 print(rep.entry_count, fields.updated_count)
@@ -208,15 +201,14 @@ print(rep.entry_count, fields.updated_count)
 ```bash
 $R/python "$SKILL/scripts/docx_ops.py" replace report.docx checked.docx --edit "three points lower" "two points lower" 1
 $R/rdocx validate checked.docx
-$R/python -c 'import rdocx; d = rdocx.Document.open("checked.docx"); d.story_items; print(len(d.paragraphs))'
 $R/rdocx diff report.docx checked.docx
 pages=$(mktemp -d)                                       # render into a new folder each time
 $R/rdocx render checked.docx -o "$pages" --pages 1-3 --dpi 80
 ls "$pages"
 ```
 
-`validate` misses broken headers and dangling style ids (gap validate-parts): the re-open with `story_items`
-reads every story. Look at the PNG of every page you touched. Page numbers come from rdocx's layout, which
+`validate` reads every part the document relates to and checks every style id. Look at the PNG of every
+page you touched. Page numbers come from rdocx's layout, which
 differs from Word's (gaps line-gap, picture-line-spacing): never quote them as Word's.
 
 ## A new document from a template
@@ -233,8 +225,7 @@ docx_ops.save_atomic(doc, "note.docx")
 ```
 
 `remove_content` leaves the section properties, headers, footers, styles and numbering of the template.
-From a .dotx, save as .docx the same way, then fix the content type that rdocx keeps (gap
-template-save-as-document):
+From a .dotx, save as .docx the same way: rdocx writes the content type the extension names.
 
 ```python
 import docx_ops, rdocx, zipfile
@@ -247,7 +238,31 @@ with zipfile.ZipFile("note.docx") as src, zipfile.ZipFile("note.dotx", "w") as d
 doc = rdocx.Document.open("note.dotx")
 doc.add_paragraph("Filled from the template.")
 docx_ops.save_atomic(doc, "from-template.docx")
-docx_ops.fix_template_content_type("from-template.docx")
 with zipfile.ZipFile("from-template.docx") as z:
     assert b"wordprocessingml.document.main+xml" in z.read("[Content_Types].xml")
 ```
+
+## A new document with its own styles, a numbered list and properties
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document()                                     # Normal, Title, Heading 1 to 9, List Paragraph...
+doc.core_properties.title = "Inspection checklist"
+doc.core_properties.author = "Claude"
+note = doc.add_style("Note box", based_on="Normal", italic=True, left_indent=rdocx.Inches(0.5))
+steps = doc.add_numbering_instance(doc.add_numbering_definition([
+    rdocx.ListLevel(format="decimal", text="%1.", left_indent=rdocx.Inches(0.5), hanging_indent=rdocx.Inches(0.25))]))
+doc.add_paragraph("Inspection checklist")
+doc.paragraphs[0].style = "Title"
+doc.add_paragraph("Bring the 2019 survey marks.")
+doc.paragraphs[1].style = note.style_id
+for text in ("Check the bearings.", "Photograph the deck joints."):
+    doc.add_paragraph(text)
+    doc.paragraphs[-1].style = "List Paragraph"
+    doc.paragraphs[-1].numbering = (steps, 0)
+doc.paragraphs[1].text = "Bring the 2019 survey marks and a tape."    # one plain run, paragraph style kept
+docx_ops.save_atomic(doc, "checklist.docx")
+```
+
+`add_style` derives the id from the name as Word does (`"Note box"` → `Notebox`). Assign by that id or by
+the name. `link_style_to_numbering(style, num_id, level)` numbers every paragraph of a style instead.

@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
 sys.path.insert(0, str(ROOT / "skills" / "pptx" / "scripts"))
 import docx_ops  # noqa: E402
 import pptx_ops  # noqa: E402
-from conftest import BIN, digest  # noqa: E402
+from conftest import BIN  # noqa: E402
 
 
 anchored = docx_ops.anchored_text
@@ -33,7 +33,7 @@ def test_replace_batch_is_all_or_nothing(report_docx, tmp_path):
 @pytest.mark.parametrize("build", ["every_story", "word_textbox"])
 def test_replace_batch_never_leaves_occurrences_silently(tmp_path, build):
     """The helper's contract, whatever the pin reaches: text left after the replacement makes it refuse, even
-    when rdocx's count matches (a Word text box counts twice while a footnote is skipped)."""
+    when rdocx's count matches."""
     path = every_story_docx(tmp_path / "s.docx")[0] if build == "every_story" else word_textbox_docx(tmp_path / "s.docx")
     doc = rdocx.Document.open(path)
     total = sum(docx_ops.count(doc, "NEEDLE").values())
@@ -104,28 +104,35 @@ def test_comment_on_a_heading_skips_the_table_of_contents(report_docx, tmp_path)
 
 @pytest.mark.parametrize("wrapper", ["sdt", "ins"])
 @pytest.mark.parametrize("anchor", ["before", "TARGET", "after"])
-def test_comment_on_text_anchors_exactly_or_refuses(tmp_path, wrapper, anchor):
-    """The helper's contract: the comment lands on exactly the anchor, or EditError and doc unchanged (today the
-    runs after a content control or a tracked insertion are refused: gap comment-runposition-sdt)."""
+def test_comment_on_text_anchors_exactly_around_wrapped_runs(tmp_path, wrapper, anchor):
+    """The comment lands on exactly the anchor, before, inside and after a content control or a tracked
+    insertion."""
     doc = rdocx.Document.open(wrapped_run_docx(tmp_path / "w.docx", wrapper))
-    before = doc.to_bytes()
-    try:
+    cid = docx_ops.comment_on_text(doc, anchor, "x", "Reviewer")
+    assert anchored(doc.to_bytes(), cid) == anchor
+
+
+@pytest.mark.parametrize("wrapper", ["fldSimple", "smartTag", "customXml"])
+def test_comment_on_text_counts_run_offsets_around_fields_and_smart_tags(tmp_path, wrapper):
+    """Paragraph.text holds the text of a simple field, a smart tag or custom XML, Paragraph.runs does not:
+    an anchor after one lands on exactly its text, an anchor inside one is refused with that reason."""
+    doc = rdocx.Document.open(wrapped_text_docx(tmp_path / "w.docx", wrapper))
+    assert doc.paragraphs[0].text == "before MID after"
+    for anchor in ("before", "after"):
         cid = docx_ops.comment_on_text(doc, anchor, "x", "Reviewer")
-    except docx_ops.EditError as e:
-        assert "comment-runposition-sdt" in str(e) and digest(doc.to_bytes()) == digest(before)
-    else:
         assert anchored(doc.to_bytes(), cid) == anchor
+    i, start, _ = docx_ops.locate(doc, "after")
+    first, last = docx_ops.isolate(doc, i, start, start + len("after"))
+    assert [r.text for r in doc.paragraphs[i].runs[first:last]] == ["after"]
+    for anchor in ("MID", "MID after"):
+        with pytest.raises(docx_ops.EditError, match="simple field, a smart tag or a custom XML"):
+            docx_ops.comment_on_text(doc, anchor, "x", "Reviewer")
 
 
 def test_comment_on_text_in_the_report_content_control(report_docx):
     doc = rdocx.Document.open(report_docx)
-    before = doc.to_bytes()
-    try:
-        cid = docx_ops.comment_on_text(doc, "74 out of 100", "x", "Reviewer")
-    except docx_ops.EditError:
-        assert digest(doc.to_bytes()) == digest(before)
-    else:
-        assert anchored(doc.to_bytes(), cid) == "74 out of 100"
+    cid = docx_ops.comment_on_text(doc, "74 out of 100", "x", "Reviewer")
+    assert anchored(doc.to_bytes(), cid) == "74 out of 100"
 
 
 def test_command_line_entry_points(report_docx, tmp_path):
@@ -196,6 +203,6 @@ def test_fix_template_content_type(tmp_path, report_docx):
 
 
 @pytest.mark.parametrize("wrapper", ["fldSimple", "smartTag", "customXml"])
-def test_count_reads_text_that_paragraph_text_misses(tmp_path, wrapper):
+def test_count_reads_text_inside_simple_fields_smart_tags_and_custom_xml(tmp_path, wrapper):
     path = wrapped_text_docx(tmp_path / "w.docx", wrapper)
     assert docx_ops.all_text(path) == [("body", "before MID after")]

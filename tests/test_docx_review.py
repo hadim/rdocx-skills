@@ -38,10 +38,10 @@ def noop_saved(src, dst):
     return dst
 
 
-def compare(cli, a, b, out):
+def compare(cli, a, b, out, *options):
     if os.path.exists(out):
         os.remove(out)
-    return run([cli, "compare", a, b, "--author", "Reviewer", "--timestamp", STAMP, "-o", out])
+    return run([cli, "compare", a, b, "--author", "Reviewer", "--timestamp", STAMP, *options, "-o", out])
 
 
 # ---------------------------------------------------------------- comments
@@ -91,7 +91,6 @@ def test_comment_date_is_written_only_when_given(tmp_path):
     assert [(c.text, c.date) for c in rdocx.Document.open(tmp_path / "d.docx").comments] == [("undated", None), ("dated", STAMP)]
 
 
-@pytest.mark.gap("comment-date-cli")
 def test_cli_comment_add_takes_a_date(rdocx_cli, tmp_path):
     src = two_paragraphs(tmp_path / "c.docx")
     res = run([rdocx_cli, "comment", "add", src, "--start-paragraph", "0", "--start-run", "0", "--end-paragraph", "0",
@@ -113,7 +112,6 @@ def test_comment_on_a_table_cell_through_a_story_range(tmp_path):
     assert anchored(tmp_path / "d.docx", cid) == "cell text"
 
 
-@pytest.mark.gap("comment-runposition-sdt")
 @pytest.mark.parametrize("wrapper", ["sdt", "ins"])
 def test_comment_run_index_counts_wrapped_runs(tmp_path, wrapper):
     path = wrapped_run_docx(tmp_path / "w.docx", wrapper)
@@ -124,7 +122,6 @@ def test_comment_run_index_counts_wrapped_runs(tmp_path, wrapper):
     assert anchored(tmp_path / "c.docx", cid) == "TARGET"
 
 
-@pytest.mark.gap("comment-runposition-sdt")
 def test_cli_comment_run_index_counts_wrapped_runs(rdocx_cli, tmp_path):
     path = wrapped_run_docx(tmp_path / "w.docx", "sdt")
     run([rdocx_cli, "comment", "add", path, "--start-paragraph", "0", "--start-run", "1", "--end-paragraph", "0",
@@ -184,26 +181,44 @@ def test_python_compare_method(tmp_path):
     assert len(a.revisions) >= 2
 
 
-@pytest.mark.gap("compare-granularity")
 def test_compare_marks_only_the_changed_word(rdocx_cli, tmp_path):
     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor."
     a = two_paragraphs(tmp_path / "a.docx", first=text)
     b = two_paragraphs(tmp_path / "b.docx", first=text.replace("dolor", "DOLOR"))
-    compare(rdocx_cli, a, b, tmp_path / "red.docx")
+    compare(rdocx_cli, a, b, tmp_path / "red.docx", "--granularity", "word")
     deleted = "".join(re.findall(r"<w:delText[^>]*>([^<]*)</w:delText>", part(tmp_path / "red.docx", "word/document.xml").decode()))
     assert deleted.strip() == "dolor"
 
 
-@pytest.mark.gap("compare-comments")
+def test_python_compare_marks_only_the_changed_word(tmp_path):
+    text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor."
+    doc = rdocx.Document.open(two_paragraphs(tmp_path / "a.docx", first=text))
+    edited = rdocx.Document.open(two_paragraphs(tmp_path / "b.docx", first=text.replace("dolor", "DOLOR")))
+    doc.compare(edited, "Reviewer", "2026-09-29T12:00:00Z", granularity="word")
+    doc.save(tmp_path / "red.docx")
+    deleted = "".join(re.findall(r"<w:delText[^>]*>([^<]*)</w:delText>", part(tmp_path / "red.docx", "word/document.xml").decode()))
+    assert deleted.strip() == "dolor"
+
+
+def test_python_compare_ignores_comments_on_request(tmp_path):
+    doc = rdocx.Document.open(two_paragraphs(tmp_path / "a.docx"))
+    edited = rdocx.Document.open(two_paragraphs(tmp_path / "b.docx", first="Alpha paragraph with other words here."))
+    edited.add_comment(rdocx.RunRange(start=rdocx.RunPosition(body_index=1, run_index=0),
+                                      end=rdocx.RunPosition(body_index=1, run_index=1)), author="R", text="New comment")
+    assert doc.compare(edited, "Reviewer", "2026-09-29T12:00:00Z", ignore_comments=True) == ()
+    assert doc.comments == () and [r.kind for r in doc.revisions] == ["deletion", "insertion"]
+
+
 def test_compare_accepts_a_pair_whose_comments_differ(rdocx_cli, tmp_path):
     a = two_paragraphs(tmp_path / "a.docx")
     b = tmp_path / "b.docx"
     run([rdocx_cli, "comment", "add", a, "--start-paragraph", "1", "--start-run", "0", "--end-paragraph", "1",
          "--end-run", "1", "--author", "R", "--text", "New comment", "-o", b], check=True)
-    assert compare(rdocx_cli, a, b, tmp_path / "red.docx").returncode == 0
+    assert compare(rdocx_cli, a, b, tmp_path / "red.docx").returncode != 0
+    assert compare(rdocx_cli, a, b, tmp_path / "red.docx", "--ignore-comments").returncode == 0
+    assert rdocx.Document.open(tmp_path / "red.docx").comments == ()
 
 
-@pytest.mark.gap("compare-sdt-id")
 def test_compare_ignores_a_content_control_id(rdocx_cli, report_docx, tmp_path):
     b = tmp_path / "b.docx"
     with zipfile.ZipFile(report_docx) as zin, zipfile.ZipFile(b, "w", zipfile.ZIP_DEFLATED) as zout:
@@ -215,7 +230,6 @@ def test_compare_ignores_a_content_control_id(rdocx_cli, report_docx, tmp_path):
     assert compare(rdocx_cli, report_docx, b, tmp_path / "red.docx").returncode == 0
 
 
-@pytest.mark.gap("empty-comments-reserialised")
 def test_compare_against_its_own_rdocx_save(rdocx_cli, report_docx, tmp_path):
     doc = rdocx.Document.open(report_docx)
     doc.try_replace_text("described", "outlined")
@@ -223,7 +237,6 @@ def test_compare_against_its_own_rdocx_save(rdocx_cli, report_docx, tmp_path):
     assert compare(rdocx_cli, report_docx, tmp_path / "e.docx", tmp_path / "red.docx").returncode == 0
 
 
-@pytest.mark.gap("compare-own-save-noise")
 def test_compare_after_rdocx_edit_reports_only_the_edit(rdocx_cli, tmp_path):
     d = docx.Document()
     for t in ("Paragraph 1, lorem ipsum.", "WORD", "Paragraph 3, lorem ipsum."):
@@ -249,7 +262,6 @@ def test_compare_after_a_plain_edit_of_an_rdocx_saved_original(rdocx_cli, report
     assert compare(rdocx_cli, base, tmp_path / "e.docx", tmp_path / "red.docx").returncode == 0
 
 
-@pytest.mark.gap("compare-packed-fields")
 def test_compare_after_refreshing_packed_page_fields(rdocx_cli, report_docx, tmp_path):
     base = noop_saved(report_docx, tmp_path / "base.docx")
     doc = rdocx.Document.open(base)
@@ -285,7 +297,6 @@ def test_revision_accept_record_counts_every_story(rdocx_cli, tmp_path):
     assert rec["resolved"] >= 1 and rec["scope"] == "all-supported-stories"
 
 
-@pytest.mark.gap("revisions-main-story")
 def test_revisions_listed_across_stories(rdocx_cli, tmp_path):
     d = docx.Document()
     d.add_paragraph("Body.")
@@ -296,4 +307,6 @@ def test_revisions_listed_across_stories(rdocx_cli, tmp_path):
     d.save(tmp_path / "b.docx")
     compare(rdocx_cli, tmp_path / "a.docx", tmp_path / "b.docx", tmp_path / "red.docx")
     assert b"<w:ins " in part(tmp_path / "red.docx", "word/footer1.xml")
-    assert len(rdocx.Document.open(tmp_path / "red.docx").revisions) > 0
+    assert {r.story.kind for r in rdocx.Document.open(tmp_path / "red.docx").revisions} == {"footer"}
+    listed = json.loads(run([rdocx_cli, "revision", "list", "--json", tmp_path / "red.docx"], check=True).stdout)
+    assert {r["story"]["kind"] for r in listed["revisions"]} == {"footer"}

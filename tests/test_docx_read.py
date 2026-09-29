@@ -29,7 +29,6 @@ def test_cli_text_json_schema(rdocx_cli, report_docx):
     assert headings[:2] == ["Summary", "Scope and method"]
 
 
-@pytest.mark.gap("sdt-text-cli")
 def test_cli_text_includes_block_content_control(rdocx_cli, report_docx):
     out = run([rdocx_cli, "text", report_docx], check=True).stdout
     assert "Access to the river was agreed with the harbour office" in out
@@ -124,18 +123,22 @@ def test_text_json_is_the_accepted_view(rdocx_cli, tmp_path):
     assert "Tracked: ins NEEDLE" in [p.text for p in rdocx.Document.open(path).paragraphs]
 
 
-@pytest.mark.gap("text-cli-tracked-insertions")
 def test_cli_plain_text_keeps_tracked_insertions(rdocx_cli, tmp_path):
     path, _ = every_story_docx(tmp_path / "s.docx")
     assert "ins NEEDLE" in run([rdocx_cli, "text", path], check=True).stdout
 
 
-@pytest.mark.gap("text-other-stories")
-@pytest.mark.parametrize("view", ["json", "md"])
+@pytest.mark.parametrize("view", ["plain", "json", "md"])
 def test_cli_text_includes_headers_footers_and_notes(rdocx_cli, tmp_path, view):
     path, _ = every_story_docx(tmp_path / "s.docx")
-    if view == "json":
+    if view == "plain":
+        out = run([rdocx_cli, "text", path], check=True).stdout
+        assert "--- header (/word/header1.xml) ---\nHeader NEEDLE\n" in out
+    elif view == "json":
         out = run([rdocx_cli, "text", "--json", path], check=True).stdout
+        data = json.loads(out)
+        assert data["scope"] == "all-supported-stories"
+        assert {"header", "footer", "footnote", "endnote", "text_box"} <= {s["kind"] for s in data["stories"]}
     else:
         run([rdocx_cli, "convert", path, "--to", "md", "-o", tmp_path / "s.md"], check=True)
         out = (tmp_path / "s.md").read_text()
@@ -166,7 +169,6 @@ def test_validate_catches_a_truncated_document_part(rdocx_cli, tmp_path):
     assert run([rdocx_cli, "validate", bad]).returncode != 0
 
 
-@pytest.mark.gap("validate-parts")
 def test_validate_catches_a_truncated_header(rdocx_cli, tmp_path):
     src = small_with_header(tmp_path / "a.docx")
     with zipfile.ZipFile(src) as z:
@@ -175,7 +177,6 @@ def test_validate_catches_a_truncated_header(rdocx_cli, tmp_path):
     assert run([rdocx_cli, "validate", bad]).returncode != 0
 
 
-@pytest.mark.gap("validate-parts")
 def test_validate_catches_a_dangling_style_id(rdocx_cli, tmp_path):
     src = small_with_header(tmp_path / "a.docx")
     bad = broken(src, tmp_path / "b.docx", "word/document.xml",
@@ -184,8 +185,19 @@ def test_validate_catches_a_dangling_style_id(rdocx_cli, tmp_path):
     assert run([rdocx_cli, "validate", bad]).returncode != 0
 
 
+def test_cli_text_keeps_the_body_when_a_header_is_truncated(rdocx_cli, tmp_path):
+    src = small_with_header(tmp_path / "a.docx")
+    with zipfile.ZipFile(src) as z:
+        header = next(n for n in z.namelist() if n.startswith("word/header"))
+    bad = broken(src, tmp_path / "b.docx", header, lambda b: b[: len(b) // 2])
+    res = run([rdocx_cli, "text", bad])
+    assert res.returncode == 0 and res.stdout.startswith("x") and "Head" not in res.stdout and res.stderr
+    data = json.loads(run([rdocx_cli, "text", "--json", bad], check=True).stdout)
+    assert (data["scope"], data["stories"]) == ("main", [])
+
+
 def test_reopen_with_story_items_catches_a_truncated_header(tmp_path):
-    """The verification step the skill teaches where `validate` passes (gap validate-parts)."""
+    """A second check beside `validate`: a story read fails on a truncated header."""
     src = small_with_header(tmp_path / "a.docx")
     with zipfile.ZipFile(src) as z:
         header = next(n for n in z.namelist() if n.startswith("word/header"))

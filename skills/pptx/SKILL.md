@@ -34,16 +34,17 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 
 ## Rules that prevent damage
 
-1. **Never write over the input.** The editing commands, `render` and image `convert` refuse an existing
-   output; **`rpptx convert --to pdf` and `rpptx thumbnail` overwrite anything, the input included**;
-   `Presentation.save()` writes in place: use `pptx_ops.save_atomic(prs, out, src)`. Render into a new
-   folder each time.
+1. **Never write over the input.** The editing commands, `render`, `convert` and `thumbnail` refuse an
+   existing output (`convert`, `render` and `thumbnail` accept `--force`, never for their own input);
+   `Presentation.save()` does not refuse the input: use `pptx_ops.save_atomic(prs, out, src)`. Render into a
+   new folder each time.
 2. **Every text replacement declares its expected count**: `rpptx replace ... --expect N` (slides and
-   notes), or `pptx_ops.replace_batch(src, out, [(old, new, n), ...])`, all or nothing.
+   notes), `prs.try_replace_text(old, new, expect=n)`, or `pptx_ops.replace_batch(src, out, [(old, new, n),
+   ...])`, all or nothing.
 3. **Re-fetch handles after every change that is not a geometry, font, paragraph or frame setter**: write
-   `prs.slides[i].shapes[j]` again. Any `add_*` invalidates the handles of every slide; setting any text
-   (`run.text`, `text_frame.text`, `shape.text`, `notes_text`) invalidates everything, the shape an `add_*`
-   just returned included: `box = add_textbox(...); box.text_frame.text = "x"; box.left` raises.
+   `prs.slides[i].shapes[j]` again. Any `add_*` invalidates the handles of every slide; setting
+   `text_frame.text`, `shape.text` or `notes_text` invalidates everything, the shape an `add_*` just returned
+   included: `box = add_textbox(...); box.text_frame.text = "x"; box.left` raises. `run.text` keeps them.
 4. **Walk groups**: `slide.shapes` lists top-level shapes; a group's children are in `shape.shapes`
    (`shape_type == MSO_SHAPE_TYPE.GROUP`, value 6). `pptx_ops.walk(slide.shapes)` yields all of them.
 5. **Check the fit after any text change**: `prs.text_layout()` (or `pptx_ops.py overflow`) reports every
@@ -61,22 +62,23 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Text with structure and formatting | `rpptx text --json F` | | paragraphs with `path`, `shape_id`, `level`, runs with bold, italic, underline, colour, font, size; notes |
 | Titles and outline | `rpptx outline [--json] [--notes] F` | `slide.shapes.title` | |
 | Structure, shapes, metadata | `rpptx inspect --json F` | `pptx_ops.py shapes F [--slide N]` | shape tree with ids, names, geometry |
-| Counted replacement | `rpptx replace F -p OLD -v NEW --expect N -o OUT` | `pptx_ops.replace_batch` | keeps run formatting; no Python API (gap) |
+| Counted replacement | `rpptx replace F -p OLD -v NEW --expect N -o OUT` | `prs.try_replace_text(old, new, expect=n)`, `pptx_ops.replace_batch` | keeps run formatting |
 | Edit a run, paragraph, text frame | | `run.text`, `run.font.*`, `paragraph.alignment/level/space_*/line_spacing`, `text_frame.margin_*/word_wrap/auto_size/vertical_anchor` | `shape.text = ...` drops run formatting, as in python-pptx |
-| Move, resize, rotate | | `shape.left/top/width/height/rotation` | placeholders that inherit their geometry read None (gap) |
+| Move, resize, rotate | | `shape.left/top/width/height/rotation` | a placeholder that inherits its geometry reads None: `shape.effective_geometry()` gives it, and a setter copies it first |
 | Fill, line | | `shape.fill.solid()`, `.fill.fore_color.rgb = RGBColor(...)`, `.line.width`, `.line.color.rgb` | |
-| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table` | new groups cannot be filled (gap) |
+| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each |
+| Z-order | | `shapes.move(from_, to)` | index 0 is the back |
 | Pictures | | `shape.replace_image(file)`, `shape.image.blob` | keeps position, size and crop |
-| Tables | | `shape.table.cell(r, c).text`, `table.columns[k].width` | no row or column insertion, no merge from Python (gap) |
-| Slides | | `slides.add_slide(layout)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden` | no duplication from Python (gap) |
+| Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each |
+| Slides | | `slides.add_slide(layout)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden` | |
 | Speaker notes | `rpptx text --notes F` | `slide.notes_text` (get and set) | None when the slide has no notes |
-| Hyperlinks | | | no API (gap pptx-hyperlinks) |
+| Hyperlinks | | `run.hyperlink.address` (get and set) | runs only |
 | Metadata | `rpptx inspect --json F` | | read-only; no core properties API |
-| Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `move_comment` | resolve and remove: CLI only (gap) |
+| Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `resolve_comment`, `remove_comment`, `move_comment` | |
 | Text fit | | `prs.text_layout(width_factor=1.0)`, `pptx_ops.overflowing(F)` | heights short under percentage spacing, breaks before punctuation (gaps) |
-| PDF | `rpptx convert F --to pdf -o NEW.pdf` | `prs.to_pdf()`, `prs.to_notes_pdf()` | slide backgrounds missing in the PDF (gap) |
+| PDF | `rpptx convert F --to pdf -o NEW.pdf` | `prs.to_pdf()`, `prs.to_notes_pdf()` | |
 | PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)` | CLI slides one-based, Python zero-based |
-| From a .potx template | | `rpptx.Presentation("t.potx")`, save, then `pptx_ops.fix_template_content_type(out)` | rpptx keeps the template content type (gap) |
+| From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
 | Validity | `rpptx validate F` | | |
 | What changed | `rpptx diff A B` | | slide text only |
 

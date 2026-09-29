@@ -5,8 +5,8 @@
   python pptx_ops.py overflow IN.pptx                                            text frames that overflow
   python pptx_ops.py shapes IN.pptx [--slide N]                                  shape tree with geometry
 
-Python has no replacement API yet (gap pptx-replace-python), so `replace` chains `rpptx replace --expect`
-through temporary files and publishes the result only when every count matched. Counts include speaker notes.
+`replace` chains `rpptx replace --expect` through temporary files and publishes the result only when every
+count matched (in Python, `prs.try_replace_text(old, new, expect=n)` does one replacement in memory). Counts include speaker notes.
 Outputs are written to a temporary file next to the target, flushed to disk and renamed, with the input's
 file mode. Exit codes: 0 done, 1 refused (nothing written), 2 usage.
 """
@@ -96,9 +96,9 @@ def replace_batch(src, out, edits):
 
 
 def fix_template_content_type(path):
-    """Gap template-save-as-document: a .potx saved as .pptx keeps the template content type. Rewrite the main
-    part's content type to the presentation one, in place (atomically, every other entry unchanged). Returns
-    True if the file was changed."""
+    """Rewrite a template main part's content type to the presentation one, in place (atomically, every other
+    entry unchanged). Returns True if the file was changed. Kept for the scripts that call it: rpptx's save
+    now writes the content type the path extension names."""
     import zipfile
     path = Path(path)
     with zipfile.ZipFile(path) as z:

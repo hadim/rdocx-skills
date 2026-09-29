@@ -21,16 +21,8 @@ IDENTITY_ROWS = [("paragraphs", a) for a in ("w:rsidR", "w:rsidRDefault", "w:rsi
                 [("table rows", a) for a in ("w:rsidR", "w:rsidTr", "w14:paraId")]
 
 # Known failing cells: (row, column) -> gap key
-IDENTITY_GAPS = {**{(("runs", a), "toc"): "toc-rsid-field-runs" for a in ("w:rsidR", "w:rsidRPr", "w:rsidDel")},
-                 **{(("field runs", a), "toc"): "toc-rsid-field-runs" for a in ("w:rsidR", "w:rsidRPr")},
-                 **{(("content control", a), "cmp0"): "compare-sdt-id" for a in ("w:id", "w:tag")},
-                 **{(("table rows", a), "save"): "tr-identity-lost" for a in ("w:rsidR", "w:rsidTr", "w14:paraId")}}
-TRAIT_GAPS = {("inline content control on first runs", "replace"): "sdt-replace",
-              ("inline content control on first runs", "self"): "sdt-replace",
-              ("w:orient=\"portrait\" on pgSz", "self"): "compare-own-save-noise",
-              ("packed footer fields, no cached result", "cmpfld"): "compare-packed-fields",
-              ("empty comments part", "cmpfld"): "empty-comments-reserialised",
-              ("empty comments part", "self"): "empty-comments-reserialised"}
+IDENTITY_GAPS = {}
+TRAIT_GAPS = {}
 
 
 def count_attr(path, attr):
