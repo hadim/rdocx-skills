@@ -38,15 +38,18 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
 
-## State on 27/09/2026
+## State on 29/09/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: tensorbee/rdocx `9a7ed714` (`main`, sprint S75), rdocx 0.14.0, rpptx 0.12.1. Release
-  `rdocx-9a7ed714103c` built by `build.yml` for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners, glibc
-  2.35) and macos-arm64 (macos-14), with provenance attestations; the lock records its hashes.
-- Suite: 374 passed, 93 strict xfails (61 gap keys), nothing skipped, on linux-aarch64 (27/09/2026, six gaps met in
-  real use added); 373 passed and 85 strict xfails on macos-arm64 and linux-x86_64 in `ci.yml` before them
-  (release download in 8 s, about 2 minutes in all).
+- Pinned: hadim/rdocx `f3df95bf` (`integration/open-prs-2026-09-29`: tensorbee/rdocx `main` at `9a7ed714`, sprint
+  S75, plus the 23 open pull requests #173 to #195, not yet reviewed upstream), rdocx 0.14.0, rpptx 0.12.1. That
+  branch is never rewritten nor deleted: `install --build` fetches the pinned commit from it; a later snapshot
+  gets a new dated branch. Release `rdocx-f3df95bf7daa` built by `build.yml` for linux-x86_64, linux-aarch64
+  (ubuntu-22.04 runners, glibc 2.35) and macos-arm64 (macos-14), with provenance attestations; the lock records
+  its hashes. Back to tensorbee/rdocx once those pull requests land there.
+- Suite: 421 passed, 36 strict xfails (29 gap keys), 12 skipped (installer and release tests without hashes in
+  the lock) on the three platforms in `build.yml` (29/09/2026, 32 gaps closed by the pin); 433 passed and 36
+  xfails on macos-arm64 with the release installed.
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
