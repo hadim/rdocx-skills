@@ -7,13 +7,13 @@ the next one must still open what you save. What matters when you edit with rdoc
 
 | Trait | Written by | What to do |
 |---|---|---|
-| `w:rsid*` on paragraphs, runs and rows, `w14:paraId` / `w14:textId`, a `w:rsids` list in settings | Word, on every save | carry no content; rdocx keeps them, except on table rows after an edit (gap tr-identity-lost). They break a plain TOC rebuild (gap toc-rsid-field-runs) |
-| explicit `w:val="0"` toggles (`w:b`, `w:i`, `w:rtl`, `keepNext`, `pageBreakBefore`), `xml:space="preserve"` on every `w:t`, `w:orient="portrait"` | Google Docs | equivalent to the defaults; rdocx rewrites some of them in an edited `document.xml`, which shows as noise in a redline (gap compare-own-save-noise) |
-| content controls `w:sdt` with `w:tag goog_rdk_N` around runs or paragraphs | Google Docs | text inside is invisible to replacements (gap sdt-replace) and, for paragraph-level controls, to plain `rdocx text` (gap sdt-text-cli); a comment after an inline control lands on the wrong run (gap comment-runposition-sdt: `docx_ops.comment_on_text` refuses); `add_picture` fails on such a file (gap add-picture-sdt-default-ns) |
+| `w:rsid*` on paragraphs, runs and rows, `w14:paraId` / `w14:textId`, a `w:rsids` list in settings | Word, on every save | carry no content; rdocx keeps them, on table rows too |
+| explicit `w:val="0"` toggles (`w:b`, `w:i`, `w:rtl`, `keepNext`, `pageBreakBefore`), `xml:space="preserve"` on every `w:t`, `w:orient="portrait"` | Google Docs | equivalent to the defaults; a redline against an rdocx-edited copy shows only the edit |
+| content controls `w:sdt` with `w:tag goog_rdk_N` around runs or paragraphs | Google Docs | read, replaced and commented on like the text around them; a redline ignores a control that differs only by `w:id` or `w:tag` |
 | the table of contents in a `w:sdt` with `w:docPartObj` | Word, Google Docs | one body block: `find_content_indices(heading)` returns it too |
-| field instruction packed in one run (begin, instruction, separate), PAGE / NUMPAGES without a cached result | Google Docs | rdocx reads and refreshes them; a redline after refreshing them is refused (gap compare-packed-fields) |
+| field instruction packed in one run (begin, instruction, separate), PAGE / NUMPAGES without a cached result | Google Docs | rdocx reads and refreshes them, and a redline after refreshing them compares |
 | a default namespace on the root of each part | Google Docs | harmless for reading and most edits |
-| an empty `word/comments.xml` | Google Docs | re-serialised by any save (gap empty-comments-reserialised) |
+| an empty `word/comments.xml` | Google Docs | kept byte for byte by a save |
 | a `customXML` part with Google's round-trip data | Google Docs | keep it; rdocx does |
 | style ids in the interface language (`Titre1`, `Policepardfaut`) | Word in another language | assign styles by the id the file uses (`doc.styles`), never by an English name |
 | `w:lineRule="auto"` spacing of 276 (Word) or 264 / 276 (Google) | both | layout differs from Word's (gaps line-gap, picture-line-spacing): check page breaks in the target application when they matter |
@@ -21,8 +21,8 @@ the next one must still open what you save. What matters when you edit with rdoc
 ## Rules
 
 - **Edit in place, never rebuild.** Opening, editing and saving with rdocx keeps every part you did not touch
-  byte for byte, and everything it does not model inside the parts it rewrites, except the root's
-  `mc:Ignorable` of a rewritten document, header or footer part (gap ignorable-dropped). Rebuilding a
+  byte for byte, and everything it does not model inside the parts it rewrites, the root's `mc:Ignorable`
+  included. Rebuilding a
   document from its text loses styles, numbering, fields, comments, bookmarks and producer data.
 - **Do not round-trip through python-docx or LibreOffice** to finish an rdocx edit: each rewrites the whole
   package its own way. When a gap forces python-docx for one step, do that step on the file rdocx saved,

@@ -9,8 +9,7 @@ numbers on the command line are one-based.
 | Commands | An existing output |
 |---|---|
 | `replace`, `comment add/reply/resolve/remove` (`-o` required) | refused, exit 1, "output already exists", the input included |
-| `render` (into `-o DIR`), `convert --to png/jpeg/tiff` | refused the same way: render into a new, empty folder each time |
-| `convert --to pdf`, `thumbnail` | **overwritten without a word, the input included** (gap cli-convert-overwrites): always give a new path |
+| `render` (into `-o DIR`), `convert`, `thumbnail` | refused the same way; `--force` replaces an existing output, never the input. Render into a new, empty folder each time |
 
 ## Reading
 

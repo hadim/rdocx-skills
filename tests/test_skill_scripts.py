@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
 sys.path.insert(0, str(ROOT / "skills" / "pptx" / "scripts"))
 import docx_ops  # noqa: E402
 import pptx_ops  # noqa: E402
-from conftest import BIN, digest  # noqa: E402
+from conftest import BIN  # noqa: E402
 
 
 anchored = docx_ops.anchored_text
@@ -104,28 +104,18 @@ def test_comment_on_a_heading_skips_the_table_of_contents(report_docx, tmp_path)
 
 @pytest.mark.parametrize("wrapper", ["sdt", "ins"])
 @pytest.mark.parametrize("anchor", ["before", "TARGET", "after"])
-def test_comment_on_text_anchors_exactly_or_refuses(tmp_path, wrapper, anchor):
-    """The helper's contract: the comment lands on exactly the anchor, or EditError and doc unchanged (today the
-    runs after a content control or a tracked insertion are refused: gap comment-runposition-sdt)."""
+def test_comment_on_text_anchors_exactly_around_wrapped_runs(tmp_path, wrapper, anchor):
+    """The comment lands on exactly the anchor, before, inside and after a content control or a tracked
+    insertion."""
     doc = rdocx.Document.open(wrapped_run_docx(tmp_path / "w.docx", wrapper))
-    before = doc.to_bytes()
-    try:
-        cid = docx_ops.comment_on_text(doc, anchor, "x", "Reviewer")
-    except docx_ops.EditError as e:
-        assert "comment-runposition-sdt" in str(e) and digest(doc.to_bytes()) == digest(before)
-    else:
-        assert anchored(doc.to_bytes(), cid) == anchor
+    cid = docx_ops.comment_on_text(doc, anchor, "x", "Reviewer")
+    assert anchored(doc.to_bytes(), cid) == anchor
 
 
 def test_comment_on_text_in_the_report_content_control(report_docx):
     doc = rdocx.Document.open(report_docx)
-    before = doc.to_bytes()
-    try:
-        cid = docx_ops.comment_on_text(doc, "74 out of 100", "x", "Reviewer")
-    except docx_ops.EditError:
-        assert digest(doc.to_bytes()) == digest(before)
-    else:
-        assert anchored(doc.to_bytes(), cid) == "74 out of 100"
+    cid = docx_ops.comment_on_text(doc, "74 out of 100", "x", "Reviewer")
+    assert anchored(doc.to_bytes(), cid) == "74 out of 100"
 
 
 def test_command_line_entry_points(report_docx, tmp_path):

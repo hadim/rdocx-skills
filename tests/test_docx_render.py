@@ -84,7 +84,6 @@ def test_toc_rebuild_on_a_toc_without_identity_attributes(tmp_path):
     assert doc.rebuild_toc().entry_count == 3
 
 
-@pytest.mark.gap("toc-rsid-field-runs")
 def test_toc_rebuild_on_a_fresh_open_of_a_word_file(report_docx):
     assert rdocx.Document.open(report_docx).rebuild_toc().entry_count == 21
 
@@ -254,7 +253,6 @@ def test_pdf_text_layer_arial(tmp_path):
     assert "Line 0 lorem ipsum" in subprocess.run(["pdftotext", pdf, "-"], capture_output=True, text=True).stdout
 
 
-@pytest.mark.gap("pdf-text-ligatures")
 @pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
 def test_pdf_text_layer_calibri_ligatures(tmp_path):
     d = docx.Document()
@@ -279,7 +277,6 @@ def test_diff_cli(rdocx_cli, report_docx, tmp_path):
     assert "outlined" in out
 
 
-@pytest.mark.gap("cli-broken-pipe")
 def test_cli_survives_a_closed_pipe(rdocx_cli, report_docx):
     # `text --json` of the report is about 390 kB, far above a pipe buffer, so the write always meets the closed pipe
     p = subprocess.run(f'"{rdocx_cli}" text --json "{report_docx}" 2>/dev/null | head -c 1 > /dev/null; echo ${{PIPESTATUS[0]}}',
@@ -287,7 +284,6 @@ def test_cli_survives_a_closed_pipe(rdocx_cli, report_docx):
     assert p.stdout.strip() in ("0", "141")
 
 
-@pytest.mark.gap("cli-convert-overwrites")
 @pytest.mark.parametrize("fmt", ["pdf", "md", "html"])
 def test_convert_refuses_to_overwrite_its_input(rdocx_cli, report_docx, copy_of, fmt):
     src = copy_of(report_docx)
@@ -296,7 +292,6 @@ def test_convert_refuses_to_overwrite_its_input(rdocx_cli, report_docx, copy_of,
     assert digest(src.read_bytes()) == digest(before)
 
 
-@pytest.mark.gap("cli-convert-overwrites")
 def test_convert_refuses_to_overwrite_the_default_output(rdocx_cli, report_docx, copy_of):
     src = copy_of(report_docx)
     existing = src.with_suffix(".pdf")

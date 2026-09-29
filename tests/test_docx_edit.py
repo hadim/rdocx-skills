@@ -52,7 +52,7 @@ def test_cli_replace_expect_refuses_and_writes_nothing(rdocx_cli, report_docx, t
     out = tmp_path / "out.docx"
     bad = run([rdocx_cli, "replace", report_docx, "-p", "footbridge", "-v", "X", "--expect", "1", "-o", out])
     assert bad.returncode != 0 and not out.exists()
-    good = run([rdocx_cli, "replace", report_docx, "-p", "harbour office", "-v", "port office", "--expect", "0", "-o", out])
+    good = run([rdocx_cli, "replace", report_docx, "-p", "harbour office", "-v", "port office", "--expect", "1", "-o", out])
     assert good.returncode == 0
     unchecked = run([rdocx_cli, "replace", report_docx, "-p", "footbridge", "-v", "X", "-o", tmp_path / "u.docx"])
     assert unchecked.returncode == 0  # without --expect, any count is written
@@ -70,14 +70,12 @@ def test_set_story_text_drops_the_paragraph_links(tmp_path):
     assert b"w:hyperlink" not in part(tmp_path / "b.docx", "word/document.xml")
 
 
-@pytest.mark.gap("sdt-replace")
 def test_replace_reaches_inline_and_block_content_controls(report_docx):
     doc = rdocx.Document.open(report_docx)
     assert doc.try_replace_text("74 out of 100", "75 out of 100") == 1
     assert doc.try_replace_text("harbour office", "port office") == 1
 
 
-@pytest.mark.gap("docx-replace-contract")
 def test_python_replace_with_expected_count_is_all_or_nothing(report_docx):
     doc = rdocx.Document.open(report_docx)
     with pytest.raises(rdocx.RdocxError):
@@ -122,7 +120,6 @@ def test_cli_replace_has_the_same_reach(rdocx_cli, tmp_path):
     assert run([rdocx_cli, "replace", path, "-p", "NEEDLE", "-v", "X", "--expect", n, "-o", tmp_path / "r.docx"]).returncode == 0
 
 
-@pytest.mark.gap("replace-header-footer-tables")
 def test_replace_reaches_tables_in_headers_and_footers(tmp_path):
     path, _ = every_story_docx(tmp_path / "s.docx")
     doc = rdocx.Document.open(path)
@@ -259,7 +256,6 @@ def test_split_run_then_format_a_word(tmp_path):
     assert doc.paragraphs[1].runs[0].font.bold is True
 
 
-@pytest.mark.gap("split-run-index")
 def test_split_run_body_index_after_a_table(tmp_path):
     doc = rdocx.Document.open(simple(tmp_path / "a.docx", "Alpha", "Beta paragraph after.", "Gamma.", table_after=0))
     bi = doc.find_content_index(doc.paragraphs[1])
@@ -286,7 +282,6 @@ def test_table_clone_rewrite_remove_row(report_docx):
     assert len(doc.tables[0].rows) == n
 
 
-@pytest.mark.gap("tr-identity-lost")
 def test_row_identity_attributes_survive_an_edit(report_docx, tmp_path):
     doc = rdocx.Document.open(report_docx)
     doc.try_replace_text("described", "outlined")
@@ -305,10 +300,25 @@ def test_cell_and_table_widths_are_settable(tmp_path):
     assert abs(t.cell(0, 0).width.inches - 4) < 0.01
 
 
-@pytest.mark.gap("docx-python-tables")
-def test_table_cell_merge_from_python(tmp_path):
+def test_table_merge_borders_shading_widths_and_row_height_from_python(tmp_path):
     doc = rdocx.Document.open(simple(tmp_path / "a.docx", "x", table_after=0))
-    doc.tables[0].cell(0, 0).merge(doc.tables[0].cell(0, 1))
+    doc.tables[0].cell(1, 1).text = "full"
+    with pytest.raises(rdocx.RdocxError):
+        doc.tables[0].set_cell_grid_span(1, 0, 2)  # a span consumes empty cells only
+    t = doc.tables[0]
+    t.set_cell_grid_span(0, 0, 2)  # consumes the empty cell to its right; a structural change
+    with pytest.raises(rdocx.StaleElementError):
+        t.cell(0, 0)
+    t = doc.tables[0]
+    t.cell(1, 1).shading = "FFEE00"
+    t.set_borders("single", size=4, color="000000")
+    t.set_column_width(0, rdocx.Inches(1))
+    t.rows[1].height = rdocx.Inches(0.5)
+    doc.save(tmp_path / "b.docx")
+    x = part(tmp_path / "b.docx", "word/document.xml").decode()
+    assert [len(r.cells) for r in docx.Document(tmp_path / "b.docx").tables[0].rows] == [2, 2]
+    assert '<w:gridSpan w:val="2"/>' in x and 'w:fill="FFEE00"' in x and "<w:tblBorders>" in x
+    assert '<w:gridCol w:w="1440"/>' in x and '<w:trHeight w:val="720"' in x
 
 
 # ---------------------------------------------------------------- pictures, hyperlinks, sections, styles
@@ -376,7 +386,6 @@ def test_add_picture_with_a_content_control(tmp_path):
     assert len(docx.Document(tmp_path / "b.docx").inline_shapes) == 1
 
 
-@pytest.mark.gap("add-picture-sdt-default-ns")
 def test_add_picture_with_a_content_control_and_a_default_namespace(tmp_path):
     doc = rdocx.Document.open(with_content_control(tmp_path / "a.docx", default_ns=True))
     doc.add_picture(png(), "x.png", width=rdocx.Inches(1), height=rdocx.Inches(1))
@@ -395,10 +404,10 @@ def test_retarget_hyperlink(report_docx):
     doc.set_hyperlink_url(doc.hyperlinks[0], "https://example.org/new")
 
 
-@pytest.mark.gap("docx-python-sections")
 def test_section_margins_are_writable(report_docx):
     doc = rdocx.Document.open(report_docx)
-    doc.sections[0].margin_top = rdocx.Inches(0.5)
+    doc.update_section(0, margin_top=rdocx.Inches(0.5))  # Section itself is a read-only snapshot
+    assert rdocx.Document.from_bytes(doc.to_bytes()).sections[0].margin_top == rdocx.Inches(0.5)
 
 
 @pytest.mark.gap("docx-python-styles")
@@ -407,7 +416,6 @@ def test_create_paragraph_style(report_docx):
     doc.add_style("Note", style_type="paragraph", based_on="Normal")
 
 
-@pytest.mark.gap("docx-python-bookmarks")
 def test_bookmarks_from_python(report_docx):
     assert rdocx.Document.open(report_docx).bookmarks is not None
 
@@ -458,22 +466,12 @@ def test_template_saved_as_document_gets_the_document_content_type(tmp_path):
     assert b"wordprocessingml.document.main+xml" in part(tmp_path / "b.docx", "[Content_Types].xml")
 
 
-def test_noop_save_keeps_every_part_but_comments(report_docx, tmp_path):
-    rdocx.Document.open(report_docx).save(tmp_path / "n.docx")
-    a, b = parts(report_docx), parts(tmp_path / "n.docx")
-    changed = sorted(n for n in a if n in b and a[n] != b[n])
-    assert set(a) == set(b)
-    assert changed in ([], ["word/comments.xml"])
-
-
-@pytest.mark.gap("empty-comments-reserialised")
 def test_noop_save_is_byte_identical(report_docx, tmp_path):
     rdocx.Document.open(report_docx).save(tmp_path / "n.docx")
     a, b = parts(report_docx), parts(tmp_path / "n.docx")
     assert [n for n in a if a[n] != b.get(n)] == []
 
 
-@pytest.mark.gap("ignorable-undeclared")
 def test_save_keeps_ignorable_prefixes_declared(report_docx, tmp_path):
     rdocx.Document.open(report_docx).save(tmp_path / "n.docx")
     root = part(tmp_path / "n.docx", "word/comments.xml").decode().split(">", 2)[1]
@@ -481,11 +479,10 @@ def test_save_keeps_ignorable_prefixes_declared(report_docx, tmp_path):
     assert all(f"xmlns:{p}=" in root for p in ignorable)
 
 
-@pytest.mark.gap("ignorable-dropped")
 @pytest.mark.parametrize("story", ["body", "footer"])
 def test_edit_keeps_the_root_ignorable(tmp_path, story):
     """python-docx's document and footer roots declare w14 and wp14 and list them in mc:Ignorable. An edit that
-    rewrites the part drops the attribute and keeps the declarations (and any w14:paraId in the part)."""
+    rewrites the part keeps the attribute, the declarations and any w14:paraId in the part."""
     d = docx.Document()
     d.add_paragraph("Body alpha.")
     d.sections[0].footer.paragraphs[0].text = "Footer beta."
@@ -499,7 +496,6 @@ def test_edit_keeps_the_root_ignorable(tmp_path, story):
     assert "xmlns:w14=" in root and 'mc:Ignorable="w14 wp14"' in root
 
 
-@pytest.mark.gap("save-not-atomic")
 def test_save_replaces_the_file_atomically(tmp_path):
     path = simple(tmp_path / "a.docx", "Alpha")
     before = os.stat(path).st_ino

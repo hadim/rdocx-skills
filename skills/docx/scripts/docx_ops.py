@@ -9,8 +9,7 @@
   python docx_ops.py pages IN.docx                                               page count from rdocx's layout
 
 Every function that writes takes an output path, writes a temporary file next to it, flushes it to disk and
-renames it into place (rdocx's own `save()` writes in place, gap save-not-atomic), keeps the input's file
-mode, and refuses to write over its input. Exit codes: 0 done, 1 refused (nothing written), 2 usage.
+renames it into place, keeps the input's file mode, and refuses to write over its input. Exit codes: 0 done, 1 refused (nothing written), 2 usage.
 """
 import argparse
 import collections
@@ -171,9 +170,8 @@ def count(source, text):
 def replace_batch(src, out, edits, allow_unreached=False):
     """Apply [(old, new, expected_count), ...] in order, all or nothing. A dry run on an in-memory copy comes
     first; nothing is written, and EditError names every problem, when a replacement count differs from its
-    expected count, or when `old` is still in the document after its replacement (text in content controls,
-    tracked insertions, footnotes, endnotes, tables of headers and footers: gaps sdt-replace,
-    replace-tracked-insertions, replace-footnotes, replace-header-footer-tables), unless allow_unreached=True.
+    expected count, or when `old` is still in the document after its replacement (text in tracked insertions,
+    footnotes and endnotes: gaps replace-tracked-insertions, replace-footnotes), unless allow_unreached=True.
     Counts are rdocx's: headers and footers once per variant part, a Word text box twice (gap
     textbox-alternate-content)."""
     doc = rdocx.Document.open(src)
@@ -229,9 +227,10 @@ def locate(doc, anchor, occurrence=1):
 
 def isolate(doc, flow_index, start, end):
     """Split runs so that characters [start, end) of paragraph `flow_index` form whole runs. Returns the
-    (first, last_exclusive) run indices covering them. Workaround for gap split-run-index: split_run takes
-    the flow index, while RunPosition and find_content_index use the body index."""
+    (first, last_exclusive) run indices covering them. The paragraph must be a direct child of the body:
+    split_run takes its body index, as RunPosition and find_content_index do."""
     before = doc.paragraphs[flow_index].text
+    body_index = doc.find_content_index(doc.paragraphs[flow_index])
 
     def split_at(offset):
         pos = 0
@@ -240,7 +239,7 @@ def isolate(doc, flow_index, start, end):
             if offset == pos:
                 return k
             if pos < offset < pos + n:
-                doc.split_run(flow_index, k, offset - pos)
+                doc.split_run(body_index, k, offset - pos)
                 return k + 1
             pos += n
         return len(doc.paragraphs[flow_index].runs)
@@ -275,11 +274,11 @@ def _comment(doc, anchor, text, author, initials, occurrence, date):
 def comment_on_text(doc, anchor, text, author, initials=None, occurrence=1, date=None):
     """Anchor a comment on exactly `anchor` (the n-th occurrence in the body's own paragraphs), dated `date`
     (RFC 3339; default: now, UTC). The whole operation is first run on a copy and the anchored text read
-    back: if it differs (a paragraph with runs inside a content control or a tracked insertion, gap
-    comment-runposition-sdt), EditError is raised and `doc` is left unchanged. Returns the comment id."""
+    back: if rdocx refuses the range or anchors it elsewhere, EditError is raised and `doc` is left unchanged.
+    Returns the comment id."""
     date = date or now()
     probe = rdocx.Document.from_bytes(doc.to_bytes())
-    why = "the paragraph holds runs inside a content control or a tracked insertion (gap comment-runposition-sdt)"
+    why = "nothing was written; report it as a new gap"
     try:
         cid = _comment(probe, anchor, text, author, initials, occurrence, date)
     except rdocx.RdocxError as e:
@@ -291,21 +290,9 @@ def comment_on_text(doc, anchor, text, author, initials=None, occurrence=1, date
 
 
 def rebuild_toc(doc):
-    """doc.rebuild_toc(), with the workaround for gap toc-rsid-field-runs: on a fresh open of a file whose TOC
-    field runs carry w:rsid* (Word writes them) the rebuild fails; any modelled edit first makes it work, so
-    the text of one run that occurs exactly once in the document is replaced by itself (no visible change),
-    then the rebuild runs."""
-    try:
-        return doc.rebuild_toc()
-    except rdocx.XmlError:
-        pass
-    for p in doc.paragraphs:
-        for r in p.runs:
-            t = r.text
-            if len(t) >= 4 and rdocx.Document.from_bytes(doc.to_bytes()).try_replace_text(t, t) == 1:
-                doc.try_replace_text(t, t)
-                return doc.rebuild_toc()
-    raise EditError("no run text occurs exactly once: cannot apply the TOC workaround")
+    """doc.rebuild_toc(). Kept for the scripts that call it: a fresh open of a Word file now rebuilds
+    directly."""
+    return doc.rebuild_toc()
 
 
 def fix_template_content_type(path):

@@ -29,7 +29,6 @@ def test_cli_text_json_schema(rdocx_cli, report_docx):
     assert headings[:2] == ["Summary", "Scope and method"]
 
 
-@pytest.mark.gap("sdt-text-cli")
 def test_cli_text_includes_block_content_control(rdocx_cli, report_docx):
     out = run([rdocx_cli, "text", report_docx], check=True).stdout
     assert "Access to the river was agreed with the harbour office" in out

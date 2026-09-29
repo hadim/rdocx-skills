@@ -56,6 +56,8 @@ def test_recipe_outputs(workdirs):
     first = next(c for c in doc.comments if c.parent_id is None)
     assert docx_ops.anchored_text(d / "commented.docx", first.id) == "about 12 mm" and first.resolved and first.date
     assert any(c.text == "Rename this column?" and c.date for c in doc.comments)
+    red = rdocx.Document.open(d / "redline.docx")
+    assert [(r.kind, r.story.kind) for r in red.revisions] == [("deletion", "body"), ("insertion", "body")]
     bold = rdocx.Document.open(d / "bold.docx")
     assert any(r.text == "safety of path users" and r.font.bold for p in bold.paragraphs for r in p.runs)
     assert not any(t.startswith("Access equipment, traffic management")

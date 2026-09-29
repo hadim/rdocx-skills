@@ -144,9 +144,6 @@ note.add_picture(new, "a1.png", width=rdocx.Inches(3), height=rdocx.Inches(3 * h
 docx_ops.save_atomic(note, "picture-added.docx")
 ```
 
-`add_picture` fails on a file that has a content control and a default namespace on its root, as Google Docs
-exports do (gap add-picture-sdt-default-ns): for those, fall back to python-docx for that step.
-
 ## Comments: on exact text, on a table cell, reply, resolve
 
 ```python
@@ -162,9 +159,9 @@ doc.add_comment(rdocx.StoryRunRange(start=rdocx.StoryRunPosition(item=cell, run_
 docx_ops.save_atomic(doc, "commented.docx", "report.docx")
 ```
 
-`comment_on_text` splits runs so that the comment covers exactly the anchor, dates it, and refuses (nothing
-changed) when the paragraph holds a content control or a tracked insertion before the anchor (gap
-comment-runposition-sdt). `add_comment` without `date=` writes an undated comment.
+`comment_on_text` splits runs so that the comment covers exactly the anchor, also inside or after a content
+control or a tracked insertion, dates it, and refuses (nothing changed) if rdocx would anchor it anywhere
+else. `add_comment` without `date=` writes an undated comment.
 
 ```bash
 $R/rdocx comment list --json commented.docx
@@ -174,19 +171,17 @@ $R/python "$SKILL/scripts/docx_ops.py" comment report.docx commented-cli.docx --
 ## Redline two versions, then accept or reject
 
 ```bash
-$R/python -c 'import rdocx; rdocx.Document.open("report.docx").save("v1.docx")'
+cp report.docx v1.docx
 $R/rdocx replace v1.docx -p "three points lower" -v "two points lower" --expect 1 -o v2.docx
 $R/rdocx compare v1.docx v2.docx --author "Reviewer" --timestamp 2026-09-27T12:00:00Z -o redline.docx --json
 $R/rdocx revision list --json redline.docx
 $R/rdocx revision accept redline.docx --author "Reviewer" -o accepted.docx --json
 ```
 
-The first line passes the original through rdocx: a file with an empty comments part (every Google Docs
-export) is otherwise refused against its rdocx-edited version (gap empty-comments-reserialised). Compare
-first, then rebuild the TOC or refresh fields: the other order is refused. A one-word change shows as its
-whole run deleted and re-inserted, and the redline may carry a section property change with no visible
-difference (gap compare-own-save-noise). `revision list` shows the main story only; the `resolved` count of
-`revision accept --json` covers headers, footers and notes too.
+The redline holds only the edit, in every story (`revision list` shows each revision's story). Compare
+first, then rebuild the TOC: the other order is refused (gap compare-rebuilt-toc). The CLI shows a one-word
+change as its whole run deleted and re-inserted (gap compare-granularity); in Python,
+`v1.compare(v2, "Reviewer", timestamp, granularity="word")` marks only the changed word.
 
 ## Table of contents and page fields
 
@@ -197,7 +192,7 @@ $R/python "$SKILL/scripts/docx_ops.py" toc report.docx toc.docx
 ```python
 import docx_ops, rdocx
 doc = rdocx.Document.open("report.docx")
-rep = docx_ops.rebuild_toc(doc)
+rep = doc.rebuild_toc()
 fields = doc.update_layout_backed_fields()
 docx_ops.save_atomic(doc, "fields.docx", "report.docx")
 print(rep.entry_count, fields.updated_count)

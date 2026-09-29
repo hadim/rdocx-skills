@@ -141,7 +141,6 @@ def test_handles_after_add_and_text_setters():
             sh.left
 
 
-@pytest.mark.gap("pptx-run-text-stale")
 def test_run_text_keeps_other_handles_valid(deck_pptx):
     prs = rpptx.Presentation(deck_pptx)
     shape = prs.slides[1].shapes[1]
@@ -205,22 +204,29 @@ def test_cli_replace_reaches_tables_nested_groups_and_notes(rpptx_cli, deck_pptx
         assert text not in run([rpptx_cli, "text", "--notes", out], check=True).stdout
 
 
-@pytest.mark.gap("pptx-duplicate-slide")
 def test_duplicate_slide(deck_pptx):
     prs = rpptx.Presentation(deck_pptx)
+    n = len(prs.slides)
     prs.slides.duplicate(prs.slides[1])
+    copy = pptx.Presentation(io.BytesIO(prs.to_bytes()))
+    assert len(copy.slides) == n + 1
+    texts = [[sh.text_frame.text for sh in s.shapes if sh.has_text_frame] for s in copy.slides]
+    assert texts.count(texts[1]) == 2
 
 
-@pytest.mark.gap("pptx-replace-python")
 def test_replace_text_python(deck_pptx):
     prs = rpptx.Presentation(deck_pptx)
-    assert prs.replace_text("Riverton Footbridge", "Kestrel Footbridge") == 1
+    assert prs.try_replace_text("Riverton Footbridge", "Kestrel Footbridge") == 1
+    with pytest.raises(rpptx.ReplacementCountError):
+        prs.try_replace_text("Kestrel Footbridge", "X", expect=2)
 
 
-@pytest.mark.gap("pptx-inherited-geometry")
 def test_inherited_placeholder_geometry(deck_pptx):
     title = rpptx.Presentation(deck_pptx).slides[1].shapes[0]
-    assert (title.left, title.top, title.width, title.height) == (457200, 274638, 8229600, 1143000)
+    assert title.left is None  # python-pptx reads the inherited value here; rpptx names it effective_geometry
+    assert title.effective_geometry() == (457200, 274638, 8229600, 1143000)
+    title.left = 914400  # a setter copies the inherited geometry first
+    assert (title.left, title.top, title.width, title.height) == (914400, 274638, 8229600, 1143000)
 
 
 @pytest.mark.gap("pptx-group-population")
@@ -231,10 +237,23 @@ def test_populate_a_new_group():
     g.shapes.add_textbox(EMU, EMU, EMU, EMU)
 
 
-@pytest.mark.gap("pptx-zorder")
 def test_zorder(deck_pptx):
     prs = rpptx.Presentation(deck_pptx)
-    prs.slides[1].shapes.move_to_back(prs.slides[1].shapes[3])
+    names = [s.name for s in prs.slides[1].shapes]
+    prs.slides[1].shapes.move(3, 0)  # to the back; the last index is the front
+    assert [s.name for s in rpptx.Presentation.from_bytes(prs.to_bytes()).slides[1].shapes] == [names[3], *names[:3], *names[4:]]
+
+
+def test_table_cell_merge_row_height_and_cell_fill(deck_pptx):
+    prs = rpptx.Presentation(deck_pptx)
+    table = prs.slides[3].shapes[1].table
+    table.cell(0, 0).merge(table.cell(1, 1))
+    table.rows[1].height = 600000
+    table.cell(2, 0).fill.solid()
+    table.cell(2, 0).fill.fore_color.rgb = rpptx.dml.color.RGBColor(0x7B, 0x1E, 0x3A)
+    t = pptx.Presentation(io.BytesIO(prs.to_bytes())).slides[3].shapes[1].table
+    assert t.cell(0, 0).is_merge_origin and (t.cell(0, 0).span_height, t.cell(0, 0).span_width) == (2, 2)
+    assert t.rows[1].height == 600000 and str(t.cell(2, 0).fill.fore_color.rgb) == "7B1E3A"
 
 
 @pytest.mark.gap("pptx-table-rows")
@@ -270,7 +289,6 @@ def test_comments_python_add_and_reply(deck_pptx):
     assert c.text == "Source?" and c.replies[0].text == "Report."
 
 
-@pytest.mark.gap("pptx-comment-resolve-python")
 def test_comment_resolve_python(deck_pptx):
     prs = rpptx.Presentation(deck_pptx)
     prs.add_comment_author(id="{11111111-2222-3333-4444-555555555555}", name="Reviewer", user_id="reviewer",
@@ -375,7 +393,6 @@ def test_render_png_and_pdf(deck_pptx, rpptx_cli, tmp_path):
     assert (tmp_path / "d.pdf").stat().st_size > 10_000
 
 
-@pytest.mark.gap("pptx-pdf-background")
 def test_pdf_keeps_the_title_slide_background(deck_pptx, tmp_path):
     import shutil
     import subprocess
@@ -387,7 +404,6 @@ def test_pdf_keeps_the_title_slide_background(deck_pptx, tmp_path):
     assert Image.open(io.BytesIO(png)).convert("RGB").getpixel((2, 2)) == (123, 30, 58)
 
 
-@pytest.mark.gap("pptx-gradient-optional-attrs")
 def test_open_a_python_pptx_gradient(tmp_path):
     p = pptx.Presentation()
     s = p.slides.add_slide(p.slide_layouts[6])
@@ -424,7 +440,6 @@ def test_open_a_paragraph_with_two_ppr(tmp_path):
     assert rpptx.Presentation(tmp_path / "b.pptx").slides[0].shapes[0].text == "One. Two."
 
 
-@pytest.mark.gap("cli-convert-overwrites")
 def test_convert_refuses_to_overwrite_its_input(rpptx_cli, deck_pptx, copy_of):
     src = copy_of(deck_pptx)
     before = src.read_bytes()
@@ -432,7 +447,6 @@ def test_convert_refuses_to_overwrite_its_input(rpptx_cli, deck_pptx, copy_of):
     assert digest(src.read_bytes()) == digest(before)
 
 
-@pytest.mark.gap("cli-convert-overwrites")
 def test_thumbnail_refuses_to_overwrite_its_input(rpptx_cli, deck_pptx, copy_of):
     src = copy_of(deck_pptx)
     before = src.read_bytes()
@@ -451,13 +465,14 @@ def test_image_convert_and_render_refuse_an_existing_output(rpptx_cli, deck_pptx
     assert res.returncode == 1 and "already exists" in res.stderr
 
 
-@pytest.mark.gap("pptx-hyperlinks")
 def test_hyperlink_on_a_run():
     prs = rpptx.Presentation()
     prs.slides.add_slide(prs.slide_layouts[6])
     prs.slides[0].shapes.add_textbox(EMU, EMU, EMU, EMU)
     prs.slides[0].shapes[0].text_frame.text = "link"
     prs.slides[0].shapes[0].text_frame.paragraphs[0].runs[0].hyperlink.address = "https://example.org/"
+    run_ = pptx.Presentation(io.BytesIO(prs.to_bytes())).slides[0].shapes[0].text_frame.paragraphs[0].runs[0]
+    assert run_.hyperlink.address == "https://example.org/"
 
 
 @pytest.mark.gap("template-save-as-document")

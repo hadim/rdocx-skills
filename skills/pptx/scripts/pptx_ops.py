@@ -5,8 +5,8 @@
   python pptx_ops.py overflow IN.pptx                                            text frames that overflow
   python pptx_ops.py shapes IN.pptx [--slide N]                                  shape tree with geometry
 
-Python has no replacement API yet (gap pptx-replace-python), so `replace` chains `rpptx replace --expect`
-through temporary files and publishes the result only when every count matched. Counts include speaker notes.
+`replace` chains `rpptx replace --expect` through temporary files and publishes the result only when every
+count matched (in Python, `prs.try_replace_text(old, new, expect=n)` does one replacement in memory). Counts include speaker notes.
 Outputs are written to a temporary file next to the target, flushed to disk and renamed, with the input's
 file mode. Exit codes: 0 done, 1 refused (nothing written), 2 usage.
 """
