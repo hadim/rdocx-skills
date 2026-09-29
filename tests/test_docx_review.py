@@ -38,10 +38,10 @@ def noop_saved(src, dst):
     return dst
 
 
-def compare(cli, a, b, out):
+def compare(cli, a, b, out, *options):
     if os.path.exists(out):
         os.remove(out)
-    return run([cli, "compare", a, b, "--author", "Reviewer", "--timestamp", STAMP, "-o", out])
+    return run([cli, "compare", a, b, "--author", "Reviewer", "--timestamp", STAMP, *options, "-o", out])
 
 
 # ---------------------------------------------------------------- comments
@@ -91,7 +91,6 @@ def test_comment_date_is_written_only_when_given(tmp_path):
     assert [(c.text, c.date) for c in rdocx.Document.open(tmp_path / "d.docx").comments] == [("undated", None), ("dated", STAMP)]
 
 
-@pytest.mark.gap("comment-date-cli")
 def test_cli_comment_add_takes_a_date(rdocx_cli, tmp_path):
     src = two_paragraphs(tmp_path / "c.docx")
     res = run([rdocx_cli, "comment", "add", src, "--start-paragraph", "0", "--start-run", "0", "--end-paragraph", "0",
@@ -182,12 +181,11 @@ def test_python_compare_method(tmp_path):
     assert len(a.revisions) >= 2
 
 
-@pytest.mark.gap("compare-granularity")
 def test_compare_marks_only_the_changed_word(rdocx_cli, tmp_path):
     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor."
     a = two_paragraphs(tmp_path / "a.docx", first=text)
     b = two_paragraphs(tmp_path / "b.docx", first=text.replace("dolor", "DOLOR"))
-    compare(rdocx_cli, a, b, tmp_path / "red.docx")
+    compare(rdocx_cli, a, b, tmp_path / "red.docx", "--granularity", "word")
     deleted = "".join(re.findall(r"<w:delText[^>]*>([^<]*)</w:delText>", part(tmp_path / "red.docx", "word/document.xml").decode()))
     assert deleted.strip() == "dolor"
 
@@ -211,13 +209,14 @@ def test_python_compare_ignores_comments_on_request(tmp_path):
     assert doc.comments == () and [r.kind for r in doc.revisions] == ["deletion", "insertion"]
 
 
-@pytest.mark.gap("compare-comments")
 def test_compare_accepts_a_pair_whose_comments_differ(rdocx_cli, tmp_path):
     a = two_paragraphs(tmp_path / "a.docx")
     b = tmp_path / "b.docx"
     run([rdocx_cli, "comment", "add", a, "--start-paragraph", "1", "--start-run", "0", "--end-paragraph", "1",
          "--end-run", "1", "--author", "R", "--text", "New comment", "-o", b], check=True)
-    assert compare(rdocx_cli, a, b, tmp_path / "red.docx").returncode == 0
+    assert compare(rdocx_cli, a, b, tmp_path / "red.docx").returncode != 0
+    assert compare(rdocx_cli, a, b, tmp_path / "red.docx", "--ignore-comments").returncode == 0
+    assert rdocx.Document.open(tmp_path / "red.docx").comments == ()
 
 
 def test_compare_ignores_a_content_control_id(rdocx_cli, report_docx, tmp_path):

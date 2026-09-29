@@ -229,12 +229,15 @@ def test_inherited_placeholder_geometry(deck_pptx):
     assert (title.left, title.top, title.width, title.height) == (914400, 274638, 8229600, 1143000)
 
 
-@pytest.mark.gap("pptx-group-population")
 def test_populate_a_new_group():
     prs = rpptx.Presentation()
     prs.slides.add_slide(prs.slide_layouts[6])
     g = prs.slides[0].shapes.add_group_shape()
     g.shapes.add_textbox(EMU, EMU, EMU, EMU)
+    prs.slides[0].shapes[0].shapes.add_shape(MSO_SHAPE.RECTANGLE, 2 * EMU, 2 * EMU, EMU, EMU)
+    group = pptx.Presentation(io.BytesIO(prs.to_bytes())).slides[0].shapes[0]
+    assert group.shape_type == 6 and len(group.shapes) == 2
+    assert (group.left, group.top, group.width, group.height) == (EMU, EMU, 2 * EMU, 2 * EMU)
 
 
 def test_zorder(deck_pptx):
@@ -256,10 +259,14 @@ def test_table_cell_merge_row_height_and_cell_fill(deck_pptx):
     assert t.rows[1].height == 600000 and str(t.cell(2, 0).fill.fore_color.rgb) == "7B1E3A"
 
 
-@pytest.mark.gap("pptx-table-rows")
 def test_table_add_row(deck_pptx):
     prs = rpptx.Presentation(deck_pptx)
+    rows, cols = len(prs.slides[3].shapes[1].table.rows), len(prs.slides[3].shapes[1].table.columns)
     prs.slides[3].shapes[1].table.rows.add_row()
+    prs.slides[3].shapes[1].table.columns.add_column(0)
+    prs.slides[3].shapes[1].table.rows.remove(prs.slides[3].shapes[1].table.rows[0])
+    t = pptx.Presentation(io.BytesIO(prs.to_bytes())).slides[3].shapes[1].table
+    assert (len(t.rows), len(t.columns)) == (rows, cols + 1)
 
 
 # ---------------------------------------------------------------- comments
@@ -421,7 +428,6 @@ def test_noop_save_round_trip(deck_pptx, tmp_path, rpptx_cli):
     assert len(pptx.Presentation(tmp_path / "n.pptx").slides) == 7
 
 
-@pytest.mark.gap("pptx-duplicate-ppr")
 def test_open_a_paragraph_with_two_ppr(tmp_path):
     """a:p children pPr, r, pPr, r: not schema-valid (one pPr, first), met in decks; python-pptx and LibreOffice
     read both runs. rpptx accepts a pPr after a run but refuses the whole file on a second one."""
@@ -475,7 +481,6 @@ def test_hyperlink_on_a_run():
     assert run_.hyperlink.address == "https://example.org/"
 
 
-@pytest.mark.gap("template-save-as-document")
 def test_template_saved_as_presentation_gets_the_presentation_content_type(tmp_path):
     p = pptx.Presentation()
     p.slides.add_slide(p.slide_layouts[6])

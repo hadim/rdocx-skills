@@ -23,7 +23,10 @@ Lengths are EMU integers; build them with `rdocx.Pt(12)`, `rdocx.Inches(1)`, `rd
   included for any heading (never delete by it); it does not search tables. `find_content_index(text)`
   returns the first, or raises `ValueError`.
 - Run indices of `RunPosition` and `split_run` count the runs `Paragraph.runs` lists, those inside an inline
-  content control or a tracked insertion included. `docx_ops.comment_on_text` finds a text and anchors on it.
+  content control or a tracked insertion included. `Paragraph.runs` does not hold the text of a simple
+  field, a smart tag or a custom XML element, which `Paragraph.text` holds: a character offset in `p.text`
+  is not a run offset. `docx_ops.locate` returns run
+  offsets, and `docx_ops.comment_on_text` finds a text and anchors on it.
 
 ## Handles
 
@@ -31,26 +34,31 @@ Every handle is checked: `Paragraph`, `Run`, `Table`, `Row`, `Cell` and `StoryIt
 `StoryRunRange` built on one) raise `StaleElementError` once the document has changed structure. Only
 formatting setters (font, paragraph format, style, alignment, numbering, widths) and `Run.text` keep handles
 valid. Everything else invalidates every handle: insert, remove, clone, move, pop, split, `add_*`,
-`set_story_text`, `cell.text = ...`, `try_replace_text`, `replace_all_regex`, `clone_row`, `remove_row`,
-`add_comment`. Re-navigate from `doc` after each such call (`doc.paragraphs[i].runs[j]`,
+`set_story_text`, `paragraph.text = ...`, `cell.text = ...`, `try_replace_text`, `replace_all_regex`,
+`clone_row`, `remove_row`, `add_comment`. Re-navigate from `doc` after each such call (`doc.paragraphs[i].runs[j]`,
 `doc.story_items`); never keep `p = doc.paragraphs[i]` across edits.
 
 ## Document
 
 | Member | Notes |
 |---|---|
-| `Document()`, `Document.open(path)`, `Document.from_bytes(b)`, `doc.to_bytes()`, `doc.save(path)` | new documents have the Normal and Heading1 styles only (gap new-document-styles); `save` writes a temporary file and renames it (`docx_ops.save_atomic` also refuses the input); a .dotx saved as .docx keeps the template content type (gap template-save-as-document): start from a copy of a .docx |
+| `Document()`, `Document.open(path)`, `Document.from_bytes(b)`, `doc.to_bytes()`, `doc.save(path)` | a new document has Word's usual styles (Normal, Title, Subtitle, Heading 1 to 9, No Spacing, Quote, List Paragraph, Caption, Table Grid). `save` writes a temporary file and renames it (`docx_ops.save_atomic` also refuses the input), and writes the package class its extension names: a .dotx saved as .docx becomes a document |
 | `paragraphs`, `tables`, `sections`, `styles`, `stories`, `story_items`, `header_footer_variants`, `hyperlinks`, `comments`, `revisions` | read-only collections (sections and styles are snapshots; `revisions` covers every story, `r.story.kind`) |
+| `core_properties` → `CoreProperties` | `title`, `author`, `subject`, `keywords`, `category`, `comments`, `last_modified_by`, `content_status`, `language`, `identifier`, `version` (strings), `created`, `modified`, `last_printed` (`datetime` or None), `revision` (int): read and set |
+| `add_style(name, style_type="paragraph", *, style_id=None, based_on=None, next_style=None, font_name=, font_size=, bold=, italic=, color=, space_before=, space_after=, left_indent=, right_indent=, first_line_indent=)` → `Style` | as python-docx's `styles.add_style`: unless given, the id keeps the letters, digits and hyphens of the name (`"Note box"` → `Notebox`). `based_on` and `next_style` take an id or a name. Lengths and `font_size` in EMU (`rdocx.Pt(11)`). `KeyError` for an unknown base, `ValueError` for a duplicate |
+| `remove_style(style)` → bool, `set_default_style(style)` | |
+| `add_numbering_definition([rdocx.ListLevel(format="decimal", text="%1.", start=1, left_indent=, hanging_indent=), ...])` → definition id, `add_numbering_instance(definition_id)` → `num_id`, `link_style_to_numbering(style, num_id, level)` | a list: define its levels once, make an instance, then `paragraph.numbering = (num_id, level)` or link a style to it |
 | `add_paragraph(text)`, `insert_paragraph(bi, text)`, `add_table(rows, cols)` | append / insert with Normal formatting |
 | `add_picture(data, filename, width=None, height=None, *, after=None)` | inline picture in a new paragraph; width and height together or neither; returns the `StoryItem` |
 | `clone_content(handle, bi)` | copies a block to body index `bi`, with its formatting, fields and bookmarks (a copied bookmark is renamed, `MailMerge1`...); comment anchors are not copied |
 | `move_content(handle, bi)`, `pop_content(bi)` → `ContentFragment`, `insert_content(bi, fragment)`, `remove_content(bi)` | `bi` of `move_content` is counted before the move (moving the 2nd of ABCDE to 3 gives ACBDE) |
-| `set_story_text(item, text)` | replaces a paragraph's text, keeping the first run's formatting |
+| `set_story_text(item, text)` | replaces a paragraph's text, keeping the first run's formatting (any story) |
 | `split_run(body_index, run_index, offset)` | splits one run in two at a character offset; body paragraphs only |
 | `update_section(i, *, margin_top=, orientation=, page_width=, ...)` → `Section` | writes a section's page setup; `doc.sections` stays a snapshot |
-| `try_replace_text(old, new, *, expect=None)` → int, `replace_all_regex([(pattern, repl), ...])` → int | literal and regex replacement across runs, in the body, its tables, content controls and text boxes (a Word text box counts twice), headers and footers with their tables (once per variant part); not inside tracked insertions, footnotes, endnotes, simple fields or smart tags (gaps). With `expect=N`, a different count raises and changes nothing; `docx_ops.replace_batch` also refuses text left out of reach |
+| `try_replace_text(old, new, *, expect=None)` → int, `replace_all_regex([(pattern, repl), ...])` → int | literal and regex replacement across runs, in the body, its tables, content controls, tracked insertions, simple fields, smart tags and text boxes (a Word text box once), headers and footers with their tables (once per variant part), footnotes and endnotes. A match across the edge of a content control, an insertion or a simple field is not replaced. With `expect=N`, a different count raises and changes nothing; `docx_ops.replace_batch` also refuses text left out of reach |
 | `set_header(text)`, `set_footer(text)`, `add_hyperlink_to_story(story, text, url)` | `set_header` / `set_footer` replace the default story's content (fields included) |
-| `image_data(rid)`, `replace_image(rid, bytes)`, `replace_image_for_story(story, rid, bytes)` | the relationship id is the `r:embed` of the picture (`StoryItem.xml` of a `drawing` item) |
+| `set_hyperlink_url(link, url)`, `remove_hyperlink(link)` | `link` from `doc.hyperlinks`. Removal keeps the text. Retargeting keeps the other entries of `doc.hyperlinks` valid. After a removal or an added link, the older entries of that story raise `RdocxError`: re-fetch `doc.hyperlinks` |
+| `image_data(rid)`, `replace_image(rid, bytes)`, `replace_image_for_story(story, rid, bytes)`, `set_picture_size(rid, width, height)` → count | the relationship id is the `r:embed` of the picture (`StoryItem.xml` of a `drawing` item). `replace_image` keeps the old extent, `set_picture_size` resizes every body picture of that relationship (EMU) |
 | `add_comment(RunRange or StoryRunRange, *, author, text, initials=None, date=None)` → id | `RunRange(start=RunPosition(body_index=, run_index=), end=...)`, end exclusive, body paragraphs; `StoryRunRange(start=StoryRunPosition(item=, run_index=), end=...)` for a table cell or another story's paragraph item. No `date`, no date in the file: pass an RFC 3339 string. Ids stay stable across saves |
 | `reply_to(parent_id, *, author, text, date=None)` → id, `resolve_comment(id, *, resolved=True)`, `remove_comment(id)` | |
 | `accept_all()`, `reject_all()`, `accept_revision_id(id)`, `reject_revision_id(id)`, `accept_revisions_by_author(a)`, `reject_revisions_by_author(a)`, `accept_revisions_in_date_range(*, start, end)`, `reject_revisions_in_date_range(*, start, end)` | every supported story; dates as RFC 3339 strings |
@@ -60,14 +68,14 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 | `layout()` → tuple of `LayoutFragment` (`body_index`, `physical_page`, `displayed_page`, `bounds.x/.y/.width/.height` in points), `layout_page(i)` → `LayoutPage` (`page_number`, `displayed_page_number`, `width`, `height`) | rdocx's pagination (gaps line-gap, picture-line-spacing) |
 | `to_pdf()` → bytes, `render_pages(*, dpi=150, format="png", quality=90, transparent=False, pages=None)` → list of bytes, `render_page_to_png(i, dpi)`, `render_all_pages(dpi)` | `pages` zero-based |
 
-No core properties (title, author, dates) in either direction (gap docx-core-properties).
-
 ## Paragraph, Run, Font, ParagraphFormat
 
-- `Paragraph`: `text` (read-only; the accepted view: tracked insertions in, deletions out), `runs`, `style`
-  (style **id**, settable; an unknown id or a style name is accepted silently, gap style-id-unchecked:
-  check it against `{s.style_id for s in doc.styles}`), `alignment` (`WD_ALIGN_PARAGRAPH`), `numbering`
-  (`(num_id, level)` or None, settable, unchecked too), `paragraph_format`, `add_run(text)`,
+- `Paragraph`: `text` (the accepted view: tracked insertions in, deletions out. Setting it leaves one run
+  without direct formatting, keeps the paragraph style, format and comment ranges, and refuses a
+  paragraph holding one end of a field that spans paragraphs, such as a TOC), `runs`, `style` (reads the
+  style id. Set an id or a name the document defines, as python-docx does: `KeyError` when no paragraph
+  style has it, `ValueError` for a character or table style), `alignment` (`WD_ALIGN_PARAGRAPH`),
+  `numbering` (`(num_id, level)` or None, settable, unchecked), `paragraph_format`, `add_run(text)`,
   `add_hyperlink(text, url)` (appends at the end).
 - `ParagraphFormat`: `space_before`, `space_after`, `line_spacing` (float for multiples, length for exact),
   `left_indent`, `right_indent`, `first_line_indent`, `keep_with_next`, `keep_together`,
@@ -94,10 +102,11 @@ size, color)`, `set_border(edge, ...)`, `set_cell_margins(...)`, `set_column_wid
 
 `doc.story_items` lists the paragraphs, tables, pictures, content controls and fields of every story, with
 `item.story.kind` in `body`, `table_cell`, `text_box`, `header`, `footer`, `footnote`, `endnote`, ... and
-`item.story.part_name`; a header or footer has one story per variant part. It misses text boxes as Word
-writes them (`mc:AlternateContent`, gap textbox-alternate-content), and the CLI views and `doc.paragraphs`
-leave out every story but the body. `docx_ops.story_paragraphs(doc)`, `all_text(doc)` and `count(doc, text)`
-read the package XML instead: every paragraph of every story, in the accepted view, a Word text box once.
+`item.story.part_name`. A header or footer has one story per variant part, and a text box as Word writes
+it (`mc:AlternateContent`, DrawingML with a VML copy) is listed once. `doc.paragraphs` holds the body only,
+and `rdocx text` and `text --json` (`stories`) print the others after it. `docx_ops.story_paragraphs(doc)`,
+`all_text(doc)` and `count(doc, text)` read the package XML: every paragraph of every story, in the accepted
+view, with its part and style id.
 
 ## Read-only records
 

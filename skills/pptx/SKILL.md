@@ -66,10 +66,10 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Edit a run, paragraph, text frame | | `run.text`, `run.font.*`, `paragraph.alignment/level/space_*/line_spacing`, `text_frame.margin_*/word_wrap/auto_size/vertical_anchor` | `shape.text = ...` drops run formatting, as in python-pptx |
 | Move, resize, rotate | | `shape.left/top/width/height/rotation` | a placeholder that inherits its geometry reads None: `shape.effective_geometry()` gives it, and a setter copies it first |
 | Fill, line | | `shape.fill.solid()`, `.fill.fore_color.rgb = RGBColor(...)`, `.line.width`, `.line.color.rgb` | |
-| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table` | new groups cannot be filled (gap) |
+| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each |
 | Z-order | | `shapes.move(from_, to)` | index 0 is the back |
 | Pictures | | `shape.replace_image(file)`, `shape.image.blob` | keeps position, size and crop |
-| Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height` | no row or column insertion or removal (gap) |
+| Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each |
 | Slides | | `slides.add_slide(layout)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden` | |
 | Speaker notes | `rpptx text --notes F` | `slide.notes_text` (get and set) | None when the slide has no notes |
 | Hyperlinks | | `run.hyperlink.address` (get and set) | runs only |
@@ -78,7 +78,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Text fit | | `prs.text_layout(width_factor=1.0)`, `pptx_ops.overflowing(F)` | heights short under percentage spacing, breaks before punctuation (gaps) |
 | PDF | `rpptx convert F --to pdf -o NEW.pdf` | `prs.to_pdf()`, `prs.to_notes_pdf()` | |
 | PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)` | CLI slides one-based, Python zero-based |
-| From a .potx template | | `rpptx.Presentation("t.potx")`, save, then `pptx_ops.fix_template_content_type(out)` | rpptx keeps the template content type (gap) |
+| From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
 | Validity | `rpptx validate F` | | |
 | What changed | `rpptx diff A B` | | slide text only |
 

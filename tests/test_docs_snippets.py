@@ -67,6 +67,15 @@ def test_recipe_outputs(workdirs):
     with zipfile.ZipFile(d / "from-template.docx") as z:
         assert b"wordprocessingml.document.main+xml" in z.read("[Content_Types].xml")
     assert [p.text for p in rdocx.Document.open(d / "note.docx").paragraphs] == ["Site visit note", "Visited on 27 September 2026."]
+    import docx
+    check = docx.Document(d / "checklist.docx")
+    assert check.core_properties.title == "Inspection checklist" and check.core_properties.author == "Claude"
+    assert [(p.style.name, p.text) for p in check.paragraphs] == [
+        ("Title", "Inspection checklist"), ("Note box", "Bring the 2019 survey marks and a tape."),
+        ("List Paragraph", "Check the bearings."), ("List Paragraph", "Photograph the deck joints.")]
+    assert check.styles["Note box"].font.italic and check.styles["Note box"].base_style.name == "Normal"
+    num = [p._p.pPr.numPr for p in check.paragraphs[2:]]
+    assert all(n is not None and n.numId.val == num[0].numId.val for n in num)
     p = {r.parent.parent.name: w for r, w in workdirs.items()}["pptx"]
     texts = "\n".join(sh.text_frame.text for s in pptx.Presentation(p / "edited.pptx").slides for sh in s.shapes if sh.has_text_frame)
     assert "EUR 236,000" in texts and "eight weeks" in texts
@@ -78,3 +87,10 @@ def test_recipe_outputs(workdirs):
     assert re_deck.slides[-1].shapes.title.text == "Questions"
     with zipfile.ZipFile(p / "from-template.pptx") as z:
         assert b"presentationml.presentation.main+xml" in z.read("[Content_Types].xml")
+    before, grown = pptx.Presentation(p / "deck.pptx").slides[3].shapes, pptx.Presentation(p / "grown.pptx").slides[3].shapes
+    table, old = next(sh.table for sh in grown if sh.has_table), next(sh.table for sh in before if sh.has_table)
+    assert len(table.rows) == len(old.rows) + 1 and table.cell(len(old.rows) - 1, 0).text == "Contingency"
+    assert table.cell(len(table.rows) - 1, 0).text == old.cell(len(old.rows) - 1, 0).text
+    assert table.rows[len(old.rows) - 1].height in (old.rows[len(old.rows) - 2].height, old.rows[len(old.rows) - 1].height)
+    group = grown[len(before)]
+    assert group.shape_type == 6 and [sh.has_text_frame and sh.text_frame.text for sh in group.shapes][1] == "Legend"

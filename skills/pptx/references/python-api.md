@@ -20,7 +20,7 @@ call, `remove`, `move` and `add_slide` invalidate the handles of every slide. Se
 
 | Member | Notes |
 |---|---|
-| `Presentation(path=None)`, `Presentation.from_bytes(b)`, `save(path)`, `to_bytes()` | `save` does not refuse the input (use `pptx_ops.save_atomic`); a new presentation is 16:9 with the eleven default layouts; a .potx saved as .pptx keeps the template content type (gap template-save-as-document: `pptx_ops.fix_template_content_type`) |
+| `Presentation(path=None)`, `Presentation.from_bytes(b)`, `save(path)`, `to_bytes()` | `save` does not refuse the input (use `pptx_ops.save_atomic`); a new presentation is 16:9 with the eleven default layouts, and `save` writes the package class its extension names: a .potx saved as .pptx becomes a presentation |
 | `slides`, `slide_layouts`, `slide_width`, `slide_height`, `comment_authors` | |
 | `slides.add_slide(layout)`, `slides.duplicate(slide)` → the copy, `slides.move(from_, to)`, `slides.remove(slide)`, `slide_layouts.index(layout)` | |
 | `try_replace_text(old, new, *, expect=None)` → int | slides and notes, across runs, keeping the first run's formatting; a count other than `expect` raises `ReplacementCountError` and changes nothing |
@@ -41,14 +41,15 @@ is RFC 3339 with its zone.
 - `ShapeCollection`: iteration, `title`, `placeholders`, `add_textbox(left, top, width, height)`,
   `add_shape(MSO_SHAPE.X, left, top, width, height)` (every preset of python-pptx's `MSO_SHAPE`),
   `add_connector(MSO_CONNECTOR.X, begin_x, begin_y, end_x, end_y)`, `add_picture(file, left, top,
-  width=None, height=None)`, `add_table(rows, cols, left, top, width, height)`, `add_group_shape()` (empty,
-  cannot be filled: gap), `remove(shape)`, `move(from_, to)` (z-order: index 0 is the back).
+  width=None, height=None)`, `add_table(rows, cols, left, top, width, height)`, `add_group_shape()`, `remove(shape)`, `move(from_, to)`
+  (z-order: index 0 is the back). A group's `shapes` take the same `add_*` calls, and the group grows to
+  hold its members.
 - `Shape`: `shape_id`, `name`, `shape_type` (`MSO_SHAPE_TYPE`), `left`, `top`, `width`, `height` (settable;
   None on a placeholder that inherits its geometry from the layout: `effective_geometry()` returns the
   inherited `(left, top, width, height)`, and a setter copies it before changing one value), `rotation`, `has_text_frame`, `text` (setting it drops run
   formatting), `text_frame`, `fill`, `line`, `adjustments`, `has_table`, `table`, `image` (`blob`,
   `content_type`, `ext`), `replace_image(file)` (keeps position, size and crop), `shapes` (a group's
-  children, read-only), `xml` (the shape element as bytes).
+  children), `xml` (the shape element as bytes).
 - `TextFrame`: `paragraphs`, `add_paragraph()`, `text`, `margin_left/right/top/bottom`, `word_wrap`,
   `auto_size` (`MSO_AUTO_SIZE`), `autofit`, `vertical_anchor` (`MSO_ANCHOR`).
 - `Paragraph`: `runs`, `add_run(text="")`, `text`, `alignment` (`PP_ALIGN`), `level`, `bullet`,
@@ -60,4 +61,6 @@ is RFC 3339 with its zone.
 - `FillFormat`: `solid()`, `background()` (no fill), `fore_color.rgb`, `type` (`MSO_FILL`). `LineFormat`:
   `width`, `color.rgb`, `fill`.
 - `Table`: `cell(r, c)` (`text`, `merge(other)`, `split()`, `is_merge_origin`, `span_height`, `span_width`,
-  `fill`), `columns[k].width`, `rows[k].height`. No row or column insertion or removal (gap pptx-table-rows).
+  `fill`), `columns[k].width`, `rows[k].height`, `rows.add_row(index=None)` → the new row,
+  `rows.remove(row)`, `columns.add_column(index=None)`, `columns.remove(column)`: a new row or column copies
+  a neighbour's size. Re-fetch the table after each edit.

@@ -9,7 +9,7 @@ import pytest
 import rdocx
 from PIL import Image
 
-from builders import every_story_docx, word_textbox_docx, wrapped_text_docx
+from builders import every_story_docx, word_textbox_docx, wrapped_run_docx, wrapped_text_docx
 from conftest import part, parts, run
 
 
@@ -95,7 +95,6 @@ def test_replacement_reach_by_story(tmp_path):
     assert b"Header X" in notes and b">Footer X" in notes and b"First footer X" in notes
 
 
-@pytest.mark.gap("replace-footnotes")
 def test_replace_reaches_footnotes(tmp_path):
     path, _ = every_story_docx(tmp_path / "s.docx")
     doc = rdocx.Document.open(path)
@@ -105,13 +104,15 @@ def test_replace_reaches_footnotes(tmp_path):
     assert b"NEEDLE" not in part(tmp_path / "r.docx", "word/endnotes.xml")
 
 
-@pytest.mark.gap("replace-tracked-insertions")
 def test_replace_reaches_tracked_insertions(tmp_path):
     path, _ = every_story_docx(tmp_path / "s.docx")
     doc = rdocx.Document.open(path)
     assert "Tracked: ins NEEDLE" in [p.text for p in doc.paragraphs]
     doc.try_replace_text("ins NEEDLE", "ins X")
     assert "Tracked: ins X" in [p.text for p in doc.paragraphs]
+    assert [r.kind for r in doc.revisions].count("insertion") == 1  # the new text stays a tracked insertion
+    doc.reject_all()
+    assert "Tracked: del NEEDLE" in [p.text for p in doc.paragraphs]  # the insertion goes, the deletion comes back
 
 
 def test_cli_replace_has_the_same_reach(rdocx_cli, tmp_path):
@@ -129,7 +130,6 @@ def test_replace_reaches_tables_in_headers_and_footers(tmp_path):
     assert b"Footer cell X" in footers
 
 
-@pytest.mark.gap("textbox-alternate-content")
 def test_word_text_box_is_read_and_counted_once(tmp_path):
     """Word writes a text box twice (DrawingML in mc:Choice, VML in mc:Fallback): one occurrence for a reader."""
     doc = rdocx.Document.open(word_textbox_docx(tmp_path / "w.docx", footnote=False))
@@ -137,11 +137,24 @@ def test_word_text_box_is_read_and_counted_once(tmp_path):
     assert doc.try_replace_text("NEEDLE", "X") == 1
 
 
-@pytest.mark.gap("text-wrapped-runs")
 @pytest.mark.parametrize("wrapper", ["fldSimple", "smartTag", "customXml"])
 def test_text_inside_simple_fields_smart_tags_and_custom_xml(rdocx_cli, tmp_path, wrapper):
     path = wrapped_text_docx(tmp_path / "w.docx", wrapper)
     assert rdocx.Document.open(path).paragraphs[0].text == "before MID after"
+
+
+@pytest.mark.parametrize("wrapper", ["sdt", "ins", "fldSimple", "smartTag"])
+def test_a_match_across_a_wrapper_edge_is_not_replaced(tmp_path, wrapper):
+    """A match inside a content control, an insertion, a simple field or a smart tag is replaced there; one
+    that crosses its edge is not (docx_ops.replace_batch then refuses: the text is still there)."""
+    if wrapper in ("sdt", "ins"):
+        path = wrapped_run_docx(tmp_path / "w.docx", wrapper, target="MID")
+    else:
+        path = wrapped_text_docx(tmp_path / "w.docx", wrapper)
+    doc = rdocx.Document.open(path)
+    assert doc.paragraphs[0].text == "before MID after"
+    assert doc.try_replace_text("before MID", "X") == 0
+    assert doc.try_replace_text("MID", "X") == 1 and doc.paragraphs[0].text == "before X after"
 
 
 # ---------------------------------------------------------------- structure
@@ -177,6 +190,7 @@ KEEP = {
 }
 INVALIDATE = {
     "cell_text": lambda d: setattr(d.tables[0].cell(1, 1), "text", "Y"),
+    "paragraph_text": lambda d: setattr(d.paragraphs[1], "text", "Z"),
     "try_replace_text": lambda d: d.try_replace_text("delta", "D"),
     "replace_all_regex": lambda d: d.replace_all_regex([("delta", "D")]),
     "add_run": lambda d: d.paragraphs[1].add_run("more"),
@@ -263,11 +277,36 @@ def test_split_run_body_index_after_a_table(tmp_path):
     assert [r.text for r in doc.paragraphs[1].runs] == ["Beta", " paragraph after."]
 
 
-@pytest.mark.gap("docx-paragraph-text-setter")
 def test_paragraph_text_setter(tmp_path):
     doc = rdocx.Document.open(simple(tmp_path / "a.docx", "Alpha"))
     doc.paragraphs[0].text = "Omega"
     assert doc.paragraphs[0].text == "Omega"
+
+
+def test_paragraph_text_setter_keeps_format_and_comments(tmp_path):
+    """One run without direct formatting; the paragraph style and format, and comment anchors, stay."""
+    d = docx.Document()
+    p = d.add_paragraph(style="Heading 1")
+    p.add_run("Bold").bold = True
+    p.add_run(" plain")
+    d.save(tmp_path / "a.docx")
+    doc = rdocx.Document.open(tmp_path / "a.docx")
+    doc.paragraphs[0].paragraph_format.keep_together = True
+    doc.add_comment(rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=0),
+                                   end=rdocx.RunPosition(body_index=0, run_index=2)), author="R", text="c")
+    doc.paragraphs[0].text = "New title"
+    doc.save(tmp_path / "b.docx")
+    p = docx.Document(tmp_path / "b.docx").paragraphs[0]
+    assert (p.text, p.style.name, p.paragraph_format.keep_together) == ("New title", "Heading 1", True)
+    assert (p.runs[0].text, p.runs[0].bold) == ("New title", None)
+    assert b"commentRangeStart" in part(tmp_path / "b.docx", "word/document.xml")
+
+
+def test_paragraph_text_setter_refuses_part_of_a_toc(report_docx):
+    doc = rdocx.Document.open(report_docx)
+    i = next(k for k, p in enumerate(doc.paragraphs) if p.style == "TOC1")  # holds the TOC field's begin
+    with pytest.raises((rdocx.RdocxError, ValueError)):
+        doc.paragraphs[i].text = "x"
 
 
 # ---------------------------------------------------------------- tables
@@ -392,16 +431,31 @@ def test_add_picture_with_a_content_control_and_a_default_namespace(tmp_path):
     doc.save(tmp_path / "b.docx")
 
 
-@pytest.mark.gap("docx-picture-resize")
-def test_resize_existing_picture(report_docx):
+def test_resize_existing_picture(report_docx, tmp_path):
     doc = rdocx.Document.open(report_docx)
-    doc.set_picture_size("rId1", width=rdocx.Inches(1), height=rdocx.Inches(1))
+    drawing = next(it for it in doc.story_items if it.kind == "drawing")
+    xml = drawing.xml.decode() if isinstance(drawing.xml, bytes) else drawing.xml
+    rid = re.search(r'r:embed="([^"]+)"', xml).group(1)
+    assert doc.set_picture_size(rid, width=rdocx.Inches(1), height=rdocx.Inches(2)) >= 1
+    doc.save(tmp_path / "b.docx")
+    sizes = [(s.width, s.height) for s in docx.Document(tmp_path / "b.docx").inline_shapes]
+    assert (rdocx.Inches(1), rdocx.Inches(2)) in sizes
 
 
-@pytest.mark.gap("docx-hyperlink-retarget")
-def test_retarget_hyperlink(report_docx):
+def test_retarget_and_remove_hyperlinks(report_docx):
+    """Retargeting keeps every Hyperlink snapshot valid; a removal makes the older ones of its story raise."""
     doc = rdocx.Document.open(report_docx)
-    doc.set_hyperlink_url(doc.hyperlinks[0], "https://example.org/new")
+    links = doc.hyperlinks
+    text = links[0].text
+    for k, link in enumerate(links):
+        doc.set_hyperlink_url(link, f"https://example.org/{k}")
+    assert [h.url for h in doc.hyperlinks] == [f"https://example.org/{k}" for k in range(len(links))]
+    stale = doc.hyperlinks
+    doc.remove_hyperlink(stale[0])
+    assert len(doc.hyperlinks) == len(stale) - 1 and any(text in p.text for p in doc.paragraphs)
+    same = next(h for h in stale[1:] if (h.story.kind, h.story.part_name) == (stale[0].story.kind, stale[0].story.part_name))
+    with pytest.raises(rdocx.RdocxError):
+        doc.set_hyperlink_url(same, "https://example.org/x")
 
 
 def test_section_margins_are_writable(report_docx):
@@ -410,24 +464,31 @@ def test_section_margins_are_writable(report_docx):
     assert rdocx.Document.from_bytes(doc.to_bytes()).sections[0].margin_top == rdocx.Inches(0.5)
 
 
-@pytest.mark.gap("docx-python-styles")
 def test_create_paragraph_style(report_docx):
     doc = rdocx.Document.open(report_docx)
     doc.add_style("Note", style_type="paragraph", based_on="Normal")
+    doc.paragraphs[0].style = "Note"
+    assert doc.paragraphs[0].style == "Note"
 
 
 def test_bookmarks_from_python(report_docx):
     assert rdocx.Document.open(report_docx).bookmarks is not None
 
 
-@pytest.mark.gap("style-id-unchecked")
 def test_unknown_style_id_is_refused(tmp_path):
     doc = rdocx.Document.open(simple(tmp_path / "a.docx", "x"))
     with pytest.raises((rdocx.RdocxError, ValueError, KeyError)):
         doc.paragraphs[0].style = "NoSuchStyle"
 
 
-@pytest.mark.gap("docx-core-properties")
+def test_style_is_assigned_by_id_or_name(tmp_path):
+    doc = rdocx.Document.open(simple(tmp_path / "a.docx", "x"))
+    doc.paragraphs[0].style = "Heading 1"
+    assert doc.paragraphs[0].style == "Heading1"
+    with pytest.raises(KeyError):
+        doc.paragraphs[0].style = "NoSuchStyle"
+
+
 def test_core_properties_are_writable(tmp_path):
     doc = rdocx.Document()
     doc.core_properties.title = "A title"
@@ -452,7 +513,6 @@ def test_length_helpers():
 
 
 # ---------------------------------------------------------------- save semantics
-@pytest.mark.gap("template-save-as-document")
 def test_template_saved_as_document_gets_the_document_content_type(tmp_path):
     src = simple(tmp_path / "a.docx", "x")
     with zipfile.ZipFile(src) as z:

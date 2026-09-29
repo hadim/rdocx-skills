@@ -30,8 +30,8 @@ the next one must still open what you save. What matters when you edit with rdoc
 - **Tracked changes and comments are shared state.** A file under review in Word or Google Docs carries the
   reviewers' threads and revisions: never accept, reject or remove them unless asked; add yours with an
   author name that says it is a machine (for example "Claude"), never the user's name, and a date (an undated
-  comment shows none). Read such a file with `rdocx text --json` or
-  `Paragraph.text` (accepted view): plain `rdocx text` drops inserted text, and replacements do not reach it.
+  comment shows none). `rdocx text`, `rdocx text --json` and `Paragraph.text` show the accepted view
+  (insertions in, deletions out), and replacement edits the text inside an insertion, which stays tracked.
 - **Fields and the TOC**: cached field results (TOC page numbers, PAGE, NUMPAGES) come from rdocx's
   pagination when you refresh them, which is close to Word's and not equal. When exact page numbers matter,
   say so and let Word update the fields (`doc.update_fields_on_open = True` asks Word to do it on open).

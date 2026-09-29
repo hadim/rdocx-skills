@@ -97,7 +97,8 @@ def save_atomic(doc, out, src=None):
 
 def textmap(path):
     """`rdocx text --json`: body paragraphs and table cells with body_index, path, style, runs (accepted view:
-    tracked insertions in, deletions out). Headers, footers, notes and text boxes are not in it: see all_text."""
+    tracked insertions in, deletions out). Headers, footers, notes and text boxes are in the record's
+    `stories`, not here: see all_text."""
     return json.loads(cli("text", "--json", path).stdout)["paragraphs"]
 
 
@@ -170,10 +171,9 @@ def count(source, text):
 def replace_batch(src, out, edits, allow_unreached=False):
     """Apply [(old, new, expected_count), ...] in order, all or nothing. A dry run on an in-memory copy comes
     first; nothing is written, and EditError names every problem, when a replacement count differs from its
-    expected count, or when `old` is still in the document after its replacement (text in tracked insertions,
-    footnotes and endnotes: gaps replace-tracked-insertions, replace-footnotes), unless allow_unreached=True.
-    Counts are rdocx's: headers and footers once per variant part, a Word text box twice (gap
-    textbox-alternate-content)."""
+    expected count, or when `old` is still in the document after its replacement (a match across the edge of a
+    content control, a tracked insertion or a simple field), unless allow_unreached=True. Counts are rdocx's:
+    headers and footers once per variant part, a Word text box once."""
     doc = rdocx.Document.open(src)
     probe = rdocx.Document.from_bytes(doc.to_bytes())
     wrong = []
@@ -202,33 +202,50 @@ def replace_batch(src, out, edits, allow_unreached=False):
     return save_atomic(doc, out, src)
 
 
+def _starts(text, anchor):
+    """Every start offset of `anchor` in `text`, overlapping ones included."""
+    out, k = [], text.find(anchor)
+    while k != -1:
+        out.append(k)
+        k = text.find(anchor, k + 1)
+    return out
+
+
 def locate(doc, anchor, occurrence=1):
-    """(flow index, character offset, body index) of the n-th occurrence of `anchor` within the text of one
-    paragraph that is a direct child of the body. Paragraphs in table cells and in block content controls (a
-    table of contents, Google Docs blocks) are skipped: comments cannot be anchored there by body index."""
+    """(flow index, run offset, body index) of the n-th occurrence of `anchor` within the text of one paragraph
+    that is a direct child of the body. Paragraphs in table cells and in block content controls (a table of
+    contents, Google Docs blocks) are skipped: comments cannot be anchored there by body index. The offset
+    counts the characters of the paragraph's runs (`"".join(r.text for r in p.runs)`), which leave out the
+    text inside a simple field, a smart tag or a custom XML element that `Paragraph.text` shows: an anchor
+    that sits in such an element, or crosses its edge, is refused."""
     seen = 0
     for i, p in enumerate(doc.paragraphs):
-        text = p.text
-        start = text.find(anchor)
-        if start == -1:
+        shown = _starts(p.text, anchor)
+        if not shown:
             continue
         try:
             bi = doc.find_content_index(doc.paragraphs[i])
         except ValueError:  # not a direct child of the body
             continue
-        while start != -1:
-            seen += 1
-            if seen == occurrence:
-                return i, start, bi
-            start = text.find(anchor, start + 1)
+        if seen + len(shown) < occurrence:
+            seen += len(shown)
+            continue
+        offsets = _starts("".join(r.text for r in doc.paragraphs[i].runs), anchor)
+        if len(offsets) != len(shown):
+            raise EditError(f"anchor {anchor!r} occurrence {occurrence}: in its paragraph the text sits inside a simple "
+                            "field, a smart tag or a custom XML element (or crosses its edge), whose text is not in "
+                            "Paragraph.runs: anchor on text outside that element")
+        return i, offsets[occurrence - seen - 1], bi
     raise EditError(f"anchor {anchor!r} occurrence {occurrence} not found in the body's own paragraphs "
                     "(table cells and content-control blocks are not searched)")
 
 
 def isolate(doc, flow_index, start, end):
-    """Split runs so that characters [start, end) of paragraph `flow_index` form whole runs. Returns the
-    (first, last_exclusive) run indices covering them. The paragraph must be a direct child of the body:
-    split_run takes its body index, as RunPosition and find_content_index do."""
+    """Split runs so that characters [start, end) of paragraph `flow_index` form whole runs. Offsets count the
+    characters of the paragraph's runs joined, as `locate` returns them (not `Paragraph.text`, which also holds
+    the text of simple fields, smart tags and custom XML). Returns the (first, last_exclusive) run indices
+    covering them. The paragraph must be a direct child of the body: split_run takes its body index, as
+    RunPosition and find_content_index do."""
     before = doc.paragraphs[flow_index].text
     body_index = doc.find_content_index(doc.paragraphs[flow_index])
 
@@ -296,9 +313,9 @@ def rebuild_toc(doc):
 
 
 def fix_template_content_type(path):
-    """Gap template-save-as-document: a .dotx saved as .docx keeps the template content type. Rewrite the main
-    part's content type to the document one, in place (atomically, every other entry unchanged). Returns
-    True if the file was changed."""
+    """Rewrite a template main part's content type to the document one, in place (atomically, every other
+    entry unchanged). Returns True if the file was changed. Kept for the scripts that call it: rdocx's save
+    now writes the content type the path extension names."""
     path = Path(path)
     with zipfile.ZipFile(path) as z:
         items = [(info, z.read(info.filename)) for info in z.infolist()]

@@ -96,9 +96,9 @@ def replace_batch(src, out, edits):
 
 
 def fix_template_content_type(path):
-    """Gap template-save-as-document: a .potx saved as .pptx keeps the template content type. Rewrite the main
-    part's content type to the presentation one, in place (atomically, every other entry unchanged). Returns
-    True if the file was changed."""
+    """Rewrite a template main part's content type to the presentation one, in place (atomically, every other
+    entry unchanged). Returns True if the file was changed. Kept for the scripts that call it: rpptx's save
+    now writes the content type the path extension names."""
     import zipfile
     path = Path(path)
     with zipfile.ZipFile(path) as z:
