@@ -198,3 +198,18 @@ jobs:
           } > notes.md
           gh release create "$TAG" assets/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "rdocx ${COMMIT:0:12} ($REF)" --notes-file notes.md --latest=false
+
+  # The pinned release is the one `install` downloads: on a bump pushed to main, mark it Latest, so the releases
+  # page shows it first. Candidate releases built by hand or by the weekly run stay unmarked.
+  latest:
+    needs: [plan, release]
+    if: always() && github.event_name == 'push' && (needs.plan.outputs.exists == 'true' || needs.release.result == 'success')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Mark the pinned release Latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --latest

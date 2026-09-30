@@ -124,7 +124,8 @@ whose release exists and whose hashes are recorded, together with the tests and 
    `install` and `test`. Every strict xfail that now passes means a gap is closed: remove its marker and its
    entry in `tests/gaps.py`, and update both skills' `references/gaps.md` and tables. Every new failure is a
    regression: keep the previous pin, or narrow what the skills claim.
-3. Commit the lock, the tests and the skill changes together, and merge into `main`.
+3. Commit the lock, the tests and the skill changes together, and merge into `main`. The build workflow then
+   marks the pinned release Latest, so the releases page lists it first (candidates stay unmarked).
 
 A bump pushed to `main` before its release exists still works: the build workflow runs on the change of the
 lock and publishes the release; `lock --write --release` then fills the hashes in a second commit. Until
