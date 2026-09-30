@@ -15,4 +15,5 @@ Triage, for each finding:
 4. Delete the finding file: from then on the test is the reproduction, and the suite run on each new build
    says when the gap closes.
 
-Upstream issues are not tracked here; a finding is written so that it can be filed as one as it is.
+A finding is written so that it can be filed upstream as it is. Once filed, the issue is named in a comment on
+the gap's entry in `tests/gaps.py` (step 2), not in the finding.

@@ -27,7 +27,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - English everywhere, ASCII in code. Findings as `findings/README.md` describes them: what fails, a neutral
   reproduction that builds its own input, the real output, an acceptance criterion.
 - Gaps live here as strict xfails (`tests/gaps.py`) and narrow what the skills claim; the suite run on each
-  new build says which ones closed. Which upstream issue or pull request fixes a gap is not tracked here.
+  new build says which ones closed. When a gap is reported upstream, a comment on its entry in `tests/gaps.py`
+  names the issue (`# upstream: owner/repo#N`); the suite, not the issue's state, says when it closed.
 - Never weaken a test to make it pass. A behaviour change of rdocx is either a fix (remove the gap marker) or
   a regression (keep the test red and the previous pin, or narrow the skills).
 - Every claim in the skills is backed by a test or a recipe block that runs. Changing a claim means changing
