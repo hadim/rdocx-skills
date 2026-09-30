@@ -650,6 +650,30 @@ def test_edit_rewrites_only_the_part_it_touches(report_docx, tmp_path):
     assert [n for n in a if a[n] != b[n]] == ["word/document.xml"]
 
 
+@pytest.mark.gap("edit-reserializes-part")
+def test_edit_rewrites_its_part_in_the_source_layout(tmp_path):
+    """Word writes w:rsid* on nearly every paragraph and run, and no indentation. An edit of one paragraph keeps
+    the rest of document.xml as it was: xmlns:w declared once, no line added, the size within a few bytes."""
+    d = docx.Document()
+    for i in range(50):
+        d.add_paragraph(f"Paragraph {i} alpha beta.")
+    d.save(tmp_path / "a.docx")
+    with zipfile.ZipFile(tmp_path / "a.docx") as z:
+        items = [(i, z.read(i.filename)) for i in z.infolist()]
+    with zipfile.ZipFile(tmp_path / "b.docx", "w", zipfile.ZIP_DEFLATED) as z:
+        for info, data in items:
+            if info.filename == "word/document.xml":
+                data = data.replace(b"<w:p>", b'<w:p w:rsidR="00AB12CD">')
+            z.writestr(info, data)
+    doc = rdocx.Document.open(tmp_path / "b.docx")
+    assert doc.try_replace_text("Paragraph 7 ", "Paragraph seven ") == 1
+    doc.save(tmp_path / "c.docx")
+    a, b = part(tmp_path / "b.docx", "word/document.xml"), part(tmp_path / "c.docx", "word/document.xml")
+    assert a.count(b"xmlns:w=") == 1 and a.count(b"\n") == 1
+    assert (b.count(b"xmlns:w="), b.count(b"\n")) == (1, 1)
+    assert abs(len(b) - len(a)) < 64
+
+
 def test_save_keeps_ignorable_prefixes_declared(report_docx, tmp_path):
     rdocx.Document.open(report_docx).save(tmp_path / "n.docx")
     root = part(tmp_path / "n.docx", "word/comments.xml").decode().split(">", 2)[1]

@@ -19,4 +19,7 @@ GAPS = {
     # upstream: tensorbee/rdocx#243 (both style gaps)
     "styles-duplicate-ids": "add_style raises \"invalid style graph: duplicate style ID\" when styles.xml repeats a style id",
     "styles-several-defaults": "add_style raises \"invalid style graph: style type '...' has more than one default\" when styles.xml marks several styles of one type as default",
+    # docx: saving
+    # upstream: tensorbee/rdocx#245
+    "edit-reserializes-part": "an edit rewrites the whole part it touches, indented, with xmlns:w declared again on every element that carries w:rsid*",
 }
