@@ -558,8 +558,22 @@ def test_noop_save_round_trip(deck_pptx, tmp_path, rpptx_cli):
     rpptx.Presentation(deck_pptx).save(tmp_path / "n.pptx")
     a, b = parts(deck_pptx), parts(tmp_path / "n.pptx")
     assert set(a) == set(b)
+    assert [n for n in a if a[n] != b[n]] == []
     assert run([rpptx_cli, "validate", tmp_path / "n.pptx"]).returncode == 0
     assert len(pptx.Presentation(tmp_path / "n.pptx").slides) == 7
+
+
+def test_edit_rewrites_only_the_part_it_touches(deck_pptx, tmp_path):
+    """A run edit on slide 2 rewrites that slide's part; the other slides, layouts, masters, notes and media keep
+    their bytes, and the package gains no part."""
+    prs = rpptx.Presentation(deck_pptx)
+    run_ = next(p.runs[0] for sh in prs.slides[1].shapes if sh.has_text_frame
+                for p in sh.text_frame.paragraphs if p.runs and p.runs[0].text == "Condition at a glance")
+    run_.text = "Condition today"
+    prs.save(tmp_path / "e.pptx")
+    a, b = parts(deck_pptx), parts(tmp_path / "e.pptx")
+    assert sorted(b) == sorted(a)
+    assert [n for n in a if a[n] != b[n]] == ["ppt/slides/slide2.xml"]
 
 
 def test_open_a_paragraph_with_two_ppr(tmp_path):

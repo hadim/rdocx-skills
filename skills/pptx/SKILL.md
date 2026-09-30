@@ -5,10 +5,10 @@ description: "Use this skill any time a PowerPoint file (.pptx or .potx) is invo
 
 # PowerPoint decks with rpptx
 
-rpptx reads and writes the presentation package natively, keeps what it does not touch, lays text out with
-its own line breaker and renders slides itself (no LibreOffice). One pinned build serves the `rpptx` CLI
-(whole-deck operations) and the `rpptx` Python module (everything finer; its API follows python-pptx). Use
-them for every .pptx task. The tool is young: the gaps that force another tool for one step are in
+rpptx reads and writes the presentation package natively, keeps every part it does not touch byte for byte,
+lays text out with its own line breaker and renders slides itself (no LibreOffice). One pinned build serves
+the `rpptx` CLI (whole-deck operations) and the `rpptx` Python module (everything finer; its API follows
+python-pptx). Use them for every .pptx task. The tool is young: the gaps that force another tool for one step are in
 `references/gaps.md`, and every new one you meet is reported (last section).
 
 ## Setup, once per session

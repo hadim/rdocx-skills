@@ -639,6 +639,17 @@ def test_noop_save_is_byte_identical(report_docx, tmp_path):
     assert [n for n in a if a[n] != b.get(n)] == []
 
 
+def test_edit_rewrites_only_the_part_it_touches(report_docx, tmp_path):
+    """A body replacement rewrites word/document.xml; styles, numbering, headers, footers, comments and media keep
+    their bytes, and the package gains no part."""
+    doc = rdocx.Document.open(report_docx)
+    assert doc.try_replace_text("inspection", "survey") > 0
+    doc.save(tmp_path / "e.docx")
+    a, b = parts(report_docx), parts(tmp_path / "e.docx")
+    assert sorted(b) == sorted(a)
+    assert [n for n in a if a[n] != b[n]] == ["word/document.xml"]
+
+
 def test_save_keeps_ignorable_prefixes_declared(report_docx, tmp_path):
     rdocx.Document.open(report_docx).save(tmp_path / "n.docx")
     root = part(tmp_path / "n.docx", "word/comments.xml").decode().split(">", 2)[1]
