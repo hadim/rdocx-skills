@@ -489,6 +489,70 @@ def test_style_is_assigned_by_id_or_name(tmp_path):
         doc.paragraphs[0].style = "NoSuchStyle"
 
 
+def duplicate_styles_docx():
+    """A TOC, a heading, and a styles part that repeats style ids as Google Docs writes them: `TableNormal`
+    three times, a second `Normal` with another body, `Table1` twice with different bodies."""
+    import copy
+
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls, qn
+    d = docx.Document()
+    p = d.add_paragraph()
+    for xml in ('<w:fldChar w:fldCharType="begin"/>', '<w:instrText xml:space="preserve"> TOC \\o "1-3" \\h </w:instrText>',
+                '<w:fldChar w:fldCharType="separate"/>', '<w:t>Old entry</w:t>'):
+        p._p.append(parse_xml(f"<w:r {nsdecls('w')}>{xml}</w:r>"))
+    d.add_paragraph()._p.append(parse_xml(f'<w:r {nsdecls("w")}><w:fldChar w:fldCharType="end"/></w:r>'))
+    d.add_paragraph("Scope", style="Heading 1")
+    styles = d.styles.element
+    first = next(s for s in styles.findall(qn("w:style")) if s.get(qn("w:styleId")) == "TableNormal")
+    styles.append(copy.deepcopy(first))
+    styles.append(copy.deepcopy(first))
+    styles.append(parse_xml(f'<w:style {nsdecls("w")} w:type="paragraph" w:styleId="Normal"><w:name w:val="normal"/>'
+                            '<w:rPr><w:sz w:val="30"/></w:rPr></w:style>'))
+    for body in ("", '<w:tblPr><w:tblStyleRowBandSize w:val="1"/></w:tblPr>'):
+        styles.append(parse_xml(f'<w:style {nsdecls("w")} w:type="table" w:styleId="Table1"><w:name w:val="Table1"/>{body}</w:style>'))
+    buf = io.BytesIO()
+    d.save(buf)
+    return buf.getvalue()
+
+
+@pytest.mark.gap("styles-duplicate-ids")
+def test_add_style_with_duplicate_style_ids():
+    doc = rdocx.Document.from_bytes(duplicate_styles_docx())
+    doc.add_style("Note box", based_on="Normal")  # the first Normal is authoritative, as for rebuild_toc
+    back = docx.Document(io.BytesIO(doc.to_bytes()))
+    assert back.styles["Note box"].base_style.style_id == "Normal"
+
+
+def test_rebuild_toc_uses_the_first_of_duplicate_style_ids():
+    doc = rdocx.Document.from_bytes(duplicate_styles_docx())
+    report = doc.rebuild_toc()
+    assert report.entry_count == 1
+    assert "duplicate style ID 'TableNormal' used first definition while rebuilding TOC" in report.diagnostics
+
+
+def test_add_style_after_removing_later_duplicate_styles():
+    """The workaround of gap styles-duplicate-ids: keep the first w:style of each id, then add_style."""
+    from lxml import etree
+    from docx.oxml.ns import qn
+    src = zipfile.ZipFile(io.BytesIO(duplicate_styles_docx()))
+    root, seen = etree.fromstring(src.read("word/styles.xml")), set()
+    for style in root.findall(qn("w:style")):
+        if style.get(qn("w:styleId")) in seen:
+            root.remove(style)
+        seen.add(style.get(qn("w:styleId")))
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
+        for info in src.infolist():
+            data = src.read(info.filename)
+            if info.filename == "word/styles.xml":
+                data = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+            dst.writestr(info, data)
+    doc = rdocx.Document.from_bytes(out.getvalue())
+    doc.add_style("Note box", based_on="Normal")
+    assert docx.Document(io.BytesIO(doc.to_bytes())).styles["Note box"].base_style.style_id == "Normal"
+
+
 def test_core_properties_are_writable(tmp_path):
     doc = rdocx.Document()
     doc.core_properties.title = "A title"

@@ -13,4 +13,7 @@ Which upstream issue or pull request closes a gap is not tracked here: the suite
 build workflow's release notes) says which gaps closed.
 """
 
-GAPS = {}
+GAPS = {
+    # docx: styles
+    "styles-duplicate-ids": "add_style raises \"invalid style graph: duplicate style ID\" when styles.xml repeats a style id",
+}

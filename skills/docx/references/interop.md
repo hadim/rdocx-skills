@@ -15,6 +15,7 @@ the next one must still open what you save. What matters when you edit with rdoc
 | a default namespace on the root of each part | Google Docs | harmless for reading and most edits |
 | an empty `word/comments.xml` | Google Docs | kept byte for byte by a save |
 | a `customXML` part with Google's round-trip data | Google Docs | keep it; rdocx does |
+| several `w:style` elements with one id (`TableNormal`, `Normal`, `Table1`, ...), the later ones sometimes with other contents | Google Docs | `rebuild_toc()` uses the first definition; `add_style()` refuses the file: gap styles-duplicate-ids in `gaps.md` |
 | style ids in the interface language (`Titre1`, `Policepardfaut`) | Word in another language | assign styles by the id the file uses (`doc.styles`), never by an English name |
 | `w:lineRule="auto"` spacing of 276 (Word) or 264 / 276 (Google) | both | rdocx lays lines at Word's heights; still check page breaks in the target application when they matter |
 
