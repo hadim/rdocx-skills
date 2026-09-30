@@ -3,7 +3,7 @@
   "source": "git",
   "commit": "d4d7c8af3fb1ec416b08441101bbe4afe21d4f60",
   "ref": "integration/open-prs-2026-09-30",
-  "release": "https://github.com/hadim/rdocx-skills/releases/download/rdocx-d4d7c8af3fb1",
+  "release": "https://github.com/hadim/rdocx-skills/releases/download/rdocx-20260930-d4d7c8af3fb1",
   "versions": {
     "rdocx": "0.14.0",
     "rpptx": "0.12.1"
@@ -11,21 +11,21 @@
   "artifacts": {
     "linux-aarch64": {
       "rdocx": "ac91918ce0a219934995fd9757d86ae0163c066dac523dad14bc927f0147926c",
-      "rdocx-0.14.0-cp39-abi3-manylinux_2_35_aarch64.whl": "29fd73c49dab54604f4bcd14cf6aa6b7f540c0685d21b3f18f8af6f7258ebad6",
+      "rdocx-0.14.0-cp39-abi3-manylinux_2_35_aarch64.whl": "41efb7b9d145e0d27f0a80a0f4f7b54af1523b71f952743926e859c32ba290f9",
       "rpptx": "7b788d0e18dc642264d80d0817ecb7f1bcef43be0f974a6df8c1ffab8c35a8ef",
-      "rpptx-0.12.1-cp39-abi3-manylinux_2_35_aarch64.whl": "af2afd008072b42c22cee4dde34795bb28bb675f137a889bb54cb7d41d932580"
+      "rpptx-0.12.1-cp39-abi3-manylinux_2_35_aarch64.whl": "b5d240fb2bebf305c41bbb37bee1fb3c1ed2d5b2727e75b92abbf86922f3c29b"
     },
     "linux-x86_64": {
       "rdocx": "abbfbe00ff371a0c8620d770165782d8fb7e0c95c4483b9ab17125b43779096e",
-      "rdocx-0.14.0-cp39-abi3-manylinux_2_35_x86_64.whl": "6ea9cc659af022afe4b30dba11aa404cc5f8f5fc166008a15bb8c087e55516e8",
+      "rdocx-0.14.0-cp39-abi3-manylinux_2_35_x86_64.whl": "9c866aea9d7a1f0cbfdba9682b13acfb31f227e7504c435a1cc6a57dd3047675",
       "rpptx": "3fd8fb33443f8570a1b697cd66bf20dd47a6f1f7136b7be3d11665b65400d856",
-      "rpptx-0.12.1-cp39-abi3-manylinux_2_35_x86_64.whl": "af33c9d59f7e510d7a693f8f61729a14d21056696ae6ed4d8a13778494657b3c"
+      "rpptx-0.12.1-cp39-abi3-manylinux_2_35_x86_64.whl": "c2186b12911258c0be3abb1ed3fb151f21fbdd8cdbc0898f8092255639228b10"
     },
     "macos-arm64": {
       "rdocx": "8e14b1bfe0876e3447cc608503ae5f33dfd0145e3b634e766213d1956155d919",
-      "rdocx-0.14.0-cp39-abi3-macosx_11_0_arm64.whl": "90b3d3cfd1be036e32f7c1e4da7d36a91a69c4dbbee44920054e99985904d836",
+      "rdocx-0.14.0-cp39-abi3-macosx_11_0_arm64.whl": "ebc4ef1092efef63d10ab205ae4551b0b0a80bdf3f7e1958faead775431e296a",
       "rpptx": "297c5e9afe54d438a755228c60840dd7bf4bb24ce55cef134d3cb4c8bdbb444a",
-      "rpptx-0.12.1-cp39-abi3-macosx_11_0_arm64.whl": "e5e8857b0484f973ade868da4e3df8256182003c57419d2270fc7c8e5997acf8"
+      "rpptx-0.12.1-cp39-abi3-macosx_11_0_arm64.whl": "c3985929bc7244bbc562af62f44e3a858668cd6ca44265815ab64d1a9a9c6df2"
     }
   },
   "installed_files": {
