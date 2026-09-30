@@ -61,14 +61,20 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Titles and outline | `rpptx outline [--json] [--notes] F` | `slide.shapes.title` | |
 | Structure, shapes, metadata | `rpptx inspect --json F` | `pptx_ops.py shapes F [--slide N]` | shape tree with ids, names, geometry |
 | Counted replacement | `rpptx replace F -p OLD -v NEW --expect N -o OUT` | `prs.try_replace_text(old, new, expect=n)`, `pptx_ops.replace_batch` | keeps run formatting |
+| Replacement in one slide or one frame | | `slide.try_replace_text(old, new, expect=n)`, `shape.text_frame.try_replace_text(old, new, expect=n)` | the slide's notes too unless `notes=False`; same all-or-nothing count |
 | Edit a run, paragraph, text frame | | `run.text`, `run.font.*`, `paragraph.alignment/level/space_*/line_spacing`, `text_frame.margin_*/word_wrap/auto_size/vertical_anchor` | `shape.text = ...` drops run formatting, as in python-pptx |
 | Move, resize, rotate | | `shape.left/top/width/height/rotation` | a placeholder that inherits its geometry reads None: `shape.effective_geometry()` gives it, and a setter copies it first |
 | Fill, line | | `shape.fill.solid()`, `.fill.fore_color.rgb = RGBColor(...)`, `.line.width`, `.line.color.rgb` | |
-| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each |
+| Dashes, arrowheads | | `.line.dash_style = MSO_LINE_DASH_STYLE.DASH`, `.line.tail_end.type = MSO_ARROWHEAD_STYLE.TRIANGLE`, `.width`, `.length`; `head_end` likewise | enums in `rpptx.enum.dml` |
+| Shadow | | `shape.shadow.visible = True`, `.color.rgb`, `.alpha`, `.blur_radius`, `.distance`, `.direction`, `.align` | writes `a:outerShdw`; `shadow.inherit = False` removes the theme's shadow |
+| Connector without the theme effect | | `connector.theme_effect_index = 0` | `add_connector` references the theme's effect 1, an outer shadow in the default theme |
+| Change a shape's preset | | `shape.auto_shape_type = MSO_SHAPE.RECTANGLE` | autoshapes only |
+| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each; `add_shape` writes no theme style, so the shape draws nothing until it gets a fill colour or a line colour |
 | Z-order | | `shapes.move(from_, to)` | index 0 is the back |
 | Pictures | | `shape.replace_image(file)`, `shape.image.blob` | keeps position, size and crop |
 | Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each |
 | Slides | | `slides.add_slide(layout)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden` | |
+| Import a slide from another deck | | `prs.slides.import_slide(other.slides[k], layout=prs.slide_layouts[j], index=None)` | without `layout=`, a layout of the same name must exist here, else `RpptxError` |
 | Speaker notes | `rpptx text --notes F` | `slide.notes_text` (get and set) | None when the slide has no notes |
 | Hyperlinks | | `run.hyperlink.address` (get and set) | runs only |
 | Metadata | `rpptx inspect --json F` | | read-only; no core properties API |

@@ -36,6 +36,17 @@ pptx_ops.replace_batch("deck.pptx", "edited.pptx", [
 ])
 ```
 
+## Replace in one slide or one frame
+
+```python
+import pptx_ops, rpptx
+prs = rpptx.Presentation("deck.pptx")
+prs.slides[2].try_replace_text("12 mm", "14 mm", expect=1, notes=False)   # the deck holds it twice: slides 2 and 3
+k = next(i for i, sh in enumerate(prs.slides[5].shapes) if sh.has_text_frame and "Total:" in sh.text)
+prs.slides[5].shapes[k].text_frame.try_replace_text("230,000", "236,000", expect=1)  # this frame only, not slide 7
+pptx_ops.save_atomic(prs, "scoped.pptx", "deck.pptx")
+```
+
 ## Edit a run without losing its formatting
 
 ```python
@@ -68,6 +79,30 @@ prs.slides[3].shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(7), Inches(1),
 pptx_ops.save_atomic(prs, "shapes.pptx", "deck.pptx")
 ```
 
+## Shadow, dashes and arrowheads, a connector without the theme effect, another preset
+
+```python
+import pptx_ops, rpptx
+from rpptx.dml.color import RGBColor
+from rpptx.enum.dml import MSO_ARROWHEAD_LENGTH, MSO_ARROWHEAD_STYLE, MSO_ARROWHEAD_WIDTH, MSO_LINE_DASH_STYLE
+from rpptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
+from rpptx.util import Inches, Pt
+prs = rpptx.Presentation("deck.pptx")
+card = prs.slides[4].shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.5), Inches(6.4), Inches(2.5), Inches(0.6))
+card.fill.solid(); card.fill.fore_color.rgb = RGBColor(0xF2, 0xF2, 0xF2)   # add_shape writes no theme style:
+card.line.color.rgb = RGBColor(0x80, 0x80, 0x80)                          # without these it draws nothing
+card.auto_shape_type = MSO_SHAPE.RECTANGLE                                # change the preset in place
+card.shadow.visible = True; card.shadow.color.rgb = RGBColor(0, 0, 0); card.shadow.alpha = 0.35
+card.shadow.blur_radius = Pt(4); card.shadow.distance = Pt(3); card.shadow.direction = 45.0; card.shadow.align = "tl"
+arrow = prs.slides[4].shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(3.2), Inches(6.7), Inches(5), Inches(6.7))
+arrow.theme_effect_index = 0                     # add_connector references effect 1, a shadow in the default theme
+arrow.line.color.rgb = RGBColor(0x40, 0x40, 0x40); arrow.line.width = Pt(1.5)
+arrow.line.dash_style = MSO_LINE_DASH_STYLE.DASH
+arrow.line.tail_end.type = MSO_ARROWHEAD_STYLE.TRIANGLE
+arrow.line.tail_end.width = MSO_ARROWHEAD_WIDTH.WIDE; arrow.line.tail_end.length = MSO_ARROWHEAD_LENGTH.LONG
+pptx_ops.save_atomic(prs, "styled.pptx", "deck.pptx")
+```
+
 ## Grow a table, fill a group
 
 ```python
@@ -98,6 +133,19 @@ prs.slides.add_slide(prs.slide_layouts[1])
 new = prs.slides[len(prs.slides) - 1]
 new.shapes.title.text = "Questions"
 pptx_ops.save_atomic(prs, "reordered.pptx", "deck.pptx")
+```
+
+## Import a slide from another deck
+
+```python
+import pptx_ops, rpptx
+other = rpptx.Presentation()                     # stands for rpptx.Presentation("other.pptx")
+other.slides.add_slide(other.slide_layouts[5])
+other.slides[0].shapes.title.text = "Appendix: survey method"
+prs = rpptx.Presentation("deck.pptx")
+# without layout=, deck.pptx needs a layout named like the source's, else RpptxError "no layout named ..."
+prs.slides.import_slide(other.slides[0], layout=prs.slide_layouts[5], index=1)   # second slide
+pptx_ops.save_atomic(prs, "imported.pptx", "deck.pptx")
 ```
 
 ## Replace a picture, keeping its frame

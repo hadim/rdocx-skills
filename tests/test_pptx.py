@@ -11,6 +11,7 @@ import pytest
 import rpptx
 from PIL import Image
 from rpptx.dml.color import RGBColor
+from rpptx.enum.dml import MSO_ARROWHEAD_LENGTH, MSO_ARROWHEAD_STYLE, MSO_ARROWHEAD_WIDTH, MSO_LINE_DASH_STYLE
 from rpptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 
 from conftest import STAMP, digest, parts, run
@@ -177,6 +178,97 @@ def test_fill_line_and_picture_replace(deck_pptx, tmp_path):
     assert pic.image.blob == new_png and pic.image.content_type == "image/png"
 
 
+def blank_slide():
+    prs = rpptx.Presentation()
+    prs.slides.add_slide(prs.slide_layouts[6])
+    return prs
+
+
+def dark_pixels(png):
+    return sum(1 for v in Image.open(io.BytesIO(png)).convert("L").getdata() if v < 200)
+
+
+def test_add_shape_writes_no_style_and_draws_nothing_until_styled():
+    """Current behaviour, not a gap: python-pptx's add_shape writes a p:style (accent1 fill and line),
+    rpptx's writes none, so the new shape has neither fill nor line."""
+    ref = pptx.Presentation()
+    ref_shape = ref.slides.add_slide(ref.slide_layouts[6]).shapes.add_shape(1, EMU, EMU, 3 * EMU, 2 * EMU)
+    assert ref_shape._element.find(pptx.oxml.ns.qn("p:style")) is not None
+    prs = blank_slide()
+    prs.slides[0].shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, 3 * EMU, 2 * EMU)
+    sh = prs.slides[0].shapes[0]
+    assert b"p:style" not in sh.xml and sh.fill.type is None and sh.line.color.rgb is None
+    assert sh.theme_effect_index is None
+    with pytest.raises(rpptx.RpptxError, match="no p:style"):
+        sh.theme_effect_index = 0
+    assert dark_pixels(prs.render_slide_to_png(0, 40)) == 0
+    sh.line.color.rgb = RGBColor(0, 0, 0)
+    assert dark_pixels(prs.render_slide_to_png(0, 40)) > 0
+    prs = blank_slide()
+    prs.slides[0].shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, 3 * EMU, 2 * EMU)
+    prs.slides[0].shapes[0].fill.solid()
+    prs.slides[0].shapes[0].fill.fore_color.rgb = RGBColor(0x20, 0x40, 0x80)
+    assert dark_pixels(prs.render_slide_to_png(0, 40)) > 0
+
+
+def test_connector_theme_effect_line_ends_and_dash():
+    prs = blank_slide()
+    c = prs.slides[0].shapes.add_connector(MSO_CONNECTOR.STRAIGHT, EMU, EMU, 3 * EMU, EMU)
+    assert b'<a:effectRef idx="1">' in c.xml and c.theme_effect_index == 1
+    with zipfile.ZipFile(io.BytesIO(prs.to_bytes())) as z:  # effect style 1 of the default theme is a shadow
+        theme = z.read("ppt/theme/theme1.xml").decode()
+    assert "outerShdw" in theme.split("<a:effectStyleLst>")[1].split("</a:effectStyle>")[0]
+    c.theme_effect_index = 0
+    c.line.dash_style = MSO_LINE_DASH_STYLE.DASH
+    c.line.tail_end.type = MSO_ARROWHEAD_STYLE.TRIANGLE
+    c.line.tail_end.width = MSO_ARROWHEAD_WIDTH.WIDE
+    c.line.tail_end.length = MSO_ARROWHEAD_LENGTH.LONG
+    c.line.head_end.type = MSO_ARROWHEAD_STYLE.OVAL
+    c.shadow.inherit = False
+    assert c.left == EMU  # these setters keep the handle valid
+    c = prs.slides[0].shapes[0]
+    assert (c.theme_effect_index, c.line.dash_style, c.line.tail_end.type, c.line.head_end.type) == (0, 4, 2, 6)
+    xml = c.xml
+    assert b'<a:effectRef idx="0">' in xml and b"<a:effectLst/>" in xml
+    assert b'<a:tailEnd type="triangle" w="lg" len="lg"/>' in xml and b'<a:headEnd type="oval"/>' in xml
+    line = pptx.Presentation(io.BytesIO(prs.to_bytes())).slides[0].shapes[0].line
+    assert line.dash_style == pptx.enum.dml.MSO_LINE_DASH_STYLE.DASH
+
+
+def test_shadow_writes_an_outer_shadow():
+    prs = blank_slide()
+    sh = prs.slides[0].shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, EMU, EMU)
+    assert sh.shadow.inherit and not sh.shadow.visible
+    s = sh.shadow
+    s.visible = True
+    s.color.rgb = RGBColor(0, 0, 0)
+    s.alpha = 0.35
+    s.blur_radius, s.distance, s.direction, s.align, s.rotate_with_shape = 50800, 38100, 45.0, "tl", False
+    assert sh.left == EMU
+    s = prs.slides[0].shapes[0].shadow
+    assert (s.inherit, s.visible, s.alpha, s.blur_radius, s.distance, s.direction, s.align, s.rotate_with_shape) == (
+        False, True, 0.35, 50800, 38100, 45.0, "tl", False)
+    x = pptx.Presentation(io.BytesIO(prs.to_bytes())).slides[0].shapes[0]
+    outer = x._element.spPr.find(pptx.oxml.ns.qn("a:effectLst")).find(pptx.oxml.ns.qn("a:outerShdw"))
+    assert dict(outer.attrib) == {"blurRad": "50800", "dist": "38100", "dir": "2700000", "algn": "tl", "rotWithShape": "0"}
+    assert x.shadow.inherit is False
+
+
+def test_auto_shape_type_changes_the_preset():
+    prs = blank_slide()
+    prs.slides[0].shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, EMU, EMU, EMU, EMU)
+    prs.slides[0].shapes.add_textbox(EMU, 3 * EMU, EMU, EMU)
+    sh = prs.slides[0].shapes[0]
+    assert sh.auto_shape_type == MSO_SHAPE.ROUNDED_RECTANGLE
+    sh.auto_shape_type = MSO_SHAPE.RECTANGLE
+    assert sh.left == EMU
+    assert pptx.Presentation(io.BytesIO(prs.to_bytes())).slides[0].shapes[0].auto_shape_type == pptx.enum.shapes.MSO_SHAPE.RECTANGLE
+    sh.auto_shape_type = "roundRect"
+    assert prs.slides[0].shapes[0].auto_shape_type == MSO_SHAPE.ROUNDED_RECTANGLE
+    with pytest.raises(ValueError):
+        prs.slides[0].shapes[1].auto_shape_type
+
+
 def test_slides_notes_hide_move_add_remove(deck_pptx):
     prs = rpptx.Presentation(deck_pptx)
     n = len(prs.slides)
@@ -219,6 +311,54 @@ def test_replace_text_python(deck_pptx):
     assert prs.try_replace_text("Riverton Footbridge", "Kestrel Footbridge") == 1
     with pytest.raises(rpptx.ReplacementCountError):
         prs.try_replace_text("Kestrel Footbridge", "X", expect=2)
+
+
+def test_import_slide_needs_layout_when_names_differ():
+    src = pptx.Presentation()
+    src.slides.add_slide(src.slide_layouts[5]).shapes.title.text = "Imported"
+    src.slide_layouts[5]._element.cSld.set("name", "Heading only")  # a name the destination lacks
+    buf = io.BytesIO()
+    src.save(buf)
+    source = rpptx.Presentation.from_bytes(buf.getvalue())
+    dst = rpptx.Presentation()
+    dst.slides.add_slide(dst.slide_layouts[0])
+    with pytest.raises(rpptx.RpptxError, match='no layout named "Heading only", pass the destination layout'):
+        dst.slides.import_slide(source.slides[0])
+    assert len(dst.slides) == 1
+    dst.slides.import_slide(source.slides[0], layout=dst.slide_layouts[5], index=0)
+    back = pptx.Presentation(io.BytesIO(dst.to_bytes()))
+    assert len(back.slides) == 2 and back.slides[0].shapes.title.text == "Imported"
+    assert back.slides[0].slide_layout.name == "Title Only"
+    same = rpptx.Presentation()  # same layout names: no layout= needed
+    same.slides.import_slide(rpptx.Presentation.from_bytes(dst.to_bytes()).slides[0])
+    assert same.slides[0].slide_layout.name == "Title Only"
+
+
+def test_replace_text_in_one_slide_or_one_frame():
+    prs = blank_slide()
+    prs.slides.add_slide(prs.slide_layouts[6])
+    for k in range(2):
+        prs.slides[k].shapes.add_textbox(EMU, EMU, 4 * EMU, EMU)
+        prs.slides[k].shapes[0].text_frame.text = "Draft a"
+        prs.slides[k].notes_text = "Draft note"
+    assert prs.slides[1].try_replace_text("Draft", "Final", expect=2) == 2  # the shape and the notes
+    assert [s.shapes[0].text for s in prs.slides] == ["Draft a", "Final a"]
+    assert [s.notes_text for s in prs.slides] == ["Draft note", "Final note"]
+    assert prs.slides[0].try_replace_text("Draft", "Final", expect=1, notes=False) == 1
+    assert prs.slides[0].notes_text == "Draft note"
+    with pytest.raises(rpptx.ReplacementCountError):
+        prs.slides[0].try_replace_text("Final", "X", expect=2)
+    with pytest.raises(rpptx.ReplacementCountError):
+        prs.slides[0].shapes[0].text_frame.try_replace_text("Final", "X", expect=2)
+    assert prs.slides[0].shapes[0].text == "Final a"  # all or nothing
+    for replace in (lambda: prs.slides[0].shapes[0].text_frame.try_replace_text("Final", "F", expect=1),
+                    lambda: prs.slides[0].try_replace_text("F", "G", expect=1),
+                    lambda: prs.try_replace_text("G", "H", expect=1)):
+        sh = prs.slides[0].shapes[0]
+        replace()
+        with pytest.raises(rpptx.StaleElementError):
+            sh.left
+    assert prs.slides[0].shapes[0].text == "H a"
 
 
 def test_inherited_placeholder_geometry(deck_pptx):

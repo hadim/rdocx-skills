@@ -82,6 +82,22 @@ def test_recipe_outputs(workdirs):
     shapes = pptx.Presentation(p / "shapes.pptx").slides[3].shapes
     badge = next(sh for sh in shapes if sh.has_text_frame and sh.text_frame.text == "Decision")
     assert str(badge.fill.fore_color.rgb) == "7B1E3A"
+    styled = pptx.Presentation(p / "styled.pptx").slides[4].shapes
+    card, arrow = styled[len(styled) - 2], styled[len(styled) - 1]
+    assert card.auto_shape_type == pptx.enum.shapes.MSO_SHAPE.RECTANGLE and str(card.fill.fore_color.rgb) == "F2F2F2"
+    assert card.shadow.inherit is False and b'<a:outerShdw blurRad="50800" dist="38100" dir="2700000" algn="tl"' in card._element.xml.encode()
+    assert arrow.line.dash_style == pptx.enum.dml.MSO_LINE_DASH_STYLE.DASH
+    assert b'<a:tailEnd type="triangle" w="lg" len="lg"/>' in arrow._element.xml.encode()
+    assert b'<a:effectRef idx="0">' in arrow._element.xml.encode()
+    imported, base = pptx.Presentation(p / "imported.pptx").slides, pptx.Presentation(p / "deck.pptx").slides
+    assert len(imported) == len(base) + 1 and imported[1].shapes.title.text == "Appendix: survey method"
+    assert imported[1].slide_layout.name == "Title Only"
+    def texts_of(shapes):
+        for sh in shapes:
+            yield from texts_of(sh.shapes) if sh.shape_type == 6 else [sh.text_frame.text if sh.has_text_frame else ""]
+    scoped = [" ".join(texts_of(s.shapes)) for s in pptx.Presentation(p / "scoped.pptx").slides]
+    assert "12 mm" in scoped[1] and "14 mm" in scoped[2] and "12 mm" not in scoped[2]
+    assert "Total: EUR 236,000" in scoped[5] and "EUR 230,000" in scoped[6]
     re_deck = pptx.Presentation(p / "reordered.pptx")
     assert re_deck.slides[2].notes_slide.notes_text_frame.text == "Mention the photo record for each defect."
     assert re_deck.slides[-1].shapes.title.text == "Questions"
