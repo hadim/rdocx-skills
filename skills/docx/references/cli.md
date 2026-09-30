@@ -43,6 +43,7 @@ exactly N matches were replaced (without it, any count is written). Occurrences 
 
 ```bash
 rdocx comment add F --start-paragraph P --start-run S --end-paragraph Q --end-run E --author A [--initials I] --text T [--date RFC3339] -o OUT [--json]
+rdocx comment add F --anchor TEXT [--occurrence K] --author A --text T [--date RFC3339] -o OUT   # K from 0, main story, cells included
 rdocx comment reply F --id ID --author A --text T [--date RFC3339] -o OUT
 rdocx comment resolve F --id ID -o OUT
 rdocx comment remove F --id ID -o OUT        # removes the comment and its replies

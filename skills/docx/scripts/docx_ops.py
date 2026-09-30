@@ -4,7 +4,7 @@
   python docx_ops.py text IN.docx                                                every paragraph of every story, by part
   python docx_ops.py count IN.docx TEXT                                          occurrences of TEXT by story kind
   python docx_ops.py replace IN.docx OUT.docx --edit OLD NEW COUNT [--edit ...] [--allow-unreached]
-  python docx_ops.py comment IN.docx OUT.docx --anchor TEXT --text COMMENT --author NAME [--occurrence N] [--date ISO]
+  python docx_ops.py comment IN.docx OUT.docx --anchor TEXT --text COMMENT --author NAME [--occurrence N] [--in-tables] [--date ISO]
   python docx_ops.py toc IN.docx OUT.docx                                        rebuild the table of contents
   python docx_ops.py pages IN.docx                                               page count from rdocx's layout
 
@@ -288,22 +288,68 @@ def _comment(doc, anchor, text, author, initials, occurrence, date):
     return doc.add_comment(rng, author=author, text=text, initials=initials, date=date)
 
 
-def comment_on_text(doc, anchor, text, author, initials=None, occurrence=1, date=None):
-    """Anchor a comment on exactly `anchor` (the n-th occurrence in the body's own paragraphs), dated `date`
-    (RFC 3339; default: now, UTC). The whole operation is first run on a copy and the anchored text read
-    back: if rdocx refuses the range or anchors it elsewhere, EditError is raised and `doc` is left unchanged.
-    Returns the comment id."""
+def comment_landings(data):
+    """{comment id: True if its range starts inside a table cell} for every comment range of document.xml."""
+    out = {}
+
+    def walk(el, in_cell):
+        if el.tag == W_NS + "commentRangeStart":
+            out[int(el.get(W_NS + "id"))] = in_cell
+        for child in el:
+            walk(child, in_cell or el.tag == W_NS + "tc")
+
+    with zipfile.ZipFile(io.BytesIO(data) if isinstance(data, bytes) else data) as z:
+        walk(ET.fromstring(z.read("word/document.xml")), False)
+    return out
+
+
+def _cell_occurrence(doc, anchor, occurrence):
+    """The zero-based occurrence number that `add_comment_on_text` gives the n-th occurrence of `anchor`
+    inside a table cell. rdocx numbers the anchor's occurrences over the whole main story in document order;
+    anchoring every one of them on a copy (the text does not change) shows which ones sit in a cell."""
+    probe = rdocx.Document.from_bytes(doc.to_bytes())
+    ids = []
+    while True:
+        try:
+            ids.append(probe.add_comment_on_text(anchor, author="probe", text="probe", occurrence=len(ids)))
+        except rdocx.RdocxError:
+            break
+    landing = comment_landings(probe.to_bytes())
+    in_cells = [k for k, cid in enumerate(ids) if landing.get(cid)]
+    if len(in_cells) < occurrence:
+        raise EditError(f"anchor {anchor!r} occurrence {occurrence} not found in table cells "
+                        f"({len(in_cells)} there, {len(ids)} in the main story)")
+    return in_cells[occurrence - 1]
+
+
+def comment_on_text(doc, anchor, text, author, initials=None, occurrence=1, date=None, in_tables=False):
+    """Anchor a comment on exactly `anchor`, dated `date` (RFC 3339; default: now, UTC). `occurrence` counts
+    from 1 in the body's own paragraphs, or, with `in_tables=True`, in the paragraphs of table cells (nested
+    tables included), in document order. The whole operation is first run on a copy and the anchored text
+    read back: if rdocx refuses the range or anchors it elsewhere, EditError is raised and `doc` is left
+    unchanged. Returns the comment id."""
     date = date or now()
+    if in_tables:
+        k = _cell_occurrence(doc, anchor, occurrence)
+
+        def act(d):
+            return d.add_comment_on_text(anchor, author=author, text=text, occurrence=k, initials=initials, date=date)
+    else:
+        def act(d):
+            return _comment(d, anchor, text, author, initials, occurrence, date)
     probe = rdocx.Document.from_bytes(doc.to_bytes())
     why = "nothing was written; report it as a new gap"
     try:
-        cid = _comment(probe, anchor, text, author, initials, occurrence, date)
+        cid = act(probe)
     except rdocx.RdocxError as e:
         raise EditError(f"rdocx refused the range ({e}): {why}") from e
-    got = anchored_text(probe.to_bytes(), cid)
+    data = probe.to_bytes()
+    got = anchored_text(data, cid)
     if got != anchor:
         raise EditError(f"the comment would be anchored on {got!r} instead of {anchor!r}: {why}")
-    return _comment(doc, anchor, text, author, initials, occurrence, date)
+    if in_tables and not comment_landings(data).get(cid):
+        raise EditError(f"the comment would be anchored outside the table cells: {why}")
+    return act(doc)
 
 
 def rebuild_toc(doc):
@@ -399,6 +445,7 @@ def main():
     p.add_argument("--author", required=True)
     p.add_argument("--initials")
     p.add_argument("--occurrence", type=int, default=1)
+    p.add_argument("--in-tables", action="store_true", help="count and anchor in table cells")
     p.add_argument("--date", help="RFC 3339, default now (UTC)")
     p = sub.add_parser("toc")
     p.add_argument("src")
@@ -417,7 +464,7 @@ def main():
             print(f"wrote {a.out}")
         elif a.cmd == "comment":
             doc = rdocx.Document.open(a.src)
-            cid = comment_on_text(doc, a.anchor, a.text, a.author, a.initials, a.occurrence, a.date)
+            cid = comment_on_text(doc, a.anchor, a.text, a.author, a.initials, a.occurrence, a.date, a.in_tables)
             save_atomic(doc, a.out, a.src)
             print(f"comment {cid} written to {a.out}")
         elif a.cmd == "toc":

@@ -9,7 +9,7 @@ import docx
 import pytest
 import rdocx
 
-from builders import wrapped_run_docx
+from builders import cell_text_docx, wrapped_run_docx
 from conftest import STAMP, digest, part, run
 
 
@@ -110,6 +110,31 @@ def test_comment_on_a_table_cell_through_a_story_range(tmp_path):
     cid = doc.add_comment(rng, author="A", text="on a cell", date=STAMP)
     doc.save(tmp_path / "d.docx")
     assert anchored(tmp_path / "d.docx", cid) == "cell text"
+
+
+def test_comment_on_part_of_a_table_cell_paragraph_by_text(tmp_path):
+    """add_comment_on_text numbers the anchor over the main story in document order, from 0, table cells
+    included, and splits the cell's run with its format kept. split_run itself refuses a cell paragraph."""
+    path = cell_text_docx(tmp_path / "c.docx")
+    doc = rdocx.Document.open(path)
+    with pytest.raises(ValueError, match="table cell"):
+        doc.split_run(doc.tables[0].cell(0, 0).paragraphs[0], 0, 6)
+    cid = doc.add_comment_on_text("beta", author="A", text="x", occurrence=1, date=STAMP)
+    doc.save(tmp_path / "d.docx")
+    assert anchored(tmp_path / "d.docx", cid) == "beta"
+    runs = [r for r in rdocx.Document.open(tmp_path / "d.docx").tables[0].cell(0, 0).paragraphs[0].runs if r.text]
+    assert [r.text for r in runs] == ["alpha ", "beta", " gamma"] and all(r.font.bold for r in runs)
+    with pytest.raises(rdocx.RdocxError, match="occurs 4 times"):
+        rdocx.Document.open(path).add_comment_on_text("beta", author="A", text="x", occurrence=4)
+
+
+def test_cli_comment_on_part_of_a_table_cell_paragraph_by_text(rdocx_cli, tmp_path):
+    path = cell_text_docx(tmp_path / "c.docx")
+    run([rdocx_cli, "comment", "add", path, "--anchor", "beta", "--occurrence", "1", "--author", "A", "--text", "x",
+         "--date", STAMP, "-o", tmp_path / "d.docx"], check=True)
+    assert anchored(tmp_path / "d.docx", 0) == "beta"
+    assert [r.text for r in rdocx.Document.open(tmp_path / "d.docx").tables[0].cell(0, 0).paragraphs[0].runs if r.text] \
+        == ["alpha ", "beta", " gamma"]
 
 
 @pytest.mark.parametrize("wrapper", ["sdt", "ins"])

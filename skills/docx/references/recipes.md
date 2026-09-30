@@ -150,6 +150,7 @@ doc = rdocx.Document.open("report.docx")
 cid = docx_ops.comment_on_text(doc, "about 12 mm", "Measured against which reference?", "Reviewer", "RV")
 rid = doc.reply_to(cid, author="Author", text="The 2019 survey marks.", date=docx_ops.now())
 doc.resolve_comment(cid)
+docx_ops.comment_on_text(doc, "spalled concrete", "Which face of the pier?", "Reviewer", in_tables=True)  # part of a cell
 cell = next(it for it in doc.story_items if it.story.kind == "table_cell" and it.kind == "paragraph" and it.text == "Ref")
 doc.add_comment(rdocx.StoryRunRange(start=rdocx.StoryRunPosition(item=cell, run_index=0),
                                     end=rdocx.StoryRunPosition(item=cell, run_index=len(doc.tables[0].cell(0, 0).paragraphs[0].runs))),
@@ -159,11 +160,15 @@ docx_ops.save_atomic(doc, "commented.docx", "report.docx")
 
 `comment_on_text` splits runs so that the comment covers exactly the anchor, also inside or after a content
 control or a tracked insertion, dates it, and refuses (nothing changed) if rdocx would anchor it anywhere
-else, or if the anchor sits inside a simple field, a smart tag or a custom XML element. `add_comment` without `date=` writes an undated comment.
+else, or if the anchor sits inside a simple field, a smart tag or a custom XML element. `occurrence` counts
+the body's own paragraphs; with `in_tables=True` (`--in-tables`) it counts the paragraphs of table cells,
+nested tables included, and the comment covers exactly the anchor inside the cell. `add_comment` without
+`date=` writes an undated comment.
 
 ```bash
 $R/rdocx comment list --json commented.docx
 $R/python "$SKILL/scripts/docx_ops.py" comment report.docx commented-cli.docx --anchor "about 12 mm" --text "Which reference?" --author "Reviewer"
+$R/python "$SKILL/scripts/docx_ops.py" comment report.docx commented-cell.docx --anchor "spalled concrete" --in-tables --text "Which face?" --author "Reviewer"
 ```
 
 ## Redline two versions, then accept or reject

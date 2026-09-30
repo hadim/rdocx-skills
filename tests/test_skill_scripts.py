@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import rdocx
 
-from builders import every_story_docx, word_textbox_docx, wrapped_run_docx, wrapped_text_docx
+from builders import cell_text_docx, every_story_docx, word_textbox_docx, wrapped_run_docx, wrapped_text_docx
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
@@ -135,6 +135,32 @@ def test_comment_on_text_in_the_report_content_control(report_docx):
     assert anchored(doc.to_bytes(), cid) == "74 out of 100"
 
 
+def test_comment_on_part_of_a_table_cell_paragraph(tmp_path):
+    """in_tables=True counts the anchor in table cells only and anchors on exactly it, the cell's run split
+    with its format kept."""
+    doc = rdocx.Document.open(cell_text_docx(tmp_path / "t.docx"))
+    cid = docx_ops.comment_on_text(doc, "beta", "x", "Reviewer", in_tables=True, date="2026-09-30T12:00:00Z")
+    data = doc.to_bytes()
+    assert anchored(data, cid) == "beta" and docx_ops.comment_landings(data)[cid] is True
+    runs = [r for r in doc.tables[0].cell(0, 0).paragraphs[0].runs if r.text]
+    assert [r.text for r in runs] == ["alpha ", "beta", " gamma"] and all(r.font.bold for r in runs)
+    assert doc.comments[0].date == "2026-09-30T12:00:00Z"
+
+
+def test_comment_on_text_in_tables_counts_nested_cells_and_refuses_past_the_last(tmp_path):
+    doc = rdocx.Document.open(cell_text_docx(tmp_path / "t.docx"))
+    cid = docx_ops.comment_on_text(doc, "beta", "x", "Reviewer", occurrence=2, in_tables=True)
+    data = doc.to_bytes()
+    assert anchored(data, cid) == "beta" and docx_ops.comment_landings(data)[cid] is True
+    assert [r.text for r in doc.tables[0].cell(0, 0).paragraphs[0].runs] == ["alpha beta gamma"]  # not the first
+    before = doc.to_bytes()
+    with pytest.raises(docx_ops.EditError, match="not found in table cells"):
+        docx_ops.comment_on_text(doc, "beta", "x", "Reviewer", occurrence=3, in_tables=True)
+    assert doc.to_bytes() == before
+    cid = docx_ops.comment_on_text(doc, "beta", "x", "Reviewer")  # the default still counts body paragraphs
+    assert docx_ops.comment_landings(doc.to_bytes())[cid] is False
+
+
 def test_command_line_entry_points(report_docx, tmp_path):
     py = str(BIN / "python")  # the runtime Python an agent gets
     script = ROOT / "skills" / "docx" / "scripts" / "docx_ops.py"
@@ -146,6 +172,10 @@ def test_command_line_entry_points(report_docx, tmp_path):
     res = subprocess.run([py, script, "comment", report_docx, tmp_path / "c.docx", "--anchor", "three-span steel and timber",
                           "--text", "x", "--author", "R", "--date", "2026-09-27T12:00:00Z"], capture_output=True, text=True, check=True)
     assert rdocx.Document.open(tmp_path / "c.docx").comments[0].date == "2026-09-27T12:00:00Z"
+    cells = cell_text_docx(tmp_path / "cells.docx")
+    subprocess.run([py, script, "comment", cells, tmp_path / "cc.docx", "--anchor", "beta", "--in-tables", "--text", "x",
+                    "--author", "R"], capture_output=True, text=True, check=True)
+    assert docx_ops.comment_landings(tmp_path / "cc.docx") == {0: True} and anchored(tmp_path / "cc.docx", 0) == "beta"
     path, _ = every_story_docx(tmp_path / "s.docx")
     res = subprocess.run([py, script, "count", path, "NEEDLE"], capture_output=True, text=True, check=True)
     assert '"footnote": 1' in res.stdout

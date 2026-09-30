@@ -59,6 +59,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
    `Paragraph.runs` lists, those inside inline content controls and tracked insertions included. The text
    of a simple field, a smart tag or a custom XML element is in `Paragraph.text` but not in
    `Paragraph.runs`: offsets in `p.text` are not run offsets, and a comment cannot be anchored inside one.
+   For text inside a table cell pass `in_tables=True` (`--in-tables`): `occurrence` then counts cells only.
 6. **Read what reviewers see**: `rdocx text`, `rdocx text --json` or `Paragraph.text` show the accepted
    view (tracked insertions in, deletions out). Both CLI views print the body, then every other story (text
    boxes, headers, footers, footnotes, endnotes, comments), and `docx_ops.py text F` lists every paragraph
@@ -94,7 +95,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Page setup | | `doc.update_section(i, margin_top=rdocx.Inches(0.5), ...)` | `doc.sections` are read-only snapshots |
 | Pictures | | `doc.add_picture(bytes, name, width=, height=)`, `doc.replace_image(rid, bytes)`, `doc.set_picture_size(rid, width, height)` | `replace_image` keeps the old size: resize for a new aspect ratio |
 | Hyperlinks | | `doc.hyperlinks`, `paragraph.add_hyperlink(text, url)`, `doc.set_hyperlink_url(link, url)`, `doc.remove_hyperlink(link)` | removal keeps the text, re-fetch `doc.hyperlinks` after one |
-| Comments, replies, resolution | `docx_ops.py comment`; `rdocx comment list/reply/resolve/remove`, `--date` | `docx_ops.comment_on_text`, `reply_to(date=)`, `resolve_comment`, `remove_comment`; `StoryRunRange` for table cells | always date a comment |
+| Comments, replies, resolution | `docx_ops.py comment`; `rdocx comment list/reply/resolve/remove`, `--date` | `docx_ops.comment_on_text` (`in_tables=True` for part of a table cell), `reply_to(date=)`, `resolve_comment`, `remove_comment`; `StoryRunRange` for whole runs of a cell | always date a comment |
 | Tracked changes | `rdocx revision list/accept/reject --id/--author/--start-date/--end-date` | `doc.revisions`, `accept_all()`, `reject_all()`, `accept_revision_id(id)`, by author, by dates | every story: `r.story.kind` |
 | Redline of two versions | `rdocx compare A B --author N --timestamp T --granularity word [--ignore-comments] -o OUT` | `a.compare(b, author, timestamp, granularity="word", ignore_comments=True)` | the default granularity replaces whole runs, differing comments are refused without the option, a TOC rebuilt on one side shows as revisions too: check the result |
 | Table of contents | `docx_ops.py toc IN OUT` | `doc.rebuild_toc()` | the entry of a numbered heading gets a stop after its number |

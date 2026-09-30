@@ -55,6 +55,20 @@ def wrap_run(paragraph, text, wrapper):
     return paragraph
 
 
+def cell_text_docx(path):
+    """"beta" in a body paragraph, in a cell paragraph whose single bold run is "alpha beta gamma" (table 0,
+    cell 0,0), in a nested table (cell 1,1), and in a last body paragraph: body, cell, nested cell, body."""
+    d = docx.Document()
+    d.add_paragraph("beta in the body")
+    t = d.add_table(rows=2, cols=2)
+    t.cell(0, 0).paragraphs[0].add_run("alpha beta gamma").bold = True
+    t.cell(0, 1).text = "delta"
+    t.cell(1, 1).add_table(rows=1, cols=1).cell(0, 0).text = "nested beta"
+    d.add_paragraph("after beta")
+    d.save(path)
+    return path
+
+
 def wrapped_run_docx(path, wrapper, target="TARGET"):
     """One paragraph: "before " | <wrapper>target</wrapper> | " after"."""
     d = docx.Document()
