@@ -97,10 +97,10 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Hyperlinks | | `doc.hyperlinks`, `paragraph.add_hyperlink(text, url)`, `doc.set_hyperlink_url(link, url)`, `doc.remove_hyperlink(link)` | removal keeps the text, re-fetch `doc.hyperlinks` after one |
 | Comments, replies, resolution | `docx_ops.py comment`; `rdocx comment list/reply/resolve/remove`, `--date` | `docx_ops.comment_on_text` (`in_tables=True` for part of a table cell), `reply_to(date=)`, `resolve_comment`, `remove_comment`; `StoryRunRange` for whole runs of a cell | always date a comment |
 | Tracked changes | `rdocx revision list/accept/reject --id/--author/--start-date/--end-date` | `doc.revisions`, `accept_all()`, `reject_all()`, `accept_revision_id(id)`, by author, by dates | every story: `r.story.kind` |
-| Redline of two versions | `rdocx compare A B --author N --timestamp T --granularity word [--ignore-comments] -o OUT` | `a.compare(b, author, timestamp, granularity="word", ignore_comments=True)` | the default granularity replaces whole runs, differing comments are refused without the option, a TOC rebuilt on one side shows as revisions too: check the result |
+| Redline of two versions | `rdocx compare A B --author N --timestamp T --granularity word [--ignore-comments] -o OUT` | `a.compare(b, author, timestamp, granularity="word", ignore_comments=True)` | the default granularity replaces whole runs, differing comments are refused without the option, a TOC rebuilt on one side shows as revisions too: check the result; a changed picture and a table added at the very end: `references/gaps.md` |
 | Table of contents | `docx_ops.py toc IN OUT` | `doc.rebuild_toc()` | the entry of a numbered heading gets a stop after its number |
 | Page fields | | `doc.update_layout_backed_fields()`, `update_page_fields()` | |
-| PDF | `rdocx convert F --to pdf -o NEW.pdf` | `doc.to_pdf()` | |
+| PDF | `rdocx convert F --to pdf -o NEW.pdf` | `doc.to_pdf()` | the accepted view of tracked changes, no marks: `references/gaps.md` |
 | PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100` | `doc.render_pages(dpi=, pages=[0, 1])` | CLI pages one-based, Python zero-based |
 | Markdown, HTML | `rdocx convert F --to md -o NEW.md` / `--to html` | | body, then text boxes, headers, footers, notes, no comments |
 | Validity | `rdocx validate F` | `Document.open(F).story_items` | every related part and every style id |

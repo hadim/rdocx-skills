@@ -14,7 +14,7 @@ from docx.oxml.ns import nsdecls, qn
 from docx.shared import Pt
 from PIL import Image
 
-from conftest import digest, part, run
+from conftest import STAMP, digest, part, run
 
 
 def spaced(path, font, size, line, lines=3, picture=None):
@@ -233,6 +233,43 @@ def test_cli_convert_and_render(rdocx_cli, report_docx, tmp_path):
     assert (tmp_path / "r.pdf").read_bytes()[:5] == b"%PDF-"
     run([rdocx_cli, "render", report_docx, "-o", tmp_path, "--pages", "1-2", "--dpi", "36"], check=True)
     assert len(list(tmp_path.glob("*.png"))) == 2
+
+
+def redline(path):
+    """A word-level redline: "OLDWORD" deleted, "NEWWORD" inserted."""
+    a, b = rdocx.Document(), rdocx.Document()
+    a.add_paragraph("Keep OLDWORD here.")
+    b.add_paragraph("Keep NEWWORD here.")
+    a.compare(b, "Reviewer", STAMP, granularity="word")
+    a.save(path)
+    return a
+
+
+def pdf_text(pdf, tmp_path):
+    (tmp_path / "t.pdf").write_bytes(pdf)
+    return subprocess.run(["pdftotext", tmp_path / "t.pdf", "-"], capture_output=True, text=True).stdout
+
+
+@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+def test_pdf_of_a_redline_is_the_accepted_view(rdocx_cli, tmp_path):
+    doc = redline(tmp_path / "r.docx")
+    assert "Keep NEWWORD here." in pdf_text(doc.to_pdf(), tmp_path) and "OLDWORD" not in pdf_text(doc.to_pdf(), tmp_path)
+    run([rdocx_cli, "convert", tmp_path / "r.docx", "--to", "pdf", "-o", tmp_path / "r.pdf"], check=True)
+    assert "OLDWORD" not in pdf_text((tmp_path / "r.pdf").read_bytes(), tmp_path)
+
+
+@pytest.mark.gap("render-tracked-view")
+@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+def test_pdf_of_a_redline_can_show_its_revisions(rdocx_cli, tmp_path):
+    """The Rust API renders a tracked view (RenderOptions { revision_view: RevisionView::Tracked }: deletions struck
+    through, insertions underlined, a change bar); Python and the CLI expose only the accepted view."""
+    doc = redline(tmp_path / "r.docx")
+    tracked = pdf_text(doc.to_pdf(revision_view="tracked"), tmp_path)
+    assert "OLDWORD" in tracked and "NEWWORD" in tracked
+    assert len(doc.render_pages(dpi=36, pages=[0], revision_view="tracked")) == 1
+    run([rdocx_cli, "convert", tmp_path / "r.docx", "--to", "pdf", "--revision-view", "tracked", "-o",
+         tmp_path / "r.pdf"], check=True)
+    assert "OLDWORD" in pdf_text((tmp_path / "r.pdf").read_bytes(), tmp_path)
 
 
 @pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")

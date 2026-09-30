@@ -24,6 +24,13 @@ GAPS = {
     # upstream: tensorbee/rdocx#243 (both style gaps)
     "styles-duplicate-ids": "add_style raises \"invalid style graph: duplicate style ID\" when styles.xml repeats a style id",
     "styles-several-defaults": "add_style raises \"invalid style graph: style type '...' has more than one default\" when styles.xml marks several styles of one type as default",
+    # docx: comparison and rendering
+    # upstream: tensorbee/rdocx#255
+    "compare-final-table": "compare refuses a table added or removed with a paragraph at the very end of the body: \"comparison needs an adjacent paragraph for a final paragraph change\"",
+    # upstream: tensorbee/rdocx#254
+    "compare-picture-change": "compare of a picture whose image changed: no revision and the old image kept, or a refusal (\"comparison acceptance does not reproduce the edited stories\") when another paragraph changes too",
+    # upstream: tensorbee/rdocx#253
+    "render-tracked-view": "to_pdf, render_pages and rdocx convert render only the accepted view of tracked changes; the Rust RevisionView::Tracked is not exposed",
     # docx: saving
     # upstream: tensorbee/rdocx#245
     "edit-reserializes-part": "an edit rewrites the whole part it touches, indented, with xmlns:w declared again on every element that carries w:rsid*",
