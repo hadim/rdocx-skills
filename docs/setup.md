@@ -131,7 +131,14 @@ whose release exists and whose hashes are recorded, together with the tests and 
    (it finds the release and records its URL and hashes), `install` and `test`. Every strict xfail that now passes means a gap is closed: remove its marker and its
    entry in `tests/gaps.py`, and update both skills' `references/gaps.md` and tables. Every new failure is a
    regression: keep the previous pin, or narrow what the skills claim.
-3. Commit the lock, the tests and the skill changes together, and merge into `main`. The build workflow then
+3. Read the skills again against the new build before merging: `tests/test_skill_docs.py` already fails on a
+   cited Python name, keyword, CLI command or flag that the build lacks, on a gap page out of step with
+   `tests/gaps.py`, and on a SKILL.md of 200 lines or more; what it cannot judge is whether each sentence still
+   holds. Go through both SKILL.md files, their references (`cli.md`, `python-api.md`, `gaps.md`,
+   `interop.md`) and `skills/*/scripts` with the new build installed, looking for a workaround a closed gap made
+   useless, advice about a behaviour that changed, and a limitation stated without its gap key. An agent can do
+   this pass in a few minutes (report only); fix what it finds on the same branch.
+4. Commit the lock, the tests and the skill changes together, and merge into `main`. The build workflow then
    marks the pinned release Latest, so the releases page lists it first (candidates stay unmarked).
 
 A bump pushed to `main` before its release exists still works: the build workflow runs on the change of the

@@ -7,7 +7,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 
 ## Map
 
-- `skills/<name>/SKILL.md`: what an agent reads first; keep it under 200 lines, details go to `references/`.
+- `skills/<name>/SKILL.md`: what an agent reads first; keep it under 200 lines, details go to `references/`
+  (`tests/test_skill_docs.py` checks the size, and every Python name, keyword, CLI command and flag the skills cite).
 - `skills/<name>/references/`: `cli.md`, `python-api.md`, `recipes.md` (every block is executed by
   `tests/test_docs_snippets.py`), `gaps.md`, and `interop.md` for docx.
 - `skills/<name>/scripts/`: helpers importable and runnable as commands; tested in `tests/test_skill_scripts.py`.
@@ -52,7 +53,7 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `d4d7c8af`). Release `rdocx-20260930-d75b536acc31` built by `build.yml` for linux-x86_64, linux-aarch64
   (ubuntu-22.04 runners, glibc 2.35) and macos-arm64 (macos-14), with provenance attestations; the lock records
   its URL and hashes. Back to tensorbee/rdocx once those pull requests land there.
-- Suite: on macos-arm64 with the release installed and the hashes in the lock, 543 passed and 8 strict xfails,
+- Suite: on macos-arm64 with the release installed and the hashes in the lock, 567 passed and 8 strict xfails,
   for three gaps met in real use and reported upstream: compare-final-table (5), compare-picture-change (2) and
   render-tracked-view. This pin closed the five earlier ones (decimal-measurements, docpr-duplicate-ids,
   styles-duplicate-ids, styles-several-defaults, edit-reserializes-part: 25 XPASS). The release build ran the
