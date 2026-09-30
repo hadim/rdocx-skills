@@ -1,7 +1,9 @@
 """scripts/rdocx_env.py and the releases of this repository: `install` downloads the pinned files and checks them
-against the lock, `lock --write --release` records a release, `bump` moves the pin. The release is served from a
+against the lock, `lock --write --release` records a release (and finds it by commit among the repository's releases when the lock
+names none yet), `bump` moves the pin. The release is served from a
 local folder through RDOCX_RELEASE_URL (file://), and the script runs from a copy of the repository without its
 dist folder. The download tests are skipped when this machine has no verified build to serve."""
+import io
 import json
 import os
 import shutil
@@ -104,8 +106,40 @@ def test_bump_to_a_commit_empties_the_hashes(tmp_path):
     assert res.returncode == 0, res.stderr
     lock = json.loads((repo / "rdocx.lock.json").read_text())
     assert lock["commit"] == other and lock["ref"] == other
-    assert lock["release"] == LOCK["release"].rsplit("/", 1)[0] + "/rdocx-0123456789ab"
+    assert lock["release"] == "" and "rdocx-<date>-0123456789ab" in res.stderr
     assert lock["artifacts"] == lock["installed_files"] == lock["versions"] == {}
     res = cmd(repo, tmp_path / "home", tmp_path, "bump", other)
     assert res.returncode == 0 and "already pinned" in res.stderr
     assert json.loads((repo / "rdocx.lock.json").read_text()) == lock
+
+
+def test_release_url_is_the_release_whose_tag_ends_with_the_commit():
+    commit = "0123456789abcdef0123456789abcdef01234567"
+    releases = [{"tag_name": "rdocx-20260929-f2fa36d1d18a"}, {"tag_name": "rdocx-20260930-0123456789ab"}]
+    assert (rdocx_env.release_url("owner/repo", releases, commit)
+            == "https://github.com/owner/repo/releases/download/rdocx-20260930-0123456789ab")
+
+
+@pytest.mark.parametrize("tags, message", [
+    ([], "no release of commit 0123456789ab"),
+    (["rdocx-20260929-0123456789ab", "rdocx-20260930-0123456789ab"], "several releases of commit 0123456789ab"),
+])
+def test_release_url_refuses_no_or_several_releases(tags, message, capsys):
+    with pytest.raises(SystemExit):
+        rdocx_env.release_url("owner/repo", [{"tag_name": t} for t in tags], "0123456789ab" + "0" * 28)
+    assert message in capsys.readouterr().err
+
+
+def test_github_releases_reads_every_page_and_sends_the_token(monkeypatch):
+    pages, seen = {1: [{"tag_name": f"t{i}"} for i in range(100)], 2: [{"tag_name": "last"}]}, []
+
+    def urlopen(req, timeout):
+        seen.append((req.full_url, req.get_header("Authorization")))
+        return io.BytesIO(json.dumps(pages[int(req.full_url.rsplit("=", 1)[1])]).encode())
+
+    monkeypatch.setattr(rdocx_env.urllib.request, "urlopen", urlopen)
+    monkeypatch.delenv("GH_TOKEN", raising=False)
+    monkeypatch.setenv("GITHUB_TOKEN", "secret")
+    assert len(rdocx_env.github_releases("owner/repo")) == 101
+    assert seen == [(f"https://api.github.com/repos/owner/repo/releases?per_page=100&page={n}", "Bearer secret")
+                    for n in (1, 2)]

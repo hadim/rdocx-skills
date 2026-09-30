@@ -16,7 +16,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - `rdocx.lock.json`: the pin (upstream commit and ref, release URL, SHA-256 per platform). `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
 - `.github/workflows/`: `ci.yml` (suite on every push and PR), `build.yml` (builds one upstream commit on
-  three runners and publishes the release `rdocx-<commit12>`).
+  three runners and publishes the release `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first; the lock's
+  `release` URL is the only record of the tag, filled by `lock --write --release`).
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin.
