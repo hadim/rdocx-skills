@@ -70,14 +70,14 @@ story. JSON record: `main_story_revisions`, `diagnostics`, `scope`, `output`. Th
 `run`: one changed word shows as its whole run deleted and re-inserted. Pass `--granularity word` for a
 redline a person reads. A pair whose comments differ is refused unless `--ignore-comments` (the original's
 comments are kept, the edited file's dropped). A pair whose edited side had
-its TOC rebuilt is refused (gap compare-rebuilt-toc): check the exit code and read the redline before
-presenting it.
+its TOC rebuilt compares, and the rebuilt TOC entries show as revisions next to the edit: check the exit code
+and read the redline before presenting it.
 
 ```bash
 rdocx toc rebuild F -o OUT [--json]
 ```
-Rebuilds existing TOC fields from the headings and rdocx's pagination (prints `Entries: N`). The entry of a numbered heading has its title pushed to the right
-margin when the TOC style has no stop before the page number (gap toc-numbered-entries).
+Rebuilds existing TOC fields from the headings and rdocx's pagination (prints `Entries: N`). The entry of a numbered heading gets a left stop after its
+number, so its title stays on the left when the TOC style has only the page-number stop.
 
 ## Rendering and conversion
 

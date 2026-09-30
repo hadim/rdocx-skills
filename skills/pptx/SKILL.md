@@ -48,9 +48,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 4. **Walk groups**: `slide.shapes` lists top-level shapes; a group's children are in `shape.shapes`
    (`shape_type == MSO_SHAPE_TYPE.GROUP`, value 6). `pptx_ops.walk(slide.shapes)` yields all of them.
 5. **Check the fit after any text change**: `prs.text_layout()` (or `pptx_ops.py overflow`) reports every
-   frame whose text overflows, with rpptx's own line breaks; then render the slide and look at it. Its lines
-   under percentage spacing are short and it can break before a comma (gaps pptx-line-pitch,
-   pptx-line-breaks): a frame it says fits is at risk when `height * 1.2` exceeds `usable.height`.
+   frame whose text overflows, with rpptx's own line breaks; then render the slide and look at it.
 6. **The deck will be opened elsewhere** (PowerPoint, Google Slides, Keynote, LibreOffice): edit in place,
    keep placeholders and layouts, never rebuild a deck to change it.
 
@@ -75,7 +73,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Hyperlinks | | `run.hyperlink.address` (get and set) | runs only |
 | Metadata | `rpptx inspect --json F` | | read-only; no core properties API |
 | Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `resolve_comment`, `remove_comment`, `move_comment` | |
-| Text fit | | `prs.text_layout(width_factor=1.0)`, `pptx_ops.overflowing(F)` | heights short under percentage spacing, breaks before punctuation (gaps) |
+| Text fit | | `prs.text_layout(width_factor=1.0)`, `pptx_ops.overflowing(F)` | rpptx's line breaks; `width_factor=0.95` for a margin |
 | PDF | `rpptx convert F --to pdf -o NEW.pdf` | `prs.to_pdf()`, `prs.to_notes_pdf()` | |
 | PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)` | CLI slides one-based, Python zero-based |
 | From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
