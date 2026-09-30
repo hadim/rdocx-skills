@@ -1,9 +1,10 @@
 # Builds the rdocx and rpptx CLIs and wheels of one upstream commit on three native runners, runs the acceptance
-# suite on each, and publishes them as the release rdocx-<first 12 characters of the commit> of this repository,
-# which `rdocx_env.py install` downloads and checks against the lock. Runs on a bump (rdocx.lock.json changed on
-# main), by hand on any upstream tag, branch or commit, and weekly on upstream main HEAD. A release that exists is
-# never rebuilt nor overwritten. A failing suite does not block the release (a bump that closes gaps fails it on
-# purpose): its summary goes into the release notes.
+# suite on each, and publishes them as the release rdocx-<UTC build date YYYYMMDD>-<first 12 characters of the
+# commit> of this repository, which `rdocx_env.py lock --write --release` records in the lock and
+# `rdocx_env.py install` downloads and checks against it. Runs on a bump (rdocx.lock.json changed on main), by hand
+# on any upstream tag, branch or commit, and weekly on upstream main HEAD. A commit has at most one release: one
+# whose tag ends with -<commit12> is never rebuilt nor overwritten. A failing suite does not block the release (a
+# bump that closes gaps fails it on purpose): its summary goes into the release notes.
 name: build
 
 on:
@@ -30,6 +31,7 @@ jobs:
       ref: ${{ steps.plan.outputs.ref }}
       repo: ${{ steps.plan.outputs.repo }}
       tag: ${{ steps.plan.outputs.tag }}
+      date: ${{ steps.plan.outputs.date }}
       exists: ${{ steps.plan.outputs.exists }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -48,9 +50,20 @@ jobs:
           commit=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["commit"])')
           ref=$(python -c 'import json; print(json.load(open("rdocx.lock.json")).get("ref", ""))')
           repo=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["upstream"].removeprefix("https://github.com/"))')
-          tag="rdocx-${commit:0:12}"
-          if gh release view "$tag" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then exists=true; else exists=false; fi
-          { echo "commit=$commit"; echo "ref=$ref"; echo "repo=$repo"; echo "tag=$tag"; echo "exists=$exists"; } >> "$GITHUB_OUTPUT"
+          c12=${commit:0:12}
+          date=$(date -u +%Y-%m-%d)
+          # The release the lock names (a bump empties it), else any release whose tag ends with -<commit12>, else
+          # a new tag dated today (UTC): a commit is never built twice.
+          locked=$(python -c 'import json; print(json.load(open("rdocx.lock.json")).get("release", "").rstrip("/").rsplit("/", 1)[-1])')
+          tag=
+          case "$locked" in
+            *-"$c12") if gh release view "$locked" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then tag=$locked; fi ;;
+          esac
+          if [ -z "$tag" ]; then
+            tag=$(gh release list -R "$GITHUB_REPOSITORY" --limit 1000 --json tagName --jq '.[].tagName' | grep -e "-$c12\$" | head -n 1 || true)
+          fi
+          if [ -n "$tag" ]; then exists=true; else exists=false; tag="rdocx-${date//-/}-$c12"; fi
+          { echo "commit=$commit"; echo "ref=$ref"; echo "repo=$repo"; echo "tag=$tag"; echo "date=$date"; echo "exists=$exists"; } >> "$GITHUB_OUTPUT"
           echo "$repo@$commit ($ref): release $tag, exists already: $exists" >> "$GITHUB_STEP_SUMMARY"
 
   build:
@@ -157,6 +170,7 @@ jobs:
       REF: ${{ needs.plan.outputs.ref }}
       REPO: ${{ needs.plan.outputs.repo }}
       TAG: ${{ needs.plan.outputs.tag }}
+      DATE: ${{ needs.plan.outputs.date }}
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -197,4 +211,20 @@ jobs:
             cat "$RUNNER_TEMP"/artifacts/suite-*/suite-*.md
           } > notes.md
           gh release create "$TAG" assets/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "rdocx ${COMMIT:0:12} ($REF)" --notes-file notes.md --latest=false
+            --title "rdocx $DATE ${COMMIT:0:12} ($REF)" --notes-file notes.md --latest=false
+
+  # The pinned release is the one `install` downloads: on a bump pushed to main, mark it Latest, so the releases
+  # page shows it first. The plan's tag is the one the lock names, or the one it will name once the release is
+  # recorded. Candidate releases built by hand or by the weekly run stay unmarked.
+  latest:
+    needs: [plan, release]
+    if: always() && github.event_name == 'push' && (needs.plan.outputs.exists == 'true' || needs.release.result == 'success')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Mark the pinned release Latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --latest

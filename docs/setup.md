@@ -4,7 +4,8 @@ The skills never use whatever rdocx happens to be installed. They use the build 
 
 - `upstream` and `commit`: the rdocx source, by full 40-character git hash; `ref`: the tag or branch it was
   pinned from (for the reader);
-- `release`: where this repository's build workflow published the files of that commit;
+- `release`: where this repository's build workflow published the files of that commit (empty after a bump,
+  until `lock --write --release` finds the release and records its URL);
 - `artifacts.<platform>`: the SHA-256 of the two CLIs and the two wheels built from that commit, per
   platform (`linux-x86_64`, `linux-aarch64`, `macos-arm64`);
 - `installed_files.<platform>`: the SHA-256 of every file the two wheels install (modules, stubs, native
@@ -22,8 +23,8 @@ python3 scripts/rdocx_env.py install --build         # compile the pinned commit
 python3 scripts/rdocx_env.py install --from DIR      # from a folder of prebuilt files, checked against the lock
 python3 scripts/rdocx_env.py build [--target linux-aarch64]
 python3 scripts/rdocx_env.py lock [--write] [--platform P]  # compare (or record) a local dist folder
-python3 scripts/rdocx_env.py lock --write --release  # record every platform of the release named in the lock
-python3 scripts/rdocx_env.py bump REF                # pin an upstream tag, branch or full commit hash
+python3 scripts/rdocx_env.py lock --write --release  # record every platform of the release named in the lock (found first if none)
+python3 scripts/rdocx_env.py bump REF                # pin an upstream tag, branch or full commit hash (release and hashes emptied)
 python3 scripts/rdocx_env.py test [pytest args]      # the acceptance suite on the installed build
 python3 scripts/rdocx_env.py paths
 ```
@@ -107,10 +108,16 @@ The Linux files are built on Ubuntu 22.04 runners: they need glibc 2.35 or later
   linux-x86_64 (the release download, or a build right after a bump), then the acceptance suite.
 - `.github/workflows/build.yml`: builds one upstream commit on three native runners (ubuntu-22.04,
   ubuntu-22.04-arm, macos-14), runs the suite on each, and publishes the release
-  `rdocx-<first 12 characters of the commit>` with `SHA256SUMS`, provenance attestations, and the suite
-  summaries in its notes (gaps closed, other failures). It runs on a bump (the lock changed on `main`), by
-  hand on any upstream tag, branch or commit (Actions, build, Run workflow, `ref`), and weekly on upstream
-  `main` HEAD. An existing release is never rebuilt or overwritten; a failing suite does not block it.
+  `rdocx-<YYYYMMDD>-<first 12 characters of the commit>` (the UTC build date first, so the releases sort by
+  date; title `rdocx <YYYY-MM-DD> <commit12> (<ref>)`) with `SHA256SUMS`, provenance attestations, and the
+  suite summaries in its notes (gaps closed, other failures). It runs on a bump (the lock changed on `main`),
+  by hand on any upstream tag, branch or commit (Actions, build, Run workflow, `ref`), and weekly on upstream
+  `main` HEAD. A commit has at most one release: when a release tag already ends with `-<commit12>`, it is
+  never rebuilt or overwritten; a failing suite does not block it.
+- The tag cannot be derived from the commit (the date is the build's), so the lock's `release` URL is the
+  only source of truth: `lock --write --release` lists this repository's releases through the GitHub API
+  (unauthenticated, or with `GH_TOKEN` / `GITHUB_TOKEN` when set), takes the one whose tag ends with
+  `-<commit12>`, and records its URL.
 
 ## Moving the pin
 
@@ -118,13 +125,14 @@ Each commit of `main` is a version of the plugin (it has no version number), so 
 whose release exists and whose hashes are recorded, together with the tests and skills that match it:
 
 1. Build the candidate: Actions, build, Run workflow, with `ref` set to an upstream tag, branch or full commit
-   hash. It publishes the release `rdocx-<commit12>`, with the suite's results on three platforms in its
-   notes (gaps closed, other failures). The weekly run does the same for upstream `main` HEAD.
-2. On a branch: `bump REF` (the commit, the release name, empty hashes), then `lock --write --release`,
-   `install` and `test`. Every strict xfail that now passes means a gap is closed: remove its marker and its
+   hash. It publishes the release `rdocx-<YYYYMMDD>-<commit12>`, with the suite's results on three platforms
+   in its notes (gaps closed, other failures). The weekly run does the same for upstream `main` HEAD.
+2. On a branch: `bump REF` (the commit, an empty release and empty hashes), then `lock --write --release`
+   (it finds the release and records its URL and hashes), `install` and `test`. Every strict xfail that now passes means a gap is closed: remove its marker and its
    entry in `tests/gaps.py`, and update both skills' `references/gaps.md` and tables. Every new failure is a
    regression: keep the previous pin, or narrow what the skills claim.
-3. Commit the lock, the tests and the skill changes together, and merge into `main`.
+3. Commit the lock, the tests and the skill changes together, and merge into `main`. The build workflow then
+   marks the pinned release Latest, so the releases page lists it first (candidates stay unmarked).
 
 A bump pushed to `main` before its release exists still works: the build workflow runs on the change of the
 lock and publishes the release; `lock --write --release` then fills the hashes in a second commit. Until

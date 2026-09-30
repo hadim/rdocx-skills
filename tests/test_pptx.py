@@ -327,7 +327,6 @@ def test_thumbnail_and_diff(rpptx_cli, deck_pptx, tmp_path):
     assert run([rpptx_cli, "diff", deck_pptx, deck_pptx], check=True).stdout.strip() == ""
 
 
-@pytest.mark.gap("pptx-builtin-table-styles")
 def test_builtin_table_style_is_drawn(tmp_path):
     """python-pptx's default table style is PowerPoint's built-in Medium Style 2 - Accent 1, by GUID: its
     header row is filled with the accent colour (4F81BD in the default theme)."""
@@ -362,26 +361,21 @@ def arial_box(path, paragraphs, width_pt=300, spacing=None):
     return path
 
 
-@pytest.mark.gap("pptx-line-pitch")
 def test_line_pitch_at_100_percent_covers_the_glyphs(tmp_path):
-    """a:spcPct 100 %: rpptx multiplies the font size (14.0 pt), below the glyphs' 1.117 em (15.6 pt), so lines
-    overlap and a frame reported as fitting overflows; LibreOffice lays 100 % at 1.2 em (16.8 pt)."""
+    """a:spcPct 100 %: one line of 14 pt Arial is 1.2 em (16.8 pt), as in LibreOffice, above the glyphs' 1.117 em."""
     lines = rpptx.Presentation(arial_box(tmp_path / "s.pptx", ["One", "Two"], spacing=1.0)).text_layout()[0].lines
-    assert lines[1].baseline - lines[0].baseline >= 14 * 1.117
+    assert abs(lines[1].baseline - lines[0].baseline - 14 * 1.2) < 0.1
 
 
-def test_line_pitch_margin_flags_a_frame_that_overflows_elsewhere(tmp_path):
-    """Six 14 pt lines at 100 % in a 100 pt box (92.8 pt usable): LibreOffice lays them 100.9 pt high. The margin
-    that gaps.md gives (height x 1.2 against the usable height) flags the frame whatever `overflow` says."""
+def test_six_lines_at_100_percent_overflow_as_in_libreoffice(tmp_path):
+    """Six 14 pt lines at 100 % in a 100 pt box (92.8 pt usable): LibreOffice lays them 100.9 pt high."""
     frame = rpptx.Presentation(arial_box(tmp_path / "s.pptx", ["Line"] * 6, spacing=1.0)).text_layout()[0]
-    assert frame.usable.height < 93 and frame.height * 1.2 > frame.usable.height
+    assert frame.usable.height < 93 and abs(frame.height - 100.9) < 0.5 and frame.overflow
 
 
-@pytest.mark.gap("pptx-line-breaks")
 def test_no_line_starts_with_a_comma_a_space_or_a_hyphen(tmp_path):
-    """Frame widths from 150 to 350 pt; at 273 pt rpptx breaks '...still in service' / ', or ...', where UAX #14
-    forbids a break before a comma and LibreOffice breaks after 'in'. A paragraph whose direction is set (rtl="0"
-    in python-pptx's text styles) goes through a breaker that breaks at every word boundary."""
+    """Frame widths from 150 to 350 pt, in a paragraph whose direction is set (rtl="0" in python-pptx's text
+    styles): UAX #14 forbids a break before a comma, and LibreOffice breaks after 'in' where a comma follows."""
     text = "Repainted in 3 weeks while still in service, or re-coated next spring"
     prs = rpptx.Presentation(arial_box(tmp_path / "b.pptx", [text]))
     starts = set()

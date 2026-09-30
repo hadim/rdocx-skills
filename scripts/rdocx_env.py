@@ -18,8 +18,10 @@ commit and, per platform, the SHA-256 of the two CLIs, of the two wheels, and of
                                         compare (or record) a platform's dist hashes with the lock
   rdocx_env.py lock --write --release [--platform P]
                                         download the release's files, hash them here, record every platform
-  rdocx_env.py bump REF                 pin an upstream tag, branch or full commit: new commit and release
-                                        name, hashes emptied until the release is built and recorded
+                                        (when the lock names no release yet, find the pinned commit's one
+                                        among this repository's releases and record its URL first)
+  rdocx_env.py bump REF                 pin an upstream tag, branch or full commit: new commit, release and
+                                        hashes emptied until the release is built and recorded
   rdocx_env.py paths                    print RDOCX=..., RPPTX=..., RDOCX_PY=... for eval in a shell
   rdocx_env.py test [PYTEST ARGS]       run tests/ on the installed build, from a separate environment that
                                         holds the hash-pinned test dependencies
@@ -34,10 +36,12 @@ for the platform or with --allow-local; `lock --write` records them after review
 CLIs, the wrapper, every file of the two packages (and refuses any other file there), the interpreter
 link, pyvenv.cfg and the start-up files (.pth, sitecustomize) recorded at install.
 
-Releases: the build workflow of this repository publishes, per upstream commit, a release `rdocx-<first 12
-characters of the commit>` whose assets are `<platform>.<file>` plus a SHA256SUMS listing them. A downloaded
-file is trusted only through the lock: it lands in RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the
-same staging and hash check as any dist folder.
+Releases: the build workflow of this repository publishes, per upstream commit, a release `rdocx-<UTC build
+date YYYYMMDD>-<first 12 characters of the commit>` whose assets are `<platform>.<file>` plus a SHA256SUMS
+listing them. The tag cannot be derived from the commit alone: the lock's `release` URL is the only source of
+truth, filled by `lock --write --release` from the GitHub API listing of the releases (GH_TOKEN or GITHUB_TOKEN
+is sent when set). A downloaded file is trusted only through the lock: it lands in
+RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the same staging and hash check as any dist folder.
 
 Environment: RDOCX_HOME (default ~/.local/share/rdocx-skills), RDOCX_SRC (a local clone of rdocx; default:
 a sibling `rdocx` folder of this repository), RDOCX_DIST (a folder holding <commit>/<platform>/),
@@ -64,6 +68,7 @@ REPO = Path(__file__).resolve().parent.parent
 LOCK_PATH = REPO / "rdocx.lock.json"
 HOME = Path(os.environ.get("RDOCX_HOME", Path.home() / ".local" / "share" / "rdocx-skills"))
 GIT_ENV = dict(os.environ, GIT_NO_REPLACE_OBJECTS="1")
+RELEASES_REPO = "hadim/rdocx-skills"  # the GitHub repository whose releases the lock names
 TRIPLES = {"linux-x86_64": "x86_64-unknown-linux-gnu", "linux-aarch64": "aarch64-unknown-linux-gnu"}
 ZIGBUILD_VERSION = "0.20.1"
 
@@ -198,8 +203,32 @@ def wheel_files(wheel):
 
 
 # ---------------------------------------------------------------- releases
-def release_tag(commit):
-    return f"rdocx-{commit[:12]}"
+def github_releases(repo):
+    """Every release of `repo` from the GitHub REST API, page by page (a token from GH_TOKEN or GITHUB_TOKEN,
+    if set, raises the rate limit)."""
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    releases, page = [], 1
+    while True:
+        req = urllib.request.Request(f"https://api.github.com/repos/{repo}/releases?per_page=100&page={page}",
+                                     headers={"Accept": "application/vnd.github+json"})
+        if token:
+            req.add_header("Authorization", f"Bearer {token}")
+        with urllib.request.urlopen(req, timeout=60) as res:
+            batch = json.load(res)
+        releases += batch
+        if len(batch) < 100:
+            return releases
+        page += 1
+
+
+def release_url(repo, releases, commit):
+    """Download URL of the one release of `commit`: its tag ends with `-<first 12 characters of the commit>`."""
+    tags = sorted(r["tag_name"] for r in releases if r.get("tag_name", "").endswith(f"-{commit[:12]}"))
+    if not tags:
+        die(f"{repo} has no release of commit {commit[:12]} yet: run the build workflow on it first")
+    if len(tags) > 1:
+        die(f"{repo} has several releases of commit {commit[:12]} ({', '.join(tags)}): name one in the lock")
+    return f"https://github.com/{repo}/releases/download/{tags[0]}"
 
 
 def release_base(lock):
@@ -605,16 +634,18 @@ def main():
         if commit == lock["commit"]:
             say(f"{args.ref} is {commit}, already pinned")
             return
-        lock.update(commit=commit, ref=args.ref, versions={}, artifacts={}, installed_files={})
-        if lock.get("release"):
-            lock["release"] = f"{lock['release'].rstrip('/').rsplit('/', 1)[0]}/{release_tag(commit)}"
+        lock.update(commit=commit, ref=args.ref, release="", versions={}, artifacts={}, installed_files={})
         write_lock(lock)
-        say(f"pinned {args.ref} = {commit}; no hashes recorded yet. Next: `install --build` and `test` here, then "
-            f"push: the build workflow publishes the release {release_tag(commit)}; then `lock --write --release`.")
+        say(f"pinned {args.ref} = {commit}; no release nor hashes recorded yet. Next: `install --build` and `test` "
+            f"here, then push: the build workflow publishes the release rdocx-<date>-{commit[:12]}; then "
+            "`lock --write --release` finds it and records it.")
         return
     if args.cmd == "lock" and args.release:
         if not args.write:
             die("--release records hashes: use it with --write")
+        if not lock.get("release"):
+            lock["release"] = release_url(RELEASES_REPO, github_releases(RELEASES_REPO), lock["commit"])
+            say(f"release: {lock['release']}")
         base = release_base(lock)
         if not base:
             die("the lock names no release")

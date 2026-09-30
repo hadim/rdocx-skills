@@ -122,13 +122,11 @@ def pdf_words(pdf, tmp_path):
     return [(float(a), float(b), w) for a, b, w in boxes]
 
 
-@pytest.mark.gap("toc-numbered-entries")
-@pytest.mark.gap("tab-stops")
 @pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
 def test_toc_entry_of_a_numbered_heading_keeps_its_title_on_the_left(tmp_path):
     """The TOC 1 style carries one right dot-leader tab at the text width and no other stop. The rebuilt entry is
-    number, tab, title, tab, page, with no stop for the first tab: the title goes to the right stop (LibreOffice
-    draws it right-aligned there). Needs both gaps closed: rdocx also lays custom stops 36 pt early."""
+    number, tab, title, tab, page: rebuild_toc gives the entry a left stop after the number, as Word does, and the
+    title is laid out there, not at the right stop."""
     d = arial_document()
     toc1 = d.styles.add_style("toc 1", WD_STYLE_TYPE.PARAGRAPH)
     toc1.element.set(qn("w:styleId"), "TOC1")
@@ -154,7 +152,7 @@ def test_toc_entry_of_a_numbered_heading_keeps_its_title_on_the_left(tmp_path):
     doc = rdocx.Document.open(tmp_path / "toc.docx")
     assert doc.rebuild_toc().entry_count == 2
     title = next(w for w in pdf_words(doc.to_pdf(), tmp_path) if w[2].startswith("Scope"))
-    assert title[0] < 90 + 432 / 2  # left half of the line; today x 486, the right stop minus 36 pt
+    assert title[0] < 90 + 432 / 2  # left half of the line
 
 
 def tabbed(path, align, leader="none"):
@@ -169,18 +167,16 @@ def tabbed(path, align, leader="none"):
     return rdocx.Document.open(path).to_pdf()
 
 
-@pytest.mark.gap("tab-stops")
 @pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
 def test_text_after_a_right_tab_ends_at_the_stop(tmp_path):
-    """Today "12" starts 36 pt before the stop (x 204), so it ends 23.8 pt short; LibreOffice ends it at 240.1."""
+    """"12" ends at the stop (x 240), as in LibreOffice (240.1)."""
     number = next(w for w in pdf_words(tabbed(tmp_path / "r.docx", "right", "dot"), tmp_path) if w[2].endswith("12"))
     assert abs(number[1] - 240) <= 1
 
 
-@pytest.mark.gap("tab-stops")
 @pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
 def test_text_after_a_left_tab_starts_at_the_stop(tmp_path):
-    """Today "12" starts at x 204, 36 pt before the stop; LibreOffice starts it at 240.1."""
+    """"12" starts at the stop (x 240), as in LibreOffice (240.1)."""
     number = next(w for w in pdf_words(tabbed(tmp_path / "l.docx", "left"), tmp_path) if w[2].endswith("12"))
     assert abs(number[0] - 240) <= 1
 
@@ -190,12 +186,11 @@ def test_layout_pages_and_fragments(report_docx):
     doc = rdocx.Document.open(report_docx)
     frags = doc.layout()
     assert frags[0].body_index == 0 and frags[0].physical_page == 1
-    assert 12 <= max(f.physical_page for f in frags) <= 13  # 12 today, 13 in LibreOffice: gap line-gap
+    assert max(f.physical_page for f in frags) == 13  # as LibreOffice
     page = doc.layout_page(0)
     assert page.width == 612.0 and page.height == 792.0
 
 
-@pytest.mark.gap("line-gap")
 def test_single_line_height_includes_the_line_gap(tmp_path):
     frags = rdocx.Document.open(spaced(tmp_path / "c.docx", "Calibri", 11, 240)).layout()
     assert abs(frags[0].bounds.height - 11 * 1.2207) < 0.2
@@ -203,10 +198,9 @@ def test_single_line_height_includes_the_line_gap(tmp_path):
 
 def test_single_line_height_arial_is_close_to_word(tmp_path):
     frags = rdocx.Document.open(spaced(tmp_path / "a.docx", "Arial", 12, 240)).layout()
-    assert 12 * 1.117 - 0.2 < frags[0].bounds.height < 12 * 1.150 + 0.2  # 1.117 today, Word 1.150: gap line-gap
+    assert abs(frags[0].bounds.height - 12 * 1.150) < 0.2  # Word 1.150 em
 
 
-@pytest.mark.gap("picture-line-spacing")
 def test_picture_line_keeps_the_picture_height(tmp_path):
     frags = rdocx.Document.open(spaced(tmp_path / "p.docx", "Calibri", 11, 264, lines=1, picture=400)).layout()
     assert frags[1].bounds.height < 405  # Word: 402.7 pt from the lead line to the caption
@@ -219,13 +213,8 @@ def caption_page(doc):
     return next(f.physical_page for f in doc.layout() if f.body_index == bi)
 
 
-def test_figure_caption_page_on_the_report(report_docx):
-    assert caption_page(rdocx.Document.open(report_docx)) in (5, 6)
-
-
-@pytest.mark.gap("picture-line-spacing")
 def test_figure_caption_stays_with_its_figure_on_the_report(report_docx):
-    """Word and LibreOffice keep the caption of figure 1 on page 5; rdocx pushes it to page 6."""
+    """Word and LibreOffice keep the caption of figure 1 on page 5."""
     assert caption_page(rdocx.Document.open(report_docx)) == 5
 
 

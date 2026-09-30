@@ -178,8 +178,8 @@ $R/rdocx revision accept redline.docx --author "Reviewer" -o accepted.docx --jso
 
 The redline holds only the edit, in every story (`revision list` shows each revision's story), and
 `--granularity word` marks only the changed words (the default, `run`, deletes and re-inserts the whole
-run). In Python: `v1.compare(v2, "Reviewer", timestamp, granularity="word")`. Compare first, then rebuild
-the TOC: the other order is refused (gap compare-rebuilt-toc).
+run). In Python: `v1.compare(v2, "Reviewer", timestamp, granularity="word")`. Compare before rebuilding the
+TOC: a TOC rebuilt on the edited side adds its entries to the redline as revisions.
 
 ## Table of contents and page fields
 
@@ -209,7 +209,7 @@ ls "$pages"
 
 `validate` reads every part the document relates to and checks every style id. Look at the PNG of every
 page you touched. Page numbers come from rdocx's layout, which
-differs from Word's (gaps line-gap, picture-line-spacing): never quote them as Word's.
+lays lines at Word's heights: still check in Word before quoting one as Word's.
 
 ## A new document from a template
 

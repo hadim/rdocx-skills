@@ -271,8 +271,8 @@ def test_compare_after_refreshing_packed_page_fields(rdocx_cli, report_docx, tmp
     assert res.returncode == 0, res.stderr
 
 
-@pytest.mark.gap("compare-rebuilt-toc")
 def test_compare_after_toc_rebuild(rdocx_cli, report_docx, tmp_path):
+    """The redline also holds the rebuilt TOC; accepting it gives the edited text, rejecting it the original's."""
     base = noop_saved(report_docx, tmp_path / "base.docx")
     doc = rdocx.Document.open(base)
     doc.try_replace_text("described", "outlined")  # an edit rewrites the identity attributes, then the TOC rebuilds
@@ -280,6 +280,15 @@ def test_compare_after_toc_rebuild(rdocx_cli, report_docx, tmp_path):
     doc.save(tmp_path / "t.docx")
     res = compare(rdocx_cli, base, tmp_path / "t.docx", tmp_path / "red.docx")
     assert res.returncode == 0, res.stderr
+    texts = {name: [p.text for p in rdocx.Document.open(path).paragraphs]
+             for name, path in (("base", base), ("edited", tmp_path / "t.docx"))}
+    red = rdocx.Document.open(tmp_path / "red.docx")
+    assert len(red.revisions) > 2  # the edit (a deletion and an insertion) and the TOC entries
+    red.accept_all()
+    assert [p.text for p in red.paragraphs] == texts["edited"]
+    red = rdocx.Document.open(tmp_path / "red.docx")
+    red.reject_all()
+    assert [p.text for p in red.paragraphs] == texts["base"]
 
 
 def test_revision_accept_record_counts_every_story(rdocx_cli, tmp_path):

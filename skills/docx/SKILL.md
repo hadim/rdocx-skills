@@ -79,7 +79,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Headers, footers, footnotes, text boxes, comments | `rdocx text F`, `rdocx text --json F` (`stories`), `docx_ops.py text F` | `doc.story_items`, `docx_ops.story_paragraphs(doc)` | after the body, a Word text box once |
 | Where a string occurs | `docx_ops.py count F TEXT` | `docx_ops.count(doc, text)` | by story kind |
 | Counts, styles used, metadata | `rdocx inspect --json F` | `doc.styles`, `doc.sections`, `doc.header_footer_variants`, `doc.core_properties` | title, author, subject, keywords, dates: read and write |
-| Page of every block | `rdocx layout --json F` | `doc.layout()`, `doc.layout_page(i)` | rdocx's own pagination, close to Word's but not equal (gaps) |
+| Page of every block | `rdocx layout --json F` | `doc.layout()`, `doc.layout_page(i)` | rdocx's own pagination, on Word's line heights: confirm a page number in Word when it matters |
 | Counted replacement | `docx_ops.py replace IN OUT --edit OLD NEW N` | `docx_ops.replace_batch` | crosses runs; `rdocx replace --expect N` does not check what it could not reach |
 | Regex replacement | | `doc.replace_all_regex([(pattern, repl)])` | returns the count, no contract: check it |
 | Paragraph after an anchor, same format | | `doc.clone_content(doc.paragraphs[i], bi + 1)` then set run texts | copies fields, renamed bookmarks; not comment anchors |
@@ -96,8 +96,8 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Hyperlinks | | `doc.hyperlinks`, `paragraph.add_hyperlink(text, url)`, `doc.set_hyperlink_url(link, url)`, `doc.remove_hyperlink(link)` | removal keeps the text, re-fetch `doc.hyperlinks` after one |
 | Comments, replies, resolution | `docx_ops.py comment`; `rdocx comment list/reply/resolve/remove`, `--date` | `docx_ops.comment_on_text`, `reply_to(date=)`, `resolve_comment`, `remove_comment`; `StoryRunRange` for table cells | always date a comment |
 | Tracked changes | `rdocx revision list/accept/reject --id/--author/--start-date/--end-date` | `doc.revisions`, `accept_all()`, `reject_all()`, `accept_revision_id(id)`, by author, by dates | every story: `r.story.kind` |
-| Redline of two versions | `rdocx compare A B --author N --timestamp T --granularity word [--ignore-comments] -o OUT` | `a.compare(b, author, timestamp, granularity="word", ignore_comments=True)` | the default granularity replaces whole runs, differing comments are refused without the option, a rebuilt TOC is refused (gap): check the result |
-| Table of contents | `docx_ops.py toc IN OUT` | `doc.rebuild_toc()` | numbered headings get their title pushed right (gap) |
+| Redline of two versions | `rdocx compare A B --author N --timestamp T --granularity word [--ignore-comments] -o OUT` | `a.compare(b, author, timestamp, granularity="word", ignore_comments=True)` | the default granularity replaces whole runs, differing comments are refused without the option, a TOC rebuilt on one side shows as revisions too: check the result |
+| Table of contents | `docx_ops.py toc IN OUT` | `doc.rebuild_toc()` | the entry of a numbered heading gets a stop after its number |
 | Page fields | | `doc.update_layout_backed_fields()`, `update_page_fields()` | |
 | PDF | `rdocx convert F --to pdf -o NEW.pdf` | `doc.to_pdf()` | |
 | PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100` | `doc.render_pages(dpi=, pages=[0, 1])` | CLI pages one-based, Python zero-based |

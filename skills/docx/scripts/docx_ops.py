@@ -374,7 +374,7 @@ def image_size(data):
 
 
 def pages(path):
-    """Page count from rdocx's own layout (close to Word's, not equal: gaps line-gap, picture-line-spacing)."""
+    """Page count from rdocx's own layout (on Word's line heights; confirm in Word when it matters)."""
     return max(f.physical_page for f in rdocx.Document.open(path).layout())
 
 
