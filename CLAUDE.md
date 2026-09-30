@@ -52,8 +52,10 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   (macos-14), with provenance attestations; the lock records its URL and hashes. The releases named
   `rdocx-<commit12>` of earlier pins were deleted with their tags when the dated scheme came in. Back to tensorbee/rdocx once those pull requests
   land there.
-- Suite: 487 passed, no gap left (the last 8 gap keys closed by this pin, 61 of 61 in all) on macos-arm64 with
-  the release installed and the hashes in the lock. The release build ran the same suite on the three
+- Suite: on linux-x86_64 with the release installed, 498 passed and 1 strict xfail (gap styles-duplicate-ids,
+  met in real use after the pin). Earlier, before that gap and the later tests: 487 passed, no gap left (the last
+  8 gap keys closed by this pin, 61 of 61 in all) on macos-arm64 with the release installed and the hashes in
+  the lock. The release build ran the same suite on the three
   platforms: 476 passed and 11 skipped on each (tests that need a build recorded in the lock), nothing
   failing.
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
