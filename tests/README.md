@@ -8,12 +8,12 @@ python3 scripts/rdocx_env.py test --runxfail      # show how each known gap fail
 
 | File | Covers |
 |---|---|
-| `test_docx_read.py` | CLI text and JSON views, inspect, layout, structure, hyperlinks, conversion to md and html, stories other than the body, tracked changes in the views, validation |
+| `test_docx_read.py` | CLI text and JSON views, inspect, layout, structure, hyperlinks, conversion to md and html, stories other than the body, tracked changes in the views, validation, measurements with a decimal part |
 | `test_docx_create.py` | a new document read back by python-docx, validated |
-| `test_docx_edit.py` | counted replacement and its reach by story, structural edits, which calls invalidate handles, tables, pictures, styles, units, save semantics, byte stability |
+| `test_docx_edit.py` | counted replacement and its reach by story, structural edits, which calls invalidate handles, tables, pictures and their ids, styles, units, save semantics, byte stability |
 | `test_docx_review.py` | comments (anchoring, dates, ids, table cells), threads, tracked changes, compare, the redline refusals |
 | `test_docx_render.py` | fields, TOC, layout against Word's metrics, PDF and PNG, text layer, which outputs are overwritten or refused, CLI robustness |
-| `test_docx_matrices.py` | identity attributes (18 rows) and producer traits (11 rows) by operation |
+| `test_docx_matrices.py` | identity attributes (18 rows) and producer traits (12 rows) by operation |
 | `test_pptx.py` | reading, creating, editing, comments, notes, text fit, rendering, round trip |
 | `test_skill_scripts.py` | the helpers shipped in `skills/*/scripts` |
 | `test_installer.py` | `scripts/rdocx_env.py`: a fresh install, then each change `status` must catch and `install` repair |

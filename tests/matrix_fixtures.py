@@ -123,6 +123,12 @@ def pack_no_cache(s):
                                                                      '<w:fldChar w:fldCharType="separate"/><w:fldChar w:fldCharType="end"/></w:r>'))
 
 
+def decimal_measurements(s):
+    # a floating-point tail on every measurement, as Google Docs writes them (w:gridCol w:w="2210.0000000000005")
+    return re.sub(r'<w:(?:gridCol|tblW|tcW|trHeight|ind|spacing|pgSz|pgMar)\b[^>]*>',
+                  lambda m: re.sub(r'(w:\w+=")(\d+)"', r'\g<1>\g<2>.0000000000005"', m[0]), s)
+
+
 def inline_sdt(s):
     # wrap the first run of every body paragraph in an inline content control
     return re.sub(r'(<w:p>(?:<w:pPr>.*?</w:pPr>)?)(<w:r>.*?</w:r>)',
@@ -141,6 +147,7 @@ TRAITS = {
     "packed footer fields, no cached result": (None, pack_no_cache),
     "inline content control on first runs": (inline_sdt, None),
     "empty comments part": (None, None, True),
+    "decimal measurements": (decimal_measurements, None),
 }
 
 

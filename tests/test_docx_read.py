@@ -1,10 +1,14 @@
 """docx, reading: text, structure, JSON views, metadata, hyperlinks, sections, styles."""
 import json
+import re
 import zipfile
+from decimal import ROUND_HALF_UP, Decimal
 
 import docx
 import pytest
 import rdocx
+from docx.oxml.ns import qn
+from docx.shared import Twips
 
 from builders import every_story_docx
 from conftest import run
@@ -204,3 +208,117 @@ def test_reopen_with_story_items_catches_a_truncated_header(tmp_path):
     bad = broken(src, tmp_path / "b.docx", header, lambda b: b[: len(b) // 2])
     with pytest.raises(rdocx.RdocxError):
         rdocx.Document.open(bad).story_items
+
+
+# ---------------------------------------------------------------- measurements with a decimal part
+def measured(path):
+    """An indented paragraph with spacing, a 1x2 table with a row height and a width, a header with an indent: the
+    measurements Google Docs writes with a floating-point tail."""
+    d = docx.Document()
+    p = d.add_paragraph("Indented paragraph")
+    p.paragraph_format.left_indent, p.paragraph_format.first_line_indent = Twips(720), Twips(-227)
+    p.paragraph_format.space_before, p.paragraph_format.line_spacing = Twips(120), 1.15
+    t = d.add_table(rows=1, cols=2)
+    t.rows[0].height = Twips(535)
+    t.cell(0, 0).text = "Cell A"
+    width = t._tbl.tblPr.find(qn("w:tblW"))
+    width.set(qn("w:type"), "dxa")
+    width.set(qn("w:w"), "8640")
+    d.sections[0].header.paragraphs[0].text = "Header"
+    d.sections[0].header.paragraphs[0].paragraph_format.left_indent = Twips(360)
+    d.save(path)
+    return path
+
+
+def twips(emu):
+    return emu / 635
+
+
+# part, attribute as python-docx writes it with {} for the value, a decimal value, the integer it stands for, and
+# where the binding reads it back in twips (None: not exposed)
+DECIMAL = [
+    ("document", 'w:gridCol w:w="{}"', "4320.0", 4320, lambda d: twips(d.tables[0].grid_widths[0])),
+    ("document", 'w:gridCol w:w="{}"', "4319.999999999999", 4320, lambda d: twips(d.tables[0].grid_widths[0])),
+    ("document", 'w:left="{}"', "720.0", 720, lambda d: twips(d.paragraphs[0].paragraph_format.left_indent)),
+    ("document", 'w:hanging="{}"', "226.99999999999977", 227, lambda d: -twips(d.paragraphs[0].paragraph_format.first_line_indent)),
+    ("document", 'w:before="{}"', "120.0", 120, lambda d: twips(d.paragraphs[0].paragraph_format.space_before)),
+    ("document", 'w:trHeight w:val="{}"', "535.0000000000182", 535, lambda d: twips(d.tables[0].rows[0].height)),
+    ("document", 'w:pgSz w:w="{}"', "12240.0", 12240, lambda d: twips(d.sections[0].page_width)),
+    ("document", 'w:top="{}"', "1440.0", 1440, lambda d: twips(d.sections[0].margin_top)),
+    ("document", 'w:tcW w:type="dxa" w:w="{}"', "4319.999999999999", 4320, lambda d: twips(d.tables[0].cell(0, 0).width)),
+    ("document", 'w:tblW w:type="dxa" w:w="{}"', "8639.999999999999", 8640, lambda d: twips(d.tables[0].width)),
+    ("styles", 'w:after="{}"', "200.0", 200, None),
+    ("styles", '<w:sz w:val="{}"/>', "22.0", 22, None),
+    ("numbering", 'w:left="{}"', "360.0", 360, None),
+]
+# the same cases that open today
+DECIMAL_ACCEPTED = [
+    ("document", 'w:line="{}"', "275.99999999999994", 276, lambda d: round(d.paragraphs[0].paragraph_format.line_spacing * 240)),
+    ("document", 'w:tcW w:type="dxa" w:w="{}"', "4320.0", 4320, lambda d: twips(d.tables[0].cell(0, 0).width)),
+    ("header1", 'w:left="{}"', "360.0", 360, None),
+]
+
+
+def with_values(src, dst, rows):
+    """`src` with, for each row, the first occurrence of the attribute set to the row's decimal value."""
+    with zipfile.ZipFile(src) as z:
+        items = [(i, z.read(i.filename)) for i in z.infolist()]
+    with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as z:
+        for info, data in items:
+            for part, template, value, integer, _ in rows:
+                if info.filename == f"word/{part}.xml":
+                    before = template.format(integer).encode()
+                    assert before in data, (part, before)
+                    data = data.replace(before, template.format(value).encode(), 1)
+            z.writestr(info, data)
+    return dst
+
+
+def cases(rows, gap=None):
+    return [pytest.param(*row, marks=[pytest.mark.gap(gap)] if gap else [], id=f"{row[0]} {row[1].format(row[2])}")
+            for row in rows]
+
+
+@pytest.mark.parametrize("part,template,value,integer,read", cases(DECIMAL, "decimal-measurements") + cases(DECIMAL_ACCEPTED))
+def test_decimal_measurement_is_read_as_the_nearest_integer(part, template, value, integer, read, rdocx_cli, tmp_path):
+    """Google Docs writes measurements with a floating-point tail (`w:gridCol w:w="2210.0000000000005"`), which Word
+    rounds. The file opens in the binding and in the CLI, and the value reads back as the nearest integer."""
+    f = with_values(measured(tmp_path / "a.docx"), tmp_path / "b.docx", [(part, template, value, integer, read)])
+    doc = rdocx.Document.open(f)
+    if read:
+        assert read(doc) == integer
+    res = run([rdocx_cli, "text", f])
+    assert res.returncode == 0 and "Indented paragraph" in res.stdout, res.stderr
+
+
+def test_measurements_read_back_where_the_decimal_tests_look(tmp_path):
+    """The control of the test above: each attribute is in the fixture, and its integer reads back there."""
+    doc = rdocx.Document.open(measured(tmp_path / "a.docx"))
+    for part, template, _, integer, read in DECIMAL + DECIMAL_ACCEPTED:
+        assert template.format(integer).encode() in zipfile.ZipFile(tmp_path / "a.docx").read(f"word/{part}.xml")
+        assert read is None or read(doc) == integer, template
+
+
+def round_decimal_measurements(src, dst):
+    """The workaround of gap decimal-measurements: every w: attribute of the word/*.xml parts whose value is a
+    decimal number becomes the nearest integer, half away from zero."""
+    def nearest(m):
+        return m[1] + str(int(Decimal(m[2].decode()).to_integral_value(ROUND_HALF_UP))).encode() + m[3]
+    with zipfile.ZipFile(src) as z:
+        items = [(i, z.read(i.filename)) for i in z.infolist()]
+    with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as z:
+        for info, data in items:
+            if re.fullmatch(r"word/[^/]+\.xml", info.filename):
+                data = re.sub(rb'(\sw:\w+=")(-?\d+\.\d+)(")', nearest, data)
+            z.writestr(info, data)
+    return dst
+
+
+def test_rounding_decimal_measurements_before_opening(rdocx_cli, tmp_path):
+    """The workaround of gap decimal-measurements, on a file that carries every case at once."""
+    rows = DECIMAL + DECIMAL_ACCEPTED
+    f = round_decimal_measurements(with_values(measured(tmp_path / "a.docx"), tmp_path / "b.docx", rows), tmp_path / "c.docx")
+    assert b'w:gridCol w:w="4320"/><w:gridCol w:w="4320"/>' in zipfile.ZipFile(f).read("word/document.xml")
+    doc = rdocx.Document.open(f)
+    assert [read(doc) for *_, read in rows if read] == [integer for *_, integer, read in rows if read]
+    assert run([rdocx_cli, "text", f]).returncode == 0

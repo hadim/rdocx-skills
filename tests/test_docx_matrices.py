@@ -20,9 +20,11 @@ IDENTITY_ROWS = [("paragraphs", a) for a in ("w:rsidR", "w:rsidRDefault", "w:rsi
                 [("content control", a) for a in ("w:id", "w:tag")] + \
                 [("table rows", a) for a in ("w:rsidR", "w:rsidTr", "w14:paraId")]
 
+TRAIT_COLUMNS = ("noop", "replace", "toc", "fields", "render", "cmpfld", "cmp1", "self")
+
 # Known failing cells: (row, column) -> gap key
 IDENTITY_GAPS = {}
-TRAIT_GAPS = {}
+TRAIT_GAPS = {("decimal measurements", c): "decimal-measurements" for c in TRAIT_COLUMNS}
 
 
 def count_attr(path, attr):
@@ -79,8 +81,7 @@ def test_identity_matrix(row, column, rdocx_cli, tmp_path):
         assert revisions(rdocx_cli, f, g, tmp_path / "out.docx") == 2
 
 
-@pytest.mark.parametrize("row,column", params(list(TRAITS), ("noop", "replace", "toc", "fields", "render", "cmpfld", "cmp1", "self"),
-                                              TRAIT_GAPS))
+@pytest.mark.parametrize("row,column", params(list(TRAITS), TRAIT_COLUMNS, TRAIT_GAPS))
 def test_producer_traits_matrix(row, column, rdocx_cli, tmp_path):
     trait = TRAITS[row]
     f = rewrite(build(tmp_path / "case.docx"), *trait)

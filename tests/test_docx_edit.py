@@ -431,6 +431,75 @@ def test_add_picture_with_a_content_control_and_a_default_namespace(tmp_path):
     doc.save(tmp_path / "b.docx")
 
 
+WP = "{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}"
+DOCPR_ID = re.compile(rb'(<wp:docPr\b[^>]*?\sid=")(\d+)(")')
+
+
+def two_pictures(ids):
+    """Two inline pictures in the body, with these two wp:docPr ids."""
+    d = docx.Document()
+    for name in "AB":
+        d.add_paragraph(f"Picture {name}: ").add_run().add_picture(io.BytesIO(png()), width=docx.shared.Inches(1))
+    for docpr, value in zip(d.element.body.iter(WP + "docPr"), ids):
+        docpr.set("id", str(value))
+    buf = io.BytesIO()
+    d.save(buf)
+    return buf.getvalue()
+
+
+def docpr_ids(xml):
+    return [int(m[2]) for m in DOCPR_ID.finditer(xml)]
+
+
+@pytest.mark.parametrize("ids", [(1, 2), (0, 1), pytest.param((0, 0), marks=pytest.mark.gap("docpr-duplicate-ids")),
+                                 pytest.param((7, 7), marks=pytest.mark.gap("docpr-duplicate-ids"))])
+def test_drawings_of_one_part_that_share_an_id(ids, rdocx_cli, tmp_path):
+    """Two pictures of the body with one wp:docPr id (one id in two parts already opens): the file opens in the CLI
+    and the binding, a new picture gets an id that no other drawing of the part has, and the saved file opens."""
+    f = tmp_path / "a.docx"
+    f.write_bytes(two_pictures(ids))
+    assert run([rdocx_cli, "text", f]).returncode == 0
+    doc = rdocx.Document.open(f)
+    doc.add_picture(png(), "x.png", width=rdocx.Inches(1), height=rdocx.Inches(1))
+    doc.save(tmp_path / "b.docx")
+    got = docpr_ids(part(tmp_path / "b.docx", "word/document.xml"))
+    assert len(got) == 3 and got.count(got[-1]) == 1
+    assert len(docx.Document(tmp_path / "b.docx").inline_shapes) == 3
+    rdocx.Document.open(tmp_path / "b.docx")
+
+
+def renumber_drawing_ids(data):
+    """The workaround of gap docpr-duplicate-ids: in each part, a wp:docPr id already used earlier in the part gets
+    one above the largest id of the package."""
+    src = zipfile.ZipFile(io.BytesIO(data))
+    items = [(i, src.read(i.filename)) for i in src.infolist()]
+    top = max((i for info, x in items if info.filename.endswith(".xml") for i in docpr_ids(x)), default=0)
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for info, x in items:
+            seen = set()
+
+            def fresh(m):
+                nonlocal top
+                if int(m[2]) not in seen:
+                    seen.add(int(m[2]))
+                    return m[0]
+                top += 1
+                return m[1] + str(top).encode() + m[3]
+            z.writestr(info, DOCPR_ID.sub(fresh, x) if info.filename.endswith(".xml") else x)
+    return out.getvalue()
+
+
+def test_add_picture_after_renumbering_drawing_ids():
+    """The workaround of gap docpr-duplicate-ids."""
+    data = renumber_drawing_ids(two_pictures((7, 7)))
+    assert docpr_ids(zipfile.ZipFile(io.BytesIO(data)).read("word/document.xml")) == [7, 8]
+    doc = rdocx.Document.from_bytes(data)
+    doc.add_picture(png(), "x.png", width=rdocx.Inches(1), height=rdocx.Inches(1))
+    got = docpr_ids(zipfile.ZipFile(io.BytesIO(doc.to_bytes())).read("word/document.xml"))
+    assert got[:2] == [7, 8] and len(set(got)) == 3
+
+
 def test_resize_existing_picture(report_docx, tmp_path):
     doc = rdocx.Document.open(report_docx)
     drawing = next(it for it in doc.story_items if it.kind == "drawing")

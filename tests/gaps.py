@@ -15,6 +15,11 @@ gaps closed.
 """
 
 GAPS = {
+    # docx: opening a file
+    # upstream: tensorbee/rdocx#246
+    "decimal-measurements": "a decimal value in an integer measurement (w:gridCol w:w=\"4320.0\", as Google Docs writes them) makes the file unreadable: \"parse int error\" or \"unsupported table measurement\"",
+    # upstream: tensorbee/rdocx#247
+    "docpr-duplicate-ids": "two drawings of one part with the same wp:docPr id make the file unreadable: \"duplicate drawing id\"",
     # docx: styles
     # upstream: tensorbee/rdocx#243 (both style gaps)
     "styles-duplicate-ids": "add_style raises \"invalid style graph: duplicate style ID\" when styles.xml repeats a style id",

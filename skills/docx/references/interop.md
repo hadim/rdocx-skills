@@ -13,6 +13,7 @@ the next one must still open what you save. What matters when you edit with rdoc
 | the table of contents in a `w:sdt` with `w:docPartObj` | Word, Google Docs | one body block: `find_content_indices(heading)` returns it too |
 | field instruction packed in one run (begin, instruction, separate), PAGE / NUMPAGES without a cached result | Google Docs | rdocx reads and refreshes them, and a redline after refreshing them compares |
 | a default namespace on the root of each part | Google Docs | harmless for reading and most edits |
+| measurements with a floating-point tail (`w:gridCol w:w="2210.0000000000005"`, `w:ind w:hanging="226.99999999999977"`, `w:trHeight`, `w:pgMar`) | Google Docs | rdocx refuses the file on open: round them on a copy first, gap decimal-measurements in `gaps.md` |
 | an empty `word/comments.xml` | Google Docs | kept byte for byte by a save |
 | a `customXML` part with Google's round-trip data | Google Docs | keep it; rdocx does |
 | several `w:style` elements with one id (`TableNormal`, `Normal`, `Table1`, ...), the later ones sometimes with other contents | Google Docs | `rebuild_toc()` uses the first definition; `add_style()` refuses the file: gap styles-duplicate-ids in `gaps.md` |

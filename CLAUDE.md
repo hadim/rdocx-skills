@@ -53,8 +53,9 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   (macos-14), with provenance attestations; the lock records its URL and hashes. The releases named
   `rdocx-<commit12>` of earlier pins were deleted with their tags when the dated scheme came in. Back to tensorbee/rdocx once those pull requests
   land there.
-- Suite: on macos-arm64 with the release installed, 507 passed and 3 strict xfails (gaps styles-duplicate-ids
-  and styles-several-defaults, met in real use after the pin, and edit-reserializes-part). Earlier, before that gap and the later tests: 487 passed, no gap left (the last
+- Suite: on macos-arm64 with the release installed, 515 passed and 26 strict xfails, for five gaps met in real use
+  after the pin: decimal-measurements (13 attributes and 8 cells of the traits matrix), docpr-duplicate-ids (2),
+  styles-duplicate-ids, styles-several-defaults and edit-reserializes-part. Earlier, before these gaps and their tests: 487 passed, no gap left (the last
   8 gap keys closed by this pin, 61 of 61 in all) on macos-arm64 with the release installed and the hashes in
   the lock. The release build ran the same suite on the three
   platforms: 476 passed and 11 skipped on each (tests that need a build recorded in the lock), nothing

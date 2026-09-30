@@ -7,6 +7,13 @@ says so, and this page is updated. "Fallback" means: do that step only with the 
 A step that rdocx blocks, or gets wrong, and that this page does not list is a new gap: report it as
 `SKILL.md` describes (Reporting a bug or a missing feature).
 
+## Opening a file
+
+| Gap | What happens | Workaround / fallback |
+|---|---|---|
+| Measurements with a decimal part [decimal-measurements] | Google Docs writes measurements with a floating-point tail (`w:gridCol w:w="2210.0000000000005"`, `w:ind w:hanging="226.99999999999977"`, `w:trHeight`, `w:pgMar`); such a file does not open: `Document.open()` and every CLI command, `rdocx text` and `validate` included, fail with `OXML parsing error: parse int error: invalid digit found in string` (no attribute named) or `unsupported table measurement: "..."`. Even `240.0` is refused, in the body, the styles and the numbering; only `w:spacing/@w:line` and whole table widths (`w:tcW w:w="4320.0"`) open | on a copy, never on the input: in the `word/*.xml` parts, round every `w:` attribute whose value is a decimal number (`-?\d+\.\d+`) to the nearest integer (zipfile and one regular expression), then open the copy with rdocx and go on. No fallback needed beyond that one step |
+| Two drawings of one part with one id [docpr-duplicate-ids] | a file in which two drawings of one part share a `wp:docPr` id (several `id="0"` in the body) does not open: `cannot scan identifiers in XML part /word/document.xml: duplicate drawing id 0 in imported or preserved XML`, in `Document.open()` and every CLI command. One id used once in the body and once in a header opens | on a copy: in each part, give every `wp:docPr` whose id was already used earlier in that part a new id above the largest one of the package, then open the copy with rdocx. No fallback needed beyond that one step |
+
 ## Styles
 
 | Gap | What happens | Workaround / fallback |
