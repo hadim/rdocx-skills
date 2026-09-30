@@ -19,7 +19,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   three runners and publishes the release `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first; the lock's
   `release` URL is the only record of the tag, filled by `lock --write --release`).
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
-- `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
+- `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); one now
+  (docx-edit-reserializes-part).
 - `docs/setup.md`: install, trust model, CI, how to move the pin.
 
 ## Rules
