@@ -13,11 +13,11 @@ the next one must still open what you save. What matters when you edit with rdoc
 | the table of contents in a `w:sdt` with `w:docPartObj` | Word, Google Docs | one body block: `find_content_indices(heading)` returns it too |
 | field instruction packed in one run (begin, instruction, separate), PAGE / NUMPAGES without a cached result | Google Docs | rdocx reads and refreshes them, and a redline after refreshing them compares |
 | a default namespace on the root of each part | Google Docs | harmless for reading and most edits |
-| measurements with a floating-point tail (`w:gridCol w:w="2210.0000000000005"`, `w:ind w:hanging="226.99999999999977"`, `w:trHeight`, `w:pgMar`) | Google Docs | rdocx refuses the file on open: round them on a copy first, gap decimal-measurements in `gaps.md` |
+| measurements with a floating-point tail (`w:gridCol w:w="2210.0000000000005"`, `w:ind w:hanging="226.99999999999977"`, `w:trHeight`, `w:pgMar`) | Google Docs | rdocx reads each as the nearest integer |
 | an empty `word/comments.xml` | Google Docs | kept byte for byte by a save |
 | a `customXML` part with Google's round-trip data | Google Docs | keep it; rdocx does |
-| several `w:style` elements with one id (`TableNormal`, `Normal`, `Table1`, ...), the later ones sometimes with other contents | Google Docs | `rebuild_toc()` uses the first definition; `add_style()` refuses the file: gap styles-duplicate-ids in `gaps.md` |
-| several default styles of one type under different ids (`TableNormal` and `TableauNormal`, up to four paragraph defaults) | Google Docs | `rebuild_toc()` accepts them; `add_style()` refuses the file: gap styles-several-defaults in `gaps.md` |
+| several `w:style` elements with one id (`TableNormal`, `Normal`, `Table1`, ...), the later ones sometimes with other contents | Google Docs | `rebuild_toc()` and the style edits (`add_style()`) use the first definition |
+| several default styles of one type under different ids (`TableNormal` and `TableauNormal`, up to four paragraph defaults) | Google Docs | `rebuild_toc()` and `add_style()` accept them |
 | style ids in the interface language (`Titre1`, `Policepardfaut`) | Word in another language | assign styles by the id the file uses (`doc.styles`), never by an English name |
 | `w:lineRule="auto"` spacing of 276 (Word) or 264 / 276 (Google) | both | rdocx lays lines at Word's heights; still check page breaks in the target application when they matter |
 

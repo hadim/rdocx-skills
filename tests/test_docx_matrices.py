@@ -24,7 +24,7 @@ TRAIT_COLUMNS = ("noop", "replace", "toc", "fields", "render", "cmpfld", "cmp1",
 
 # Known failing cells: (row, column) -> gap key
 IDENTITY_GAPS = {}
-TRAIT_GAPS = {("decimal measurements", c): "decimal-measurements" for c in TRAIT_COLUMNS}
+TRAIT_GAPS = {}
 
 
 def count_attr(path, attr):

@@ -85,7 +85,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Regex replacement | | `doc.replace_all_regex([(pattern, repl)])` | returns the count, no contract: check it |
 | Paragraph after an anchor, same format | | `doc.clone_content(doc.paragraphs[i], bi + 1)` then set run texts | copies fields, renamed bookmarks; not comment anchors |
 | Plain new paragraph | | `doc.insert_paragraph(bi, text)` | Normal style |
-| Delete, move a block | | `remove_content(bi)`, `pop_content(bi)` + `insert_content(bi, frag)`, `move_content(handle, bi)` | |
+| Delete, move a block | | `remove_content(bi)`, `pop_content(bi)` + `insert_content(bi, frag)`, `move_content(source, destination)` | |
 | Rewrite a paragraph's text | | `doc.paragraphs[i].text = text`, `doc.set_story_text(item, text)` | the setter leaves one unformatted run (paragraph style, format and comments kept), `set_story_text` keeps the first run's format |
 | Format part of a run | | `docx_ops.locate` + `docx_ops.isolate`, then `.font.bold = True` | |
 | Paragraph format, style, numbering | | `.paragraph_format.*`, `.style = "Heading1"` or `"Heading 1"`, `.numbering = (num_id, level)` | style id or name, checked (`KeyError`), numbering unchecked |
@@ -94,13 +94,13 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Table merges and format | | `.set_cell_grid_span(r, c, n)`, `.set_cell_vertical_merge(r, c, "restart")`, `.set_borders(...)`, `.set_column_width(c, w)`, `cell.shading = "RRGGBB"`, `row.height = w` | a span consumes empty cells only; re-fetch the table after a merge |
 | Page setup | | `doc.update_section(i, margin_top=rdocx.Inches(0.5), ...)` | `doc.sections` are read-only snapshots |
 | Pictures | | `doc.add_picture(bytes, name, width=, height=)`, `doc.replace_image(rid, bytes)`, `doc.set_picture_size(rid, width, height)` | `replace_image` keeps the old size: resize for a new aspect ratio |
-| Hyperlinks | | `doc.hyperlinks`, `paragraph.add_hyperlink(text, url)`, `doc.set_hyperlink_url(link, url)`, `doc.remove_hyperlink(link)` | removal keeps the text, re-fetch `doc.hyperlinks` after one |
+| Hyperlinks | | `doc.hyperlinks`, `paragraph.add_hyperlink(text, url)`, `doc.set_hyperlink_url(hyperlink, url)`, `doc.remove_hyperlink(hyperlink)` | removal keeps the text, re-fetch `doc.hyperlinks` after one |
 | Comments, replies, resolution | `docx_ops.py comment`; `rdocx comment list/reply/resolve/remove`, `--date` | `docx_ops.comment_on_text` (`in_tables=True` for part of a table cell), `reply_to(date=)`, `resolve_comment`, `remove_comment`; `StoryRunRange` for whole runs of a cell | always date a comment |
 | Tracked changes | `rdocx revision list/accept/reject --id/--author/--start-date/--end-date` | `doc.revisions`, `accept_all()`, `reject_all()`, `accept_revision_id(id)`, by author, by dates | every story: `r.story.kind` |
-| Redline of two versions | `rdocx compare A B --author N --timestamp T --granularity word [--ignore-comments] -o OUT` | `a.compare(b, author, timestamp, granularity="word", ignore_comments=True)` | the default granularity replaces whole runs, differing comments are refused without the option, a TOC rebuilt on one side shows as revisions too: check the result |
+| Redline of two versions | `rdocx compare A B --author N --timestamp T --granularity word [--ignore-comments] -o OUT` | `a.compare(b, author, timestamp, granularity="word", ignore_comments=True)` | the default granularity replaces whole runs, differing comments are refused without the option, a TOC rebuilt on one side shows as revisions too: check the result; a changed picture and a table added at the very end: `references/gaps.md` |
 | Table of contents | `docx_ops.py toc IN OUT` | `doc.rebuild_toc()` | the entry of a numbered heading gets a stop after its number |
 | Page fields | | `doc.update_layout_backed_fields()`, `update_page_fields()` | |
-| PDF | `rdocx convert F --to pdf -o NEW.pdf` | `doc.to_pdf()` | |
+| PDF | `rdocx convert F --to pdf -o NEW.pdf` | `doc.to_pdf()` | the accepted view of tracked changes, no marks: `references/gaps.md` |
 | PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100` | `doc.render_pages(dpi=, pages=[0, 1])` | CLI pages one-based, Python zero-based |
 | Markdown, HTML | `rdocx convert F --to md -o NEW.md` / `--to html` | | body, then text boxes, headers, footers, notes, no comments |
 | Validity | `rdocx validate F` | `Document.open(F).story_items` | every related part and every style id |

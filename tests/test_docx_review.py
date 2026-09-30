@@ -1,4 +1,5 @@
 """docx, review features: comments and threads, tracked changes, redline by comparison."""
+import io
 import json
 import os
 import re
@@ -8,6 +9,8 @@ import zipfile
 import docx
 import pytest
 import rdocx
+from docx.oxml.ns import qn
+from PIL import Image
 
 from builders import cell_text_docx, wrapped_run_docx
 from conftest import STAMP, digest, part, run
@@ -204,6 +207,176 @@ def test_python_compare_method(tmp_path):
     b = rdocx.Document.open(two_paragraphs(tmp_path / "b.docx", second="Gamma paragraph."))
     a.compare(b, "Reviewer", STAMP)
     assert len(a.revisions) >= 2
+
+
+def body_doc(spec):
+    """A new document from a spec: "T" is a one-cell table, any other string a paragraph."""
+    d = rdocx.Document()
+    for item in spec:
+        if item == "T":
+            d.add_table(1, 1)
+            d.tables[len(d.tables) - 1].cell(0, 0).text = "cell"
+        else:
+            d.add_paragraph(item)
+    return d
+
+
+def body_shape(d):
+    return ([p.text for p in d.paragraphs], len(d.tables))
+
+
+@pytest.mark.gap("compare-final-table")
+@pytest.mark.parametrize("original, edited", [
+    (["a"], ["a", "T", ""]),
+    ([""], ["", "T", ""]),
+    (["a", "T", ""], ["a", "T", "", "T", ""]),
+    (["a"], ["a", "T", "b"]),
+    (["a", "T", "b"], ["a"]),
+])
+def test_compare_a_table_added_or_removed_at_the_end_of_the_body(original, edited):
+    """A table followed by a paragraph added (or removed) at the very end of the body: the final paragraph change
+    is marked on the item before it, a table, and compare refuses with "comparison needs an adjacent paragraph
+    for a final paragraph change". The same table inserted between two paragraphs compares."""
+    red = body_doc(original)
+    red.compare(body_doc(edited), "Reviewer", STAMP, granularity="word")
+    accepted, rejected = rdocx.Document.from_bytes(red.to_bytes()), rdocx.Document.from_bytes(red.to_bytes())
+    accepted.accept_all()
+    rejected.reject_all()
+    assert body_shape(accepted) == body_shape(body_doc(edited))
+    assert body_shape(rejected) == body_shape(body_doc(original))
+
+
+@pytest.mark.parametrize("original, edited", [
+    (["a"], ["a", "T", ""]),
+    (["a"], ["a", "T", "b"]),
+    (["a", "T", "b"], ["a"]),
+])
+def test_compare_final_table_workaround_one_empty_paragraph_at_the_end(original, edited):
+    """The workaround for compare-final-table: one empty paragraph added at the end of both copies."""
+    red, new = body_doc(original), body_doc(edited)
+    red.add_paragraph("")
+    new.add_paragraph("")
+    red.compare(new, "Reviewer", STAMP, granularity="word")
+    red.accept_all()
+    assert body_shape(red) == (edited_paragraphs(edited) + [""], edited.count("T"))
+
+
+def edited_paragraphs(spec):
+    return [s for s in spec if s != "T"]
+
+
+def test_compare_a_table_inserted_between_two_paragraphs():
+    red = body_doc(["a", "b"])
+    red.compare(body_doc(["a", "T", "b"]), "Reviewer", STAMP, granularity="word")
+    red.accept_all()
+    assert body_shape(red) == (["a", "b"], 1)
+
+
+def solid_png(rgb):
+    buf = io.BytesIO()
+    Image.new("RGB", (60, 40), rgb).save(buf, "PNG")
+    return buf.getvalue()
+
+
+def figure_doc(image, caption="Figure 1. Caption."):
+    d = rdocx.Document()
+    d.add_paragraph("Before the figure.")
+    d.add_picture(image, "figure1.png", rdocx.Inches(1), rdocx.Inches(0.66))
+    d.add_paragraph(caption)
+    return d
+
+
+def figure_images(d, tmp_path):
+    """The bytes of each picture the body shows, in order (python-docx reads the saved file)."""
+    d.save(tmp_path / "f.docx")
+    doc = docx.Document(tmp_path / "f.docx")
+    rids = [b.get(qn("r:embed")) for b in doc.element.body.iter(qn("a:blip"))]
+    return [doc.part.related_parts[rid].blob for rid in rids]
+
+
+@pytest.mark.gap("compare-picture-change")
+@pytest.mark.parametrize("caption", ["Figure 1. Caption.", "Figure 1. New caption."])
+def test_compare_tracks_a_picture_whose_image_changed(caption, tmp_path):
+    """Word's Compare marks a picture whose image changed as deleted and inserted. rdocx reports no revision and
+    keeps the old image when nothing else changes, and refuses the pair ("comparison acceptance does not
+    reproduce the edited stories") when another paragraph changes too."""
+    old, new = solid_png((200, 30, 30)), solid_png((30, 30, 200))
+    red = figure_doc(old)
+    red.compare(figure_doc(new, caption), "Reviewer", STAMP, granularity="word")
+    assert red.revisions
+    accepted, rejected = rdocx.Document.from_bytes(red.to_bytes()), rdocx.Document.from_bytes(red.to_bytes())
+    accepted.accept_all()
+    rejected.reject_all()
+    assert figure_images(accepted, tmp_path) == [new] and accepted.paragraphs[-1].text == caption
+    assert figure_images(rejected, tmp_path) == [old] and rejected.paragraphs[-1].text == "Figure 1. Caption."
+
+
+def drawing_rid(d):
+    item = next(i for i in d.story_items if i.kind == "drawing")
+    xml = item.xml if isinstance(item.xml, str) else item.xml.decode()
+    return re.search(r'r:embed="([^"]+)"', xml).group(1)
+
+
+def test_compare_picture_change_workaround_new_image_in_the_original_copy(tmp_path):
+    """The workaround for compare-picture-change: the pictures differ, so the new image goes into a copy of the
+    original before the comparison; the caption edit is then a revision and the redline shows the new image."""
+    old, new = solid_png((200, 30, 30)), solid_png((30, 30, 200))
+    red, edited = figure_doc(old), figure_doc(new, "Figure 1. New caption.")
+    assert red.image_data(drawing_rid(red)) != edited.image_data(drawing_rid(edited))
+    red.replace_image(drawing_rid(red), edited.image_data(drawing_rid(edited)))
+    red.compare(edited, "Reviewer", STAMP, granularity="word")
+    assert red.revisions and figure_images(red, tmp_path) == [new]
+    red.accept_all()
+    assert red.paragraphs[-1].text == "Figure 1. New caption."
+
+
+W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+
+def marked_copy(src, dst):
+    """The workaround for render-tracked-view: insertions underlined in blue, deletions struck through in red."""
+    from lxml import etree
+
+    def mark(run, color, strike):
+        rpr = run.find(W + "rPr")
+        if rpr is None:
+            rpr = etree.Element(W + "rPr")
+            run.insert(0, rpr)
+        etree.SubElement(rpr, W + ("strike" if strike else "u"), {} if strike else {W + "val": "single"})
+        etree.SubElement(rpr, W + "color", {W + "val": color})
+
+    with zipfile.ZipFile(src) as z:
+        items = [(i, z.read(i.filename)) for i in z.infolist()]
+    with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as out:
+        for info, data in items:
+            if info.filename == "word/document.xml":
+                root = etree.fromstring(data)
+                for tag, color, strike in (("ins", "1F4E9E", False), ("del", "C00000", True)):
+                    for wrapper in list(root.iter(W + tag)):  # unwrap, marks on its runs
+                        for r in wrapper.iter(W + "r"):
+                            mark(r, color, strike)
+                            for t in r.iter(W + "delText"):
+                                t.tag = W + "t"
+                        for child in list(wrapper):
+                            wrapper.addprevious(child)
+                        wrapper.getparent().remove(wrapper)
+                data = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+            out.writestr(info, data)
+    return dst
+
+
+@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+def test_render_tracked_view_workaround_marks_on_a_copy(tmp_path):
+    a, b = rdocx.Document(), rdocx.Document()
+    a.add_paragraph("Keep OLDWORD here.")
+    b.add_paragraph("Keep NEWWORD here.")
+    a.compare(b, "Reviewer", STAMP, granularity="word")
+    a.save(tmp_path / "red.docx")
+    marked = rdocx.Document.open(marked_copy(tmp_path / "red.docx", tmp_path / "marked.docx"))
+    assert not marked.revisions
+    (tmp_path / "m.pdf").write_bytes(marked.to_pdf())
+    text = run(["pdftotext", tmp_path / "m.pdf", "-"], check=True).stdout
+    assert "OLDWORD" in text and "NEWWORD" in text
 
 
 def test_compare_marks_only_the_changed_word(rdocx_cli, tmp_path):

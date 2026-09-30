@@ -49,5 +49,4 @@ rpptx render F -o NEW_DIR [--slide N] [--dpi 150] [--format png|jpeg|tiff]
 rpptx thumbnail F -o NEW.png               # slide 1, 320 pixels wide
 ```
 `convert` to images writes `OUT.png` for one slide, `OUT_001.png`, `OUT_002.png`... for several; `render`
-writes `NEW_DIR/<name>_slide<N>.png`. Solid slide backgrounds are missing from the PDF but present in PNG
-output (gap).
+writes `NEW_DIR/<name>_slide<N>.png`.

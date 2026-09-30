@@ -43,23 +43,21 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## State on 30/09/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: hadim/rdocx `d4d7c8af` (`integration/open-prs-2026-09-30`: tensorbee/rdocx `main` at `b7230b68`,
-  sprint S76, which integrated 19 of the open pull requests in the maintainer's own versions, plus every other
-  open pull request of the fork: the 21 older ones and #214 to #242, not yet reviewed upstream), rdocx 0.14.0,
+- Pinned: hadim/rdocx `d75b536a` (`integration/open-prs-2026-09-30-2`: the previous snapshot
+  `integration/open-prs-2026-09-30` at `d4d7c8af`, which is tensorbee/rdocx `main` at `b7230b68`, sprint S76, plus
+  every other open pull request of the fork, and on top #248 to #252, not yet reviewed upstream), rdocx 0.14.0,
   rpptx 0.12.1. Integration branches are never rewritten nor deleted: `install --build` fetches the pinned
   commit from them, and a later snapshot gets a new dated branch (earlier ones: `integration/open-prs-2026-09-29`
-  at `f3df95bf`, `integration/open-prs-2026-09-29-2` at `f2fa36d1`). Release `rdocx-20260930-d4d7c8af3fb1`
-  built by `build.yml` for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners, glibc 2.35) and macos-arm64
-  (macos-14), with provenance attestations; the lock records its URL and hashes. The releases named
-  `rdocx-<commit12>` of earlier pins were deleted with their tags when the dated scheme came in. Back to tensorbee/rdocx once those pull requests
-  land there.
-- Suite: on macos-arm64 with the release installed, 515 passed and 26 strict xfails, for five gaps met in real use
-  after the pin: decimal-measurements (13 attributes and 8 cells of the traits matrix), docpr-duplicate-ids (2),
-  styles-duplicate-ids, styles-several-defaults and edit-reserializes-part. Earlier, before these gaps and their tests: 487 passed, no gap left (the last
-  8 gap keys closed by this pin, 61 of 61 in all) on macos-arm64 with the release installed and the hashes in
-  the lock. The release build ran the same suite on the three
-  platforms: 476 passed and 11 skipped on each (tests that need a build recorded in the lock), nothing
-  failing.
+  at `f3df95bf`, `integration/open-prs-2026-09-29-2` at `f2fa36d1`, `integration/open-prs-2026-09-30` at
+  `d4d7c8af`). Release `rdocx-20260930-d75b536acc31` built by `build.yml` for linux-x86_64, linux-aarch64
+  (ubuntu-22.04 runners, glibc 2.35) and macos-arm64 (macos-14), with provenance attestations; the lock records
+  its URL and hashes. Back to tensorbee/rdocx once those pull requests land there.
+- Suite: on macos-arm64 with the release installed and the hashes in the lock, 543 passed and 8 strict xfails,
+  for three gaps met in real use and reported upstream: compare-final-table (5), compare-picture-change (2) and
+  render-tracked-view. This pin closed the five earlier ones (decimal-measurements, docpr-duplicate-ids,
+  styles-duplicate-ids, styles-several-defaults, edit-reserializes-part: 25 XPASS). The release build ran the
+  suite of this branch before those closures were recorded, with the same result on the three platforms: the
+  25 XPASS and one pptx test since fixed (a stale shape collection handle in the test itself).
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
