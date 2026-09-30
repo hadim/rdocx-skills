@@ -7,20 +7,6 @@ says so, and this page is updated. "Fallback" means: do that step only with the 
 A step that rdocx blocks, or gets wrong, and that this page does not list is a new gap: report it as
 `SKILL.md` describes (Reporting a bug or a missing feature).
 
-## Opening a file
-
-| Gap | What happens | Workaround / fallback |
-|---|---|---|
-| Measurements with a decimal part [decimal-measurements] | Google Docs writes measurements with a floating-point tail (`w:gridCol w:w="2210.0000000000005"`, `w:ind w:hanging="226.99999999999977"`, `w:trHeight`, `w:pgMar`); such a file does not open: `Document.open()` and every CLI command, `rdocx text` and `validate` included, fail with `OXML parsing error: parse int error: invalid digit found in string` (no attribute named) or `unsupported table measurement: "..."`. Even `240.0` is refused, in the body, the styles and the numbering; only `w:spacing/@w:line` and whole table widths (`w:tcW w:w="4320.0"`) open | on a copy, never on the input: in the `word/*.xml` parts, round every `w:` attribute whose value is a decimal number (`-?\d+\.\d+`) to the nearest integer (zipfile and one regular expression), then open the copy with rdocx and go on. No fallback needed beyond that one step |
-| Two drawings of one part with one id [docpr-duplicate-ids] | a file in which two drawings of one part share a `wp:docPr` id (several `id="0"` in the body) does not open: `cannot scan identifiers in XML part /word/document.xml: duplicate drawing id 0 in imported or preserved XML`, in `Document.open()` and every CLI command. One id used once in the body and once in a header opens | on a copy: in each part, give every `wp:docPr` whose id was already used earlier in that part a new id above the largest one of the package, then open the copy with rdocx. No fallback needed beyond that one step |
-
-## Styles
-
-| Gap | What happens | Workaround / fallback |
-|---|---|---|
-| Duplicate style ids [styles-duplicate-ids] | when `word/styles.xml` holds several `w:style` elements with one id (Google Docs writes `TableNormal`, `Normal`, `Table1` and others more than once), `add_style()` raises `RdocxError: invalid style graph: duplicate style ID '...'`; `rebuild_toc()` on the same file uses the first definition and says so in its `diagnostics` | before `add_style`, repair the styles part with lxml as in the next row (keep the first `w:style` of each id), then go on with rdocx. No fallback needed beyond that one step |
-| Several default styles of one type [styles-several-defaults] | when `word/styles.xml` marks several styles of one type as default under different ids (Google Docs writes a `TableNormal` and a localized `TableauNormal`, both `w:default="1"`, and up to four default paragraph styles), `add_style()` raises `RdocxError: invalid style graph: style type '...' has more than one default`, also once the duplicate ids are gone; `rebuild_toc()` accepts the file | one lxml pass over `word/styles.xml` before `add_style`: drop every `w:style` whose id was already seen, then remove `w:default` from every later default style of a type, keeping the first of each type. No fallback needed beyond that one step |
-
 ## Comparison and rendering
 
 | Gap | What happens | Workaround / fallback |
@@ -29,8 +15,3 @@ A step that rdocx blocks, or gets wrong, and that this page does not list is a n
 | A picture whose image changed [compare-picture-change] | when a figure keeps its place but gets a new image, `compare()` records no revision and the redline keeps the old image if nothing else changed; if anything else changed too, it refuses the pair: `comparison acceptance does not reproduce the edited stories at body story item[N]` | before comparing, check whether the pictures differ (`image_data(rid)` of each `drawing` item on both sides). If one does, put the new image into a copy of the original (`replace_image(rid, bytes)`), compare that copy, and anchor a comment on the caption saying the figure changed: the redline cannot show it as a revision |
 | A PDF that shows the tracked changes [render-tracked-view] | `to_pdf()`, `render_pages()`, `rdocx convert --to pdf` and `rdocx render` render the accepted view only: insertions in, deletions out, no marks. The Rust API has a tracked view; Python and the CLI do not expose it | on a copy of the redline, with lxml, give the runs inside `w:ins` an underline and a colour and turn each `w:del` into a struck-through, coloured run (`w:delText` becomes `w:t`), then render the copy with rdocx. Say in the answer that the PDF is a rendering of marks, not Word's own |
 
-## Saving
-
-| Gap | What happens | Workaround / fallback |
-|---|---|---|
-| An edit re-serializes its part [edit-reserializes-part] | every other part keeps its bytes and nothing is lost, but the part an edit touches (`word/document.xml` for the body) is written again in full: indented, with `xmlns:w` declared again on every element that carries `w:rsid*` (Word writes them on nearly every paragraph and run). The part grows, and an XML diff shows all of it instead of the edit | review an edit by text (`rdocx diff`, `rdocx text --json`), never by the XML of the parts. No fallback needed: the content is kept |

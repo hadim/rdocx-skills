@@ -198,10 +198,9 @@ def test_add_shape_writes_the_python_pptx_theme_style_and_draws():
     ref_shapes.add_group_shape().shapes.add_shape(1, EMU, EMU, EMU, EMU)
     ref_shapes.add_textbox(0, 0, EMU, EMU)
     prs = blank_slide()
-    shapes = prs.slides[0].shapes
-    shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, 3 * EMU, 2 * EMU)
-    shapes.add_group_shape().shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, EMU, EMU)
-    shapes.add_textbox(0, 0, EMU, EMU)
+    prs.slides[0].shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, 3 * EMU, 2 * EMU)
+    prs.slides[0].shapes.add_group_shape().shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, EMU, EMU)
+    prs.slides[0].shapes.add_textbox(0, 0, EMU, EMU)
 
     def styles(blob):
         with zipfile.ZipFile(io.BytesIO(blob)) as z:

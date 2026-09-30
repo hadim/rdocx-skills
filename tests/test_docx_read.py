@@ -1,8 +1,6 @@
 """docx, reading: text, structure, JSON views, metadata, hyperlinks, sections, styles."""
 import json
-import re
 import zipfile
-from decimal import ROUND_HALF_UP, Decimal
 
 import docx
 import pytest
@@ -279,7 +277,7 @@ def cases(rows, gap=None):
             for row in rows]
 
 
-@pytest.mark.parametrize("part,template,value,integer,read", cases(DECIMAL, "decimal-measurements") + cases(DECIMAL_ACCEPTED))
+@pytest.mark.parametrize("part,template,value,integer,read", cases(DECIMAL) + cases(DECIMAL_ACCEPTED))
 def test_decimal_measurement_is_read_as_the_nearest_integer(part, template, value, integer, read, rdocx_cli, tmp_path):
     """Google Docs writes measurements with a floating-point tail (`w:gridCol w:w="2210.0000000000005"`), which Word
     rounds. The file opens in the binding and in the CLI, and the value reads back as the nearest integer."""
@@ -298,27 +296,3 @@ def test_measurements_read_back_where_the_decimal_tests_look(tmp_path):
         assert template.format(integer).encode() in zipfile.ZipFile(tmp_path / "a.docx").read(f"word/{part}.xml")
         assert read is None or read(doc) == integer, template
 
-
-def round_decimal_measurements(src, dst):
-    """The workaround of gap decimal-measurements: every w: attribute of the word/*.xml parts whose value is a
-    decimal number becomes the nearest integer, half away from zero."""
-    def nearest(m):
-        return m[1] + str(int(Decimal(m[2].decode()).to_integral_value(ROUND_HALF_UP))).encode() + m[3]
-    with zipfile.ZipFile(src) as z:
-        items = [(i, z.read(i.filename)) for i in z.infolist()]
-    with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as z:
-        for info, data in items:
-            if re.fullmatch(r"word/[^/]+\.xml", info.filename):
-                data = re.sub(rb'(\sw:\w+=")(-?\d+\.\d+)(")', nearest, data)
-            z.writestr(info, data)
-    return dst
-
-
-def test_rounding_decimal_measurements_before_opening(rdocx_cli, tmp_path):
-    """The workaround of gap decimal-measurements, on a file that carries every case at once."""
-    rows = DECIMAL + DECIMAL_ACCEPTED
-    f = round_decimal_measurements(with_values(measured(tmp_path / "a.docx"), tmp_path / "b.docx", rows), tmp_path / "c.docx")
-    assert b'w:gridCol w:w="4320"/><w:gridCol w:w="4320"/>' in zipfile.ZipFile(f).read("word/document.xml")
-    doc = rdocx.Document.open(f)
-    assert [read(doc) for *_, read in rows if read] == [integer for *_, integer, read in rows if read]
-    assert run([rdocx_cli, "text", f]).returncode == 0
