@@ -48,9 +48,9 @@ is RFC 3339 with its zone.
   `add_connector(MSO_CONNECTOR.X, begin_x, begin_y, end_x, end_y)`, `add_picture(file, left, top,
   width=None, height=None)`, `add_table(rows, cols, left, top, width, height)`, `add_group_shape()`, `remove(shape)`, `move(from_, to)`
   (z-order: index 0 is the back). A group's `shapes` take the same `add_*` calls, and the group grows to
-  hold its members. `add_shape` writes no `p:style` (python-pptx writes one with an accent1 fill and line):
-  the new shape has neither fill nor line and draws nothing until it gets a fill colour (`fill.solid()`,
-  `fill.fore_color.rgb`) or a line colour (`line.color.rgb`). `add_connector` writes python-pptx's `p:style` (accent1 line, `effectRef idx="1"`: the theme's first
+  hold its members. `add_shape`, on a slide or in a group, writes python-pptx's `p:style` (accent1 fill and
+  line, `effectRef idx="2"`, the minor font in `lt1`): the shape draws in the theme's colours with no direct
+  fill or line (`fill.type` None) until they are set; `add_textbox` writes none. `add_connector` writes python-pptx's `p:style` (accent1 line, `effectRef idx="1"`: the theme's first
   effect style, an outer shadow in the default theme); `theme_effect_index = 0` gives a line without it.
 - `Shape`: `shape_id`, `name`, `shape_type` (`MSO_SHAPE_TYPE`), `left`, `top`, `width`, `height` (settable;
   None on a placeholder that inherits its geometry from the layout: `effective_geometry()` returns the

@@ -89,8 +89,8 @@ from rpptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 from rpptx.util import Inches, Pt
 prs = rpptx.Presentation("deck.pptx")
 card = prs.slides[4].shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.5), Inches(6.4), Inches(2.5), Inches(0.6))
-card.fill.solid(); card.fill.fore_color.rgb = RGBColor(0xF2, 0xF2, 0xF2)   # add_shape writes no theme style:
-card.line.color.rgb = RGBColor(0x80, 0x80, 0x80)                          # without these it draws nothing
+card.fill.solid(); card.fill.fore_color.rgb = RGBColor(0xF2, 0xF2, 0xF2)   # add_shape writes the theme style
+card.line.color.rgb = RGBColor(0x80, 0x80, 0x80)                          # (accent1): direct values replace it
 card.auto_shape_type = MSO_SHAPE.RECTANGLE                                # change the preset in place
 card.shadow.visible = True; card.shadow.color.rgb = RGBColor(0, 0, 0); card.shadow.alpha = 0.35
 card.shadow.blur_radius = Pt(4); card.shadow.distance = Pt(3); card.shadow.direction = 45.0; card.shadow.align = "tl"

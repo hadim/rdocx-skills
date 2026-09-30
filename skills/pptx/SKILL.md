@@ -69,7 +69,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Shadow | | `shape.shadow.visible = True`, `.color.rgb`, `.alpha`, `.blur_radius`, `.distance`, `.direction`, `.align` | writes `a:outerShdw`; `shadow.inherit = False` removes the theme's shadow |
 | Connector without the theme effect | | `connector.theme_effect_index = 0` | `add_connector` references the theme's effect 1, an outer shadow in the default theme |
 | Change a shape's preset | | `shape.auto_shape_type = MSO_SHAPE.RECTANGLE` | autoshapes only |
-| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each; `add_shape` writes no theme style, so the shape draws nothing until it gets a fill colour or a line colour |
+| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each; `add_shape` writes python-pptx's theme style (accent1 fill and line, theme effect 2), `add_textbox` none |
 | Z-order | | `shapes.move(from_, to)` | index 0 is the back |
 | Pictures | | `shape.replace_image(file)`, `shape.image.blob` | keeps position, size and crop |
 | Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each |

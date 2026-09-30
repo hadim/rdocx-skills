@@ -2,6 +2,7 @@
 import io
 import json
 import os
+import re
 import zipfile
 
 import pptx
@@ -188,27 +189,33 @@ def dark_pixels(png):
     return sum(1 for v in Image.open(io.BytesIO(png)).convert("L").getdata() if v < 200)
 
 
-def test_add_shape_writes_no_style_and_draws_nothing_until_styled():
-    """Current behaviour, not a gap: python-pptx's add_shape writes a p:style (accent1 fill and line),
-    rpptx's writes none, so the new shape has neither fill nor line."""
+def test_add_shape_writes_the_python_pptx_theme_style_and_draws():
+    """add_shape writes python-pptx's p:style (accent1 fill and line, effect 2, minor font in lt1), on a
+    slide and in a group; add_textbox writes none. Direct fill and line stay unset."""
     ref = pptx.Presentation()
-    ref_shape = ref.slides.add_slide(ref.slide_layouts[6]).shapes.add_shape(1, EMU, EMU, 3 * EMU, 2 * EMU)
-    assert ref_shape._element.find(pptx.oxml.ns.qn("p:style")) is not None
+    ref_shapes = ref.slides.add_slide(ref.slide_layouts[6]).shapes
+    ref_shapes.add_shape(1, EMU, EMU, 3 * EMU, 2 * EMU)
+    ref_shapes.add_group_shape().shapes.add_shape(1, EMU, EMU, EMU, EMU)
+    ref_shapes.add_textbox(0, 0, EMU, EMU)
     prs = blank_slide()
-    prs.slides[0].shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, 3 * EMU, 2 * EMU)
+    shapes = prs.slides[0].shapes
+    shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, 3 * EMU, 2 * EMU)
+    shapes.add_group_shape().shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, EMU, EMU)
+    shapes.add_textbox(0, 0, EMU, EMU)
+
+    def styles(blob):
+        with zipfile.ZipFile(io.BytesIO(blob)) as z:
+            return re.findall(r"<p:style>.*?</p:style>", z.read("ppt/slides/slide1.xml").decode())
+
+    out = io.BytesIO()
+    ref.save(out)
+    assert len(styles(prs.to_bytes())) == 2 and styles(prs.to_bytes()) == styles(out.getvalue())
     sh = prs.slides[0].shapes[0]
-    assert b"p:style" not in sh.xml and sh.fill.type is None and sh.line.color.rgb is None
-    assert sh.theme_effect_index is None
-    with pytest.raises(rpptx.RpptxError, match="no p:style"):
-        sh.theme_effect_index = 0
-    assert dark_pixels(prs.render_slide_to_png(0, 40)) == 0
-    sh.line.color.rgb = RGBColor(0, 0, 0)
+    assert sh.fill.type is None and sh.line.color.rgb is None and sh.theme_effect_index == 2
     assert dark_pixels(prs.render_slide_to_png(0, 40)) > 0
-    prs = blank_slide()
-    prs.slides[0].shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, EMU, 3 * EMU, 2 * EMU)
-    prs.slides[0].shapes[0].fill.solid()
-    prs.slides[0].shapes[0].fill.fore_color.rgb = RGBColor(0x20, 0x40, 0x80)
-    assert dark_pixels(prs.render_slide_to_png(0, 40)) > 0
+    sh.theme_effect_index = 0
+    assert sh.theme_effect_index == 0 and b'<a:effectRef idx="0">' in sh.xml
+    assert prs.slides[0].shapes[2].theme_effect_index is None
 
 
 def test_connector_theme_effect_line_ends_and_dash():
