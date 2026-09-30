@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
 sys.path.insert(0, str(ROOT / "skills" / "pptx" / "scripts"))
 import docx_ops  # noqa: E402
 import pptx_ops  # noqa: E402
-from conftest import BIN  # noqa: E402
+from conftest import BIN, digest  # noqa: E402
 
 
 anchored = docx_ops.anchored_text
@@ -156,7 +156,7 @@ def test_comment_on_text_in_tables_counts_nested_cells_and_refuses_past_the_last
     before = doc.to_bytes()
     with pytest.raises(docx_ops.EditError, match="not found in table cells"):
         docx_ops.comment_on_text(doc, "beta", "x", "Reviewer", occurrence=3, in_tables=True)
-    assert doc.to_bytes() == before
+    assert digest(doc.to_bytes()) == digest(before)
     cid = docx_ops.comment_on_text(doc, "beta", "x", "Reviewer")  # the default still counts body paragraphs
     assert docx_ops.comment_landings(doc.to_bytes())[cid] is False
 
