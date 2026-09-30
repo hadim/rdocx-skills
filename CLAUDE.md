@@ -38,19 +38,21 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
 
-## State on 29/09/2026
+## State on 30/09/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: hadim/rdocx `f2fa36d1` (`integration/open-prs-2026-09-29-2`: tensorbee/rdocx `main` at `9a7ed714`,
-  sprint S75, plus the 40 open pull requests #173 to #212, not yet reviewed upstream), rdocx 0.14.0, rpptx
-  0.12.1. That branch is never rewritten nor deleted: `install --build` fetches the pinned commit from it, and a
-  later snapshot gets a new dated branch (the first one, `integration/open-prs-2026-09-29` at `f3df95bf`, held
-  #173 to #195). Release `rdocx-f2fa36d1d18a` built by `build.yml` for linux-x86_64, linux-aarch64
-  (ubuntu-22.04 runners, glibc 2.35) and macos-arm64 (macos-14), with provenance attestations. The lock records
-  its hashes. Back to tensorbee/rdocx once those pull requests land there.
-- Suite: 462 passed, 10 strict xfails (8 gap keys), 12 skipped (installer and release tests without hashes in
-  the lock) on linux-x86_64 in `ci.yml` and on macos-arm64 with the local build (29/09/2026, 21 more gaps
-  closed by the pin, 53 of 61 in all). 474 passed and 10 xfails on macos-arm64 with the release installed.
+- Pinned: hadim/rdocx `d4d7c8af` (`integration/open-prs-2026-09-30`: tensorbee/rdocx `main` at `b7230b68`,
+  sprint S76, which integrated 19 of the open pull requests in the maintainer's own versions, plus every other
+  open pull request of the fork: the 21 older ones and #214 to #242, not yet reviewed upstream), rdocx 0.14.0,
+  rpptx 0.12.1. Integration branches are never rewritten nor deleted: `install --build` fetches the pinned
+  commit from them, and a later snapshot gets a new dated branch (earlier ones: `integration/open-prs-2026-09-29`
+  at `f3df95bf`, `integration/open-prs-2026-09-29-2` at `f2fa36d1`). Release `rdocx-d4d7c8af3fb1` built by
+  `build.yml` for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners, glibc 2.35) and macos-arm64 (macos-14),
+  with provenance attestations. The lock records its hashes. Back to tensorbee/rdocx once those pull requests
+  land there.
+- Suite: 483 passed, no gap left (the last 8 gap keys closed by this pin, 61 of 61 in all) on macos-arm64 with
+  the release installed and the hashes in the lock. The release build ran the previous suite on the three
+  platforms: 462 passed and the 10 former gap tests XPASS, nothing else failing.
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
