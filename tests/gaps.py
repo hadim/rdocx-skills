@@ -16,4 +16,5 @@ build workflow's release notes) says which gaps closed.
 GAPS = {
     # docx: styles
     "styles-duplicate-ids": "add_style raises \"invalid style graph: duplicate style ID\" when styles.xml repeats a style id",
+    "styles-several-defaults": "add_style raises \"invalid style graph: style type '...' has more than one default\" when styles.xml marks several styles of one type as default",
 }

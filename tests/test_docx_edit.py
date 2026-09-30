@@ -489,9 +489,11 @@ def test_style_is_assigned_by_id_or_name(tmp_path):
         doc.paragraphs[0].style = "NoSuchStyle"
 
 
-def duplicate_styles_docx():
-    """A TOC, a heading, and a styles part that repeats style ids as Google Docs writes them: `TableNormal`
-    three times, a second `Normal` with another body, `Table1` twice with different bodies."""
+def google_styles_docx(duplicate_ids=True, several_defaults=False):
+    """A TOC, a heading, and a styles part with what Google Docs writes: with `duplicate_ids`, repeated style
+    ids (`TableNormal` three times, a second `Normal` with another body, `Table1` twice with different bodies);
+    with `several_defaults`, a second default table style (`TableauNormal`) and a second default paragraph
+    style (`NormalWeb`) under ids of their own."""
     import copy
 
     from docx.oxml import parse_xml
@@ -504,51 +506,92 @@ def duplicate_styles_docx():
     d.add_paragraph()._p.append(parse_xml(f'<w:r {nsdecls("w")}><w:fldChar w:fldCharType="end"/></w:r>'))
     d.add_paragraph("Scope", style="Heading 1")
     styles = d.styles.element
-    first = next(s for s in styles.findall(qn("w:style")) if s.get(qn("w:styleId")) == "TableNormal")
-    styles.append(copy.deepcopy(first))
-    styles.append(copy.deepcopy(first))
-    styles.append(parse_xml(f'<w:style {nsdecls("w")} w:type="paragraph" w:styleId="Normal"><w:name w:val="normal"/>'
-                            '<w:rPr><w:sz w:val="30"/></w:rPr></w:style>'))
-    for body in ("", '<w:tblPr><w:tblStyleRowBandSize w:val="1"/></w:tblPr>'):
-        styles.append(parse_xml(f'<w:style {nsdecls("w")} w:type="table" w:styleId="Table1"><w:name w:val="Table1"/>{body}</w:style>'))
+    if duplicate_ids:
+        first = next(s for s in styles.findall(qn("w:style")) if s.get(qn("w:styleId")) == "TableNormal")
+        styles.append(copy.deepcopy(first))
+        styles.append(copy.deepcopy(first))
+        styles.append(parse_xml(f'<w:style {nsdecls("w")} w:type="paragraph" w:styleId="Normal"><w:name w:val="normal"/>'
+                                '<w:rPr><w:sz w:val="30"/></w:rPr></w:style>'))
+        for body in ("", '<w:tblPr><w:tblStyleRowBandSize w:val="1"/></w:tblPr>'):
+            styles.append(parse_xml(f'<w:style {nsdecls("w")} w:type="table" w:styleId="Table1"><w:name w:val="Table1"/>{body}</w:style>'))
+    if several_defaults:
+        for kind, sid, name in (("table", "TableauNormal", "Tableau Normal"), ("paragraph", "NormalWeb", "Normal (Web)")):
+            styles.append(parse_xml(f'<w:style {nsdecls("w")} w:type="{kind}" w:default="1" w:styleId="{sid}">'
+                                    f'<w:name w:val="{name}"/></w:style>'))
     buf = io.BytesIO()
     d.save(buf)
     return buf.getvalue()
 
 
+def repair_styles(data):
+    """The workaround of gaps styles-duplicate-ids and styles-several-defaults, with lxml: keep the first
+    w:style of each id, then drop w:default from every later default style of a type."""
+    from lxml import etree
+    from docx.oxml.ns import qn
+    src = zipfile.ZipFile(io.BytesIO(data))
+    root, seen, typed = etree.fromstring(src.read("word/styles.xml")), set(), set()
+    for style in root.findall(qn("w:style")):
+        if style.get(qn("w:styleId")) in seen:
+            root.remove(style)
+            continue
+        seen.add(style.get(qn("w:styleId")))
+        if style.get(qn("w:default")) in ("1", "true", "on"):
+            if style.get(qn("w:type")) in typed:
+                del style.attrib[qn("w:default")]
+            typed.add(style.get(qn("w:type")))
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
+        for info in src.infolist():
+            part_data = src.read(info.filename)
+            if info.filename == "word/styles.xml":
+                part_data = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+            dst.writestr(info, part_data)
+    return out.getvalue()
+
+
+def default_style_ids(data):
+    from lxml import etree
+    from docx.oxml.ns import qn
+    root = etree.fromstring(zipfile.ZipFile(io.BytesIO(data)).read("word/styles.xml"))
+    return sorted((s.get(qn("w:type")), s.get(qn("w:styleId"))) for s in root.findall(qn("w:style"))
+                  if s.get(qn("w:default")) in ("1", "true", "on"))
+
+
 @pytest.mark.gap("styles-duplicate-ids")
 def test_add_style_with_duplicate_style_ids():
-    doc = rdocx.Document.from_bytes(duplicate_styles_docx())
+    doc = rdocx.Document.from_bytes(google_styles_docx())
     doc.add_style("Note box", based_on="Normal")  # the first Normal is authoritative, as for rebuild_toc
     back = docx.Document(io.BytesIO(doc.to_bytes()))
     assert back.styles["Note box"].base_style.style_id == "Normal"
 
 
+@pytest.mark.gap("styles-several-defaults")
+def test_add_style_with_several_default_styles_of_one_type():
+    doc = rdocx.Document.from_bytes(google_styles_docx(duplicate_ids=False, several_defaults=True))
+    doc.add_style("Note box", based_on="Normal")  # the first default of each type is authoritative
+    back = docx.Document(io.BytesIO(doc.to_bytes()))
+    assert back.styles["Note box"].base_style.style_id == "Normal"
+
+
 def test_rebuild_toc_uses_the_first_of_duplicate_style_ids():
-    doc = rdocx.Document.from_bytes(duplicate_styles_docx())
+    doc = rdocx.Document.from_bytes(google_styles_docx())
     report = doc.rebuild_toc()
     assert report.entry_count == 1
     assert "duplicate style ID 'TableNormal' used first definition while rebuilding TOC" in report.diagnostics
 
 
-def test_add_style_after_removing_later_duplicate_styles():
-    """The workaround of gap styles-duplicate-ids: keep the first w:style of each id, then add_style."""
-    from lxml import etree
-    from docx.oxml.ns import qn
-    src = zipfile.ZipFile(io.BytesIO(duplicate_styles_docx()))
-    root, seen = etree.fromstring(src.read("word/styles.xml")), set()
-    for style in root.findall(qn("w:style")):
-        if style.get(qn("w:styleId")) in seen:
-            root.remove(style)
-        seen.add(style.get(qn("w:styleId")))
-    out = io.BytesIO()
-    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
-        for info in src.infolist():
-            data = src.read(info.filename)
-            if info.filename == "word/styles.xml":
-                data = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
-            dst.writestr(info, data)
-    doc = rdocx.Document.from_bytes(out.getvalue())
+def test_rebuild_toc_accepts_several_default_styles_of_one_type():
+    doc = rdocx.Document.from_bytes(google_styles_docx(duplicate_ids=False, several_defaults=True))
+    assert doc.rebuild_toc().entry_count == 1
+
+
+@pytest.mark.parametrize("duplicate_ids,several_defaults", [(True, False), (False, True), (True, True)])
+def test_add_style_after_repairing_the_styles_part(duplicate_ids, several_defaults):
+    """The workaround of gaps styles-duplicate-ids and styles-several-defaults: one step for both."""
+    data = repair_styles(google_styles_docx(duplicate_ids, several_defaults))
+    assert default_style_ids(data) == [("character", "DefaultParagraphFont"), ("numbering", "NoList"),
+                                       ("paragraph", "Normal"), ("table", "TableNormal")]
+    doc = rdocx.Document.from_bytes(data)
     doc.add_style("Note box", based_on="Normal")
     assert docx.Document(io.BytesIO(doc.to_bytes())).styles["Note box"].base_style.style_id == "Normal"
 
