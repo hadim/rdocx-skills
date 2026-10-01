@@ -18,6 +18,27 @@ def test_cli_text_plain(rdocx_cli, report_docx):
     assert "Figure 1. Cross-section through pier 2" in out
 
 
+def paragraph_redline(path):
+    """A redline that removes the middle paragraph of three."""
+    a, b = rdocx.Document(), rdocx.Document()
+    for text in ("Alpha", "Gone", "Omega"):
+        a.add_paragraph(text)
+    for text in ("Alpha", "Omega"):
+        b.add_paragraph(text)
+    a.compare(b, "Reviewer", "2026-09-27T12:00:00Z", granularity="word")
+    a.save(path)
+    return a
+
+
+def test_a_paragraph_removed_by_a_tracked_deletion(rdocx_cli, tmp_path):
+    """No line in `rdocx text` and no layout fragment; `text --json` keeps it with empty text."""
+    doc = paragraph_redline(tmp_path / "r.docx")
+    assert run([rdocx_cli, "text", tmp_path / "r.docx"], check=True).stdout == "Alpha\nOmega\n"
+    data = json.loads(run([rdocx_cli, "text", "--json", tmp_path / "r.docx"], check=True).stdout)
+    assert [p["text"] for p in data["paragraphs"]] == ["Alpha", "", "Omega"]
+    assert sorted({f.body_index for f in doc.layout()}) == [0, 2]
+
+
 def test_cli_text_json_schema(rdocx_cli, report_docx):
     data = json.loads(run([rdocx_cli, "text", "--json", report_docx], check=True).stdout)
     assert data["schema"] == 1

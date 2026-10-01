@@ -236,3 +236,15 @@ def test_fix_template_content_type(tmp_path, report_docx):
 def test_count_reads_text_inside_simple_fields_smart_tags_and_custom_xml(tmp_path, wrapper):
     path = wrapped_text_docx(tmp_path / "w.docx", wrapper)
     assert docx_ops.all_text(path) == [("body", "before MID after")]
+
+
+def test_story_paragraphs_lists_a_paragraph_removed_by_a_tracked_deletion(tmp_path):
+    a, b = rdocx.Document(), rdocx.Document()
+    for text in ("Alpha", "Gone", "Omega"):
+        a.add_paragraph(text)
+    for text in ("Alpha", "Omega"):
+        b.add_paragraph(text)
+    a.compare(b, "Reviewer", "2026-09-27T12:00:00Z", granularity="word")
+    a.save(tmp_path / "r.docx")
+    texts = [t for _, kind, _, t in docx_ops.story_paragraphs(tmp_path / "r.docx") if kind == "body"]
+    assert texts == ["Alpha", "", "Omega"]
