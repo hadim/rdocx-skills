@@ -54,8 +54,9 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `integration/open-prs-2026-09-30` at `d4d7c8af`, `integration/open-prs-2026-09-30-2` at `d75b536a`,
   `integration/open-prs-2026-10-01` at `f8e7aa57`, `integration/open-prs-2026-10-01-2` at `a060826a`,
   `integration/open-prs-2026-10-01-3` at `3ccf0aa7`). Release `rdocx-20261001-fc7329a8a7ae` built by `build.yml`
-  for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners, glibc 2.35) and macos-arm64 (macos-14), with provenance
-  attestations; the lock records its URL and hashes. Back to tensorbee/rdocx once those pull requests land there.
+  for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners, glibc 2.35) and macos-arm64 (macos-14), then completed
+  with windows-x86_64 (windows-2025, MSVC) by the same workflow, with provenance attestations; the lock records its
+  URL and the hashes of the four platforms. Back to tensorbee/rdocx once those pull requests land there.
 - Suite: on macos-arm64 with the release installed and the hashes in the lock, 582 passed, no strict xfail (the
   release build: 569 passed, 12 skipped and the one test below failing on each platform, before the update).
   Moving the base from S77 to S78 changed one result: `compare` no longer refuses a pair whose comments differ.

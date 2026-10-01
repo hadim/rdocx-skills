@@ -62,7 +62,7 @@ new pin fixes it, the suite fails on purpose so that the skills are updated. Run
 
 The plugin holds no binaries. The first time a skill runs, it calls `scripts/rdocx_env.py install`, which
 downloads the pinned rdocx and rpptx CLIs and wheels for the machine (Linux x86_64 or arm64 with glibc 2.35
-or later, macOS arm64; about 70 MB) from this repository's GitHub release, checks their SHA-256 against
+or later, macOS arm64, Windows x86_64 from Git Bash; about 70 MB) from this repository's GitHub release, checks their SHA-256 against
 `rdocx.lock.json`, and installs them under `~/.local/share/rdocx-skills/` (`RDOCX_HOME`): nothing
 system-wide, nothing from PyPI. To do it ahead of time, run `python3 scripts/rdocx_env.py install` from a
 clone of this repository.
