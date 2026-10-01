@@ -48,14 +48,16 @@ def _publish(write, out, src=None):
     os.close(fd)
     try:
         write(tmp)
+        # flushed through a handle open for writing (Windows refuses to flush one open for reading, EBADF), before
+        # setting the mode, which may make the file read-only
+        with open(tmp, "rb+") as f:
+            os.fsync(f.fileno())
         if src is not None and Path(src).exists():
             os.chmod(tmp, Path(src).stat().st_mode & 0o7777)
         else:
             umask = os.umask(0)
             os.umask(umask)
             os.chmod(tmp, 0o666 & ~umask)
-        with open(tmp, "rb") as f:
-            os.fsync(f.fileno())
         os.replace(tmp, out)
         try:
             fd = os.open(out.parent, os.O_RDONLY)
