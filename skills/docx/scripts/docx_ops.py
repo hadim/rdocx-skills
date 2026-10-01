@@ -57,6 +57,13 @@ def now():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _fsync(path):
+    """Flush a file to disk, through a handle open for writing: Windows refuses to flush one open for reading
+    (EBADF). Call it before setting the file's mode, which may make it read-only."""
+    with open(path, "rb+") as f:
+        os.fsync(f.fileno())
+
+
 def _fsync_dir(folder):
     """Flush a rename to disk (best effort: some file systems refuse to open a folder)."""
     try:
@@ -79,14 +86,13 @@ def save_atomic(doc, out, src=None):
     os.close(fd)
     try:
         doc.save(tmp)
+        _fsync(tmp)
         if src is not None and Path(src).exists():
             os.chmod(tmp, Path(src).stat().st_mode & 0o7777)
         else:
             umask = os.umask(0)
             os.umask(umask)
             os.chmod(tmp, 0o666 & ~umask)
-        with open(tmp, "rb") as f:
-            os.fsync(f.fileno())
         os.replace(tmp, out)
         _fsync_dir(out.parent)
     finally:
@@ -375,9 +381,8 @@ def fix_template_content_type(path):
         with zipfile.ZipFile(tmp, "w") as out:
             for info, data in items:
                 out.writestr(info, data.replace(old, new) if info.filename == "[Content_Types].xml" else data)
+        _fsync(tmp)
         os.chmod(tmp, path.stat().st_mode & 0o7777)
-        with open(tmp, "rb") as f:
-            os.fsync(f.fileno())
         os.replace(tmp, path)
         _fsync_dir(path.parent)
     finally:

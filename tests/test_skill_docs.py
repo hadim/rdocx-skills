@@ -47,7 +47,8 @@ def python_api():
     """Name -> parameter-name sets (None for a class or an attribute), from the type stubs and Python modules of
     the installed packages and from the skills' scripts."""
     api = {}
-    sources = [f for m in (rdocx, rpptx) for f in Path(m.__file__).parent.rglob("*.py*")]
+    # .py and .pyi only: "*.py*" also matches the extension module on Windows (.pyd), a binary
+    sources = [f for m in (rdocx, rpptx) for f in Path(m.__file__).parent.rglob("*.py*") if f.suffix in (".py", ".pyi")]
     for f in sources + sorted(SKILLS.glob("*/scripts/*.py")):
         for node in ast.walk(ast.parse(f.read_text())):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
