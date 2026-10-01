@@ -635,6 +635,89 @@ def test_hyperlink_on_a_run():
     assert run_.hyperlink.address == "https://example.org/"
 
 
+
+def test_shape_click_action_link_and_slide_jump(tmp_path, rpptx_cli):
+    """A web link and a slide jump on whole shapes (a group member included); the setters keep handles valid,
+    None clears, a jump survives a move, and removing its target leaves a link that does nothing."""
+    prs = rpptx.Presentation()
+    for _ in range(3):
+        prs.slides.add_slide(prs.slide_layouts[6])
+    prs.slides[0].shapes.add_textbox(EMU, EMU, EMU, EMU)
+    prs.slides[0].shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, 2 * EMU, EMU, EMU)
+    prs.slides[0].shapes.add_group_shape()
+    prs.slides[0].shapes[2].shapes.add_shape(MSO_SHAPE.RECTANGLE, EMU, 3 * EMU, EMU, EMU)
+    box, rect, slide = prs.slides[0].shapes[0], prs.slides[0].shapes[1], prs.slides[0]
+    assert box.click_action.hyperlink.address is None and box.click_action.target_slide is None
+    box.click_action.hyperlink.address = "https://example.org/a"
+    rect.click_action.target_slide = prs.slides[2]
+    assert box.left == EMU and rect.top == 2 * EMU and len(slide.shapes) == 3      # handles still valid
+    prs.slides[0].shapes[2].shapes[0].click_action.target_slide = prs.slides[1]
+    assert prs.slides[0].shapes[1].click_action.target_slide == prs.slides[2]
+    assert prs.slides[0].shapes[1].click_action.hyperlink.address == "slide3.xml"
+    assert prs.slides[0].shapes[2].shapes[0].click_action.target_slide == prs.slides[1]
+    prs.save(tmp_path / "links.pptx")
+    assert run([rpptx_cli, "validate", tmp_path / "links.pptx"]).returncode == 0
+    other = pptx.Presentation(tmp_path / "links.pptx")
+    shapes = other.slides[0].shapes
+    assert shapes[0].click_action.hyperlink.address == "https://example.org/a"
+    assert shapes[1].click_action.target_slide.slide_id == other.slides[2].slide_id
+    assert shapes[2].shapes[0].click_action.target_slide.slide_id == other.slides[1].slide_id
+    prs = rpptx.Presentation(tmp_path / "links.pptx")
+    prs.slides[0].shapes[0].click_action.hyperlink.address = None
+    assert prs.slides[0].shapes[0].click_action.hyperlink.address is None
+    target = prs.slides[2]
+    prs.slides.move(2, 1)
+    assert prs.slides[0].shapes[1].click_action.target_slide == prs.slides[1]
+    prs.slides.remove(prs.slides[1])
+    assert prs.slides[0].shapes[1].click_action.target_slide is None
+    with pytest.raises(rpptx.StaleElementError):
+        target.hidden
+    assert b'action="ppaction://noaction"' in parts(io.BytesIO(prs.to_bytes()))["ppt/slides/slide1.xml"]
+
+
+def test_slide_handles_compare_equal_and_are_unhashable():
+    prs = rpptx.Presentation()
+    prs.slides.add_slide(prs.slide_layouts[6])
+    prs.slides.add_slide(prs.slide_layouts[6])
+    assert prs.slides[0] == prs.slides[0] and prs.slides[0] != prs.slides[1]
+    with pytest.raises(TypeError):
+        hash(prs.slides[0])
+
+
+def test_replace_text_is_try_replace_text_and_validate_is_empty(deck_pptx):
+    prs = rpptx.Presentation(deck_pptx)
+    assert prs.validate() == ()
+    before = digest(prs.to_bytes())
+    with pytest.raises(rpptx.ReplacementCountError):
+        prs.replace_text("EUR 230,000", "EUR 236,000", expect=1)
+    assert digest(prs.to_bytes()) == before
+    assert prs.replace_text("EUR 230,000", "EUR 236,000", expect=2) == 2
+
+
+def test_comment_anchored_on_a_shape(deck_pptx, rpptx_cli, tmp_path):
+    """shape_id anchors a comment on that shape (ac:spMk in the comment part); an unknown shape or author raises
+    RpptxError and changes nothing."""
+    prs = rpptx.Presentation(deck_pptx)
+    author = "{11111111-2222-3333-4444-555555555555}"
+    sid = prs.slides[3].shapes[2].shape_id
+    kw = dict(id="{AAAAAAAA-2222-3333-4444-555555555555}", author_id=author, created=STAMP)
+    before = digest(prs.to_bytes())
+    with pytest.raises(rpptx.RpptxError, match="author"):
+        prs.slides[3].add_comment(text="x", shape_id=sid, **kw)
+    assert digest(prs.to_bytes()) == before
+    prs.add_comment_author(id=author, name="Claude", user_id="Claude", provider_id="None", initials="C")
+    before = digest(prs.to_bytes())
+    with pytest.raises(rpptx.RpptxError, match="shape id 9999"):
+        prs.slides[3].add_comment(text="x", shape_id=9999, **kw)
+    assert digest(prs.to_bytes()) == before
+    prs.slides[3].add_comment(text="On this box?", shape_id=sid, **kw)
+    prs.save(tmp_path / "c.pptx")
+    assert run([rpptx_cli, "validate", tmp_path / "c.pptx"]).returncode == 0
+    comment = next(v for k, v in parts(tmp_path / "c.pptx").items() if k.startswith("ppt/comments/"))
+    assert b"<ac:deMkLst" in comment and f'<ac:spMk id="{sid}"/>'.encode() in comment
+    listed = json.loads(run([rpptx_cli, "comment", "list", "--json", tmp_path / "c.pptx"], check=True).stdout)
+    assert [(c["slide"], c["text"]) for c in listed["comments"]] == [(4, "On this box?")]
+
 def test_template_saved_as_presentation_gets_the_presentation_content_type(tmp_path):
     p = pptx.Presentation()
     p.slides.add_slide(p.slide_layouts[6])

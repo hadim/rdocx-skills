@@ -13,8 +13,8 @@ installed module (`$R/python -c "import rpptx, os; print(os.path.dirname(rpptx._
 
 `Slide`, `Shape`, `Paragraph`, `Run` handles are checked against the presentation's revision. Geometry,
 font, paragraph and frame setters, fills, lines and line ends, shadows, `theme_effect_index`,
-`auto_shape_type` and `slide.hidden` keep every handle valid. Any `add_*` call, `remove`, `move`, `add_slide`,
-`import_slide` and every `try_replace_text` invalidate the handles of every slide. Setting `text_frame.text`,
+`auto_shape_type`, click actions and `slide.hidden` keep every handle valid. Any `add_*` call, `remove`, `move`,
+`add_slide`, `import_slide` and every `try_replace_text` invalidate the handles of every slide. Setting `text_frame.text`,
 `shape.text` or `notes_text` invalidates every handle, the shape an `add_*` just returned included;
 `run.text` keeps them. Write `prs.slides[i].shapes[j]` again after each edit.
 
@@ -26,9 +26,10 @@ font, paragraph and frame setters, fills, lines and line ends, shadows, `theme_e
 | `slides`, `slide_layouts`, `slide_width`, `slide_height`, `comment_authors` | |
 | `slides.add_slide(layout)`, `slides.duplicate(slide)` → the copy, `slides.move(from_, to)`, `slides.remove(slide)`, `slide_layouts.index(layout)` | |
 | `slides.import_slide(slide, layout=None, index=None)` → the copy | copies a slide of another presentation (at the end, or at `index`); without `layout` it takes the destination layout of the same name and raises `RpptxError` ("no layout named ...") when there is none: pass `layout=prs.slide_layouts[k]` |
-| `try_replace_text(old, new, *, expect=None)` → int | slides and notes, across runs, keeping the first run's formatting; a count other than `expect` raises `ReplacementCountError` and changes nothing |
+| `try_replace_text(old, new, *, expect=None)` → int | slides and notes, across runs, keeping the first run's formatting; a count other than `expect` raises `ReplacementCountError` and changes nothing. `replace_text` is the same call |
 | `add_comment_author(*, id, name, user_id, provider_id, initials=None)` | id is a GUID in braces |
 | `text_layout(*, width_factor=1.0)` → list of `TextFrameLayout` (`slide_index`, `shape_id`, `name`, `overflow`, `autofit`, `font_scale`, `frame`, `usable`, `height`, `lines`: `text`, `font_size`, `baseline`, `bounds`, `paragraph_index`) | rpptx's own line breaks; `width_factor=0.95` asks whether text fits a narrower frame; percentage line spacing is laid out as LibreOffice does (100 % is 1.2 em) |
+| `validate()` → tuple of `ValidationIssue` (`kind`, `message`) | empty when the deck is valid |
 | `to_pdf()`, `to_notes_pdf()`, `render_slide_to_png(i, dpi=150)`, `render_all_slides(dpi)`, `render_all_notes(dpi)` | zero-based slide index |
 
 ## Slide
@@ -37,9 +38,11 @@ font, paragraph and frame setters, fills, lines and line ends, shadows, `theme_e
 notes=True)` → int (this slide only, its notes unless `notes=False`; same all-or-nothing count as the
 presentation's), `notes_text` (None when the slide has no
 notes; setting it creates the notes slide), `background.fill`, `follow_master_background`, `comments` (each with `id`, `author_id`, `created`,
-`text`, `status`, `replies`), `add_comment(*, id, author_id, created, text)`, `reply_to_comment(comment_id,
-*, id, author_id, created, text)`, `resolve_comment(comment_id)`, `remove_comment(comment_id)`, `move_comment(from_, to)`, `move_reply(comment_id, from_, to)`. `created`
-is RFC 3339 with its zone.
+`text`, `status`, `replies`), `add_comment(*, id, author_id, created, text, shape_id=None)` (on the slide, or on
+the shape `shape_id` names; an unknown shape or author raises `RpptxError` and changes nothing),
+`reply_to_comment(comment_id, *, id, author_id, created, text)`, `resolve_comment(comment_id)`, `remove_comment(comment_id)`, `move_comment(from_, to)`, `move_reply(comment_id, from_, to)`. `created`
+is RFC 3339 with its zone. Two handles of one slide compare equal (`==`); a `Slide` is unhashable (no sets, no
+dict keys).
 
 ## Shapes
 
@@ -58,8 +61,10 @@ is RFC 3339 with its zone.
   formatting), `text_frame`, `fill`, `line`, `shadow`, `auto_shape_type` (get and set: `MSO_SHAPE` or a preset
   name such as `"roundRect"`; ValueError on a shape that is not an autoshape), `theme_effect_index` (the
   `effectRef` of `p:style`, None without one; setting it raises `RpptxError` on a shape without `p:style`),
-  `adjustments`, `has_table`, `table`, `image` (`blob`,
-  `content_type`, `ext`), `replace_image(file)` (keeps position, size and crop), `shapes` (a group's
+  `click_action` (`hyperlink.address`: a web link on the whole shape, get and set; `target_slide`: a `Slide` or
+  None, get and set, a click jumps to that slide; for a jump `hyperlink.address` reads the target part, such as
+  `"slide3.xml"`; removing the target slide leaves a link that does nothing), `adjustments`, `has_table`,
+  `table`, `image` (`blob`, `content_type`, `ext`), `replace_image(file)` (keeps position, size and crop), `shapes` (a group's
   children), `xml` (the shape element as bytes).
 - `TextFrame`: `paragraphs`, `add_paragraph()`, `text`, `try_replace_text(old, new, *, expect=None)` → int
   (this frame only), `margin_left/right/top/bottom`, `word_wrap`,
@@ -68,7 +73,7 @@ is RFC 3339 with its zone.
   `line_spacing`, `space_before`, `space_after`, `left_indent`, `right_indent`, `first_line_indent`, `font`.
 - `Run`: `text`, `font` (`name`, `size`, `bold`, `italic`, `underline`, `strike`, `all_caps`, `color`: reads
   a hex string such as `"123456"`, set it with `font.color = RGBColor(...)`, not python-pptx's
-  `font.color.rgb`), `hyperlink.address` (get and set; runs only). Shape fills and lines use
+  `font.color.rgb`), `hyperlink.address` (get and set). Shape fills and lines use
   `fill.fore_color.rgb` and `line.color.rgb`, as in python-pptx.
 - `FillFormat`: `solid()`, `background()` (no fill), `fore_color.rgb`, `type` (`MSO_FILL`). `LineFormat`:
   `width`, `color.rgb`, `fill`, `dash_style` (`MSO_LINE_DASH_STYLE`), `head_end` and `tail_end`

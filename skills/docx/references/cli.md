@@ -25,7 +25,7 @@ print an operation record: `output`, `scope` and the result (`comment_id`, `main
 | `rdocx layout --json F` | `body_items`: for each top-level block, `body_index`, `kind`, `fragments` (`physical_page`, `displayed_page`, `x`, `y`, `width`, `height` in points); a paragraph that a tracked deletion removes has none |
 | `rdocx comment list [--json] F` | `comments`: `id`, `author`, `initials`, `date`, `text`, `parent_id`, `resolved`, in package order |
 | `rdocx revision list [--json] F` | `revisions`: `id`, `kind` (insertion, deletion, paragraph_property_change, run_property_change, section_property_change, ...), `author`, `timestamp`, `story` (`kind`, `part_name`, `owner_index`): every supported story |
-| `rdocx diff A B` | paragraphs that differ, by one-based position, `-` and `+` lines, with the paragraph and table counts of each file |
+| `rdocx diff A B` | paragraphs that differ in every story, `-` and `+` lines, each labelled with its body position or its story (`[4]`, `[header default, section 1, paragraph 1]`), with the paragraph and table counts of each file |
 | `rdocx validate F` | package and schema invariants: every XML part the main document relates to must be well formed (a truncated header fails, naming the part), and every paragraph, character or table style id used by the body, headers, footers, notes and comments must be defined. Warnings (empty paragraphs, missing title) keep exit 0 |
 
 ## Editing

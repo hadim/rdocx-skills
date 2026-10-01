@@ -44,22 +44,22 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## State on 01/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: hadim/rdocx `a060826a` (`integration/open-prs-2026-10-01-2`: the previous snapshot
-  `integration/open-prs-2026-10-01` at `f8e7aa57`, which is tensorbee/rdocx `main` at `b7230b68`, sprint S76,
-  plus every other open pull request of the fork and #256 to #262, and on top #263, not yet reviewed upstream),
+- Pinned: hadim/rdocx `3ccf0aa7` (`integration/open-prs-2026-10-01-3`: tensorbee/rdocx `main` at `5fd80c16`,
+  sprint S77, which carries the maintainer's versions of the older pull requests, plus every open pull request of
+  the fork that `main` does not carry yet, #214 to #263, with #219, #231 and #234 rebased onto that `main`),
   rdocx 0.14.0, rpptx 0.12.1. Integration branches are never rewritten nor deleted: `install --build` fetches the
   pinned commit from them, and a later snapshot gets a new dated branch (earlier ones:
   `integration/open-prs-2026-09-29` at `f3df95bf`, `integration/open-prs-2026-09-29-2` at `f2fa36d1`,
   `integration/open-prs-2026-09-30` at `d4d7c8af`, `integration/open-prs-2026-09-30-2` at `d75b536a`,
-  `integration/open-prs-2026-10-01` at `f8e7aa57`). Release `rdocx-20261001-a060826aa88d` built by `build.yml`
-  for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners, glibc 2.35) and macos-arm64 (macos-14), with
-  provenance attestations; the lock records its URL and hashes. Back to tensorbee/rdocx once those pull
-  requests land there.
-- Suite: on macos-arm64 with the release installed and the hashes in the lock, 574 passed, no strict xfail.
-  The previous pin closed compare-final-table, compare-picture-change and render-tracked-view, and its review
-  pass found accepted-view-deleted-rows (a deleted table row stayed in the text, Markdown, HTML and the
-  accepted PDF), which this pin closes (#263: 1 XPASS on the three platforms in the release build, nothing
-  else failed).
+  `integration/open-prs-2026-10-01` at `f8e7aa57`, `integration/open-prs-2026-10-01-2` at `a060826a`). Release
+  `rdocx-20261001-3ccf0aa78d98` built by `build.yml` for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners,
+  glibc 2.35) and macos-arm64 (macos-14), with provenance attestations; the lock records its URL and hashes.
+  Back to tensorbee/rdocx once those pull requests land there.
+- Suite: on macos-arm64 with the release installed and the hashes in the lock, 582 passed, no strict xfail (562
+  passed and 12 skipped on each platform in the release build, no failure). Moving the base from S76 to S77
+  changed no result: no gap closed, none opened. Its review pass found capabilities the skills did not cite yet
+  (shape links and slide jumps, comments anchored on a shape, a refreshable TOC from `insert_toc`, `rdocx diff`
+  over every story), now cited and tested (8 new tests).
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.

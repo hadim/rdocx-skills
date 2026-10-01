@@ -102,6 +102,35 @@ def test_cli_toc_rebuild(rdocx_cli, tmp_path, report_docx):
     assert res.returncode == 0, res.stderr
 
 
+
+def test_insert_toc_then_rebuild_fills_a_new_document(rdocx_cli, tmp_path):
+    """insert_toc writes a TOC field that rebuild_toc fills: TOC1 entries linked to the headings, with the pages of
+    rdocx's layout; python-docx reads the entries and their style back."""
+    doc = rdocx.Document()
+    doc.add_paragraph("Inspection report")
+    doc.paragraphs[0].style = "Title"
+    for heading in ("Scope", "Findings", "Recommendations"):
+        doc.add_paragraph(heading)
+        doc.paragraphs[-1].style = "Heading 1"
+        doc.add_paragraph("Body text. " * 300)
+    doc.insert_toc(1, max_level=2)
+    assert doc.rebuild_toc().entry_count == 3
+    doc.save(tmp_path / "toc.docx")
+    assert run([rdocx_cli, "validate", tmp_path / "toc.docx"]).returncode == 0
+    doc = rdocx.Document.open(tmp_path / "toc.docx")
+    pages = {}
+    for p in doc.paragraphs:
+        if p.style == "Heading1":
+            bi = doc.find_content_index(p)
+            pages[p.text] = min(f.physical_page for f in doc.layout() if f.body_index == bi)
+    entries = [tuple(p.text.split("\t")) for p in doc.paragraphs if p.style == "TOC1"]
+    assert entries == [(h, str(n)) for h, n in pages.items()]
+    assert [p.text.split("\t")[0] for p in docx.Document(tmp_path / "toc.docx").paragraphs
+            if p.style.style_id == "TOC1"] == list(pages)
+    assert len(set(pages.values())) > 1
+    xml = part(tmp_path / "toc.docx", "word/document.xml")
+    assert b'TOC \\o "1-2" \\h' in xml and b'<w:hyperlink w:anchor="_Toc1">' in xml and b'w:name="_Toc1"' in xml
+
 def arial_document():
     """python-docx's template (Letter, left and right margins 1.25 in: text from x 90 to x 522 pt), in Arial."""
     d = docx.Document()
@@ -348,6 +377,14 @@ def test_diff_cli(rdocx_cli, report_docx, tmp_path):
     doc.save(tmp_path / "e.docx")
     out = run([rdocx_cli, "diff", report_docx, tmp_path / "e.docx"]).stdout
     assert "outlined" in out
+
+
+def test_diff_cli_reads_every_story(rdocx_cli, report_docx, tmp_path):
+    run([rdocx_cli, "replace", report_docx, "-p", "Issue B", "-v", "Issue C", "--expect", "2", "-o", tmp_path / "c.docx"],
+        check=True)
+    out = run([rdocx_cli, "diff", report_docx, tmp_path / "c.docx"]).stdout
+    assert re.search(r"^\+ \[\d+\] Issue C, for review$", out, re.M)
+    assert re.search(r"^\+ \[header default, section 1, paragraph 1\] .*Issue C$", out, re.M)
 
 
 def test_cli_survives_a_closed_pipe(rdocx_cli, report_docx):

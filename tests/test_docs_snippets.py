@@ -76,6 +76,11 @@ def test_recipe_outputs(workdirs):
     assert check.styles["Note box"].font.italic and check.styles["Note box"].base_style.name == "Normal"
     num = [p._p.pPr.numPr for p in check.paragraphs[2:]]
     assert all(n is not None and n.numId.val == num[0].numId.val for n in num)
+    toc = rdocx.Document.open(d / "with-toc.docx")
+    assert [p.text.split("\t")[0] for p in toc.paragraphs if p.style == "TOC1"] == ["Scope", "Findings", "Recommendations"]
+    assert all(p.text.split("\t")[1].isdigit() for p in toc.paragraphs if p.style == "TOC1")
+    with zipfile.ZipFile(d / "with-toc.docx") as z:
+        assert b'TOC \\o "1-2" \\h' in z.read("word/document.xml")
     p = {r.parent.parent.name: w for r, w in workdirs.items()}["pptx"]
     texts = "\n".join(sh.text_frame.text for s in pptx.Presentation(p / "edited.pptx").slides for sh in s.shapes if sh.has_text_frame)
     assert "EUR 236,000" in texts and "eight weeks" in texts
@@ -110,3 +115,10 @@ def test_recipe_outputs(workdirs):
     assert table.rows[len(old.rows) - 1].height in (old.rows[len(old.rows) - 2].height, old.rows[len(old.rows) - 1].height)
     group = grown[len(before)]
     assert group.shape_type == 6 and [sh.has_text_frame and sh.text_frame.text for sh in group.shapes][1] == "Legend"
+    links = pptx.Presentation(p / "links.pptx")
+    option_b = next(sh for sh in links.slides[3].shapes if sh.has_text_frame and sh.text_frame.text.startswith("Option B"))
+    assert option_b.click_action.target_slide.slide_id == links.slides[4].slide_id
+    assert links.slides[0].shapes[3].click_action.hyperlink.address == "https://example.com/footbridge"
+    with zipfile.ZipFile(p / "links.pptx") as z:
+        comment = b"".join(z.read(n) for n in z.namelist() if n.startswith("ppt/comments/"))
+    assert b"Which option did the board pick?" in comment and f'<ac:spMk id="{option_b.shape_id}"/>'.encode() in comment
