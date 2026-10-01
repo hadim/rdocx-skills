@@ -42,27 +42,26 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
 
-## State on 01/10/2026
+## State on 02/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: hadim/rdocx `fc7329a8` (`integration/open-prs-2026-10-01-4`: tensorbee/rdocx `main` at `3f1909fb`,
-  sprint S78, which carries the maintainer's versions of the older pull requests and of #214, #228, #229, #232,
-  #233 and #239, plus every open pull request of the fork that `main` does not carry yet, #218 to #263),
-  rdocx 0.14.0, rpptx 0.12.1. Integration branches are never rewritten nor deleted: `install --build` fetches the
-  pinned commit from them, and a later snapshot gets a new dated branch (earlier ones:
-  `integration/open-prs-2026-09-29` at `f3df95bf`, `integration/open-prs-2026-09-29-2` at `f2fa36d1`,
+- Pinned: hadim/rdocx `404c299e` (`integration/open-prs-2026-10-01-5`: tensorbee/rdocx `main` at `09af5601`,
+  sprint S79, which carries the maintainer's versions of the older pull requests and of #214, #220, #222, #225,
+  #228, #229, #232, #233, #236, #237 and #239, plus every open pull request of the fork that `main` does not
+  carry yet, #218 to #263), rdocx 0.14.0, rpptx 0.12.1. Integration branches are never rewritten nor deleted:
+  `install --build` fetches the pinned commit from them, and a later snapshot gets a new dated branch (earlier
+  ones: `integration/open-prs-2026-09-29` at `f3df95bf`, `integration/open-prs-2026-09-29-2` at `f2fa36d1`,
   `integration/open-prs-2026-09-30` at `d4d7c8af`, `integration/open-prs-2026-09-30-2` at `d75b536a`,
   `integration/open-prs-2026-10-01` at `f8e7aa57`, `integration/open-prs-2026-10-01-2` at `a060826a`,
-  `integration/open-prs-2026-10-01-3` at `3ccf0aa7`). Release `rdocx-20261001-fc7329a8a7ae` built by `build.yml`
-  for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners, glibc 2.35) and macos-arm64 (macos-14), then completed
-  with windows-x86_64 (windows-2025, MSVC) by the same workflow, with provenance attestations; the lock records its
-  URL and the hashes of the four platforms. Back to tensorbee/rdocx once those pull requests land there.
-- Suite: on macos-arm64 with the release installed and the hashes in the lock, 582 passed, no strict xfail (the
-  release build: 569 passed, 12 skipped and the one test below failing on each platform, before the update).
-  Moving the base from S77 to S78 changed one result: `compare` no longer refuses a pair whose comments differ.
-  A comment added or removed replaces the paragraph it anchors on, a reply or a resolved state adds one
-  insertion, and accepting gives the edited comments, rejecting the original ones. The test and the docx skill
-  now say so. No gap closed, none opened.
+  `integration/open-prs-2026-10-01-3` at `3ccf0aa7`, `integration/open-prs-2026-10-01-4` at `fc7329a8`). Release
+  `rdocx-20261001-404c299e8263` built by `build.yml` for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners,
+  glibc 2.35), macos-arm64 (macos-14) and windows-x86_64 (windows-2025, MSVC), with provenance attestations; the
+  lock records its URL and the hashes of the four platforms. Back to tensorbee/rdocx once those pull requests
+  land there.
+- Suite: the release build gives 570 passed and 12 skipped on each of the four platforms, no failure and no
+  strict xfail. Moving the base from S78 to S79 changed no result: no gap closed, none opened. The one change in
+  the surface the skills use is `rdocx diff --exit-code`, which now exits 2 when a story could not be compared;
+  the skills do not cite that exit code.
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
