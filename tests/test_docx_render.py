@@ -4,6 +4,7 @@ import json
 import re
 import shutil
 import subprocess
+from pathlib import Path
 
 import docx
 import pytest
@@ -14,7 +15,7 @@ from docx.oxml.ns import nsdecls, qn
 from docx.shared import Pt
 from PIL import Image
 
-from conftest import STAMP, digest, part, run
+from conftest import BASH, STAMP, digest, part, run
 
 
 def spaced(path, font, size, line, lines=3, picture=None):
@@ -389,8 +390,8 @@ def test_diff_cli_reads_every_story(rdocx_cli, report_docx, tmp_path):
 
 def test_cli_survives_a_closed_pipe(rdocx_cli, report_docx):
     # `text --json` of the report is about 390 kB, far above a pipe buffer, so the write always meets the closed pipe
-    p = subprocess.run(f'"{rdocx_cli}" text --json "{report_docx}" 2>/dev/null | head -c 1 > /dev/null; echo ${{PIPESTATUS[0]}}',
-                       shell=True, executable="/bin/bash", capture_output=True, text=True)
+    p = subprocess.run([BASH, "-c", '"$0" text --json "$1" 2>/dev/null | head -c 1 > /dev/null; echo ${PIPESTATUS[0]}',
+                        Path(rdocx_cli).as_posix(), Path(report_docx).as_posix()], capture_output=True, text=True)
     assert p.stdout.strip() in ("0", "141")
 
 

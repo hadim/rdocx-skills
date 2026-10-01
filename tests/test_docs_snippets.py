@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import BIN
+from conftest import BASH, BIN
 
 ROOT = Path(__file__).resolve().parent.parent
 BLOCKS = []
@@ -33,10 +33,14 @@ def workdirs(tmp_path_factory, report_docx, deck_pptx):
 @pytest.mark.parametrize("recipes,lang,code", BLOCKS)
 def test_recipe_block(recipes, lang, code, workdirs):
     skill = recipes.parent.parent
-    # the runtime Python an agent gets (BIN/python), not the test environment: no pytest, no Pillow there
-    env = dict(os.environ, R=str(BIN), SKILL=str(skill), RDOCX_BIN_DIR=str(BIN), PYTHONPATH=str(skill / "scripts"))
-    cmd = [str(BIN / "python"), "-c", code] if lang == "python" else ["bash", "-euo", "pipefail", "-c", code]
-    res = subprocess.run(cmd, cwd=workdirs[recipes], env=env, capture_output=True, text=True, timeout=300)
+    # in bash, as an agent runs them (Git Bash on Windows, hence the paths with forward slashes); a python block with
+    # the runtime Python an agent gets (BIN/python), not the test environment: no pytest, no Pillow there. The code
+    # goes through the environment, which no command line quoting can change.
+    env = dict(os.environ, R=BIN.as_posix(), SKILL=skill.as_posix(), RDOCX_BIN_DIR=str(BIN),
+               PYTHONPATH=str(skill / "scripts"), RECIPE=code)
+    script = '"$R/python" -c "$RECIPE"' if lang == "python" else 'eval "$RECIPE"'
+    res = subprocess.run([BASH, "-euo", "pipefail", "-c", script], cwd=workdirs[recipes], env=env, capture_output=True,
+                         text=True, timeout=300)
     assert res.returncode == 0, res.stdout[-2000:] + res.stderr[-2000:]
 
 

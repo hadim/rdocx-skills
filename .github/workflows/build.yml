@@ -1,4 +1,4 @@
-# Builds the rdocx and rpptx CLIs and wheels of one upstream commit on three native runners, runs the acceptance
+# Builds the rdocx and rpptx CLIs and wheels of one upstream commit on four native runners, runs the acceptance
 # suite on each, and publishes them as the release rdocx-<UTC build date YYYYMMDD>-<first 12 characters of the
 # commit> of this repository, which `rdocx_env.py lock --write --release` records in the lock and
 # `rdocx_env.py install` downloads and checks against it. Runs on a bump (rdocx.lock.json changed on main), by hand
@@ -76,8 +76,12 @@ jobs:
           - { platform: linux-x86_64, runner: ubuntu-22.04 }
           - { platform: linux-aarch64, runner: ubuntu-22.04-arm }
           - { platform: macos-arm64, runner: macos-14 }
+          - { platform: windows-x86_64, runner: windows-2025 }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
     env:
       COMMIT: ${{ needs.plan.outputs.commit }}
       PLATFORM: ${{ matrix.platform }}
@@ -130,14 +134,7 @@ jobs:
           if-no-files-found: error
 
       - name: Poppler, for the PDF text and raster checks
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: "1"
-        run: |
-          if [ "$RUNNER_OS" = Linux ]; then
-            sudo apt-get update -q > /dev/null && sudo apt-get install -y -q --no-install-recommends poppler-utils > /dev/null
-          else
-            brew install --quiet poppler
-          fi
+        run: .github/scripts/poppler.sh
 
       - name: Acceptance suite
         continue-on-error: true
@@ -182,7 +179,8 @@ jobs:
           for dir in "$RUNNER_TEMP"/artifacts/dist-*; do
             plat=${dir##*/dist-}
             n=0
-            for f in "$dir"/rdocx "$dir"/rpptx "$dir"/*.whl; do
+            for f in "$dir"/rdocx "$dir"/rpptx "$dir"/rdocx.exe "$dir"/rpptx.exe "$dir"/*.whl; do
+              [ -e "$f" ] || continue  # the CLIs are rdocx.exe and rpptx.exe on Windows only
               cp "$f" "assets/$plat.$(basename "$f")"
               n=$((n + 1))
             done
@@ -201,7 +199,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           {
-            echo "$REPO@$COMMIT ($REF), built for linux-x86_64, linux-aarch64 and macos-arm64 by"
+            echo "$REPO@$COMMIT ($REF), built for linux-x86_64, linux-aarch64, macos-arm64 and windows-x86_64 by"
             echo "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID from $GITHUB_REPOSITORY@$GITHUB_SHA."
             echo
             echo "These files are trusted only through rdocx.lock.json: \`rdocx_env.py bump $COMMIT\`, then"

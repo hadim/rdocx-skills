@@ -15,7 +15,7 @@ import pytest
 import rdocx
 import rpptx
 
-from conftest import BIN
+from conftest import BIN, EXE
 from gaps import GAPS
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -111,7 +111,7 @@ def test_python_names_and_keywords_exist(path):
 # ---------------------------------------------------------------- CLI commands and flags
 @functools.lru_cache(maxsize=None)
 def cli_help(*command):
-    res = subprocess.run([str(BIN / command[0]), *command[1:], "--help"], capture_output=True, text=True)
+    res = subprocess.run([str(BIN / (command[0] + EXE)), *command[1:], "--help"], capture_output=True, text=True)
     return res.stdout if res.returncode == 0 else None
 
 

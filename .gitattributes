@@ -1,0 +1,2 @@
+# LF everywhere, Windows checkouts included: the bash recipes, the .sh scripts and the regexes over the Markdown read LF.
+* text=auto eol=lf
