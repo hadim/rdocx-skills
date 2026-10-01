@@ -309,9 +309,8 @@ def table_redline(path):
     return a
 
 
-@pytest.mark.gap("accepted-view-deleted-rows")
 def test_accepted_views_drop_a_deleted_table(rdocx_cli, tmp_path):
-    """Accepting the redline leaves "a" and "b"; the text, Markdown and the accepted layout should too, with no
+    """Accepting the redline leaves "a" and "b", and so do the text, Markdown and the accepted layout, with no
     empty row, empty table or blank space where the deleted table was."""
     doc = table_redline(tmp_path / "r.docx")
     assert run([rdocx_cli, "text", tmp_path / "r.docx"], check=True).stdout == "a\nb\n"
