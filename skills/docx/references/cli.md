@@ -19,10 +19,10 @@ print an operation record: `output`, `scope` and the result (`comment_id`, `main
 
 | Command | Output |
 |---|---|
-| `rdocx text F` | plain text, accepted view of tracked changes (insertions in, deletions out): the body first, one line per paragraph, a table row on one line, then every other story (text boxes, headers, footers, footnotes, endnotes, comments), each part under a line such as `--- header (/word/header1.xml) ---`, a part without text left out. A story part that cannot be read is left out with a warning on stderr (exit 0): `validate` names it |
+| `rdocx text F` | plain text, accepted view of tracked changes (insertions in, deletions out; a paragraph that a tracked deletion removes prints no line, a deleted table row still does: `references/gaps.md` [accepted-view-deleted-rows]): the body first, one line per paragraph, a table row on one line, then every other story (text boxes, headers, footers, footnotes, endnotes, comments), each part under a line such as `--- header (/word/header1.xml) ---`, a part without text left out. A story part that cannot be read is left out with a warning on stderr (exit 0): `validate` names it |
 | `rdocx text --json F` | `{"paragraphs": [...], "revision_view": "accepted", "scope": "all-supported-stories", "stories": [...]}`: `paragraphs` holds the body and its tables, as if tracked changes were accepted. Each paragraph: `body_index` (top-level block), `path` (list of `{kind, index}` from the block down to the paragraph, through tables and content controls; `[]` for a top-level paragraph), `style` (style id), `numbering` (`[num_id, level]` or null), `text`, `runs` (`index`, `text`, `formatting`: `bold`, `italic`, `underline`, `strike`, `size_points`, `font`, `color`, `highlight`, `language`, `style`, or null; the text inside smart tags, inline custom XML and simple fields is in `text`, not in `runs`). `stories` lists every other story: `kind` (`text_box`, `header`, `footer`, `footnote`, `endnote`, `comment`), `part_name`, `owner_index`, `items` (`index_path`, `kind`, `text`). When a story part cannot be read, `scope` is `main` and `stories` is empty |
 | `rdocx inspect [--json] F` | paragraph and table counts, `content_elements`, `styles_used`, `metadata` (title, author, subject, keywords); no images |
-| `rdocx layout --json F` | `body_items`: for each top-level block, `body_index`, `kind`, `fragments` (`physical_page`, `displayed_page`, `x`, `y`, `width`, `height` in points) |
+| `rdocx layout --json F` | `body_items`: for each top-level block, `body_index`, `kind`, `fragments` (`physical_page`, `displayed_page`, `x`, `y`, `width`, `height` in points); a paragraph that a tracked deletion removes has none |
 | `rdocx comment list [--json] F` | `comments`: `id`, `author`, `initials`, `date`, `text`, `parent_id`, `resolved`, in package order |
 | `rdocx revision list [--json] F` | `revisions`: `id`, `kind` (insertion, deletion, paragraph_property_change, run_property_change, section_property_change, ...), `author`, `timestamp`, `story` (`kind`, `part_name`, `owner_index`): every supported story |
 | `rdocx diff A B` | paragraphs that differ, by one-based position, `-` and `+` lines, with the paragraph and table counts of each file |
@@ -83,10 +83,10 @@ number, so its title stays on the left when the TOC style has only the page-numb
 ## Rendering and conversion
 
 ```bash
-rdocx convert F --to pdf -o NEW.pdf [--font-dir DIR]
-rdocx convert F --to png|jpeg|tiff -o OUT.png [--dpi 150] [--pages 1,3-5] [--quality 90] [--transparent]
+rdocx convert F --to pdf -o NEW.pdf [--font-dir DIR] [--revision-view accepted|tracked]
+rdocx convert F --to png|jpeg|tiff -o OUT.png [--dpi 150] [--pages 1,3-5] [--quality 90] [--transparent] [--revision-view tracked]
 rdocx convert F --to md|html -o NEW.md
-rdocx render F -o NEW_DIR [--dpi 150] [--pages 1,3-5 | --page 0] [--format png|jpeg|tiff]
+rdocx render F -o NEW_DIR [--dpi 150] [--pages 1,3-5 | --page 0] [--format png|jpeg|tiff] [--revision-view tracked]
 ```
 Images from `convert`: one page goes to `OUT.png`, several to `OUT_001.png`, `OUT_002.png`... (tiff: one
 multi-page file). `render` writes `NEW_DIR/<name>_page<N>.png` with N one-based; `--pages` is one-based,
@@ -94,3 +94,7 @@ multi-page file). `render` writes `NEW_DIR/<name>_page<N>.png` with N one-based;
 metric-compatible families (Liberation for Arial, Times New Roman, Courier New; Carlito for Calibri; Caladea
 for Cambria) and the system fonts. Markdown and HTML hold the body, then text boxes, headers, footers,
 footnotes and endnotes, one section per part, and leave comments out.
+Tracked changes: every output shows the accepted view by default (insertions in, deletions out, no marks).
+`--revision-view tracked` renders a PDF or images with deletions struck through, insertions underlined and a
+change bar, which is how to show a redline; Markdown and HTML refuse it. A deleted table row still shows in
+the accepted view: `references/gaps.md` [accepted-view-deleted-rows].

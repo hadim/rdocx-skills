@@ -15,11 +15,6 @@ gaps closed.
 """
 
 GAPS = {
-    # docx: comparison and rendering
-    # upstream: tensorbee/rdocx#255
-    "compare-final-table": "compare refuses a table added or removed with a paragraph at the very end of the body: \"comparison needs an adjacent paragraph for a final paragraph change\"",
-    # upstream: tensorbee/rdocx#254
-    "compare-picture-change": "compare of a picture whose image changed: no revision and the old image kept, or a refusal (\"comparison acceptance does not reproduce the edited stories\") when another paragraph changes too",
-    # upstream: tensorbee/rdocx#253
-    "render-tracked-view": "to_pdf, render_pages and rdocx convert render only the accepted view of tracked changes; the Rust RevisionView::Tracked is not exposed",
+    # docx: tracked changes
+    "accepted-view-deleted-rows": "rdocx text, text --json, Markdown, HTML and the accepted PDF keep a table row or a whole table that a tracked deletion removes, as empty cells or blank space",
 }

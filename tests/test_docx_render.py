@@ -258,11 +258,10 @@ def test_pdf_of_a_redline_is_the_accepted_view(rdocx_cli, tmp_path):
     assert "OLDWORD" not in pdf_text((tmp_path / "r.pdf").read_bytes(), tmp_path)
 
 
-@pytest.mark.gap("render-tracked-view")
 @pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
 def test_pdf_of_a_redline_can_show_its_revisions(rdocx_cli, tmp_path):
-    """The Rust API renders a tracked view (RenderOptions { revision_view: RevisionView::Tracked }: deletions struck
-    through, insertions underlined, a change bar); Python and the CLI expose only the accepted view."""
+    """revision_view="tracked" and --revision-view tracked render deletions struck through, insertions underlined
+    and a change bar, so the PDF text holds both sides of the redline."""
     doc = redline(tmp_path / "r.docx")
     tracked = pdf_text(doc.to_pdf(revision_view="tracked"), tmp_path)
     assert "OLDWORD" in tracked and "NEWWORD" in tracked
@@ -270,6 +269,55 @@ def test_pdf_of_a_redline_can_show_its_revisions(rdocx_cli, tmp_path):
     run([rdocx_cli, "convert", tmp_path / "r.docx", "--to", "pdf", "--revision-view", "tracked", "-o",
          tmp_path / "r.pdf"], check=True)
     assert "OLDWORD" in pdf_text((tmp_path / "r.pdf").read_bytes(), tmp_path)
+    assert len(doc.render_all_pages(36, revision_view="tracked")) == 1
+    run([rdocx_cli, "render", tmp_path / "r.docx", "-o", tmp_path / "pages", "--dpi", "36", "--revision-view",
+         "tracked"], check=True)
+    assert len(list((tmp_path / "pages").glob("*.png"))) == 1
+    # the change bar: dark pixels in the right margin of the tracked page only
+    def margin_ink(png):
+        im = Image.open(io.BytesIO(png)).convert("L")
+        w, h = im.size
+        return sum(1 for x in range(int(0.9 * w), w) for y in range(h) if im.getpixel((x, y)) < 128)
+    assert margin_ink(doc.render_page_to_png(0, 72)) == 0
+    assert margin_ink(doc.render_page_to_png(0, 72, revision_view="tracked")) > 0
+    with pytest.raises(ValueError):
+        doc.to_pdf(revision_view="final")
+    md = tmp_path / "r.md"
+    assert run([rdocx_cli, "convert", tmp_path / "r.docx", "--to", "md", "--revision-view", "tracked", "-o",
+                md]).returncode == 1 and not md.exists()
+
+
+def test_markdown_and_html_of_a_redline_are_the_accepted_view(rdocx_cli, tmp_path):
+    redline(tmp_path / "r.docx")
+    for fmt in ("md", "html"):
+        run([rdocx_cli, "convert", tmp_path / "r.docx", "--to", fmt, "-o", tmp_path / f"r.{fmt}"], check=True)
+        out = (tmp_path / f"r.{fmt}").read_text()
+        assert "NEWWORD" in out and "OLDWORD" not in out
+
+
+def table_redline(path):
+    """A redline that removes a whole table between two paragraphs."""
+    a, b = rdocx.Document(), rdocx.Document()
+    a.add_paragraph("a")
+    a.add_table(1, 2)
+    a.tables[0].cell(0, 0).text = "KEEP"
+    a.add_paragraph("b")
+    b.add_paragraph("a")
+    b.add_paragraph("b")
+    a.compare(b, "Reviewer", STAMP, granularity="word")
+    a.save(path)
+    return a
+
+
+@pytest.mark.gap("accepted-view-deleted-rows")
+def test_accepted_views_drop_a_deleted_table(rdocx_cli, tmp_path):
+    """Accepting the redline leaves "a" and "b"; the text, Markdown and the accepted layout should too, with no
+    empty row, empty table or blank space where the deleted table was."""
+    doc = table_redline(tmp_path / "r.docx")
+    assert run([rdocx_cli, "text", tmp_path / "r.docx"], check=True).stdout == "a\nb\n"
+    run([rdocx_cli, "convert", tmp_path / "r.docx", "--to", "md", "-o", tmp_path / "r.md"], check=True)
+    assert "|" not in (tmp_path / "r.md").read_text()
+    assert [f.body_index for f in doc.layout()] == [0, 2]
 
 
 @pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")

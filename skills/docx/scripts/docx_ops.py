@@ -142,7 +142,8 @@ def _part_paragraphs(xml):
 def story_paragraphs(source):
     """[(part name, story kind, style id, text)] for every paragraph of the body (table cells, text boxes,
     content controls included), the headers and footers (each variant part), the footnotes and endnotes, read
-    from the package XML: what a reader of the document sees, in the accepted view of tracked changes."""
+    from the package XML: what a reader of the document sees, in the accepted view of tracked changes (a
+    paragraph that a tracked deletion removes is listed with empty text)."""
     out = []
     with zipfile.ZipFile(io.BytesIO(_package(source))) as z:
         names = sorted((n for n in z.namelist() if STORY_PART.match(n)),
