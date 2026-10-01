@@ -53,6 +53,18 @@ def rpptx_cli():
     return tool("rpptx")
 
 
+def poppler(name):
+    """The first Poppler tool `name` on PATH, or None. Not simply the first `name`: Git Bash puts Git for Windows'
+    mingw64/bin first on PATH, and its pdftotext is Xpdf's, which has no -bbox."""
+    for folder in os.environ.get("PATH", "").split(os.pathsep):
+        exe = shutil.which(name, path=folder) if folder else None
+        if exe:
+            res = subprocess.run([exe, "-v"], capture_output=True, text=True)
+            if "Poppler" in res.stdout + res.stderr:
+                return exe
+    return None
+
+
 def runtime_python():
     """The command that runs the runtime Python an agent gets: BIN/python, a shell wrapper, which Windows cannot
     start by itself (an agent runs it from Git Bash there)."""

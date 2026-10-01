@@ -2,7 +2,6 @@
 import io
 import json
 import re
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -15,7 +14,9 @@ from docx.oxml.ns import nsdecls, qn
 from docx.shared import Pt
 from PIL import Image
 
-from conftest import BASH, STAMP, digest, part, run
+from conftest import BASH, STAMP, digest, part, poppler, run
+
+PDFTOTEXT = poppler("pdftotext")
 
 
 def spaced(path, font, size, line, lines=3, picture=None):
@@ -146,13 +147,13 @@ def arial_document():
 def pdf_words(pdf, tmp_path):
     """(x_min, x_max, text) of every word of the PDF's first page, in reading order, from its text layer."""
     (tmp_path / "words.pdf").write_bytes(pdf)
-    out = subprocess.run(["pdftotext", "-bbox", "-f", "1", "-l", "1", tmp_path / "words.pdf", "-"],
+    out = subprocess.run([PDFTOTEXT, "-bbox", "-f", "1", "-l", "1", tmp_path / "words.pdf", "-"], check=True,
                          capture_output=True, text=True).stdout
     boxes = re.findall(r'xMin="([\d.]+)" yMin="[\d.]+" xMax="([\d.]+)" yMax="[\d.]+">([^<]*)</word>', out)
     return [(float(a), float(b), w) for a, b, w in boxes]
 
 
-@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+@pytest.mark.skipif(not PDFTOTEXT, reason="pdftotext (poppler) not installed")
 def test_toc_entry_of_a_numbered_heading_keeps_its_title_on_the_left(tmp_path):
     """The TOC 1 style carries one right dot-leader tab at the text width and no other stop. The rebuilt entry is
     number, tab, title, tab, page: rebuild_toc gives the entry a left stop after the number, as Word does, and the
@@ -197,14 +198,14 @@ def tabbed(path, align, leader="none"):
     return rdocx.Document.open(path).to_pdf()
 
 
-@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+@pytest.mark.skipif(not PDFTOTEXT, reason="pdftotext (poppler) not installed")
 def test_text_after_a_right_tab_ends_at_the_stop(tmp_path):
     """"12" ends at the stop (x 240), as in LibreOffice (240.1)."""
     number = next(w for w in pdf_words(tabbed(tmp_path / "r.docx", "right", "dot"), tmp_path) if w[2].endswith("12"))
     assert abs(number[1] - 240) <= 1
 
 
-@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+@pytest.mark.skipif(not PDFTOTEXT, reason="pdftotext (poppler) not installed")
 def test_text_after_a_left_tab_starts_at_the_stop(tmp_path):
     """"12" starts at the stop (x 240), as in LibreOffice (240.1)."""
     number = next(w for w in pdf_words(tabbed(tmp_path / "l.docx", "left"), tmp_path) if w[2].endswith("12"))
@@ -277,10 +278,10 @@ def redline(path):
 
 def pdf_text(pdf, tmp_path):
     (tmp_path / "t.pdf").write_bytes(pdf)
-    return subprocess.run(["pdftotext", tmp_path / "t.pdf", "-"], capture_output=True, text=True).stdout
+    return subprocess.run([PDFTOTEXT, tmp_path / "t.pdf", "-"], capture_output=True, text=True).stdout
 
 
-@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+@pytest.mark.skipif(not PDFTOTEXT, reason="pdftotext (poppler) not installed")
 def test_pdf_of_a_redline_is_the_accepted_view(rdocx_cli, tmp_path):
     doc = redline(tmp_path / "r.docx")
     assert "Keep NEWWORD here." in pdf_text(doc.to_pdf(), tmp_path) and "OLDWORD" not in pdf_text(doc.to_pdf(), tmp_path)
@@ -288,7 +289,7 @@ def test_pdf_of_a_redline_is_the_accepted_view(rdocx_cli, tmp_path):
     assert "OLDWORD" not in pdf_text((tmp_path / "r.pdf").read_bytes(), tmp_path)
 
 
-@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+@pytest.mark.skipif(not PDFTOTEXT, reason="pdftotext (poppler) not installed")
 def test_pdf_of_a_redline_can_show_its_revisions(rdocx_cli, tmp_path):
     """revision_view="tracked" and --revision-view tracked render deletions struck through, insertions underlined
     and a change bar, so the PDF text holds both sides of the redline."""
@@ -349,21 +350,21 @@ def test_accepted_views_drop_a_deleted_table(rdocx_cli, tmp_path):
     assert [f.body_index for f in doc.layout()] == [0, 2]
 
 
-@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+@pytest.mark.skipif(not PDFTOTEXT, reason="pdftotext (poppler) not installed")
 def test_pdf_text_layer_arial(tmp_path):
     pdf = tmp_path / "a.pdf"
     pdf.write_bytes(rdocx.Document.open(spaced(tmp_path / "a.docx", "Arial", 11, 240, lines=1)).to_pdf())
-    assert "Line 0 lorem ipsum" in subprocess.run(["pdftotext", pdf, "-"], capture_output=True, text=True).stdout
+    assert "Line 0 lorem ipsum" in subprocess.run([PDFTOTEXT, pdf, "-"], capture_output=True, text=True).stdout
 
 
-@pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) not installed")
+@pytest.mark.skipif(not PDFTOTEXT, reason="pdftotext (poppler) not installed")
 def test_pdf_text_layer_calibri_ligatures(tmp_path):
     d = docx.Document()
     r = d.add_paragraph().add_run("Location Rating Action fifteen office")
     r.font.name = "Calibri"
     d.save(tmp_path / "l.docx")
     (tmp_path / "l.pdf").write_bytes(rdocx.Document.open(tmp_path / "l.docx").to_pdf())
-    out = subprocess.run(["pdftotext", tmp_path / "l.pdf", "-"], capture_output=True, text=True).stdout
+    out = subprocess.run([PDFTOTEXT, tmp_path / "l.pdf", "-"], capture_output=True, text=True).stdout
     assert "Location Rating Action fifteen office" in out
 
 
