@@ -70,8 +70,9 @@ jobs:
         if: steps.release.outcome == 'failure'
         run: python scripts/rdocx_env.py install --build
 
+      # also after a failed build: the next attempt starts from what compiled
       - name: Save the cargo registry and the build folder
-        if: steps.release.outcome == 'failure' && steps.cache.outputs.cache-hit != 'true'
+        if: ${{ !cancelled() && steps.release.outcome == 'failure' && steps.cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
