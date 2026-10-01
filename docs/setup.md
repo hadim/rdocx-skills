@@ -124,8 +124,10 @@ with MSVC on Windows Server 2025 runners.
   date; title `rdocx <YYYY-MM-DD> <commit12> (<ref>)`) with `SHA256SUMS`, provenance attestations, and the
   suite summaries in its notes (gaps closed, other failures). It runs on a bump (the lock changed on `main`),
   by hand on any upstream tag, branch or commit (Actions, build, Run workflow, `ref`), and weekly on upstream
-  `main` HEAD. A commit has at most one release: when a release tag already ends with `-<commit12>`, it is
-  never rebuilt or overwritten; a failing suite does not block it.
+  `main` HEAD. A commit has at most one release: when a release tag already ends with `-<commit12>`, its
+  files are never rebuilt or overwritten, but a platform added to the workflow later is built and added to it
+  (its files, its lines of `SHA256SUMS`, its suite summary in the notes; then `lock --write --release`
+  records it). A failing suite does not block a release; a failing build does.
 - The tag cannot be derived from the commit (the date is the build's), so the lock's `release` URL is the
   only source of truth: `lock --write --release` lists this repository's releases through the GitHub API
   (unauthenticated, or with `GH_TOKEN` / `GITHUB_TOKEN` when set), takes the one whose tag ends with
