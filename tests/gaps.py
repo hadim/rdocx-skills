@@ -14,7 +14,4 @@ issue's state decides nothing: the suite run on each new build (the build workfl
 gaps closed.
 """
 
-GAPS = {
-    # docx: tracked changes
-    "accepted-view-deleted-rows": "rdocx text, text --json, Markdown, HTML and the accepted PDF keep a table row or a whole table that a tracked deletion removes, as empty cells or blank space",
-}
+GAPS = {}
