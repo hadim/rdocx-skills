@@ -69,8 +69,10 @@ rdocx compare ORIGINAL EDITED --author NAME --timestamp 2026-09-27T12:00:00Z -o 
 Writes ORIGINAL with EDITED's differences as tracked changes by NAME at the timestamp, in every supported
 story. JSON record: `main_story_revisions`, `diagnostics`, `scope`, `output`. The default granularity is
 `run`: one changed word shows as its whole run deleted and re-inserted. Pass `--granularity word` for a
-redline a person reads. A pair whose comments differ is refused unless `--ignore-comments` (the original's
-comments are kept, the edited file's dropped). A pair whose edited side had
+redline a person reads. A comment added or removed on the edited side replaces the paragraph it anchors on
+(deleted and reinserted), a reply or a resolved state adds one insertion: accepting gives EDITED's comments,
+rejecting ORIGINAL's. `--ignore-comments` keeps the original's comments, drops the edited file's, and
+compares the text only. A pair whose edited side had
 its TOC rebuilt compares, and the rebuilt TOC entries show as revisions next to the edit: check the exit code
 and read the redline before presenting it.
 

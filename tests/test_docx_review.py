@@ -320,9 +320,22 @@ def test_compare_accepts_a_pair_whose_comments_differ(rdocx_cli, tmp_path):
     b = tmp_path / "b.docx"
     run([rdocx_cli, "comment", "add", a, "--start-paragraph", "1", "--start-run", "0", "--end-paragraph", "1",
          "--end-run", "1", "--author", "R", "--text", "New comment", "-o", b], check=True)
-    assert compare(rdocx_cli, a, b, tmp_path / "red.docx").returncode != 0
+    # The comment added on the edited side replaces its paragraph in the redline (deleted and reinserted with
+    # the anchor): accepting gives the edited comments, rejecting the original ones, and the text is unchanged.
+    assert compare(rdocx_cli, a, b, tmp_path / "red.docx").returncode == 0
+    red = rdocx.Document.open(tmp_path / "red.docx")
+    assert [c.text for c in red.comments] == ["New comment"]
+    assert {r.kind for r in red.revisions} == {"deletion", "insertion"}
+    texts = [p.text for p in rdocx.Document.open(a).paragraphs]
+    for resolve, comments in (("accept_all", ["New comment"]), ("reject_all", [])):
+        doc = rdocx.Document.open(tmp_path / "red.docx")
+        getattr(doc, resolve)()
+        doc = rdocx.Document.from_bytes(doc.to_bytes())
+        assert [c.text for c in doc.comments] == comments
+        assert [p.text for p in doc.paragraphs] == texts and doc.revisions == ()
     assert compare(rdocx_cli, a, b, tmp_path / "red.docx", "--ignore-comments").returncode == 0
-    assert rdocx.Document.open(tmp_path / "red.docx").comments == ()
+    red = rdocx.Document.open(tmp_path / "red.docx")
+    assert red.comments == () and red.revisions == ()
 
 
 def test_compare_ignores_a_content_control_id(rdocx_cli, report_docx, tmp_path):
