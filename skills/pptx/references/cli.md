@@ -37,8 +37,8 @@ rpptx comment reply F --id ID --author NAME --text T --date RFC3339 -o OUT
 rpptx comment resolve F --id ID -o OUT
 rpptx comment remove F --id ID -o OUT      # a thread with its replies, or one reply
 ```
-Comments are anchored on the slide. The author is reused by name or added to the author list. Ids are the
-GUIDs shown by `comment list --json`.
+Comments are anchored on the slide (Python's `slide.add_comment(..., shape_id=)` anchors one on a shape). The
+author is reused by name or added to the author list. Ids are the GUIDs shown by `comment list --json`.
 
 ## Rendering
 

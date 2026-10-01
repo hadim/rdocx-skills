@@ -65,6 +65,7 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 | `accept_all()`, `reject_all()`, `accept_revision_id(id)`, `reject_revision_id(id)`, `accept_revisions_by_author(a)`, `reject_revisions_by_author(a)`, `accept_revisions_in_date_range(*, start, end)`, `reject_revisions_in_date_range(*, start, end)` | every supported story; dates as RFC 3339 strings |
 | `compare(edited, author, timestamp, *, granularity="run", ignore_comments=False, ...)` → diagnostics | turns `doc` into the redline of `doc` → `edited`; `granularity="word"` marks only the changed words, `ignore_comments=True` keeps `doc`'s comments and compares the rest |
 | `rebuild_toc()` → `TocRebuildReport` (`entry_count`, `bookmark_count`, `diagnostics`) | the entry of a numbered heading gets a left stop after its number |
+| `insert_toc(bi, max_level=3)` | inserts a TOC field (`TOC \o "1-N" \h`) at body index `bi`; `rebuild_toc()` then fills it with entries linked to the headings, their page numbers and the `TOC1`... styles |
 | `update_page_fields()` → int, `update_layout_backed_fields()` → report (`page_fields`, `num_pages_fields`, `page_reference_fields`, `updated_count`, `diagnostics`), `update_fields(*, now=datetime, file_name=, file_path=, merge_fields=, ...)` → count, `update_fields_on_open` (get/set) | caches field results from rdocx's pagination |
 | `layout()` → tuple of `LayoutFragment` (`body_index`, `physical_page`, `displayed_page`, `bounds.x/.y/.width/.height` in points), `layout_page(i)` → `LayoutPage` (`page_number`, `displayed_page_number`, `width`, `height`) | rdocx's pagination, on Word's line heights |
 | `to_pdf(*, revision_view="accepted")` → bytes, `render_pages(*, dpi=150, format="png", quality=90, transparent=False, pages=None, revision_view="accepted")` → list of bytes, `render_page_to_png(i, dpi, *, revision_view="accepted")`, `render_all_pages(dpi, *, revision_view="accepted")` | `pages` zero-based. `revision_view="tracked"` shows tracked changes (deletions struck through, insertions underlined, a change bar); any other value raises `ValueError` |
@@ -116,6 +117,6 @@ view, with its part and style id.
 `next_style`, flags); `HeaderFooterVariant` (`section_index`, `kind` header/footer, `variant`
 default/first/even, `story`, `inherited`, `source_section`); `Hyperlink` (`url`, `anchor`, `text`,
 `index_path`, `relationship_id`, `story`); `Comment` (`id`, `author`, `initials`, `date`, `text`,
-`parent_id`, `resolved`); `Revision` (`id`, `kind`, `author`, `timestamp`); `StoryItem` (`kind` paragraph,
+`parent_id`, `resolved`); `Revision` (`id`, `kind`, `author`, `timestamp`, `story`); `StoryItem` (`kind` paragraph,
 table, drawing, content_control, field, preserved_node; `index_path`, `direct_body_index`, `text`, `xml`,
 `story`); `Story` (`kind`, `part_name`, `owner_index`).

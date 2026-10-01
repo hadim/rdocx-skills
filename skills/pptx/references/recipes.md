@@ -169,6 +169,22 @@ $R/rpptx comment resolve c2.pptx --id "$ID" -o c3.pptx
 $R/rpptx comment list c3.pptx
 ```
 
+## Shape links, slide jumps, a comment on a shape
+
+```python
+import pptx_ops, rpptx
+prs = rpptx.Presentation("deck.pptx")
+k = next(i for i, sh in enumerate(prs.slides[3].shapes) if sh.has_text_frame and sh.text.startswith("Option B is recommended"))
+prs.slides[3].shapes[k].click_action.target_slide = prs.slides[4]          # a click jumps to slide 5
+assert prs.slides[3].shapes[k].click_action.target_slide == prs.slides[4]  # Slide handles compare with ==
+prs.slides[0].shapes[3].click_action.hyperlink.address = "https://example.com/footbridge"   # a web link on a shape
+author = "{6F1B3A52-0000-4000-8000-000000000001}"
+prs.add_comment_author(id=author, name="Claude", user_id="Claude", provider_id="None", initials="C")
+prs.slides[3].add_comment(id="{6F1B3A52-0000-4000-8000-000000000002}", author_id=author, created="2026-10-01T12:00:00Z",
+                          text="Which option did the board pick?", shape_id=prs.slides[3].shapes[k].shape_id)
+pptx_ops.save_atomic(prs, "links.pptx", "deck.pptx")
+```
+
 ## Check the fit, then render
 
 ```bash

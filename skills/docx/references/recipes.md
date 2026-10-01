@@ -205,6 +205,23 @@ docx_ops.save_atomic(doc, "fields.docx", "report.docx")
 print(rep.entry_count, fields.updated_count)
 ```
 
+A document without a table of contents gets one with `insert_toc`, then `rebuild_toc` fills it:
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document()
+doc.add_paragraph("Inspection report")
+doc.paragraphs[0].style = "Title"
+for heading in ("Scope", "Findings", "Recommendations"):
+    doc.add_paragraph(heading)
+    doc.paragraphs[-1].style = "Heading 1"
+    doc.add_paragraph("Body text. " * 300)
+doc.insert_toc(1, max_level=2)                 # a TOC field at body index 1, after the title
+rep = doc.rebuild_toc()                        # entries, links and page numbers from rdocx's pagination
+docx_ops.save_atomic(doc, "with-toc.docx")
+print(rep.entry_count)
+```
+
 ## Check what you changed
 
 ```bash
