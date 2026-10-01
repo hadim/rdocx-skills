@@ -14,7 +14,7 @@ you meet is reported (last section).
 ## Setup, once per session
 
 ```bash
-SKILL=/path/to/this/skill                  # the folder of this SKILL.md: the base directory shown when it loaded
+SKILL='/path/to/this/skill'                # the folder of this SKILL.md: the base directory shown when it loaded
 python3 "$SKILL/../../scripts/rdocx_env.py" install
 R=${RDOCX_HOME:-~/.local/share/rdocx-skills}/current/bin
 export PYTHONPATH="$SKILL/scripts" PYTHONDONTWRITEBYTECODE=1
@@ -27,6 +27,9 @@ SHA-256 of every file against `rdocx.lock.json` (an upstream commit and its hash
 exits 0 once the build is installed and verified (again: "already installed").
 Shell variables do not persist between commands in most agent shells: repeat the `R=` and `export` lines.
 Never `pip install rdocx` from PyPI or download a binary without its hash in the lock.
+**Windows**: run these lines in Git Bash, with `python` (or `py -3`) where they say `python3`; the quotes
+around the skill folder keep its backslashes. The CLIs are `rdocx.exe` and `rpptx.exe`, which `$R/rdocx` and
+`$R/rpptx` reach in Git Bash.
 
 **If `install` exits 2** (no verified build for this machine, for example no network access): tell the user in one line that the pinned
 rdocx build is not available here, do the task with the built-in `docx` skill, and offer to build it for

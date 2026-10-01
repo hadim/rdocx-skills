@@ -1,6 +1,6 @@
-# The acceptance suite on linux-x86_64 and windows-x86_64: the pinned files from this repository's release, checked
-# against the lock (seconds), or a build of the pinned commit when no release has them yet (right after a bump, or
-# a platform the release lacks; minutes).
+# The acceptance suite on linux-x86_64, macos-arm64 and windows-x86_64: the pinned files from this repository's
+# release, checked against the lock (seconds), or a build of the pinned commit when no release has them yet (right
+# after a bump, or a platform the release lacks; minutes).
 name: ci
 
 on:
@@ -23,6 +23,7 @@ jobs:
       matrix:
         include:
           - { platform: linux-x86_64, runner: ubuntu-24.04 }
+          - { platform: macos-arm64, runner: macos-14 }
           - { platform: windows-x86_64, runner: windows-2025 }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
