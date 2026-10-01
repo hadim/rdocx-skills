@@ -18,7 +18,7 @@ their fallback to the default skills, and asks the agent to report every new gap
 The skills never run an rdocx build they cannot verify. `rdocx.lock.json` pins an upstream commit and, per
 platform, the SHA-256 of each CLI, each wheel and every file the wheels install. The files come from this
 repository's releases: a bump of the lock makes the build workflow compile the commit on Linux x86_64, Linux
-arm64 and macOS arm64, run the acceptance suite on each, and publish them as the release
+arm64, macOS arm64 and Windows x86_64, run the acceptance suite on each, and publish them as the release
 `rdocx-<YYYYMMDD>-<commit12>` (build date first), whose URL the lock records. `scripts/rdocx_env.py` downloads
 them and installs only files that match the lock, re-checks them on `status`, or builds the pinned commit
 itself (every git object of the commit verified, `cargo --locked`, build tools pinned by hash). If no verified

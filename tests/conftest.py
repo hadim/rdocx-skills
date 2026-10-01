@@ -17,6 +17,9 @@ from gaps import GAPS  # noqa: E402
 TESTS = Path(__file__).parent
 BIN = Path(os.environ.get("RDOCX_BIN_DIR", Path(os.environ.get("RDOCX_HOME", Path.home() / ".local/share/rdocx-skills")) / "current" / "bin"))
 STAMP = "2026-09-27T12:00:00Z"
+EXE = ".exe" if os.name == "nt" else ""
+# Git Bash on Windows: a bare `bash` would start System32\bash.exe (WSL), which Windows searches before PATH
+BASH = shutil.which("bash") or "bash"
 
 
 def pytest_configure(config):
@@ -34,7 +37,7 @@ def pytest_collection_modifyitems(config, items):
 
 def tool(name):
     """The pinned CLI only: a test never runs another build found on PATH."""
-    path = BIN / name
+    path = BIN / (name + EXE)
     if not path.exists():
         pytest.fail(f"{path} not found: install the pinned build (rdocx_env.py install) or set RDOCX_BIN_DIR")
     return str(path)
@@ -48,6 +51,13 @@ def rdocx_cli():
 @pytest.fixture(scope="session")
 def rpptx_cli():
     return tool("rpptx")
+
+
+def runtime_python():
+    """The command that runs the runtime Python an agent gets: BIN/python, a shell wrapper, which Windows cannot
+    start by itself (an agent runs it from Git Bash there)."""
+    wrapper = BIN / "python"
+    return [BASH, wrapper.as_posix()] if os.name == "nt" else [str(wrapper)]
 
 
 def verified_dist():

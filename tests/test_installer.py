@@ -44,7 +44,7 @@ def dest(home):
 
 
 def site(home):
-    return next((dest(home) / "venv").glob("lib/python3*/site-packages"))
+    return rdocx_env.site_packages(dest(home) / "venv")
 
 
 def extra_pth(home):
@@ -64,18 +64,17 @@ def stray_cache(home):
 def forged_local_build(home):
     marker = dest(home) / "installed.json"
     info = json.loads(marker.read_text())
-    cli = dest(home) / "bin" / "rdocx"
-    cli.write_bytes((dest(home) / "bin" / "rpptx").read_bytes())
+    cli = dest(home) / "bin" / rdocx_env.cli_file(PLAT, "rdocx")
+    cli.write_bytes((dest(home) / "bin" / rdocx_env.cli_file(PLAT, "rpptx")).read_bytes())
     info["source"] = "local-build"
-    info["sha256"]["rdocx"] = hashlib.sha256(cli.read_bytes()).hexdigest()
+    info["sha256"][cli.name] = hashlib.sha256(cli.read_bytes()).hexdigest()
     marker.write_text(json.dumps(info))
 
 
 def repointed_current(home):
     other = home / "other" / "bin"
     other.mkdir(parents=True, exist_ok=True)
-    (home / "current").unlink()
-    (home / "current").symlink_to(other.parent)
+    rdocx_env.link_folder(home / "current", other.parent)
 
 
 def changed_package_file(home):

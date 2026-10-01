@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Build, install and verify the pinned rdocx / rpptx toolchain (CLIs and Python bindings).
 
-Standard library only, Python >= 3.9, Linux and macOS. The pin lives in ../rdocx.lock.json: an upstream git
-commit and, per platform, the SHA-256 of the two CLIs, of the two wheels, and of every file the wheels install.
+Standard library only, Python >= 3.9, Linux, macOS and Windows. The pin lives in ../rdocx.lock.json: an upstream
+git commit and, per platform, the SHA-256 of the two CLIs, of the two wheels, and of every file the wheels install.
+On Windows the CLIs are rdocx.exe and rpptx.exe, `current` is a junction (no privilege needed), and bin/python is
+the same shell wrapper as elsewhere, for Git Bash.
 
   rdocx_env.py status [--allow-local]   exit 0 when the installed build matches the lock, or is an
                                         unchanged local build of the pinned commit (only where the lock has
@@ -69,6 +71,7 @@ LOCK_PATH = REPO / "rdocx.lock.json"
 HOME = Path(os.environ.get("RDOCX_HOME", Path.home() / ".local" / "share" / "rdocx-skills"))
 GIT_ENV = dict(os.environ, GIT_NO_REPLACE_OBJECTS="1")
 RELEASES_REPO = "hadim/rdocx-skills"  # the GitHub repository whose releases the lock names
+WINDOWS = os.name == "nt"
 TRIPLES = {"linux-x86_64": "x86_64-unknown-linux-gnu", "linux-aarch64": "aarch64-unknown-linux-gnu"}
 ZIGBUILD_VERSION = "0.20.1"
 
@@ -94,6 +97,16 @@ def platform_key():
     machine = platform.machine().lower()
     machine = {"amd64": "x86_64", "arm64": "arm64" if system == "macos" else "aarch64"}.get(machine, machine)
     return f"{system}-{machine}"
+
+
+def cli_file(plat, name):
+    """The file name of the CLI `name` (rdocx or rpptx) built for `plat`."""
+    return f"{name}.exe" if plat.startswith("windows-") else name
+
+
+def venv_python(venv):
+    """A venv's interpreter, found without running it."""
+    return Path(venv) / ("Scripts/python.exe" if WINDOWS else "bin/python")
 
 
 def sha256(path):
@@ -127,7 +140,7 @@ def artifact_names(folder):
     names = set()
     for p in Path(folder).iterdir():
         name = p.name[:-3] if p.name.endswith(".gz") else p.name
-        if name in ("rdocx", "rpptx") or name.endswith(".whl"):
+        if name in ("rdocx", "rpptx", "rdocx.exe", "rpptx.exe") or name.endswith(".whl"):
             names.add(name)
     return sorted(names)
 
@@ -178,7 +191,7 @@ def source_candidates():
 
 
 def write_lock(lock):
-    LOCK_PATH.write_text(json.dumps(lock, indent=2) + "\n")
+    LOCK_PATH.write_bytes((json.dumps(lock, indent=2) + "\n").encode())  # LF line endings on Windows too
 
 
 def record(lock, plat, folder, sums):
@@ -379,7 +392,7 @@ def pip_env(venv, requirements):
         if venv.exists():
             shutil.rmtree(venv)
         run([sys.executable, "-m", "venv", venv])
-        run([venv / "bin" / "python", "-m", "pip", "install", "--quiet", "--require-hashes", "--no-deps",
+        run([venv_python(venv), "-m", "pip", "install", "--quiet", "--require-hashes", "--no-deps",
              "--only-binary", ":all:", "-r", requirements])
         stamp.write_text(want)
     return venv
@@ -419,14 +432,14 @@ def build(lock, plat, target=None):
         bins = Path(env["CARGO_TARGET_DIR"]) / "release"
         extra = []
     for crate in ("rdocx-py", "rpptx-py"):
-        run([benv / "bin" / "maturin", "build", "--release", "--locked", "-m", f"crates/{crate}/Cargo.toml",
-             "-o", wheels, *extra], cwd=src, env=env)
+        run([venv_python(benv).with_name("maturin"), "build", "--release", "--locked", "-m",
+             f"crates/{crate}/Cargo.toml", "-o", wheels, *extra], cwd=src, env=env)
     out_root = REPO / "dist" if os.access(REPO, os.W_OK) else HOME / "dist"
     out = out_root / commit / plat
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
-    for name in ("rdocx", "rpptx"):
+    for name in (cli_file(plat, "rdocx"), cli_file(plat, "rpptx")):
         shutil.copy2(bins / name, out / name)
     for whl in wheels.glob("*.whl"):
         shutil.copy2(whl, out / whl.name)
@@ -445,15 +458,17 @@ def build(lock, plat, target=None):
 # ---------------------------------------------------------------- install and status
 def site_packages(venv):
     """The venv's site-packages, found without running its interpreter."""
-    found = sorted(Path(venv).glob("lib/python3*/site-packages"))
+    found = sorted(Path(venv).glob("Lib/site-packages" if WINDOWS else "lib/python3*/site-packages"))
     if len(found) != 1:
         raise OSError(f"cannot find one site-packages folder in {venv}")
     return found[0]
 
 
 def wrapper_text(dest):
-    return (f"#!/bin/sh\nexport PYTHONDONTWRITEBYTECODE=1\n"
-            f"exec {shlex.quote(str(dest / 'venv' / 'bin' / 'python'))} \"$@\"\n")
+    """bin/python: a shell script on every platform (Git Bash runs it on Windows), so the interpreter's path is
+    written with forward slashes. UTF-8 mode makes Windows read and print text as the other platforms do."""
+    return (f"#!/bin/sh\nexport PYTHONDONTWRITEBYTECODE=1 PYTHONUTF8=1\n"
+            f"exec {shlex.quote(venv_python(dest / 'venv').as_posix())} \"$@\"\n")
 
 
 def environment_record(dest):
@@ -463,19 +478,27 @@ def environment_record(dest):
     base = site_packages(venv)
     startup = {p.name: sha256(p) for p in base.iterdir()
                if p.is_file() and (p.suffix == ".pth" or p.name in ("sitecustomize.py", "usercustomize.py"))}
-    return {"interpreter": os.path.realpath(venv / "bin" / "python"), "pyvenv_cfg": sha256(venv / "pyvenv.cfg"),
+    return {"interpreter": os.path.realpath(venv_python(venv)), "pyvenv_cfg": sha256(venv / "pyvenv.cfg"),
             "startup_files": startup}
+
+
+def link_folder(link, target):
+    """Point `link` at the folder `target`: a symlink, or on Windows a junction, which needs no privilege."""
+    if os.path.lexists(link):
+        link.unlink()  # on Windows, os.unlink removes a junction as well
+    if WINDOWS:
+        import _winapi  # CPython's own helper (its tests use it), present since 3.5
+        _winapi.CreateJunction(str(target), str(link))
+    else:
+        link.symlink_to(target)
 
 
 def point_current(dest):
     """Point HOME/current at `dest` (the skills and helpers run HOME/current/bin), and rewrite the wrapper."""
     wrapper = dest / "bin" / "python"  # a symlink would hide the venv from the interpreter
-    wrapper.write_text(wrapper_text(dest))
+    wrapper.write_bytes(wrapper_text(dest).encode())  # LF line endings on Windows too: sh reads it
     os.chmod(wrapper, 0o755)
-    current = HOME / "current"
-    if current.is_symlink() or current.exists():
-        current.unlink()
-    current.symlink_to(dest)
+    link_folder(HOME / "current", dest)
 
 
 def install_from(lock, plat, folder, local_sums=None):
@@ -493,12 +516,12 @@ def install_from(lock, plat, folder, local_sums=None):
         if dest.exists():
             shutil.rmtree(dest)
         (dest / "bin").mkdir(parents=True)
-        for name in ("rdocx", "rpptx"):
+        for name in (cli_file(plat, "rdocx"), cli_file(plat, "rpptx")):
             shutil.copyfile(staged / name, dest / "bin" / name)
             os.chmod(dest / "bin" / name, 0o755)
         run([sys.executable, "-m", "venv", dest / "venv"])
         wheels = [staged / n for n in want if n.endswith(".whl")]
-        run([dest / "venv" / "bin" / "python", "-m", "pip", "install", "--quiet", "--no-index", "--no-deps", "--no-compile",
+        run([venv_python(dest / "venv"), "-m", "pip", "install", "--quiet", "--no-index", "--no-deps", "--no-compile",
              *wheels])
         files = {}
         for w in wheels:
@@ -538,11 +561,11 @@ def status(lock, plat, allow_local=False, quiet=False):
     if not current.exists() or current.resolve() != dest.resolve():
         problems.append(f"{current} does not point at {dest} (rerun install)")
     for name in ("rdocx", "rpptx"):
-        path = dest / "bin" / name
-        if not path.is_file() or sha256(path) != ref_bins.get(name):
+        path = dest / "bin" / cli_file(plat, name)
+        if not path.is_file() or sha256(path) != ref_bins.get(path.name):
             problems.append(f"{name} does not match the {'build record' if local else 'lock'}")
     wrapper = dest / "bin" / "python"
-    if not wrapper.is_file() or wrapper.read_text() != wrapper_text(dest):
+    if not wrapper.is_file() or wrapper.read_bytes() != wrapper_text(dest).encode():
         problems.append("the bin/python wrapper was changed (rerun install)")
     if not ref_files:
         problems.append("no hashes of the installed Python files to check against")
@@ -582,7 +605,7 @@ def test_env(lock):
     .pth file: running the suite never adds anything to the runtime environment."""
     venv = pip_env(HOME / "testenv", REPO / "tests" / "requirements.txt")
     (site_packages(venv) / "rdocx_runtime.pth").write_text(str(site_packages(install_dir(lock) / "venv")) + "\n")
-    return venv / "bin" / "python"
+    return venv_python(venv)
 
 
 def main():
@@ -609,15 +632,15 @@ def main():
     args, extra = ap.parse_known_args()
     if extra and args.cmd != "test":
         ap.error(f"unrecognized arguments: {' '.join(extra)}")
-    if platform.system() not in ("Linux", "Darwin"):
-        die("only Linux and macOS are supported")
+    if platform.system() not in ("Linux", "Darwin", "Windows"):
+        die("only Linux, macOS and Windows are supported")
     lock, plat = load_lock(), platform_key()
 
     if args.cmd == "status":
         sys.exit(0 if status(lock, plat, allow_local=args.allow_local) else 1)
     if args.cmd == "paths":
         d = install_dir(lock) / "bin"
-        print(f"RDOCX={d / 'rdocx'}\nRPPTX={d / 'rpptx'}\nRDOCX_PY={d / 'python'}")
+        print(f"RDOCX={d / cli_file(plat, 'rdocx')}\nRPPTX={d / cli_file(plat, 'rpptx')}\nRDOCX_PY={d / 'python'}")
         return
     if args.cmd == "build":
         build(lock, plat, args.target)
@@ -626,7 +649,8 @@ def main():
         if not status(lock, plat, allow_local=args.allow_local or not expected(lock, plat)):
             die("the pinned build is not installed and verified: run `install` first")
         py = test_env(lock)
-        env = dict(os.environ, RDOCX_BIN_DIR=str(install_dir(lock) / "bin"), PYTHONDONTWRITEBYTECODE="1")
+        env = dict(os.environ, RDOCX_BIN_DIR=str(install_dir(lock) / "bin"), PYTHONDONTWRITEBYTECODE="1",
+                   PYTHONUTF8="1")
         sys.exit(subprocess.run([str(py), "-m", "pytest", "-p", "no:cacheprovider", str(REPO / "tests"), *extra],
                                 env=env).returncode)
     if args.cmd == "bump":

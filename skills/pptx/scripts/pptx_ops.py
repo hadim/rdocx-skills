@@ -29,10 +29,10 @@ class EditError(RuntimeError):
 
 def cli(*args, check=True):
     """Run the pinned `rpptx` CLI (never another one found on PATH)."""
-    exe = BIN / "rpptx"
+    exe = BIN / ("rpptx.exe" if os.name == "nt" else "rpptx")
     if not exe.exists():
         raise FileNotFoundError(f"{exe} not found: install the pinned build (rdocx_env.py install) or set RDOCX_BIN_DIR")
-    res = subprocess.run([str(exe), *map(str, args)], capture_output=True, text=True)
+    res = subprocess.run([str(exe), *map(str, args)], capture_output=True, encoding="utf-8")  # the CLI writes UTF-8
     if check and res.returncode:
         raise RuntimeError((res.stdout + res.stderr).strip())
     return res

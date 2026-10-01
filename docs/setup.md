@@ -7,12 +7,11 @@ The skills never use whatever rdocx happens to be installed. They use the build 
 - `release`: where this repository's build workflow published the files of that commit (empty after a bump,
   until `lock --write --release` finds the release and records its URL);
 - `artifacts.<platform>`: the SHA-256 of the two CLIs and the two wheels built from that commit, per
-  platform (`linux-x86_64`, `linux-aarch64`, `macos-arm64`);
+  platform (`linux-x86_64`, `linux-aarch64`, `macos-arm64`, `windows-x86_64`);
 - `installed_files.<platform>`: the SHA-256 of every file the two wheels install (modules, stubs, native
   libraries), checked again by `status` on the installed copy.
 
-`scripts/rdocx_env.py` (standard library only, Python 3.9 or later, Linux and macOS; Windows is not
-supported) enforces it.
+`scripts/rdocx_env.py` (standard library only, Python 3.9 or later, Linux, macOS and Windows) enforces it.
 
 ## Commands
 
@@ -31,7 +30,9 @@ python3 scripts/rdocx_env.py paths
 
 The install goes to `~/.local/share/rdocx-skills/<first 12 characters of the commit>/` (override the root
 with `RDOCX_HOME`), with `current/bin/{rdocx,rpptx,python}`: two CLIs and a Python wrapper whose
-environment has both modules. Nothing is installed system-wide. `install` from a dist folder uses no
+environment has both modules. The wrapper is a shell script that sets `PYTHONDONTWRITEBYTECODE` and
+`PYTHONUTF8` (UTF-8 for files and pipes whatever the locale) and runs the venv's interpreter. Nothing is
+installed system-wide. `install` from a dist folder uses no
 network, from the release it downloads four files; `build` fetches the source and the pinned build tools,
 `test` the pinned test dependencies.
 
@@ -99,21 +100,34 @@ your package manager; the script never installs a toolchain). It takes 10 to 30 
   sessions): never build there; `install` once per session.
 - **No verified build available**: the skills tell the user and fall back to the built-in skills for the
   task at hand, and offer `install --build` in the background.
+- **Windows** (x86_64): the commands run in Git Bash, the shell Claude Code uses there, with `python` (or
+  `py -3`) instead of `python3`, which is often absent or the Microsoft Store stub. The install sits in
+  `%USERPROFILE%\.local\share\rdocx-skills`, so `~/.local/share/rdocx-skills` in Git Bash names the same
+  folder; the CLIs are `rdocx.exe` and `rpptx.exe` (Git Bash finds them as `$R/rdocx` and `$R/rpptx`),
+  `current` is a junction, which needs no privilege where a symlink would, and `bin/python` is the same shell
+  wrapper, which Git Bash runs and `cmd.exe` or PowerShell cannot. The CLIs link the Microsoft Visual C++
+  runtime (`vcruntime140.dll`), as Rust programs built with MSVC do. A build needs the MSVC build tools
+  (Visual Studio Build Tools, C++ workload) besides rustup.
 
-The Linux files are built on Ubuntu 22.04 runners: they need glibc 2.35 or later.
+The Linux files are built on Ubuntu 22.04 runners: they need glibc 2.35 or later. The Windows files are built
+with MSVC on Windows Server 2025 runners.
 
 ## Continuous integration
 
 - `.github/workflows/ci.yml`, on every push to `main` and every pull request: `install --build` on
-  linux-x86_64 (the release download, or a build right after a bump), then the acceptance suite.
-- `.github/workflows/build.yml`: builds one upstream commit on three native runners (ubuntu-22.04,
-  ubuntu-22.04-arm, macos-14), runs the suite on each, and publishes the release
+  linux-x86_64, macos-arm64 and windows-x86_64 (the release download, or a build when the release lacks the
+  platform's files, as right after a bump), then the acceptance suite. On Windows it runs from Git Bash, as an
+  agent does.
+- `.github/workflows/build.yml`: builds one upstream commit on four native runners (ubuntu-22.04,
+  ubuntu-22.04-arm, macos-14, windows-2025), runs the suite on each, and publishes the release
   `rdocx-<YYYYMMDD>-<first 12 characters of the commit>` (the UTC build date first, so the releases sort by
   date; title `rdocx <YYYY-MM-DD> <commit12> (<ref>)`) with `SHA256SUMS`, provenance attestations, and the
   suite summaries in its notes (gaps closed, other failures). It runs on a bump (the lock changed on `main`),
   by hand on any upstream tag, branch or commit (Actions, build, Run workflow, `ref`), and weekly on upstream
-  `main` HEAD. A commit has at most one release: when a release tag already ends with `-<commit12>`, it is
-  never rebuilt or overwritten; a failing suite does not block it.
+  `main` HEAD. A commit has at most one release: when a release tag already ends with `-<commit12>`, its
+  files are never rebuilt or overwritten, but a platform added to the workflow later is built and added to it
+  (its files, its lines of `SHA256SUMS`, its suite summary in the notes; then `lock --write --release`
+  records it). A failing suite does not block a release; a failing build does.
 - The tag cannot be derived from the commit (the date is the build's), so the lock's `release` URL is the
   only source of truth: `lock --write --release` lists this repository's releases through the GitHub API
   (unauthenticated, or with `GH_TOKEN` / `GITHUB_TOKEN` when set), takes the one whose tag ends with
@@ -125,7 +139,7 @@ Each commit of `main` is a version of the plugin (it has no version number), so 
 whose release exists and whose hashes are recorded, together with the tests and skills that match it:
 
 1. Build the candidate: Actions, build, Run workflow, with `ref` set to an upstream tag, branch or full commit
-   hash. It publishes the release `rdocx-<YYYYMMDD>-<commit12>`, with the suite's results on three platforms
+   hash. It publishes the release `rdocx-<YYYYMMDD>-<commit12>`, with the suite's results on four platforms
    in its notes (gaps closed, other failures). The weekly run does the same for upstream `main` HEAD.
 2. On a branch: `bump REF` (the commit, an empty release and empty hashes), then `lock --write --release`
    (it finds the release and records its URL and hashes), `install` and `test`. Every strict xfail that now passes means a gap is closed: remove its marker and its

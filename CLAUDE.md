@@ -13,12 +13,13 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `tests/test_docs_snippets.py`), `gaps.md`, and `interop.md` for docx.
 - `skills/<name>/scripts/`: helpers importable and runnable as commands; tested in `tests/test_skill_scripts.py`.
 - `scripts/rdocx_env.py`: install (from a dist folder, else the release), build, verify, bump, lock, test;
-  standard library only, Python >= 3.9.
+  standard library only, Python >= 3.9, Linux, macOS and Windows (Git Bash: `.exe` CLIs, `current` a junction).
 - `rdocx.lock.json`: the pin (upstream commit and ref, release URL, SHA-256 per platform). `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
-- `.github/workflows/`: `ci.yml` (suite on every push and PR), `build.yml` (builds one upstream commit on
-  three runners and publishes the release `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first; the lock's
-  `release` URL is the only record of the tag, filled by `lock --write --release`).
+- `.github/workflows/`: `ci.yml` (suite on linux-x86_64, macos-arm64 and windows-x86_64, every push and PR),
+  `build.yml` (builds one upstream commit on four runners and publishes the release
+  `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first; the lock's `release` URL is the only record of the tag,
+  filled by `lock --write --release`).
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin.

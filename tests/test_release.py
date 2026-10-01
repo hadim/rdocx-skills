@@ -22,6 +22,7 @@ import rdocx_env  # noqa: E402
 LOCK = rdocx_env.load_lock()
 PLAT = rdocx_env.platform_key()
 WANT = rdocx_env.expected(LOCK, PLAT)
+RDOCX, RPPTX = rdocx_env.cli_file(PLAT, "rdocx"), rdocx_env.cli_file(PLAT, "rpptx")
 
 
 def repo_copy(root, lock=LOCK):
@@ -56,14 +57,14 @@ def test_install_downloads_the_release_and_verifies_it(release, tmp_path):
     repo, home = repo_copy(tmp_path / "repo"), tmp_path / "home"
     res = cmd(repo, home, release, "install")
     assert res.returncode == 0, res.stderr
-    assert f"download {release.as_uri()}/{PLAT}.rdocx" in res.stderr
+    assert f"download {release.as_uri()}/{PLAT}.{RDOCX}" in res.stderr
     res = cmd(repo, home, release, "status")
     assert res.returncode == 0 and "verified against the lock" in res.stderr
 
 
 def test_install_refuses_a_changed_release_file(release, tmp_path):
     changed = Path(shutil.copytree(release, tmp_path / "changed"))
-    with open(changed / f"{PLAT}.rdocx", "ab") as f:
+    with open(changed / f"{PLAT}.{RDOCX}", "ab") as f:
         f.write(b"\0")
     repo, home = repo_copy(tmp_path / "repo"), tmp_path / "home"
     res = cmd(repo, home, changed, "install")
@@ -92,7 +93,7 @@ def test_lock_write_release_records_the_same_hashes(release, tmp_path):
 
 def test_lock_write_release_refuses_files_that_differ_from_its_listing(release, tmp_path):
     changed = Path(shutil.copytree(release, tmp_path / "changed"))
-    with open(changed / f"{PLAT}.rpptx", "ab") as f:
+    with open(changed / f"{PLAT}.{RPPTX}", "ab") as f:
         f.write(b"\0")
     repo = repo_copy(tmp_path / "repo")
     res = cmd(repo, tmp_path / "home", changed, "lock", "--write", "--release")

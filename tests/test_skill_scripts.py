@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
 sys.path.insert(0, str(ROOT / "skills" / "pptx" / "scripts"))
 import docx_ops  # noqa: E402
 import pptx_ops  # noqa: E402
-from conftest import BIN, digest  # noqa: E402
+from conftest import digest, runtime_python  # noqa: E402
 
 
 anchored = docx_ops.anchored_text
@@ -68,9 +68,9 @@ def test_save_refuses_to_overwrite_the_input(report_docx):
 
 def test_save_keeps_the_input_file_mode(report_docx, copy_of, tmp_path):
     src = copy_of(report_docx)
-    os.chmod(src, 0o644)
+    os.chmod(src, 0o644)  # on Windows, only the read-only bit of a mode exists: this one reads 0o666 there
     docx_ops.save_atomic(rdocx.Document.open(src), tmp_path / "o.docx", src)
-    assert os.stat(tmp_path / "o.docx").st_mode & 0o777 == 0o644
+    assert os.stat(tmp_path / "o.docx").st_mode & 0o777 == os.stat(src).st_mode & 0o777
 
 
 def test_comment_on_text_after_tables(report_docx, tmp_path):
@@ -162,24 +162,24 @@ def test_comment_on_text_in_tables_counts_nested_cells_and_refuses_past_the_last
 
 
 def test_command_line_entry_points(report_docx, tmp_path):
-    py = str(BIN / "python")  # the runtime Python an agent gets
+    py = runtime_python()  # the runtime Python an agent gets
     script = ROOT / "skills" / "docx" / "scripts" / "docx_ops.py"
-    res = subprocess.run([py, script, "replace", report_docx, tmp_path / "o.docx", "--edit", "footbridge", "bridge", "1"],
+    res = subprocess.run([*py, script, "replace", report_docx, tmp_path / "o.docx", "--edit", "footbridge", "bridge", "1"],
                          capture_output=True, text=True)
     assert res.returncode == 1 and "refused" in res.stderr and not (tmp_path / "o.docx").exists()
-    res = subprocess.run([py, script, "pages", report_docx], capture_output=True, text=True, check=True)
+    res = subprocess.run([*py, script, "pages", report_docx], capture_output=True, text=True, check=True)
     assert int(res.stdout) == docx_ops.pages(report_docx)
-    res = subprocess.run([py, script, "comment", report_docx, tmp_path / "c.docx", "--anchor", "three-span steel and timber",
+    res = subprocess.run([*py, script, "comment", report_docx, tmp_path / "c.docx", "--anchor", "three-span steel and timber",
                           "--text", "x", "--author", "R", "--date", "2026-09-27T12:00:00Z"], capture_output=True, text=True, check=True)
     assert rdocx.Document.open(tmp_path / "c.docx").comments[0].date == "2026-09-27T12:00:00Z"
     cells = cell_text_docx(tmp_path / "cells.docx")
-    subprocess.run([py, script, "comment", cells, tmp_path / "cc.docx", "--anchor", "beta", "--in-tables", "--text", "x",
+    subprocess.run([*py, script, "comment", cells, tmp_path / "cc.docx", "--anchor", "beta", "--in-tables", "--text", "x",
                     "--author", "R"], capture_output=True, text=True, check=True)
     assert docx_ops.comment_landings(tmp_path / "cc.docx") == {0: True} and anchored(tmp_path / "cc.docx", 0) == "beta"
     path, _ = every_story_docx(tmp_path / "s.docx")
-    res = subprocess.run([py, script, "count", path, "NEEDLE"], capture_output=True, text=True, check=True)
+    res = subprocess.run([*py, script, "count", path, "NEEDLE"], capture_output=True, text=True, check=True)
     assert '"footnote": 1' in res.stdout
-    res = subprocess.run([py, script, "text", path], capture_output=True, text=True, check=True)
+    res = subprocess.run([*py, script, "text", path], capture_output=True, text=True, check=True)
     assert "footnote\tword/footnotes.xml\t\t Footnote NEEDLE." in res.stdout
 
 
@@ -192,7 +192,7 @@ def test_pptx_replace_batch(deck_pptx, tmp_path, copy_of):
     os.chmod(src, 0o644)
     pptx_ops.replace_batch(src, out, [("Riverton Footbridge", "Kestrel Footbridge", 1)])
     assert "Kestrel Footbridge" in pptx_ops.cli("text", out).stdout
-    assert os.stat(out).st_mode & 0o777 == 0o644
+    assert os.stat(out).st_mode & 0o777 == os.stat(src).st_mode & 0o777
 
 
 def test_pptx_overflow_report(deck_pptx):

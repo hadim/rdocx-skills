@@ -1,5 +1,6 @@
-# The acceptance suite on linux-x86_64: the pinned files from this repository's release, checked against the
-# lock (seconds), or a build of the pinned commit when no release has them yet (right after a bump; minutes).
+# The acceptance suite on linux-x86_64, macos-arm64 and windows-x86_64: the pinned files from this repository's
+# release, checked against the lock (seconds), or a build of the pinned commit when no release has them yet (right
+# after a bump, or a platform the release lacks; minutes).
 name: ci
 
 on:
@@ -17,8 +18,18 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux-x86_64, runner: ubuntu-24.04 }
+          - { platform: macos-arm64, runner: macos-14 }
+          - { platform: windows-x86_64, runner: windows-2025 }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -52,15 +63,16 @@ jobs:
             ~/.cargo/registry/cache
             ~/.cargo/git/db
             ~/.local/share/rdocx-skills/target
-          key: rdocx-build-ci-linux-x86_64-${{ steps.pin.outputs.commit }}
-          restore-keys: rdocx-build-ci-linux-x86_64-
+          key: rdocx-build-ci-${{ matrix.platform }}-${{ steps.pin.outputs.commit }}
+          restore-keys: rdocx-build-ci-${{ matrix.platform }}-
 
       - name: Build and install the pinned commit
         if: steps.release.outcome == 'failure'
         run: python scripts/rdocx_env.py install --build
 
+      # also after a failed build: the next attempt starts from what compiled
       - name: Save the cargo registry and the build folder
-        if: steps.release.outcome == 'failure' && steps.cache.outputs.cache-hit != 'true'
+        if: ${{ !cancelled() && steps.release.outcome == 'failure' && steps.cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -71,7 +83,7 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: Poppler, for the PDF text and raster checks
-        run: sudo apt-get update -q > /dev/null && sudo apt-get install -y -q --no-install-recommends poppler-utils > /dev/null
+        run: .github/scripts/poppler.sh
 
       - name: Acceptance suite
         run: python scripts/rdocx_env.py test --allow-local
