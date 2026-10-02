@@ -45,23 +45,24 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## State on 02/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: hadim/rdocx `251d2e4b` (`integration/open-prs-2026-10-02`: tensorbee/rdocx `main` at `57d5fbbd`,
-  sprint S80, which carries the maintainer's versions of the older pull requests and of #214, #218 to #225,
-  #228 to #230, #232 to #234, #236, #237 and #239, plus the 19 open pull requests of the fork that `main` does
-  not carry yet, #231 to #263), rdocx 0.14.0, rpptx 0.12.1. Integration branches are never rewritten nor
-  deleted: `install --build` fetches the pinned commit from them, and a later snapshot gets a new dated branch
-  (earlier ones: `integration/open-prs-2026-09-29` at `f3df95bf`, `integration/open-prs-2026-09-29-2` at
-  `f2fa36d1`, `integration/open-prs-2026-09-30` at `d4d7c8af`, `integration/open-prs-2026-09-30-2` at
-  `d75b536a`, `integration/open-prs-2026-10-01` at `f8e7aa57`, `integration/open-prs-2026-10-01-2` at
-  `a060826a`, `integration/open-prs-2026-10-01-3` at `3ccf0aa7`, `integration/open-prs-2026-10-01-4` at
-  `fc7329a8`, `integration/open-prs-2026-10-01-5` at `404c299e`). Release `rdocx-20261002-251d2e4b0879` built
-  by `build.yml` for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners, glibc 2.35), macos-arm64 (macos-14)
-  and windows-x86_64 (windows-2025, MSVC), with provenance attestations; the lock records its URL and the
-  hashes of the four platforms. Back to tensorbee/rdocx once those pull requests land there.
-- Suite: the release build gives 570 passed and 12 skipped on each of the four platforms, no failure and no
-  strict xfail. Moving the base from S79 to S80 changed no result: no gap closed, none opened. The one addition
-  to the surface the skills use is `Document.set_style`, which changes an existing style and keeps what it is
-  not given; the docx skill now cites it, backed by a test and the new-document recipe (583 passed locally).
+- Pinned: hadim/rdocx `58c874f2` (`integration/open-prs-2026-10-02-2`: tensorbee/rdocx `main` at `93b4ccad`,
+  sprint S81, which carries the maintainer's versions of the older pull requests and of #214, #218 to #225,
+  #228 to #239, plus the 16 open pull requests of the fork that `main` does not carry yet, #240 to #263),
+  rdocx 0.14.0, rpptx 0.12.1. Integration branches are never rewritten nor deleted: `install --build` fetches
+  the pinned commit from them, and a later snapshot gets a new dated branch (earlier ones:
+  `integration/open-prs-2026-09-29` at `f3df95bf`, `integration/open-prs-2026-09-29-2` at `f2fa36d1`,
+  `integration/open-prs-2026-09-30` at `d4d7c8af`, `integration/open-prs-2026-09-30-2` at `d75b536a`,
+  `integration/open-prs-2026-10-01` at `f8e7aa57`, `integration/open-prs-2026-10-01-2` at `a060826a`,
+  `integration/open-prs-2026-10-01-3` at `3ccf0aa7`, `integration/open-prs-2026-10-01-4` at `fc7329a8`,
+  `integration/open-prs-2026-10-01-5` at `404c299e`, `integration/open-prs-2026-10-02` at `251d2e4b`). Release
+  `rdocx-20261002-58c874f201a5` built by `build.yml` for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners,
+  glibc 2.35), macos-arm64 (macos-14) and windows-x86_64 (windows-2025, MSVC), with provenance attestations;
+  the lock records its URL and the hashes of the four platforms. Back to tensorbee/rdocx once those pull
+  requests land there.
+- Suite: the release build gives 571 passed and 12 skipped on each of the four platforms, no failure and no
+  strict xfail (583 passed locally). Moving the base from S80 to S81 changed no result: S81 took #231, #235
+  and #238 as they were, so the library sources equal those of the previous snapshot and no gap closed or
+  opened.
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
