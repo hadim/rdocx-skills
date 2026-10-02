@@ -10,7 +10,7 @@ import rdocx
 from PIL import Image
 
 from builders import every_story_docx, word_textbox_docx, wrapped_run_docx, wrapped_text_docx
-from conftest import part, parts, run
+from conftest import digest, part, parts, run
 
 
 def simple(path, *texts, table_after=None):
@@ -505,6 +505,28 @@ def test_create_paragraph_style(report_docx):
     doc.add_style("Note", style_type="paragraph", based_on="Normal")
     doc.paragraphs[0].style = "Note"
     assert doc.paragraphs[0].style == "Note"
+
+
+def test_set_style_changes_only_what_it_is_given(tmp_path):
+    doc = rdocx.Document.open(simple(tmp_path / "a.docx", "x"))
+    doc.add_style("Note box", based_on="Normal", italic=True, left_indent=rdocx.Inches(0.5))
+    doc.set_style("Notebox", bold=True, space_after=rdocx.Pt(6))  # by id or by name
+    doc.set_style("Heading 1", font_name="Arial", color=rdocx.RGBColor(0x11, 0x22, 0x33))
+    back = docx.Document(io.BytesIO(doc.to_bytes()))
+    note = back.styles["Note box"]
+    assert (note.font.bold, note.font.italic) == (True, True)
+    assert note.paragraph_format.left_indent == rdocx.Inches(0.5)
+    assert note.paragraph_format.space_after == rdocx.Pt(6)
+    assert note.base_style.style_id == "Normal"
+    # a theme font and a theme colour the style already has stay, and Word uses them over the new values
+    rpr = part(io.BytesIO(doc.to_bytes()), "word/styles.xml").decode()
+    heading = re.search(r'<w:style [^>]*w:styleId="Heading1".*?</w:style>', rpr, re.S).group(0)
+    assert 'w:ascii="Arial"' in heading and "w:asciiTheme=" in heading
+    assert 'w:val="112233"' in heading and "w:themeColor=" in heading
+    before = doc.to_bytes()
+    with pytest.raises(KeyError):
+        doc.set_style("No such style", bold=True)
+    assert digest(doc.to_bytes()) == digest(before)
 
 
 def test_bookmarks_from_python(report_docx):

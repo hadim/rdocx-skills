@@ -276,6 +276,7 @@ doc = rdocx.Document()                                     # Normal, Title, Head
 doc.core_properties.title = "Inspection checklist"
 doc.core_properties.author = "Claude"
 note = doc.add_style("Note box", based_on="Normal", italic=True, left_indent=rdocx.Inches(0.5))
+doc.set_style("Normal", font_size=rdocx.Pt(11), space_after=rdocx.Pt(6))  # an existing style, the rest kept
 steps = doc.add_numbering_instance(doc.add_numbering_definition([
     rdocx.ListLevel(format="decimal", text="%1.", left_indent=rdocx.Inches(0.5), hanging_indent=rdocx.Inches(0.25))]))
 doc.add_paragraph("Inspection checklist")
@@ -291,4 +292,5 @@ docx_ops.save_atomic(doc, "checklist.docx")
 ```
 
 `add_style` derives the id from the name as Word does (`"Note box"` → `Notebox`). Assign by that id or by
-the name. `link_style_to_numbering(style, num_id, level)` numbers every paragraph of a style instead.
+the name. `set_style` changes only the properties it is given, on a style chosen by id or name.
+`link_style_to_numbering(style, num_id, level)` numbers every paragraph of a style instead.
