@@ -92,7 +92,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Rewrite a paragraph's text | | `doc.paragraphs[i].text = text`, `doc.set_story_text(item, text)` | the setter leaves one unformatted run (paragraph style, format and comments kept), `set_story_text` keeps the first run's format |
 | Format part of a run | | `docx_ops.locate` + `docx_ops.isolate`, then `.font.bold = True` | |
 | Paragraph format, style, numbering | | `.paragraph_format.*`, `.style = "Heading1"` or `"Heading 1"`, `.numbering = (num_id, level)` | style id or name, checked (`KeyError`), numbering unchecked |
-| New styles and lists | | `doc.add_style(name, based_on=, ...)`, `add_numbering_definition([ListLevel(...)])`, `add_numbering_instance(d)`, `link_style_to_numbering(style, num_id, level)` | |
+| New or changed styles, lists | | `doc.add_style(name, based_on=, ...)`, `doc.set_style(style, bold=, ...)`, `add_numbering_definition([ListLevel(...)])`, `add_numbering_instance(d)`, `link_style_to_numbering(style, num_id, level)` | `set_style` keeps what it is not given |
 | Tables | | `doc.add_table`, `.cell(r, c).text`, `.clone_row(i, at)`, `.remove_row(i)`, `.width` | |
 | Table merges and format | | `.set_cell_grid_span(r, c, n)`, `.set_cell_vertical_merge(r, c, "restart")`, `.set_borders(...)`, `.set_column_width(c, w)`, `cell.shading = "RRGGBB"`, `row.height = w` | a span consumes empty cells only; re-fetch the table after a merge |
 | Page setup | | `doc.update_section(i, margin_top=rdocx.Inches(0.5), ...)` | `doc.sections` are read-only snapshots |
