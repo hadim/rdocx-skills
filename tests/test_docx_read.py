@@ -31,11 +31,12 @@ def paragraph_redline(path):
 
 
 def test_a_paragraph_removed_by_a_tracked_deletion(rdocx_cli, tmp_path):
-    """No line in `rdocx text` and no layout fragment; `text --json` keeps it with empty text."""
+    """No line in `rdocx text`, no paragraph in `text --json` and no layout fragment; the others keep their body
+    index."""
     doc = paragraph_redline(tmp_path / "r.docx")
     assert run([rdocx_cli, "text", tmp_path / "r.docx"], check=True).stdout == "Alpha\nOmega\n"
     data = json.loads(run([rdocx_cli, "text", "--json", tmp_path / "r.docx"], check=True).stdout)
-    assert [p["text"] for p in data["paragraphs"]] == ["Alpha", "", "Omega"]
+    assert [(p["body_index"], p["text"]) for p in data["paragraphs"]] == [(0, "Alpha"), (2, "Omega")]
     assert sorted({f.body_index for f in doc.layout()}) == [0, 2]
 
 
