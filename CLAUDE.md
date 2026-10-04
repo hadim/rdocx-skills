@@ -12,14 +12,14 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - `skills/<name>/references/`: `cli.md`, `python-api.md`, `recipes.md` (every block is executed by
   `tests/test_docs_snippets.py`), `gaps.md`, and `interop.md` for docx.
 - `skills/<name>/scripts/`: helpers importable and runnable as commands; tested in `tests/test_skill_scripts.py`.
-- `scripts/rdocx_env.py`: install (from a dist folder, else the release), build, verify, bump, lock, test;
+- `scripts/rdocx_env.py`: install (from a dist folder, else the releases), build, verify, bump, lock, test;
   standard library only, Python >= 3.9, Linux, macOS and Windows (Git Bash: `.exe` CLIs, `current` a junction).
-- `rdocx.lock.json`: the pin (upstream commit and ref, release URL, SHA-256 per platform). `dist/`
+- `rdocx.lock.json`: the pin (upstream commit and ref, release URLs, SHA-256 per platform). `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
-- `.github/workflows/`: `ci.yml` (suite on linux-x86_64, macos-arm64 and windows-x86_64, every push and PR),
-  `build.yml` (builds one upstream commit on four runners and publishes the release
-  `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first; the lock's `release` URL is the only record of the tag,
-  filled by `lock --write --release`).
+- `.github/workflows/`: `ci.yml` (suite on linux-x86_64, macos-arm64, macos-x86_64 and windows-x86_64, every
+  push and PR), `build.yml` (only for a commit between two upstream releases: builds it on four runners and
+  publishes the release `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first; by hand, and weekly on upstream
+  `main` HEAD as a candidate).
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin.
@@ -35,34 +35,32 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   a regression (keep the test red and the previous pin, or narrow the skills).
 - Every claim in the skills is backed by a test or a recipe block that runs. Changing a claim means changing
   or adding the test in the same commit.
-- The lock records the files of a release published by `build.yml` (`lock --write --release`), after review.
+- The lock records the files of the upstream releases (`lock --write --release`, which checks their
+  `SHA256SUMS` and their build provenance with `gh attestation verify`), after review; a commit between two
+  upstream releases is pinned through a release published by `build.yml` instead.
 - The plugin has no version number: each commit of `main` is a version, so `main` always pairs a lock whose
   release exists and is recorded with the tests and skills that match it (docs/setup.md, Moving the pin).
 - Compare file contents in asserts through `conftest.digest`: pytest diffs byte strings in full under
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
 
-## State on 03/10/2026
+## State on 04/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: tensorbee/rdocx `main` at `080d06a7` (sprint S85), rdocx 0.14.0, rpptx 0.12.1. Upstream `main` now
-  carries the maintainer's versions of every pull request of the fork, so the integration branches of
-  hadim/rdocx are no longer needed: they stay, never rewritten nor deleted, because older locks and releases
-  name their commits (the last one, `integration/open-prs-2026-10-02-2`, at `58c874f2`). Release
-  `rdocx-20261003-080d06a7566e` built by `build.yml` for linux-x86_64, linux-aarch64 (ubuntu-22.04 runners,
-  glibc 2.35), macos-arm64 (macos-14) and windows-x86_64 (windows-2025, MSVC), with provenance attestations;
-  the lock records its URL and the hashes of the four platforms.
-- Suite: 583 passed locally. The release build ran the suite before the test below was adapted: 570 passed,
-  12 skipped and 1 failed on each of the four platforms. The failure was F-X167's intended change (a paragraph
-  that a tracked deletion removes now leaves `text --json`, the others keep their `body_index`), which the
-  test and `references/cli.md` now follow. No gap closed or opened.
+- Pinned: the upstream releases tensorbee/rdocx `v0.15.0` (rdocx 0.15.0) and `rpptx-v0.13.1` (rpptx 0.13.1),
+  both at commit `9d019472` (sprint S88), the first ones that ship the CLIs and the wheels together under one
+  tag per family, with `SHA256SUMS` and build provenance attestations (tensorbee/rdocx#266). The lock records
+  five platforms: linux-x86_64, linux-aarch64 (CLIs need glibc 2.35, wheels manylinux_2_28), macos-arm64,
+  macos-x86_64 (new: upstream builds it) and windows-x86_64. This repository's releases and the integration
+  branches of hadim/rdocx are no longer used for the pin; `build.yml` stays for a commit between two
+  upstream releases.
+- Suite on macos-arm64: no gap closed or opened, no other failure against 0.15.0 / 0.13.1.
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
 
 ## Next steps
 
-1. When rdocx tags a release or `main` moves: run `build.yml` by hand on the ref, read the suite summary in
-   the release notes, then bump as docs/setup.md describes.
-2. When rdocx publishes binaries on GitHub releases and wheels on PyPI: point the lock at them and retire
-   `build.yml` (docs/setup.md, Later: upstream releases).
+1. When rdocx tags a release: `bump v<version>`, `lock --write --release`, `install`, `test`, as
+   docs/setup.md (Moving the pin) describes. The weekly `build.yml` run on upstream `main` says beforehand
+   which gaps the next release closes.

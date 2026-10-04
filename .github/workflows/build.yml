@@ -1,17 +1,15 @@
-# Builds the rdocx and rpptx CLIs and wheels of one upstream commit on four native runners, runs the acceptance
-# suite on each, and publishes them as the release rdocx-<UTC build date YYYYMMDD>-<first 12 characters of the
-# commit> of this repository, which `rdocx_env.py lock --write --release` records in the lock and
-# `rdocx_env.py install` downloads and checks against it. Runs on a bump (rdocx.lock.json changed on main), by hand
-# on any upstream tag, branch or commit, and weekly on upstream main HEAD. A commit has at most one release: one
+# Builds the rdocx and rpptx CLIs and wheels of one upstream commit between two upstream releases on four native
+# runners, runs the acceptance suite on each, and publishes them as the release rdocx-<UTC build date
+# YYYYMMDD>-<first 12 characters of the commit> of this repository, which `rdocx_env.py lock --write --release`
+# records in the lock when upstream has no release of that commit, and `rdocx_env.py install` downloads and checks
+# against it. Runs by hand on any upstream tag, branch or commit, and weekly on upstream main HEAD (a candidate
+# with the suite's results); a lock that pins upstream releases has nothing to build. A commit has at most one release: one
 # whose tag ends with -<commit12> is never rebuilt nor overwritten, but a platform added to this workflow later is
 # built and added to it (its files, its lines in SHA256SUMS, its suite summary in the notes). A failing suite does
 # not block the release (a bump that closes gaps fails it on purpose): its summary goes into the release notes.
 name: build
 
 on:
-  push:
-    branches: [main]
-    paths: [rdocx.lock.json]
   workflow_dispatch:
     inputs:
       ref:
@@ -55,6 +53,11 @@ jobs:
             {"platform": "windows-x86_64", "runner": "windows-2025"}]
         run: |
           if [ -n "$REF" ]; then python scripts/rdocx_env.py bump "$REF"; fi
+          if python -c 'import json, sys; sys.exit(not isinstance(json.load(open("rdocx.lock.json"))["release"], dict))'; then
+            echo "matrix=[]" >> "$GITHUB_OUTPUT"
+            echo "The lock pins the upstream releases of this commit: nothing to build." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           commit=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["commit"])')
           ref=$(python -c 'import json; print(json.load(open("rdocx.lock.json")).get("ref", ""))')
           repo=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["upstream"].removeprefix("https://github.com/"))')
@@ -248,19 +251,3 @@ jobs:
           } > notes.md
           gh release create "$TAG" assets/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "rdocx $DATE ${COMMIT:0:12} ($REF)" --notes-file notes.md --latest=false
-
-  # The pinned release is the one `install` downloads: on a bump pushed to main, mark it Latest, so the releases
-  # page shows it first. The plan's tag is the one the lock names, or the one it will name once the release is
-  # recorded. Candidate releases built by hand or by the weekly run stay unmarked.
-  latest:
-    needs: [plan, release]
-    if: always() && github.event_name == 'push' && (needs.plan.outputs.exists == 'true' || needs.release.result == 'success')
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - name: Mark the pinned release Latest
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.plan.outputs.tag }}
-        run: gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --latest
