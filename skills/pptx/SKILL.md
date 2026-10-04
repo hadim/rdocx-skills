@@ -22,7 +22,7 @@ $R/rpptx outline deck.pptx
 $R/python my_script.py                     # the Python that has rpptx and rdocx; `import pptx_ops` works
 ```
 
-`install` downloads the pinned build from this plugin's release when it is not already here, checks the
+`install` downloads the pinned build from rdocx's releases when it is not already here, checks the
 SHA-256 of every file against `rdocx.lock.json` before installing, and exits 0 once the build is installed
 and verified. Repeat the `R=` and `export` lines in each new shell. Never `pip
 install rpptx` from PyPI or download a binary without its hash in the lock.

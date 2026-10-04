@@ -22,7 +22,7 @@ $R/rdocx text --json report.docx
 $R/python my_script.py                     # the Python that has rdocx and rpptx; `import docx_ops` works
 ```
 
-`install` downloads the pinned build from this plugin's release when it is not already here, checks the
+`install` downloads the pinned build from rdocx's releases when it is not already here, checks the
 SHA-256 of every file against `rdocx.lock.json` (an upstream commit and its hashes) before installing, and
 exits 0 once the build is installed and verified (again: "already installed").
 Shell variables do not persist between commands in most agent shells: repeat the `R=` and `export` lines.

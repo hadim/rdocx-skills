@@ -11,19 +11,22 @@ the same shell wrapper as elsewhere, for Git Bash.
                                         no hashes for this platform, or with --allow-local), and `current`
                                         points at it
   rdocx_env.py install [--allow-local]  install from a dist folder whose files match the lock, else download
-                                        them from the release named in the lock and check them the same way
+                                        them from the releases named in the lock and check them the same way
   rdocx_env.py install --build          build the pinned commit from source if neither is available
   rdocx_env.py install --from DIR       install from DIR (for example files staged from another machine)
   rdocx_env.py build [--target linux-aarch64]
                                         build the pinned commit into dist/<commit>/<platform>/, print SHA-256
   rdocx_env.py lock [--write] [--platform P]
                                         compare (or record) a platform's dist hashes with the lock
-  rdocx_env.py lock --write --release [--platform P]
-                                        download the release's files, hash them here, record every platform
-                                        (when the lock names no release yet, find the pinned commit's one
-                                        among this repository's releases and record its URL first)
-  rdocx_env.py bump REF                 pin an upstream tag, branch or full commit: new commit, release and
-                                        hashes emptied until the release is built and recorded
+  rdocx_env.py lock --write --release [--platform P] [--skip-attestation]
+                                        download the release files, check them against the releases'
+                                        SHA256SUMS (and, for upstream releases, their build provenance with
+                                        `gh attestation verify`), hash them here, record every platform (when
+                                        the lock names no release yet, find the upstream releases whose tags
+                                        point at the pinned commit, else its build among this repository's
+                                        releases, and record their URLs first)
+  rdocx_env.py bump REF                 pin an upstream tag, branch or full commit: new commit, releases and
+                                        hashes emptied until they are recorded
   rdocx_env.py paths                    print RDOCX=..., RPPTX=..., RDOCX_PY=... for eval in a shell
   rdocx_env.py test [PYTEST ARGS]       run tests/ on the installed build, from a separate environment that
                                         holds the hash-pinned test dependencies
@@ -38,17 +41,21 @@ for the platform or with --allow-local; `lock --write` records them after review
 CLIs, the wrapper, every file of the two packages (and refuses any other file there), the interpreter
 link, pyvenv.cfg and the start-up files (.pth, sitecustomize) recorded at install.
 
-Releases: the build workflow of this repository publishes, per upstream commit, a release `rdocx-<UTC build
-date YYYYMMDD>-<first 12 characters of the commit>` whose assets are `<platform>.<file>` plus a SHA256SUMS
-listing them. The tag cannot be derived from the commit alone: the lock's `release` URL is the only source of
-truth, filled by `lock --write --release` from the GitHub API listing of the releases (GH_TOKEN or GITHUB_TOKEN
-is sent when set). A downloaded file is trusted only through the lock: it lands in
-RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the same staging and hash check as any dist folder.
+Releases. Upstream publishes one release per family and version (tags `v<version>` for rdocx,
+`rpptx-v<version>` for rpptx), each with a CLI archive per Rust target, the wheels and a SHA256SUMS. When both
+families have a release at the pinned commit, the lock's `release` maps each family to its download URL and
+`downloads` records, per platform, the SHA-256 of the two archives and the two wheels; the CLIs come out of the
+archives once those match. For a commit between two upstream releases, the build workflow of this repository
+publishes a release `rdocx-<UTC build date YYYYMMDD>-<first 12 characters of the commit>` whose assets are
+`<platform>.<file>` plus a SHA256SUMS listing them, and `release` is its URL (found through the GitHub API
+listing of the releases, with GH_TOKEN or GITHUB_TOKEN when set). A downloaded file is trusted only through the
+lock: it lands in RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the same staging and hash check as any
+dist folder.
 
 Environment: RDOCX_HOME (default ~/.local/share/rdocx-skills), RDOCX_SRC (a local clone of rdocx; default:
 a sibling `rdocx` folder of this repository), RDOCX_DIST (a folder holding <commit>/<platform>/),
-RDOCX_RELEASE_URL (a mirror of the release assets, instead of the lock's `release`), CARGO_BUILD_JOBS (fewer
-parallel jobs on small machines).
+RDOCX_RELEASE_URL (a mirror standing for `https://github.com/<owner>/<repo>/releases/download`: one folder per
+release tag), CARGO_BUILD_JOBS (fewer parallel jobs on small machines).
 """
 import argparse
 import gzip
@@ -61,18 +68,29 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import urllib.request
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 REPO = Path(__file__).resolve().parent.parent
 LOCK_PATH = REPO / "rdocx.lock.json"
 HOME = Path(os.environ.get("RDOCX_HOME", Path.home() / ".local" / "share" / "rdocx-skills"))
 GIT_ENV = dict(os.environ, GIT_NO_REPLACE_OBJECTS="1")
-RELEASES_REPO = "hadim/rdocx-skills"  # the GitHub repository whose releases the lock names
+RELEASES_REPO = "hadim/rdocx-skills"  # builds of upstream commits between two upstream releases
 WINDOWS = os.name == "nt"
 TRIPLES = {"linux-x86_64": "x86_64-unknown-linux-gnu", "linux-aarch64": "aarch64-unknown-linux-gnu"}
+# The upstream release tag of each family: one release holds its CLI archives and its wheels.
+FAMILY_TAGS = {"rdocx": r"v\d+\.\d+\.\d+", "rpptx": r"rpptx-v\d+\.\d+\.\d+"}
+# Per platform, the Rust target that names an upstream CLI archive and the platform tag of its wheel.
+UPSTREAM_PLATFORMS = {
+    "linux-x86_64": ("x86_64-unknown-linux-gnu", r"manylinux_\d+_\d+_x86_64"),
+    "linux-aarch64": ("aarch64-unknown-linux-gnu", r"manylinux_\d+_\d+_aarch64"),
+    "macos-arm64": ("aarch64-apple-darwin", r"macosx_\d+_\d+_arm64"),
+    "macos-x86_64": ("x86_64-apple-darwin", r"macosx_\d+_\d+_x86_64"),
+    "windows-x86_64": ("x86_64-pc-windows-msvc", "win_amd64"),
+}
 ZIGBUILD_VERSION = "0.20.1"
 
 
@@ -244,9 +262,27 @@ def release_url(repo, releases, commit):
     return f"https://github.com/{repo}/releases/download/{tags[0]}"
 
 
+def upstream_release(lock):
+    """True when the lock pins upstream releases (`release` maps each family to its URL), False when it pins a
+    build of this repository (`release` is its URL, or empty)."""
+    return isinstance(lock.get("release"), dict)
+
+
+def mirrored(url):
+    """A release's download URL, served from the mirror RDOCX_RELEASE_URL when set: the mirror stands for
+    `https://github.com/<owner>/<repo>/releases/download` and holds one folder per release tag."""
+    url, mirror = url.rstrip("/"), os.environ.get("RDOCX_RELEASE_URL", "").rstrip("/")
+    return f"{mirror}/{url.rsplit('/', 1)[-1]}" if url and mirror else url
+
+
 def release_base(lock):
-    """Base URL of the pinned commit's release assets (RDOCX_RELEASE_URL overrides the lock's `release`)."""
-    return (os.environ.get("RDOCX_RELEASE_URL") or lock.get("release") or "").rstrip("/")
+    """Base URL of the assets of this repository's release that the lock names."""
+    return mirrored(lock.get("release") or "")
+
+
+def family_base(lock, family):
+    """Base URL of the assets of the upstream release of `family` (rdocx or rpptx) that the lock names."""
+    return mirrored(lock["release"][family])
 
 
 def fetch(url, dest):
@@ -257,22 +293,32 @@ def fetch(url, dest):
     os.replace(tmp, dest)
 
 
-def release_listing(base):
-    """{platform: {file: sha256}} from the release's SHA256SUMS, whose lines name assets `<platform>.<file>`."""
+def release_sums(base):
+    """{asset: sha256} from a release's SHA256SUMS."""
     tmp = Path(tempfile.mkdtemp(prefix="rdocx-release-"))
     try:
         fetch(f"{base}/SHA256SUMS", tmp / "SHA256SUMS")
-        listing = {}
+        sums = {}
         for line in (tmp / "SHA256SUMS").read_text().splitlines():
             digest, asset = line.split()
-            plat, _, name = asset.partition(".")
-            if not (re.fullmatch(r"[0-9a-f]{64}", digest) and re.fullmatch(r"[a-z]+-[a-z0-9_]+", plat)
-                    and re.fullmatch(r"[A-Za-z0-9_+-][A-Za-z0-9._+-]*", name)):
+            if not (re.fullmatch(r"[0-9a-f]{64}", digest) and re.fullmatch(r"[A-Za-z0-9_+-][A-Za-z0-9._+-]*", asset)):
                 die(f"unexpected line in {base}/SHA256SUMS: {line!r}")
-            listing.setdefault(plat, {})[name] = digest
-        return listing
+            sums[asset] = digest
+        return sums
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def release_listing(base):
+    """{platform: {file: sha256}} from the SHA256SUMS of this repository's release, whose assets are named
+    `<platform>.<file>`."""
+    listing = {}
+    for asset, digest in release_sums(base).items():
+        plat, _, name = asset.partition(".")
+        if not (re.fullmatch(r"[a-z]+-[a-z0-9_]+", plat) and name):
+            die(f"unexpected asset {asset!r} in {base}/SHA256SUMS")
+        listing.setdefault(plat, {})[name] = digest
+    return listing
 
 
 def download_release(lock, plat, names):
@@ -283,6 +329,142 @@ def download_release(lock, plat, names):
         say(f"download {base}/{plat}.{name}")
         fetch(f"{base}/{plat}.{name}", out / name)
     return out
+
+
+def upstream_tags(ls_remote, commit):
+    """{family: tag} of the upstream releases whose tag points at `commit`, from `git ls-remote --tags` output (an
+    annotated tag's commit is on its `^{}` line)."""
+    tags = {name[len("refs/tags/"):].removesuffix("^{}") for oid, name in
+            (line.split("\t") for line in ls_remote.splitlines()) if oid == commit}
+    found = {}
+    for family, pattern in FAMILY_TAGS.items():
+        matching = sorted(t for t in tags if re.fullmatch(pattern, t))
+        if len(matching) > 1:
+            die(f"several {family} release tags point at {commit[:12]} ({', '.join(matching)}): name them in the lock")
+        if matching:
+            found[family] = matching[0]
+    return found
+
+
+def upstream_releases(lock):
+    """{family: download URL} of the upstream releases of the pinned commit, or {} unless both families have one."""
+    out = subprocess.run(["git", "ls-remote", "--tags", lock["upstream"]], capture_output=True, text=True,
+                         env=GIT_ENV)
+    if out.returncode:
+        die(f"git ls-remote {lock['upstream']} failed: {out.stderr.strip()}")
+    tags = upstream_tags(out.stdout, lock["commit"])
+    if len(tags) == 1:
+        say(f"note: only {', '.join(tags.values())} points at {lock['commit'][:12]}; using this repository's build")
+    if len(tags) < len(FAMILY_TAGS):
+        return {}
+    return {family: f"{lock['upstream'].rstrip('/')}/releases/download/{tag}" for family, tag in tags.items()}
+
+
+def upstream_assets(family, sums, plat):
+    """The CLI archive and the wheel of `family` for `plat` among an upstream release's files: both, or none."""
+    triple, wheel_tag = UPSTREAM_PLATFORMS[plat]
+    archive = f"{family}-{triple}.{'zip' if plat.startswith('windows-') else 'tar.gz'}"
+    wheels = [n for n in sums if re.fullmatch(rf"{family}-[0-9][^-]*-cp\d+-abi3-{wheel_tag}\.whl", n)]
+    if archive not in sums and not wheels:
+        return []
+    if archive not in sums or len(wheels) != 1:
+        die(f"the {family} release has {archive if archive in sums else 'no CLI archive'} and "
+            f"{len(wheels)} wheels for {plat}: expected one of each")
+    return [archive, wheels[0]]
+
+
+def extract_cli(archive, name, dest):
+    """Write the one regular file called `name` in a CLI archive (.tar.gz, or .zip on Windows) to `dest`."""
+    if archive.name.endswith(".zip"):
+        with zipfile.ZipFile(archive) as z:
+            found = [i for i in z.infolist() if not i.is_dir() and PurePosixPath(i.filename).name == name]
+            data = z.read(found[0]) if len(found) == 1 else None
+    else:
+        with tarfile.open(archive, "r:gz") as t:
+            found = [m for m in t.getmembers() if m.isfile() and PurePosixPath(m.name).name == name]
+            data = t.extractfile(found[0]).read() if len(found) == 1 else None
+    if data is None:
+        die(f"{archive.name} holds {len(found)} files named {name}, not one")
+    Path(dest).write_bytes(data)
+
+
+def unpack(folder, names, plat, out):
+    """Put the CLIs of the archives and the wheels among `names` (in `folder`) into the dist folder `out`."""
+    out.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        if name.endswith(".whl"):
+            shutil.copyfile(Path(folder) / name, out / name)
+        else:
+            cli = cli_file(plat, name.split("-")[0])
+            extract_cli(Path(folder) / name, cli, out / cli)
+
+
+def download_upstream(lock, plat):
+    """Download the upstream files of `plat` that the lock's `downloads` records, check them, and unpack them into
+    HOME/dist/<commit>/<plat>/, a dist folder like any other."""
+    want = lock.get("downloads", {}).get(plat, {})
+    if not want:
+        raise OSError(f"the lock records no upstream download for {plat}")
+    tmp = Path(tempfile.mkdtemp(prefix="rdocx-download-"))
+    try:
+        for name in sorted(want):
+            url = f"{family_base(lock, name.split('-')[0])}/{name}"
+            say(f"download {url}")
+            fetch(url, tmp / name)
+        ok, report = check({n: sha256(tmp / n) for n in want}, want)
+        if not ok:
+            die(f"the downloaded files do not match the lock for {plat}; not installing\n" + "\n".join(report))
+        out = HOME / "dist" / lock["commit"] / plat
+        unpack(tmp, sorted(want), plat, out)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    return out
+
+
+def verify_provenance(lock, tag, path):
+    """Check with the GitHub CLI that a GitHub-hosted runner of the upstream repository built `path` from the
+    pinned commit, at `tag`."""
+    gh = shutil.which("gh")
+    if not gh:
+        die("checking build provenance needs the GitHub CLI (gh); --skip-attestation records without it")
+    repo = lock["upstream"].removeprefix("https://github.com/").rstrip("/")
+    out = subprocess.run([gh, "attestation", "verify", str(path), "-R", repo, "--source-digest", lock["commit"],
+                          "--source-ref", f"refs/tags/{tag}", "--deny-self-hosted-runners"],
+                         capture_output=True, text=True)
+    if out.returncode:
+        die(f"{path.name}: no build provenance from {repo} at {tag} ({lock['commit'][:12]}): "
+            f"{(out.stderr or out.stdout).strip()}")
+    say(f"provenance ok   {path.name}")
+
+
+def record_upstream(lock, platforms, attest=True):
+    """Download the upstream files of each platform, check them against their release's SHA256SUMS and their
+    provenance, then record them in `downloads`, and the CLIs and wheels they hold as for any dist folder."""
+    sums = {family: release_sums(family_base(lock, family)) for family in FAMILY_TAGS}
+    recorded = []
+    for p in platforms:
+        names = {family: upstream_assets(family, sums[family], p) for family in FAMILY_TAGS}
+        if not all(names.values()):
+            say(f"note: {p} is not in both releases, not recorded")
+            continue
+        want = {n: sums[family][n] for family, ns in names.items() for n in ns}
+        tmp = Path(tempfile.mkdtemp(prefix="rdocx-download-"))
+        try:
+            for name in sorted(want):
+                fetch(f"{family_base(lock, name.split('-')[0])}/{name}", tmp / name)
+            ok, report = check({n: sha256(tmp / n) for n in want}, want)
+            if not ok:
+                die(f"{p}: the downloaded files do not match the release's SHA256SUMS\n" + "\n".join(report))
+            if attest:
+                for name in sorted(want):
+                    verify_provenance(lock, lock["release"][name.split("-")[0]].rsplit("/", 1)[-1], tmp / name)
+            unpack(tmp, sorted(want), p, tmp / "dist")
+            record(lock, p, tmp / "dist", {n: sha256(tmp / "dist" / n) for n in artifact_names(tmp / "dist")})
+            lock.setdefault("downloads", {})[p] = want
+            recorded.append(p)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+    return recorded
 
 
 def resolve_ref(upstream, ref):
@@ -623,7 +805,9 @@ def main():
     p.add_argument("--write", action="store_true")
     p.add_argument("--platform", help="platform of the dist folder to check or record (default: this machine; "
                                       "with --release: every platform of the release)")
-    p.add_argument("--release", action="store_true", help="record the files of the release named in the lock")
+    p.add_argument("--release", action="store_true", help="record the files of the releases named in the lock")
+    p.add_argument("--skip-attestation", action="store_true",
+                   help="record upstream release files without checking their build provenance")
     p = sub.add_parser("bump")
     p.add_argument("ref", help="upstream tag, branch or full commit hash")
     sub.add_parser("paths")
@@ -659,17 +843,30 @@ def main():
             say(f"{args.ref} is {commit}, already pinned")
             return
         lock.update(commit=commit, ref=args.ref, release="", versions={}, artifacts={}, installed_files={})
+        lock.pop("downloads", None)
         write_lock(lock)
-        say(f"pinned {args.ref} = {commit}; no release nor hashes recorded yet. Next: `install --build` and `test` "
-            f"here, then push: the build workflow publishes the release rdocx-<date>-{commit[:12]}; then "
-            "`lock --write --release` finds it and records it.")
+        say(f"pinned {args.ref} = {commit}; no release nor hashes recorded yet. Next: `lock --write --release` "
+            "records the upstream releases of that commit (rdocx and rpptx tags). Between two upstream releases, "
+            f"run the build workflow on it first: it publishes the release rdocx-<date>-{commit[:12]}, which "
+            "`lock --write --release` then finds and records.")
         return
     if args.cmd == "lock" and args.release:
         if not args.write:
             die("--release records hashes: use it with --write")
         if not lock.get("release"):
-            lock["release"] = release_url(RELEASES_REPO, github_releases(RELEASES_REPO), lock["commit"])
+            lock["release"] = (upstream_releases(lock)
+                               or release_url(RELEASES_REPO, github_releases(RELEASES_REPO), lock["commit"]))
             say(f"release: {lock['release']}")
+        if upstream_release(lock):
+            platforms = [args.platform] if args.platform else sorted(UPSTREAM_PLATFORMS)
+            if not record_upstream(lock, platforms, attest=not args.skip_attestation):
+                die("no platform recorded")
+            others = sorted(set(lock.get("artifacts", {})) - set(lock.get("downloads", {})))
+            if others:
+                say(f"note: {', '.join(others)} keep hashes that do not come from these releases")
+            write_lock(lock)
+            return
+        lock.pop("downloads", None)
         base = release_base(lock)
         if not base:
             die("the lock names no release")
@@ -728,11 +925,13 @@ def main():
                     break
             else:
                 folder = None
-                if expected(lock, plat) and release_base(lock):
-                    try:
+                try:
+                    if expected(lock, plat) and upstream_release(lock):
+                        folder = download_upstream(lock, plat)
+                    elif expected(lock, plat) and release_base(lock):
                         folder = download_release(lock, plat, sorted(expected(lock, plat)))
-                    except OSError as e:
-                        say(f"no download from {release_base(lock)}: {e}")
+                except OSError as e:
+                    say(f"no download: {e}")
                 if folder is not None:
                     install_from(lock, plat, folder)  # refuses any file that does not match the lock
                 elif not args.build:

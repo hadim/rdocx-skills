@@ -16,11 +16,13 @@ their fallback to the default skills, and asks the agent to report every new gap
 ## Supply chain
 
 The skills never run an rdocx build they cannot verify. `rdocx.lock.json` pins an upstream commit and, per
-platform, the SHA-256 of each CLI, each wheel and every file the wheels install. The files come from this
-repository's releases: a bump of the lock makes the build workflow compile the commit on Linux x86_64, Linux
-arm64, macOS arm64 and Windows x86_64, run the acceptance suite on each, and publish them as the release
-`rdocx-<YYYYMMDD>-<commit12>` (build date first), whose URL the lock records. `scripts/rdocx_env.py` downloads
-them and installs only files that match the lock, re-checks them on `status`, or builds the pinned commit
+platform, the SHA-256 of each CLI, each wheel and every file the wheels install. The files come from the
+upstream releases of rdocx and rpptx (one tag per family, CLI archives and wheels built by rdocx's own workflow),
+recorded in the lock after their checksums and their build provenance (`gh attestation verify`: built from the
+pinned commit by a GitHub-hosted runner of tensorbee/rdocx) were checked. A commit between two upstream releases
+can still be pinned: this repository's build workflow then compiles it on four platforms, runs the acceptance
+suite on each and publishes it as the release `rdocx-<YYYYMMDD>-<commit12>`. `scripts/rdocx_env.py` downloads
+the files and installs only those that match the lock, re-checks them on `status`, or builds the pinned commit
 itself (every git object of the commit verified, `cargo --locked`, build tools pinned by hash). If no verified
 build is available, the skills say so and hand the task to the built-in skills. See
 [docs/setup.md](docs/setup.md).
@@ -47,7 +49,7 @@ new pin fixes it, the suite fails on purpose so that the skills are updated. Run
 | `.claude-plugin/` | plugin manifest and marketplace entry |
 | `skills/docx/`, `skills/pptx/` | `SKILL.md`, `references/` (CLI, Python API, recipes, gaps, interoperability), `scripts/` (helpers usable as commands) |
 | `scripts/` | `rdocx_env.py` (install, build, verify, test, bump) and the hash-pinned build requirements |
-| `.github/` | CI on every push, and the build workflow that publishes the releases |
+| `.github/` | CI on every push, and the build workflow for a commit between two upstream releases |
 | `rdocx.lock.json` | the pinned build |
 | `tests/` | acceptance suite, fixture generators, gap registry |
 | `findings/` | gaps met in real use, as neutral reproductions, before they become tests and gap entries |
@@ -62,7 +64,7 @@ new pin fixes it, the suite fails on purpose so that the skills are updated. Run
 
 The plugin holds no binaries. The first time a skill runs, it calls `scripts/rdocx_env.py install`, which
 downloads the pinned rdocx and rpptx CLIs and wheels for the machine (Linux x86_64 or arm64 with glibc 2.35
-or later, macOS arm64, Windows x86_64 from Git Bash; about 70 MB) from this repository's GitHub release, checks their SHA-256 against
+or later, macOS arm64 or x86_64, Windows x86_64 from Git Bash; about 45 MB) from rdocx's GitHub releases, checks their SHA-256 against
 `rdocx.lock.json`, and installs them under `~/.local/share/rdocx-skills/` (`RDOCX_HOME`): nothing
 system-wide, nothing from PyPI. To do it ahead of time, run `python3 scripts/rdocx_env.py install` from a
 clone of this repository.
