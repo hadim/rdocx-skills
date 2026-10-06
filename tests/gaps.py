@@ -14,4 +14,8 @@ issue's state decides nothing: the suite run on each new build (the build workfl
 gaps closed.
 """
 
-GAPS = {}
+GAPS = {
+    # docx: comments
+    # upstream: tensorbee/rdocx#270
+    "comment-several-paragraphs": "a comment of several paragraphs is threaded and resolved through its first paragraph's paraId instead of its last (w15:commentEx): replies lose their parent, a resolved comment reads unresolved, reply_to and resolve_comment write the wrong paraId, a multi-line comment text is written as one paragraph",
+}
