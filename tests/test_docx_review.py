@@ -164,6 +164,85 @@ def test_comment_cli_refuses_to_overwrite_its_input(rdocx_cli, tmp_path):
     assert res.returncode != 0 and digest(src.read_bytes()) == digest(before)
 
 
+# Comments of several paragraphs, as Word and Google Docs write them: each w15:commentEx row is keyed by the
+# w14:paraId of the comment's LAST paragraph (and names its parent by the parent's last paragraph).
+SEVERAL_PARAGRAPHS = [("Ada", ["1A000001"]), ("Ben", ["1B000001", "1B000002"]), ("Ada", ["2A000001", "2A000002"]),
+                      ("Ben", ["2B000001"]), ("Ada", ["3A000001", "3A000002"])]
+SEVERAL_PARAGRAPHS_EX = [("1A000001", None, 0), ("1B000002", "1A000001", 0), ("2A000002", None, 0),
+                         ("2B000001", "2A000002", 0), ("3A000002", None, 1)]
+
+
+def several_paragraph_comments(path):
+    """Five anchored comments: a reply of two paragraphs, a reply to a parent of two paragraphs, a resolved
+    comment of two paragraphs. Returns the path and the comment ids in part order."""
+    doc = rdocx.Document()
+    doc.add_paragraph("Anchor paragraph.")
+    ids = [doc.add_comment(run_range(0, 0, 1), author=a, text="x", date=STAMP) for a, _ in SEVERAL_PARAGRAPHS]
+    base = doc.to_bytes()
+    comments = "".join(
+        '<w:comment w:id="%d" w:author="%s" w:date="%s">%s</w:comment>'
+        % (cid, author, STAMP, "".join('<w:p w14:paraId="%s"><w:r><w:t>%s</w:t></w:r></w:p>' % (p, p) for p in paras))
+        for cid, (author, paras) in zip(ids, SEVERAL_PARAGRAPHS))
+    replaced = {
+        "word/comments.xml": '<w:comments xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
+                             'xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">%s</w:comments>' % comments,
+        "word/commentsExtended.xml": '<w15:commentsEx xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml">%s'
+                                     '</w15:commentsEx>' % "".join(
+            '<w15:commentEx w15:paraId="%s"%s w15:done="%d"/>' % (p, ' w15:paraIdParent="%s"' % par if par else "", d)
+            for p, par, d in SEVERAL_PARAGRAPHS_EX),
+    }
+    with zipfile.ZipFile(io.BytesIO(base)) as zin, zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            zout.writestr(item, replaced.get(item.filename, zin.read(item.filename)))
+    return path, ids
+
+
+def comment_ex_rows(path):
+    """{paraId: (paraIdParent, done)} of word/commentsExtended.xml."""
+    rows = re.findall(r"<w15:commentEx\b[^>]*/>", part(path, "word/commentsExtended.xml").decode())
+    attr = lambda row, name: (re.search(r'w15:%s="([^"]*)"' % name, row) or [None, None])[1]
+    return {attr(r, "paraId"): (attr(r, "paraIdParent"), attr(r, "done") in ("1", "true")) for r in rows}
+
+
+def threads_from_xml(path):
+    """The workaround: {comment id: (parent id, resolved)} read from the XML, each commentEx row matched to the
+    comment whose last paragraph carries its paraId."""
+    comments = part(path, "word/comments.xml").decode()
+    by_last = {}
+    for cid, body in re.findall(r'<w:comment\b[^>]*w:id="(\d+)"[^>]*>(.*?)</w:comment>', comments, re.S):
+        paras = re.findall(r'w14:paraId="([0-9A-Fa-f]+)"', body)
+        if paras:
+            by_last[paras[-1]] = int(cid)
+    rows = comment_ex_rows(path)
+    return {cid: (by_last.get(rows[p][0]), rows[p][1]) for p, cid in by_last.items() if p in rows}
+
+
+@pytest.mark.gap("comment-several-paragraphs")
+def test_comment_of_several_paragraphs_threads_on_its_last_paragraph(tmp_path):
+    src, ids = several_paragraph_comments(tmp_path / "m.docx")
+    doc = rdocx.Document.open(src)
+    assert [(c.parent_id, c.resolved) for c in doc.comments] == [
+        (None, False), (ids[0], False), (None, False), (ids[2], False), (None, True)]
+    reply = doc.reply_to(ids[2], author="Cy", text="first\nsecond", date=STAMP)
+    doc.resolve_comment(ids[2])
+    out = tmp_path / "out.docx"
+    doc.save(out)
+    rows = comment_ex_rows(out)
+    assert rows["2A000002"] == (None, True) and "2A000001" not in rows
+    body = re.search(r'<w:comment\b[^>]*w:id="%d"[^>]*>(.*?)</w:comment>' % reply,
+                     part(out, "word/comments.xml").decode(), re.S).group(1)
+    assert len(re.findall(r"<w:p[ >]", body)) == 2
+    assert rows[re.findall(r'w14:paraId="([0-9A-Fa-f]+)"', body)[-1]][0] == "2A000002"
+    reread = {c.id: (c.parent_id, c.text) for c in rdocx.Document.open(out).comments}
+    assert reread[reply] == (ids[2], "first\nsecond")
+
+
+def test_comment_threads_read_from_the_xml_workaround(tmp_path):
+    src, ids = several_paragraph_comments(tmp_path / "m.docx")
+    assert threads_from_xml(src) == {ids[0]: (None, False), ids[1]: (ids[0], False), ids[2]: (None, False),
+                                     ids[3]: (ids[2], False), ids[4]: (None, True)}
+
+
 # ---------------------------------------------------------------- tracked changes
 def test_compare_then_accept_or_reject(rdocx_cli, tmp_path):
     a = two_paragraphs(tmp_path / "a.docx")
