@@ -1,4 +1,4 @@
-# Builds the rdocx and rpptx CLIs and wheels of one upstream commit between two upstream releases on four native
+# Builds the rdocx and rpptx CLIs and wheels of one upstream commit between two upstream releases on five native
 # runners, runs the acceptance suite on each, and publishes them as the release rdocx-<UTC build date
 # YYYYMMDD>-<first 12 characters of the commit> of this repository, which `rdocx_env.py lock --write --release`
 # records in the lock when upstream has no release of that commit, and `rdocx_env.py install` downloads and checks
@@ -50,6 +50,7 @@ jobs:
             [{"platform": "linux-x86_64", "runner": "ubuntu-22.04"},
             {"platform": "linux-aarch64", "runner": "ubuntu-22.04-arm"},
             {"platform": "macos-arm64", "runner": "macos-14"},
+            {"platform": "macos-x86_64", "runner": "macos-15-intel"},
             {"platform": "windows-x86_64", "runner": "windows-2025"}]
         run: |
           if [ -n "$REF" ]; then python scripts/rdocx_env.py bump "$REF"; fi

@@ -17,7 +17,7 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - `rdocx.lock.json`: the pin (upstream commit and ref, release URLs, SHA-256 per platform). `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
 - `.github/workflows/`: `ci.yml` (suite on linux-x86_64, macos-arm64, macos-x86_64 and windows-x86_64, every
-  push and PR), `build.yml` (only for a commit between two upstream releases: builds it on four runners and
+  push and PR), `build.yml` (only for a commit between two upstream releases: builds it on five runners and
   publishes the release `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first; by hand, and weekly on upstream
   `main` HEAD as a candidate).
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
@@ -44,10 +44,14 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
 
-## State on 04/10/2026
+## State on 06/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: the upstream releases tensorbee/rdocx `v0.15.0` (rdocx 0.15.0) and `rpptx-v0.13.1` (rpptx 0.13.1),
+- Pinned, until the next upstream release: `integration/open-prs-2026-10-06` of hadim/rdocx (`e22641a8`,
+  upstream main `20888b7a` plus tensorbee/rdocx#271, the fix of gap comment-several-paragraphs), through this
+  repository's release `rdocx-20261006-e22641a8f20a` (five platforms). Next upstream release that carries
+  #271: `bump v<version>` with `upstream` set back to tensorbee/rdocx.
+- Before it, pinned: the upstream releases tensorbee/rdocx `v0.15.0` (rdocx 0.15.0) and `rpptx-v0.13.1` (rpptx 0.13.1),
   both at commit `9d019472` (sprint S88), the first ones that ship the CLIs and the wheels together under one
   tag per family, with `SHA256SUMS` and build provenance attestations (tensorbee/rdocx#266). The lock records
   five platforms: linux-x86_64, linux-aarch64 (CLIs need glibc 2.35, wheels manylinux_2_28), macos-arm64,

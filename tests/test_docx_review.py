@@ -204,20 +204,6 @@ def comment_ex_rows(path):
     return {attr(r, "paraId"): (attr(r, "paraIdParent"), attr(r, "done") in ("1", "true")) for r in rows}
 
 
-def threads_from_xml(path):
-    """The workaround: {comment id: (parent id, resolved)} read from the XML, each commentEx row matched to the
-    comment whose last paragraph carries its paraId."""
-    comments = part(path, "word/comments.xml").decode()
-    by_last = {}
-    for cid, body in re.findall(r'<w:comment\b[^>]*w:id="(\d+)"[^>]*>(.*?)</w:comment>', comments, re.S):
-        paras = re.findall(r'w14:paraId="([0-9A-Fa-f]+)"', body)
-        if paras:
-            by_last[paras[-1]] = int(cid)
-    rows = comment_ex_rows(path)
-    return {cid: (by_last.get(rows[p][0]), rows[p][1]) for p, cid in by_last.items() if p in rows}
-
-
-@pytest.mark.gap("comment-several-paragraphs")
 def test_comment_of_several_paragraphs_threads_on_its_last_paragraph(tmp_path):
     src, ids = several_paragraph_comments(tmp_path / "m.docx")
     doc = rdocx.Document.open(src)
@@ -235,12 +221,6 @@ def test_comment_of_several_paragraphs_threads_on_its_last_paragraph(tmp_path):
     assert rows[re.findall(r'w14:paraId="([0-9A-Fa-f]+)"', body)[-1]][0] == "2A000002"
     reread = {c.id: (c.parent_id, c.text) for c in rdocx.Document.open(out).comments}
     assert reread[reply] == (ids[2], "first\nsecond")
-
-
-def test_comment_threads_read_from_the_xml_workaround(tmp_path):
-    src, ids = several_paragraph_comments(tmp_path / "m.docx")
-    assert threads_from_xml(src) == {ids[0]: (None, False), ids[1]: (ids[0], False), ids[2]: (None, False),
-                                     ids[3]: (ids[2], False), ids[4]: (None, True)}
 
 
 # ---------------------------------------------------------------- tracked changes
