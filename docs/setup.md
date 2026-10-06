@@ -131,9 +131,9 @@ them.
   linux-x86_64, macos-arm64, macos-x86_64 and windows-x86_64 (the release download, or a build when the release
   lacks the platform's files, as right after a bump), then the acceptance suite. On Windows it runs from Git
   Bash, as an agent does.
-- `.github/workflows/build.yml`, only for a commit between two upstream releases: builds it on four native
+- `.github/workflows/build.yml`, only for a commit between two upstream releases: builds it on five native
   runners (ubuntu-22.04,
-  ubuntu-22.04-arm, macos-14, windows-2025), runs the suite on each, and publishes the release
+  ubuntu-22.04-arm, macos-14, macos-15-intel, windows-2025), runs the suite on each, and publishes the release
   `rdocx-<YYYYMMDD>-<first 12 characters of the commit>` (the UTC build date first, so the releases sort by
   date; title `rdocx <YYYY-MM-DD> <commit12> (<ref>)`) with `SHA256SUMS`, provenance attestations, and the
   suite summaries in its notes (gaps closed, other failures). It runs by hand on any upstream tag, branch or
@@ -171,6 +171,6 @@ whose releases exist and whose hashes are recorded, together with the tests and 
 
 A commit between two upstream releases (a fix the skills need before the next release) goes through this
 repository's build first: Actions, build, Run workflow, with `ref` set to the upstream branch or full commit
-hash. It publishes the release `rdocx-<YYYYMMDD>-<commit12>`, with the suite's results on four platforms in its
+hash. It publishes the release `rdocx-<YYYYMMDD>-<commit12>`, with the suite's results on five platforms in its
 notes. Then `bump REF` and the steps above: `lock --write --release` finds no upstream release of that commit
 and records this one instead.
