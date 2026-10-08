@@ -11,7 +11,7 @@ import rdocx
 from docx.oxml.ns import qn
 from PIL import Image
 
-from builders import cell_text_docx, wrapped_run_docx
+from builders import cell_text_docx, commented_thread, google_wrapped, rewrite_body, wrapped_run_docx
 from conftest import STAMP, digest, part, run
 
 
@@ -224,46 +224,6 @@ def test_comment_of_several_paragraphs_threads_on_its_last_paragraph(tmp_path):
 
 
 # ---------------------------------------------------------------- comment anchors, moves, removals
-GOOG_SDT = '<w:sdt><w:sdtPr><w:tag w:val="goog_rdk_%d"/></w:sdtPr><w:sdtContent>%s</w:sdtContent></w:sdt>'
-
-
-def rewrite_body(src, dst, edit):
-    with zipfile.ZipFile(src) as zin, zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as zout:
-        for item in zin.infolist():
-            data = zin.read(item.filename)
-            zout.writestr(item, edit(data.decode()).encode() if item.filename == "word/document.xml" else data)
-    return dst
-
-
-def commented_thread(path):
-    """Three paragraphs; a resolved, dated comment on "paragraph" in the first one, with a reply."""
-    d = docx.Document()
-    p = d.add_paragraph()
-    for text in ("Alpha ", "paragraph", " with some words here."):
-        p.add_run(text)
-    d.add_paragraph("Beta paragraph.")
-    d.add_paragraph("Gamma paragraph.")
-    d.save(path)
-    doc = rdocx.Document.open(path)
-    cid = doc.add_comment(run_range(0, 1, 2), author="Reviewer", text="Check.", date=STAMP)
-    rid = doc.reply_to(cid, author="Author", text="Done.", date=STAMP)
-    doc.resolve_comment(cid)
-    doc.save(path)
-    return path, cid, rid
-
-
-def google_wrapped(src, dst):
-    """The comment's start marker in an inline goog_rdk content control, the anchored run in another, and
-    the paragraph in a block one, as files saved by Google Docs hold them."""
-    def edit(xml):
-        xml = re.sub(r'<w:commentRangeStart w:id="0"/>', lambda m: GOOG_SDT % (0, m.group(0)), xml, count=1)
-        xml = re.sub(r"<w:r>(?:(?!</w:r>).)*?>paragraph</w:t></w:r>", lambda m: GOOG_SDT % (1, m.group(0)), xml,
-                     count=1, flags=re.S)
-        return re.sub(r"<w:p\b(?:(?!<w:p\b).)*?goog_rdk_0.*?</w:p>", lambda m: GOOG_SDT % (2, m.group(0)), xml,
-                      count=1, flags=re.S)
-    return rewrite_body(src, dst, edit)
-
-
 def test_comment_anchor_text_through_google_wrappers(rdocx_cli, tmp_path):
     src, cid, rid = commented_thread(tmp_path / "c.docx")
     g = google_wrapped(src, tmp_path / "g.docx")

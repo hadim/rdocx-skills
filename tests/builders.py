@@ -1,8 +1,10 @@
 """Small synthetic inputs for the tests, built with python-docx plus targeted XML where python-docx has no API.
 Each builder writes a file and returns its path."""
+import re
 import zipfile
 
 import docx
+import rdocx
 from docx.oxml.ns import qn
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
@@ -202,3 +204,47 @@ def wrapped_text_docx(path, wrapper, target="MID"):
     p.add_run(" after")
     d.save(path)
     return path
+
+
+# ---------------------------------------------------------------- comments
+STAMP = "2026-09-27T12:00:00Z"
+GOOG_SDT = '<w:sdt><w:sdtPr><w:tag w:val="goog_rdk_%d"/></w:sdtPr><w:sdtContent>%s</w:sdtContent></w:sdt>'
+
+
+def rewrite_body(src, dst, edit):
+    with zipfile.ZipFile(src) as zin, zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            zout.writestr(item, edit(data.decode()).encode() if item.filename == "word/document.xml" else data)
+    return dst
+
+
+def commented_thread(path):
+    """Three paragraphs; a resolved, dated comment on "paragraph" in the first one, with a reply."""
+    d = docx.Document()
+    p = d.add_paragraph()
+    for text in ("Alpha ", "paragraph", " with some words here."):
+        p.add_run(text)
+    d.add_paragraph("Beta paragraph.")
+    d.add_paragraph("Gamma paragraph.")
+    d.save(path)
+    doc = rdocx.Document.open(path)
+    cid = doc.add_comment(rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=1),
+                                         end=rdocx.RunPosition(body_index=0, run_index=2)),
+                          author="Reviewer", text="Check.", date=STAMP)
+    rid = doc.reply_to(cid, author="Author", text="Done.", date=STAMP)
+    doc.resolve_comment(cid)
+    doc.save(path)
+    return path, cid, rid
+
+
+def google_wrapped(src, dst):
+    """The comment's start marker in an inline goog_rdk content control, the anchored run in another, and
+    the paragraph in a block one, as files saved by Google Docs hold them."""
+    def edit(xml):
+        xml = re.sub(r'<w:commentRangeStart w:id="0"/>', lambda m: GOOG_SDT % (0, m.group(0)), xml, count=1)
+        xml = re.sub(r"<w:r>(?:(?!</w:r>).)*?>paragraph</w:t></w:r>", lambda m: GOOG_SDT % (1, m.group(0)), xml,
+                     count=1, flags=re.S)
+        return re.sub(r"<w:p\b(?:(?!<w:p\b).)*?goog_rdk_0.*?</w:p>", lambda m: GOOG_SDT % (2, m.group(0)), xml,
+                      count=1, flags=re.S)
+    return rewrite_body(src, dst, edit)
