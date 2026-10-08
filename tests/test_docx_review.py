@@ -11,7 +11,7 @@ import rdocx
 from docx.oxml.ns import qn
 from PIL import Image
 
-from builders import cell_text_docx, wrapped_run_docx
+from builders import cell_text_docx, commented_thread, google_wrapped, rewrite_body, wrapped_run_docx
 from conftest import STAMP, digest, part, run
 
 
@@ -221,6 +221,136 @@ def test_comment_of_several_paragraphs_threads_on_its_last_paragraph(tmp_path):
     assert rows[re.findall(r'w14:paraId="([0-9A-Fa-f]+)"', body)[-1]][0] == "2A000002"
     reread = {c.id: (c.parent_id, c.text) for c in rdocx.Document.open(out).comments}
     assert reread[reply] == (ids[2], "first\nsecond")
+
+
+# ---------------------------------------------------------------- comment anchors, moves, removals
+def test_comment_anchor_text_through_google_wrappers(rdocx_cli, tmp_path):
+    src, cid, rid = commented_thread(tmp_path / "c.docx")
+    g = google_wrapped(src, tmp_path / "g.docx")
+    assert part(g, "word/document.xml").count(b"goog_rdk_") == 3
+    doc = rdocx.Document.open(g)
+    assert [(c.id, c.anchor_text) for c in doc.comments] == [(cid, "paragraph"), (rid, None)]
+    anchor = doc.comments[0].anchor
+    assert isinstance(anchor, rdocx.StoryRunRange) and doc.comments[1].anchor is None
+    item = anchor.start.item                                              # the paragraph inside the block control
+    assert (item.story.kind, item.kind, item.index_path, item.direct_body_index) == ("body", "paragraph", (0, 0), 0)
+    assert (anchor.start.run_index, anchor.end.run_index) == (1, 2)
+    listed = json.loads(run([rdocx_cli, "comment", "list", "--json", g], check=True).stdout)["comments"]
+    assert [(x["id"], x["anchor_text"]) for x in listed] == [(cid, "paragraph"), (rid, None)]
+    assert listed[0]["anchor"]["story"]["kind"] == "body" and listed[0]["anchor"]["start"]["body_index"] == 0
+    assert (listed[0]["anchor"]["start"]["run_index"], listed[0]["anchor"]["end"]["run_index"]) == (1, 2)
+    assert listed[0]["reference"]["story"]["kind"] == "body" and listed[1]["anchor"] is listed[1]["reference"] is None
+
+
+def test_comment_anchor_text_of_several_paragraphs_and_of_no_range(tmp_path):
+    src, cid, _ = commented_thread(tmp_path / "c.docx")
+    doc = rdocx.Document.open(src)
+    doc.move_comment(cid, rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=1),
+                                         end=rdocx.RunPosition(body_index=1, run_index=1)))
+    assert doc.comments[0].anchor_text == "paragraph with some words here.\nBeta paragraph."
+    bare = rewrite_body(src, tmp_path / "ref.docx", lambda x: re.sub(r'<w:commentRange(Start|End) w:id="0"/>', "", x))
+    assert rdocx.Document.open(bare).comments[0].anchor_text == ""          # a reference, no range
+
+
+def thread_state(doc):
+    return [(c.id, c.parent_id, c.author, c.text, c.date, c.resolved, c.anchor_text) for c in doc.comments]
+
+
+def test_move_comment_keeps_its_thread(tmp_path):
+    src, cid, rid = commented_thread(tmp_path / "c.docx")
+    doc = rdocx.Document.open(src)
+    before = thread_state(doc)
+    doc.move_comment_to_text(cid, "Beta")
+    assert thread_state(doc) == [before[0][:-1] + ("Beta",), before[1]]
+    doc.move_comment(cid, rdocx.RunRange(start=rdocx.RunPosition(body_index=2, run_index=0),
+                                         end=rdocx.RunPosition(body_index=2, run_index=1)))
+    assert doc.comments[0].anchor_text == "Gamma paragraph." and doc.comments[0].resolved
+    for bad in (lambda: doc.move_comment_to_text(rid, "Beta"),       # a reply moves with its root
+                lambda: doc.move_comment_to_text(99, "Beta"),        # unknown id
+                lambda: doc.move_comment_to_text(cid, "Nowhere")):   # text not found
+        with pytest.raises(rdocx.RdocxError):
+            bad()
+    doc.save(tmp_path / "moved.docx")
+    xml = part(tmp_path / "moved.docx", "word/document.xml").decode()
+    assert [xml.count(f'<w:{m} w:id="{cid}"/>') for m in ("commentRangeStart", "commentRangeEnd", "commentReference")] == [1, 1, 1]
+    again = rdocx.Document.open(tmp_path / "moved.docx")
+    assert thread_state(again) == thread_state(doc)
+    anchor = rdocx.Document.open(src).comments[0].anchor                     # an anchor read back moves a comment
+    again.move_comment(cid, anchor)
+    assert again.comments[0].anchor_text == "paragraph"
+
+
+def test_move_comment_out_of_google_wrappers_cli(rdocx_cli, tmp_path):
+    src, cid, rid = commented_thread(tmp_path / "c.docx")
+    g = google_wrapped(src, tmp_path / "g.docx")
+    out = tmp_path / "moved.docx"
+    rec = json.loads(run([rdocx_cli, "comment", "move", g, "--id", str(cid), "--anchor", "paragraph", "--occurrence", "1",
+                          "-o", out, "--json"], check=True).stdout)
+    assert rec["comment_id"] == cid and rec["action"] == "move"
+    doc = rdocx.Document.open(out)
+    assert [(c.id, c.parent_id, c.resolved, c.anchor_text) for c in doc.comments] == [
+        (cid, None, True, "paragraph"), (rid, cid, False, None)]
+    assert doc.comments[0].anchor.start.item.text == "Beta paragraph."
+    xml = part(out, "word/document.xml").decode()
+    assert "goog_rdk_0" not in xml and "goog_rdk_1" in xml               # the emptied wrapper went, the other stays
+    assert run([rdocx_cli, "validate", out]).returncode == 0
+    refused = run([rdocx_cli, "comment", "move", g, "--id", str(cid), "--anchor", "paragraph", "-o", out])
+    assert refused.returncode == 1 and "already exists" in refused.stderr
+    for bad in (["--id", str(cid), "--anchor", "Nowhere"], ["--id", str(rid), "--anchor", "Beta"]):
+        res = run([rdocx_cli, "comment", "move", g, *bad, "-o", tmp_path / "bad.docx"])
+        assert res.returncode == 1 and not (tmp_path / "bad.docx").exists()
+
+
+def test_removing_the_commented_content_removes_its_thread(rdocx_cli, tmp_path):
+    src, cid, _ = commented_thread(tmp_path / "c.docx")
+    doc = rdocx.Document.open(src)
+    assert doc.remove_content(0)
+    assert len(doc.comments) == 0
+    doc.save(tmp_path / "removed.docx")
+    xml = part(tmp_path / "removed.docx", "word/document.xml").decode()
+    assert "commentRangeStart" not in xml and "commentReference" not in xml
+    assert run([rdocx_cli, "validate", tmp_path / "removed.docx"]).returncode == 0
+    d = docx.Document()
+    table = d.add_table(rows=2, cols=1)
+    table.cell(0, 0).text, table.cell(1, 0).text = "kept row", "removed row"
+    d.save(tmp_path / "t.docx")
+    doc = rdocx.Document.open(tmp_path / "t.docx")
+    doc.add_comment_on_text("removed", author="Reviewer", text="Drop this row?", date=STAMP)
+    doc.tables[0].remove_row(1)
+    assert len(doc.comments) == 0
+
+
+def test_a_partial_cut_keeps_the_comment_on_what_is_left(tmp_path):
+    src, cid, rid = commented_thread(tmp_path / "c.docx")
+    doc = rdocx.Document.open(src)
+    doc.move_comment(cid, rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=1),
+                                         end=rdocx.RunPosition(body_index=1, run_index=1)))
+    doc.remove_content(0)
+    assert [(c.id, c.parent_id, c.anchor_text) for c in doc.comments] == [(cid, None, "Beta paragraph."), (rid, cid, None)]
+
+
+def test_a_popped_paragraph_carries_its_thread_back(tmp_path):
+    src, _, _ = commented_thread(tmp_path / "c.docx")
+    doc = rdocx.Document.open(src)
+    fragment = doc.pop_content(0)
+    assert len(doc.comments) == 0
+    doc.insert_content(2, fragment)
+    assert [p.text for p in doc.paragraphs][-1].startswith("Alpha")
+    root, reply = doc.comments
+    assert (root.text, root.anchor_text, root.resolved, reply.text, reply.parent_id) == (
+        "Check.", "paragraph", True, "Done.", root.id)
+
+
+def test_validate_flags_a_comment_without_range_or_reference(rdocx_cli, tmp_path):
+    src, cid, _ = commented_thread(tmp_path / "c.docx")
+    bare = rewrite_body(src, tmp_path / "bare.docx", lambda x: re.sub(
+        r'<w:commentRange(Start|End) w:id="0"/>|<w:r>(?:(?!</w:r>).)*?<w:commentReference w:id="0"/></w:r>', "", x,
+        flags=re.S))
+    assert b"commentReference" not in part(bare, "word/document.xml")
+    assert rdocx.Document.open(bare).comments[0].anchor is None and rdocx.Document.open(bare).comments[0].anchor_text is None
+    res = run([rdocx_cli, "validate", bare])
+    assert res.returncode == 1 and f"comment {cid} has no range and no reference in any story" in res.stdout
+    assert run([rdocx_cli, "validate", src]).returncode == 0
 
 
 # ---------------------------------------------------------------- tracked changes

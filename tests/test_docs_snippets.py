@@ -60,6 +60,20 @@ def test_recipe_outputs(workdirs):
     first = next(c for c in doc.comments if c.parent_id is None)
     assert docx_ops.anchored_text(d / "commented.docx", first.id) == "about 12 mm" and first.resolved and first.date
     assert any(c.text == "Rename this column?" and c.date for c in doc.comments)
+    assert first.anchor_text == "about 12 mm"
+    reviewed = rdocx.Document.open(d / "reviewed.docx")
+    root = next(c for c in reviewed.comments if c.id == first.id)
+    assert (root.anchor_text, root.resolved, len(reviewed.comments)) == ("bearing positions", True, len(doc.comments))
+    assert [c.parent_id for c in reviewed.comments if c.text == "The 2019 survey marks."] == [root.id]
+    assert not any(p.text.startswith("the bearing at pier 2") for p in reviewed.paragraphs)
+    assert rdocx.Document.open(d / "moved-cli.docx").comments[0].anchor_text == "bearing positions"
+    scoped = rdocx.Document.open(d / "scoped.docx")
+    method = [p.text for p in scoped.paragraphs if "Drainage performance was checked" in p.text]
+    assert method[0].startswith("Drainage performance was checked by pouring water at the high points of each span")
+    assert all("high points of the deck" in t for t in method[1:]) and len(method) > 1
+    actions = [scoped.tables[next(k for k, tb in enumerate(scoped.tables) if tb.cell(0, 0).text == "Ref")].cell(r, 5).text
+               for r in (1, 5)]
+    assert actions == ["Monitor", "No action"]
     red = rdocx.Document.open(d / "redline.docx")
     assert [(r.kind, r.story.kind) for r in red.revisions] == [("deletion", "body"), ("insertion", "body")]
     bold = rdocx.Document.open(d / "bold.docx")

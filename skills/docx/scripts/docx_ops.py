@@ -13,7 +13,6 @@ renames it into place, keeps the input's file mode, and refuses to write over it
 """
 import argparse
 import collections
-import html
 import io
 import json
 import os
@@ -277,14 +276,15 @@ def isolate(doc, flow_index, start, end):
 
 
 def anchored_text(data, comment_id):
-    """The text a comment is anchored on in a saved document (bytes or path), or None if it has no range."""
-    with zipfile.ZipFile(io.BytesIO(data) if isinstance(data, bytes) else data) as z:
-        xml = z.read("word/document.xml").decode("utf-8")
-    m = re.search(r'<w:commentRangeStart\b[^>]*\bw:id="%d"[^>]*/>(.*?)<w:commentRangeEnd\b[^>]*\bw:id="%d"[^>]*/>'
-                  % (comment_id, comment_id), xml, re.S)
-    if not m:
-        return None
-    return html.unescape("".join(re.findall(r"<w:t(?:\s[^>]*)?>([^<]*)</w:t>", m.group(1))))
+    """The text a comment is anchored on in a saved document (bytes or path), or None if it has no range.
+
+    Read through rdocx (`Comment.anchor_text`): the accepted view of tracked changes, through content controls
+    (Google Docs' goog_rdk wrappers included) and in table cells, the paragraphs of a range over several joined
+    with "\n". rdocx gives "" for a comment that has a reference mark but no range: that maps to None, like a
+    reply, an unknown id or a comment with no marks at all."""
+    doc = rdocx.Document.from_bytes(data) if isinstance(data, bytes) else rdocx.Document.open(data)
+    comment = next((c for c in doc.comments if c.id == comment_id), None)
+    return (comment.anchor_text or None) if comment is not None else None
 
 
 def _comment(doc, anchor, text, author, initials, occurrence, date):

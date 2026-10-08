@@ -1,6 +1,7 @@
 """The helper scripts shipped in the skills must keep working on the pinned build: they encode the
 workarounds the skills teach, so a pin that changes an underlying behaviour shows up here first."""
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -8,7 +9,8 @@ from pathlib import Path
 import pytest
 import rdocx
 
-from builders import cell_text_docx, every_story_docx, word_textbox_docx, wrapped_run_docx, wrapped_text_docx
+from builders import (cell_text_docx, commented_thread, every_story_docx, google_wrapped, rewrite_body,
+                      word_textbox_docx, wrapped_run_docx, wrapped_text_docx)
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
@@ -133,6 +135,18 @@ def test_comment_on_text_in_the_report_content_control(report_docx):
     doc = rdocx.Document.open(report_docx)
     cid = docx_ops.comment_on_text(doc, "74 out of 100", "x", "Reviewer")
     assert anchored(doc.to_bytes(), cid) == "74 out of 100"
+
+
+def test_anchored_text_reads_through_google_wrappers_and_maps_no_range_to_none(tmp_path):
+    """anchored_text reads the anchor through rdocx (Comment.anchor_text): through goog_rdk content controls
+    around the start mark, the anchored run and the paragraph; None for a reply, an unknown id, and a comment
+    left with its reference mark but no range (rdocx's ""). Table cells: the in_tables tests below."""
+    src, cid, rid = commented_thread(tmp_path / "c.docx")
+    g = google_wrapped(src, tmp_path / "g.docx")
+    assert anchored(g, cid) == anchored(g.read_bytes(), cid) == "paragraph"
+    assert anchored(g, rid) is None and anchored(g, 99) is None
+    bare = rewrite_body(src, tmp_path / "ref.docx", lambda x: re.sub(r'<w:commentRange(Start|End) w:id="0"/>', "", x))
+    assert rdocx.Document.open(bare).comments[0].anchor_text == "" and anchored(bare, cid) is None
 
 
 def test_comment_on_part_of_a_table_cell_paragraph(tmp_path):

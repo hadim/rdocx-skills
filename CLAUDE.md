@@ -8,7 +8,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## Map
 
 - `skills/<name>/SKILL.md`: what an agent reads first; keep it under 200 lines, details go to `references/`
-  (`tests/test_skill_docs.py` checks the size, and every Python name, keyword, CLI command and flag the skills cite).
+  (`tests/test_skill_docs.py` checks the size, every Python name, keyword, CLI command and flag the skills cite, and
+  the other way round that every public API of the build is cited or listed in its `NOT_DOCUMENTED` with a reason).
 - `skills/<name>/references/`: `cli.md`, `python-api.md`, `recipes.md` (every block is executed by
   `tests/test_docs_snippets.py`), `gaps.md`, and `interop.md` for docx.
 - `skills/<name>/scripts/`: helpers importable and runnable as commands; tested in `tests/test_skill_scripts.py`.
@@ -47,12 +48,13 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## State on 08/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned, until the next upstream release: `integration/open-prs-2026-10-08` of hadim/rdocx (`b9d0a16f`,
-  upstream main `20888b7a` plus tensorbee/rdocx#271, #274, #275, #279 and #280: comment threads keyed on the
-  last paragraph, cell `nil` borders, page breaks in table cells, a table's own `w:jc`, and table placement by
-  cell margin and compatibility mode), through this repository's release `rdocx-20261008-b9d0a16fd2d3` (five
-  platforms). Next upstream release that carries them: `bump v<version>` with `upstream` set back to
-  tensorbee/rdocx.
+- Pinned, until the next upstream release: `integration/open-prs-2026-10-08-2` of hadim/rdocx (`1fac166c`,
+  upstream main `20888b7a` plus tensorbee/rdocx#271, #274, #275, #279, #280, #286 and #287: comment threads
+  keyed on the last paragraph, cell `nil` borders, page breaks in table cells, a table's own `w:jc`, table
+  placement by cell margin and compatibility mode, counted replacement scoped to one paragraph, cell or story
+  item, and comment anchors kept through removals, exposed and movable), through this repository's release
+  `rdocx-20261008-1fac166ca499` (five platforms). Next upstream release that carries them: `bump v<version>`
+  with `upstream` set back to tensorbee/rdocx.
 - Before it, pinned: the upstream releases tensorbee/rdocx `v0.15.0` (rdocx 0.15.0) and `rpptx-v0.13.1` (rpptx 0.13.1),
   both at commit `9d019472` (sprint S88), the first ones that ship the CLIs and the wheels together under one
   tag per family, with `SHA256SUMS` and build provenance attestations (tensorbee/rdocx#266). The lock records

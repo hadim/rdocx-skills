@@ -157,6 +157,83 @@ def test_a_match_across_a_wrapper_edge_is_not_replaced(tmp_path, wrapper):
     assert doc.try_replace_text("MID", "X") == 1 and doc.paragraphs[0].text == "before X after"
 
 
+def test_paragraph_replace_text_is_scoped_to_its_paragraph(tmp_path):
+    """The same clause in two paragraphs: only the target one changes, across runs, its comment kept; a wrong
+    `expect` raises ReplacementCountError and changes nothing."""
+    d = docx.Document()
+    p = d.add_paragraph()
+    p.add_run("the old ")
+    p.add_run("clause").bold = True
+    p.add_run(" here")
+    d.add_paragraph("the old clause there")
+    d.save(tmp_path / "a.docx")
+    doc = rdocx.Document.open(tmp_path / "a.docx")
+    doc.add_comment(rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=0),
+                                   end=rdocx.RunPosition(body_index=0, run_index=3)), author="R", text="c")
+    assert rdocx.Document.from_bytes(doc.to_bytes()).try_replace_text("old clause", "x") == 2  # the document-wide call
+    assert doc.paragraphs[0].replace_text("old clause", "new clause", expect=1) == 1
+    assert [p.text for p in doc.paragraphs] == ["the new clause here", "the old clause there"]
+    assert doc.comments[0].anchor_text == "the new clause here"
+    with pytest.raises(rdocx.ReplacementCountError):
+        doc.paragraphs[1].replace_text("old clause", "x", expect=2)
+    assert issubclass(rdocx.ReplacementCountError, rdocx.RdocxError)
+    assert [p.text for p in doc.paragraphs] == ["the new clause here", "the old clause there"]
+    assert doc.paragraphs[1].replace_text("absent", "x") == 0
+
+
+def test_cell_replace_text_is_scoped_to_its_cell(tmp_path):
+    d = docx.Document()
+    d.add_paragraph("No action in the body")
+    t = d.add_table(rows=2, cols=2)
+    for r in range(2):
+        for c in range(2):
+            t.cell(r, c).text = "No action"
+    d.save(tmp_path / "a.docx")
+    doc = rdocx.Document.open(tmp_path / "a.docx")
+    assert doc.tables[0].cell(1, 1).replace_text("No action", "Monitor", expect=1) == 1
+    assert [c.text for row in doc.tables[0].rows for c in row.cells] == ["No action"] * 3 + ["Monitor"]
+    with pytest.raises(rdocx.ReplacementCountError):
+        doc.tables[0].cell(0, 0).replace_text("No action", "Monitor", expect=2)
+    assert doc.tables[0].cell(0, 0).text == "No action" and doc.paragraphs[0].text == "No action in the body"
+    cell_paragraph = doc.tables[0].cell(0, 1).paragraphs[0]                 # a paragraph of a cell works too
+    assert cell_paragraph.replace_text("action", "change", expect=1) == 1 and doc.tables[0].cell(0, 1).text == "No change"
+
+
+def test_replace_story_text_edits_one_item_of_another_story(tmp_path):
+    d = docx.Document()
+    d.add_paragraph("NEEDLE in the body")
+    d.add_table(rows=1, cols=2).cell(0, 1).text = "NEEDLE in a cell, NEEDLE"
+    d.sections[0].header.paragraphs[0].text = "NEEDLE in the header"
+    d.sections[0].footer.paragraphs[0].text = "NEEDLE in the footer"
+    d.save(tmp_path / "h.docx")
+    doc = rdocx.Document.open(tmp_path / "h.docx")
+
+    def item(story, kind="paragraph"):                                     # the last one: cell (0, 1) for a cell
+        return [i for i in doc.story_items if i.story.kind == story and i.kind == kind][-1]
+    for story in ("header", "footer"):
+        assert doc.replace_story_text(item(story), "NEEDLE", "PIN", expect=1) == 1
+    assert doc.replace_story_text(item("table_cell"), "NEEDLE", "PIN", expect=2) == 2
+    assert doc.paragraphs[0].text == "NEEDLE in the body"
+    assert [item(s).text for s in ("header", "footer", "table_cell")] == [
+        "PIN in the header", "PIN in the footer", "PIN in a cell, PIN"]
+    doc.tables[0].cell(0, 0).text = "NEEDLE"
+    assert doc.replace_story_text(item("body", "table"), "NEEDLE", "PIN", expect=1) == 1   # a whole body table
+    assert doc.tables[0].cell(0, 0).text == "PIN" and doc.paragraphs[0].text == "NEEDLE in the body"
+    with pytest.raises(rdocx.ReplacementCountError):
+        doc.replace_story_text(doc.story_items[0], "NEEDLE", "PIN", expect=3)
+    doc.add_comment_on_text("NEEDLE", author="R", text="NEEDLE here too")
+    comment = next(i for i in doc.story_items if i.story.kind == "comment" and i.kind == "paragraph")
+    with pytest.raises(rdocx.RdocxError):                                 # refused: comments are never searched
+        doc.replace_story_text(comment, "NEEDLE", "PIN")
+    box =rdocx.Document.open(word_textbox_docx(tmp_path / "t.docx"))
+    note = next(i for i in box.story_items if i.story.kind == "footnote" and i.kind == "paragraph")
+    assert box.replace_story_text(note, "NEEDLE", "PIN", expect=1) == 1
+    text_box = next(i for i in box.story_items if i.story.kind == "text_box" and i.kind == "paragraph")
+    with pytest.raises(rdocx.RdocxError):                                 # refused: the document-wide call edits both copies
+        box.replace_story_text(text_box, "NEEDLE", "PIN")
+    assert box.try_replace_text("NEEDLE", "PIN") == 1                     # the text box, counted once
+
+
 # ---------------------------------------------------------------- structure
 def test_clone_insert_remove_pop(tmp_path):
     path = simple(tmp_path / "a.docx", "Alpha paragraph here.", "Beta paragraph after.")
@@ -196,6 +273,9 @@ INVALIDATE = {
     "add_run": lambda d: d.paragraphs[1].add_run("more"),
     "clone_row": lambda d: d.tables[0].clone_row(0),
     "remove_row": lambda d: d.tables[0].remove_row(1),
+    "paragraph_replace_text": lambda d: d.paragraphs[1].replace_text("delta", "D"),
+    "cell_replace_text": lambda d: d.tables[0].cell(0, 0).replace_text("cell", "C"),
+    "replace_story_text": lambda d: d.replace_story_text(d.story_items[1], "delta", "D"),
     "add_comment": lambda d: d.add_comment(rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=0),
                                                           end=rdocx.RunPosition(body_index=0, run_index=1)), author="A", text="c"),
 }
@@ -755,3 +835,113 @@ def test_set_footer_replaces_the_fields_too(report_docx, tmp_path):
     doc.save(tmp_path / "f.docx")
     footer = part(tmp_path / "f.docx", "word/footer1.xml")
     assert b"Plain footer" in footer and b"fldChar" not in footer and b"fldSimple" not in footer
+
+
+# ---------------------------------------------------------------- the rest of the API python-api.md documents
+def test_insert_table_and_replace_all(tmp_path):
+    doc = rdocx.Document.open(simple(tmp_path / "a.docx", "Alpha", "Beta", "Gamma"))
+    doc.insert_table(1, 2, 3)
+    assert doc.find_content_index(doc.tables[0]) == 1 and len(doc.tables[0].rows[0].cells) == 3
+    assert doc.replace_all([("Alpha", "A"), ("Beta", "B", 1)]) == (1, 1)
+    with pytest.raises(rdocx.ReplacementCountError, match="pair 0"):
+        doc.replace_all([("Gamma", "G", 2), ("A", "Z")])
+    assert [p.text for p in doc.paragraphs] == ["A", "B", "Gamma"]                # all or nothing
+
+
+def test_sections_and_section_stories(tmp_path):
+    doc = rdocx.Document()
+    for text in ("A", "B"):
+        doc.add_paragraph(text)
+    doc.insert_section(1)                                     # after the last section's content
+    assert len(doc.sections) == 2 and [p.text for p in doc.paragraphs] == ["A", "B", ""]
+    story = doc.create_section_story(0, "header", "first")
+    doc.add_paragraph("Cover header")
+    doc.insert_content(story, doc.pop_content(len(doc.paragraphs) - 1))
+
+    def first_headers():
+        return [(v.section_index, v.inherited, v.story.part_name) for v in doc.header_footer_variants
+                if v.kind == "header" and v.variant == "first"]
+    assert first_headers() == [(0, False, story.part_name), (1, True, story.part_name)]   # the next section inherits
+    assert doc.sections[0].different_first_page
+    own = doc.unlink_section_story(1, "header", "first")
+    assert own.part_name != story.part_name and first_headers()[1] == (1, False, own.part_name)
+    doc.set_story_text(next(i for i in doc.story_items if i.story.part_name == own.part_name), "Section 2 header")
+    doc.save(tmp_path / "s.docx")
+    assert [s.first_page_header.paragraphs[0].text for s in docx.Document(tmp_path / "s.docx").sections] == [
+        "Cover header", "Section 2 header"]
+    doc.link_section_story(1, "header", "first", story)
+    doc.save(tmp_path / "t.docx")
+    assert [s.first_page_header.paragraphs[0].text for s in docx.Document(tmp_path / "t.docx").sections] == [
+        "Cover header", "Cover header"]
+    doc.remove_section(0)
+    assert len(doc.sections) == 1 and [p.text for p in doc.paragraphs] == ["A", "B"]
+    doc.insert_section(0)                                     # before the first section
+    assert [p.text for p in doc.paragraphs] == ["", "A", "B"]
+
+
+def test_bookmarks_add_and_read(tmp_path):
+    doc = rdocx.Document.open(simple(tmp_path / "a.docx", "Intro text", "Body", table_after=1))
+    doc.add_bookmark("intro", rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=0),
+                                             end=rdocx.RunPosition(body_index=0, run_index=1)))
+    bookmark = next(b for b in doc.bookmarks if b.name == "intro")
+    assert isinstance(bookmark, rdocx.Bookmark) and (bookmark.text, bookmark.issue) == ("Intro text", None)
+    assert bookmark.direct_range.start.body_index == 0 and bookmark.range.start.body_index == 0
+    doc.save(tmp_path / "b.docx")
+    assert b'w:name="intro"' in part(tmp_path / "b.docx", "word/document.xml")
+
+
+def test_run_tab_and_simple_field(rdocx_cli, tmp_path):
+    doc = rdocx.Document()
+    doc.add_paragraph("Page")
+    doc.paragraphs[0].runs[0].add_tab()
+    doc.paragraphs[0].runs[0].add_field("PAGE", "1")
+    doc.save(tmp_path / "f.docx")
+    xml = part(tmp_path / "f.docx", "word/document.xml").decode()
+    assert re.search(r"<w:t>Page</w:t><w:tab/></w:r><w:fldSimple w:instr=\"PAGE\"><w:r><w:t>1</w:t>", xml)
+    assert run([rdocx_cli, "text", tmp_path / "f.docx"], check=True).stdout.splitlines()[0] == "Page\t1"
+
+
+def test_table_and_cell_borders_margins_grid_and_rows(tmp_path):
+    doc = rdocx.Document()
+    doc.add_table(2, 2)
+    assert doc.tables[0].border("top") is None and doc.tables[0].cell_margins is None
+    doc.tables[0].set_border("top", "double", size=8, color="FF0000")
+    doc.tables[0].set_cell_margins(top=rdocx.Pt(2), right=rdocx.Pt(4), bottom=rdocx.Pt(2), left=rdocx.Pt(4))
+    doc.tables[0].grid_widths = [rdocx.Inches(1), rdocx.Inches(2)]
+    t = doc.tables[0]
+    assert t.border("top") == ("double", 8, "FF0000") and t.cell_margins == (rdocx.Pt(2), rdocx.Pt(4), rdocx.Pt(2), rdocx.Pt(4))
+    assert t.grid_widths == (rdocx.Inches(1), rdocx.Inches(2))
+    t.cell(0, 0).set_border("left", "single", size=4, color="00FF00")
+    doc.tables[0].cell(0, 0).set_margins(top=rdocx.Pt(1), right=0, bottom=rdocx.Pt(1), left=0)
+    cell = doc.tables[0].cell(0, 0)
+    assert cell.border("left") == ("single", 4, "00FF00") and cell.margins == (rdocx.Pt(1), 0, rdocx.Pt(1), 0)
+    assert isinstance(cell.margins[0], rdocx.Length)
+    row = doc.tables[0].rows[0]
+    row.is_header, row.cant_split = True, True
+    doc.tables[0].rows[1].height = rdocx.Pt(20)
+    doc.tables[0].rows[1].height_rule = rdocx.WD_ROW_HEIGHT_RULE.EXACTLY
+    assert (doc.tables[0].rows[0].is_header, doc.tables[0].rows[0].cant_split) == (True, True)
+    doc.save(tmp_path / "t.docx")
+    xml = part(tmp_path / "t.docx", "word/document.xml").decode()
+    assert "<w:tblHeader/>" in xml and "<w:cantSplit/>" in xml and 'w:hRule="exact"' in xml
+    assert re.search(r'<w:top w:val="double" w:sz="8"[^>]*w:color="FF0000"', xml)
+
+
+def test_lengths_and_colours():
+    assert isinstance(rdocx.Pt(12), rdocx.Length) and isinstance(rdocx.Inches(1), int)
+    assert str(rdocx.RGBColor.from_string("7B1E3A")) == "7B1E3A" == str(rdocx.RGBColor(0x7B, 0x1E, 0x3A))
+
+
+def test_section_and_style_records(report_docx):
+    doc = rdocx.Document.open(report_docx)
+    sec = doc.sections[-1]
+    assert sec.is_final and sec.ordinal == len(doc.sections) - 1
+    assert all(isinstance(getattr(sec, n), int) for n in (
+        "page_width", "page_height", "margin_top", "margin_right", "margin_bottom", "margin_left", "header_distance",
+        "footer_distance"))
+    for name in ("gutter", "column_count", "column_spacing"):
+        getattr(sec, name)
+    normal = next(s for s in doc.styles if s.style_id == "Normal")
+    assert normal.is_default
+    for name in ("priority", "hidden", "semi_hidden", "unhide_when_used", "quick_format", "locked", "auto_redefine"):
+        getattr(normal, name)

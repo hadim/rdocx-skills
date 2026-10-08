@@ -732,3 +732,74 @@ def test_template_saved_as_presentation_gets_the_presentation_content_type(tmp_p
     rpptx.Presentation(tmp_path / "t.potx").save(tmp_path / "b.pptx")
     with zipfile.ZipFile(tmp_path / "b.pptx") as z:
         assert b"presentationml.presentation.main+xml" in z.read("[Content_Types].xml")
+
+
+# ---------------------------------------------------------------- the rest of the API and CLI the references document
+def test_lengths_colours_and_record_types(deck_pptx):
+    assert isinstance(rpptx.util.Inches(1), rpptx.util.Length) and rpptx.util.Inches(1) == EMU
+    assert (rpptx.util.Inches(1).pt, rpptx.util.Pt(12).emu, rpptx.util.Inches(2).inches) == (72.0, 152400, 2.0)
+    assert str(RGBColor.from_string("7B1E3A")) == "7B1E3A"
+    prs = rpptx.Presentation(deck_pptx)
+    prs.add_comment_author(id="{11111111-2222-3333-4444-555555555555}", name="Reviewer", user_id="reviewer",
+                           provider_id="None", initials="R")
+    author = prs.comment_authors[-1]
+    assert isinstance(author, rpptx.CommentAuthor) and (author.name, author.initials, author.user_id) == ("Reviewer", "R", "reviewer")
+    prs.slides[1].add_comment(id="{AAAAAAAA-2222-3333-4444-555555555555}", author_id=author.id, created=STAMP, text="Q")
+    prs.slides[1].reply_to_comment("{AAAAAAAA-2222-3333-4444-555555555555}", id="{BBBBBBBB-2222-3333-4444-555555555555}",
+                                   author_id=author.id, created=STAMP, text="A")
+    comment = prs.slides[1].comments[0]
+    assert isinstance(comment, rpptx.Comment) and isinstance(comment.replies[0], rpptx.CommentReply)
+    assert (comment.replies[0].author_id, comment.replies[0].created, comment.replies[0].text) == (author.id, STAMP, "A")
+    line = prs.text_layout()[0].lines[0]
+    assert isinstance(line, rpptx.TextLineLayout) and isinstance(line.bounds, rpptx.BoundingBox)
+    assert line.bounds.y >= 0 and line.bounds.height > 0
+
+
+def test_frame_margins_picture_crop_and_cell_format(deck_pptx, tmp_path):
+    prs = rpptx.Presentation(deck_pptx)
+    box = next(sh for sh in prs.slides[0].shapes if sh.has_text_frame)
+    for name, value in (("margin_left", 0), ("margin_right", 12700), ("margin_top", 25400), ("margin_bottom", 38100)):
+        setattr(box.text_frame, name, value)
+    frame = next(sh for sh in prs.slides[0].shapes if sh.has_text_frame).text_frame
+    assert (frame.margin_left, frame.margin_right, frame.margin_top, frame.margin_bottom) == (0, 12700, 25400, 38100)
+    prs.slides[0].shapes.add_picture(io.BytesIO(png_bytes()), EMU, EMU, width=EMU)
+    pic = list(prs.slides[0].shapes)[-1]
+    pic.crop_left, pic.crop_right = 0.1, 0.2
+    pic = list(prs.slides[0].shapes)[-1]
+    assert (round(pic.crop_left, 3), round(pic.crop_right, 3), pic.crop_top, pic.crop_bottom) == (0.1, 0.2, 0.0, 0.0)
+    table = next(sh for sh in prs.slides[3].shapes if sh.has_table).table
+    cell = table.cell(0, 0)
+    assert cell.is_spanned is False
+    cell.margin_left = rpptx.util.Pt(4)
+    cell.border_top.width = rpptx.util.Pt(2)
+    cell.border_top.color.rgb = RGBColor.from_string("FF0000")
+    cell = next(sh for sh in prs.slides[3].shapes if sh.has_table).table.cell(0, 0)
+    assert (cell.margin_left, cell.border_top.width, str(cell.border_top.color.rgb)) == (rpptx.util.Pt(4), rpptx.util.Pt(2), "FF0000")
+    for name in ("margin_right", "margin_top", "margin_bottom", "border_left", "border_right", "border_bottom"):
+        getattr(cell, name)
+    prs.save(tmp_path / "f.pptx")
+    assert pptx.Presentation(tmp_path / "f.pptx").slides[3].shapes  # still opens in python-pptx
+
+
+def test_cli_operation_records_force_and_image_options(rpptx_cli, deck_pptx, tmp_path):
+    def step(*args, out):
+        return json.loads(run([rpptx_cli, *args, "-o", tmp_path / out, "--json"], check=True).stdout)
+    cid = step("comment", "add", deck_pptx, "--slide", "1", "--author", "R", "--text", "t", "--date", STAMP, out="a.pptx")["comment_id"]
+    reply = step("comment", "reply", tmp_path / "a.pptx", "--id", cid, "--author", "A", "--text", "r", "--date", STAMP, out="b.pptx")
+    assert (reply["action"], reply["parent_id"], reply["slide"], reply["schema"]) == ("reply", cid, 1, 1)
+    assert step("comment", "resolve", tmp_path / "b.pptx", "--id", cid, out="c.pptx")["action"] == "resolve"
+    assert step("comment", "remove", tmp_path / "c.pptx", "--id", cid, out="d.pptx")["comment_id"] == cid
+    for args in (["thumbnail", deck_pptx, "-o", tmp_path / "t.png"], ["convert", deck_pptx, "--to", "pdf", "-o", tmp_path / "d.pdf"],
+                 ["render", deck_pptx, "-o", tmp_path / "r", "--slide", "1", "--dpi", "20"]):
+        run([rpptx_cli, *args], check=True)
+        assert run([rpptx_cli, *args]).returncode == 1
+        assert run([rpptx_cli, *args, "--force"]).returncode == 0
+    run([rpptx_cli, "render", deck_pptx, "-o", tmp_path / "tr", "--slide", "1", "--dpi", "20", "--transparent"], check=True)
+    assert Image.open(next((tmp_path / "tr").iterdir())).mode == "RGBA"
+    sizes = []
+    for quality in ("20", "95"):
+        out = tmp_path / f"q{quality}"
+        run([rpptx_cli, "render", deck_pptx, "-o", out, "--slide", "2", "--dpi", "40", "--format", "jpeg", "--quality", quality],
+            check=True)
+        sizes.append(next(out.iterdir()).stat().st_size)
+    assert sizes[0] < sizes[1]

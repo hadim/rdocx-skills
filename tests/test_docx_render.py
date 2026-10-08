@@ -448,3 +448,88 @@ def test_editing_subcommands_refuse_an_existing_output(rdocx_cli, report_docx, c
     src = copy_of(report_docx)
     res = run([rdocx_cli, "replace", src, "-p", "footbridge", "-v", "bridge", "-o", src])
     assert res.returncode != 0 and "already exists" in res.stderr
+
+
+# ---------------------------------------------------------------- the rest of the API and CLI the references document
+def test_svg_and_pdfa_output(tmp_path):
+    doc = rdocx.Document()
+    doc.add_paragraph("One page.")
+    page = doc.render_page_to_svg(0)
+    assert isinstance(page, rdocx.SvgRenderResult) and page.svg.startswith("<svg")
+    assert all(isinstance(d, rdocx.SvgDiagnostic) and d.message for d in page.diagnostics)
+    assert doc.render_page_to_svg(5) is None
+    for profile, part_number in (("pdfa-2b", b"2"), ("pdfa-3b", b"3")):
+        pdf = doc.to_pdfa_deterministic(profile)
+        assert pdf[:5] == b"%PDF-" and re.search(rb"pdfaid:part[^0-9]{0,4}" + part_number, pdf)
+    assert doc.to_pdfa_deterministic()[:5] == b"%PDF-"
+
+
+def test_report_types_of_layout_fields_and_compare(report_docx):
+    doc = rdocx.Document.open(report_docx)
+    assert isinstance(doc.layout()[0].bounds, rdocx.BoundingBox)
+    rep = doc.update_layout_backed_fields()
+    assert isinstance(rep, rdocx.LayoutBackedFieldUpdateReport) and rep.diagnostic_count == len(rep.diagnostics)
+    toc = doc.rebuild_toc()
+    assert toc.diagnostic_count == len(toc.diagnostics)
+    other = rdocx.Document.open(report_docx)
+    other.try_replace_text("three points lower", "two points lower")
+    diagnostics = doc.compare(other, "Reviewer", STAMP)
+    assert all(isinstance(d, rdocx.ComparisonDiagnostic) and d.message is not None and d.location is not None
+               for d in diagnostics)
+
+
+def test_diff_json_and_exit_code(rdocx_cli, report_docx, tmp_path):
+    run([rdocx_cli, "replace", report_docx, "-p", "three points lower", "-v", "two points lower", "--expect", "1",
+         "-o", tmp_path / "e.docx"], check=True)
+    out = json.loads(run([rdocx_cli, "diff", "--json", report_docx, tmp_path / "e.docx"], check=True).stdout)
+    assert out["changed"] == 1 and out["differences"][0]["story"] == "body"
+    assert "two points lower" in out["differences"][0]["text_b"] and "three" in out["differences"][0]["text_a"]
+    assert run([rdocx_cli, "diff", report_docx, tmp_path / "e.docx"]).returncode == 0
+    assert run([rdocx_cli, "diff", "--exit-code", report_docx, tmp_path / "e.docx"]).returncode == 1
+    assert run([rdocx_cli, "diff", "--exit-code", report_docx, report_docx]).returncode == 0
+
+
+def test_render_quality_transparent_and_force(rdocx_cli, tmp_path):
+    d = docx.Document()
+    d.add_paragraph("One page.")
+    d.save(tmp_path / "a.docx")
+    run([rdocx_cli, "render", tmp_path / "a.docx", "-o", tmp_path / "t", "--dpi", "20", "--transparent"], check=True)
+    png = Image.open(next((tmp_path / "t").iterdir()))
+    assert png.mode == "RGBA" and png.getpixel((0, 0))[3] == 0
+    sizes = []
+    for quality in ("20", "95"):
+        out = tmp_path / f"q{quality}"
+        run([rdocx_cli, "render", tmp_path / "a.docx", "-o", out, "--dpi", "40", "--format", "jpeg", "--quality", quality],
+            check=True)
+        sizes.append(next(out.iterdir()).stat().st_size)
+    assert sizes[0] < sizes[1]
+    again = run([rdocx_cli, "render", tmp_path / "a.docx", "-o", tmp_path / "t", "--dpi", "20", "--force"])
+    assert again.returncode == 0
+    run([rdocx_cli, "convert", tmp_path / "a.docx", "--to", "pdf", "-o", tmp_path / "a.pdf"], check=True)
+    assert run([rdocx_cli, "convert", tmp_path / "a.docx", "--to", "pdf", "-o", tmp_path / "a.pdf"]).returncode == 1
+    assert run([rdocx_cli, "convert", tmp_path / "a.docx", "--to", "pdf", "-o", tmp_path / "a.pdf", "--force"]).returncode == 0
+    before = (tmp_path / "a.docx").read_bytes()
+    refused = run([rdocx_cli, "convert", tmp_path / "a.docx", "--to", "png", "-o", tmp_path / "a.docx", "--force"])
+    assert refused.returncode != 0 and digest((tmp_path / "a.docx").read_bytes()) == digest(before)
+
+
+def test_editing_commands_print_an_operation_record(rdocx_cli, tmp_path):
+    d = docx.Document()
+    d.add_paragraph("Alpha beta.")
+    d.save(tmp_path / "a.docx")
+    def step(*args, out):
+        return json.loads(run([rdocx_cli, *args, "-o", tmp_path / out, "--json"], check=True).stdout)
+    step("comment", "add", tmp_path / "a.docx", "--anchor", "beta", "--author", "R", "--text", "x", out="b.docx")
+    records = [step("comment", "reply", tmp_path / "b.docx", "--id", "0", "--author", "A", "--text", "y", out="c.docx"),
+               step("comment", "resolve", tmp_path / "c.docx", "--id", "0", out="d.docx"),
+               step("comment", "remove", tmp_path / "d.docx", "--id", "0", out="e.docx")]
+    assert [(r["schema"], r["action"], Path(r["output"]).name) for r in records] == [
+        (1, "reply", "c.docx"), (1, "resolve", "d.docx"), (1, "remove", "e.docx")]
+    compare_out = tmp_path / "f.docx"
+    run([rdocx_cli, "replace", tmp_path / "a.docx", "-p", "beta", "-v", "gamma", "--expect", "1", "-o", tmp_path / "g.docx"],
+        check=True)
+    run([rdocx_cli, "compare", tmp_path / "a.docx", tmp_path / "g.docx", "--author", "R", "--timestamp", STAMP, "-o",
+         compare_out], check=True)
+    rec = step("revision", "reject", compare_out, out="h.docx")
+    assert rec["schema"] == 1 and rec["resolved"] >= 1
+    assert [p.text for p in docx.Document(tmp_path / "h.docx").paragraphs] == ["Alpha beta."]
