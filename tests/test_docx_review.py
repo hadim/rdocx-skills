@@ -320,6 +320,58 @@ def test_removing_the_commented_content_removes_its_thread(rdocx_cli, tmp_path):
     assert len(doc.comments) == 0
 
 
+def test_replacing_a_commented_header_removes_its_thread(rdocx_cli, tmp_path):
+    d = docx.Document()
+    d.sections[0].header.paragraphs[0].text = "Old header"
+    d.add_paragraph("Body.")
+    d.save(tmp_path / "h.docx")
+    doc = rdocx.Document.open(tmp_path / "h.docx")
+    item = next(i for i in doc.story_items if i.story.kind == "header" and i.kind == "paragraph")
+    cid = doc.add_comment(rdocx.StoryRunRange(start=rdocx.StoryRunPosition(item=item, run_index=0),
+                                              end=rdocx.StoryRunPosition(item=item, run_index=1)),
+                          author="Reviewer", text="Header wording?", date=STAMP)
+    doc.reply_to(cid, author="Author", text="Will change.", date=STAMP)
+    assert len(doc.comments) == 2
+    doc.set_header("New header")
+    assert len(doc.comments) == 0
+    doc.save(tmp_path / "out.docx")
+    assert run([rdocx_cli, "validate", tmp_path / "out.docx"]).returncode == 0
+
+
+def test_a_comment_lands_on_a_paragraph_of_a_content_control_block(tmp_path):
+    d = docx.Document()
+    for text in ("Alpha.", "p1", "p2", "cell", "p3"):
+        d.add_paragraph(text)
+    d.save(tmp_path / "plain.docx")
+
+    def edit(xml):
+        paras = {t: re.search(r"<w:p\b(?:(?!<w:p\b).)*?>%s</w:t>.*?</w:p>" % t, xml, re.S).group(0)
+                 for t in ("p1", "p2", "cell", "p3")}
+        block = ("<w:sdt><w:sdtContent>" + paras["p1"]
+                 + "<w:sdt><w:sdtContent>" + paras["p2"] + "</w:sdtContent></w:sdt>"
+                 + '<w:tbl><w:tblPr/><w:tblGrid><w:gridCol w:w="4000"/></w:tblGrid><w:tr><w:tc>'
+                 + paras["cell"] + "</w:tc></w:tr></w:tbl>" + paras["p3"] + "</w:sdtContent></w:sdt>")
+        for t in ("p2", "cell", "p3"):
+            xml = xml.replace(paras[t], "", 1)
+        return xml.replace(paras["p1"], block, 1)
+
+    doc = rdocx.Document.open(rewrite_body(tmp_path / "plain.docx", tmp_path / "block.docx", edit))
+    by_text = {p.text: p for p in doc.paragraphs}
+    for text in ("p2", "cell"):
+        with pytest.raises(IndexError):
+            rdocx.StoryRunPosition(paragraph=by_text[text], run_index=0)
+    p3 = by_text["p3"]
+    cid = doc.add_comment(rdocx.StoryRunRange(start=rdocx.StoryRunPosition(paragraph=p3, run_index=0),
+                                              end=rdocx.StoryRunPosition(paragraph=p3, run_index=1)),
+                          author="Reviewer", text="Here", date=STAMP)
+    doc.save(tmp_path / "out.docx")
+    [comment] = rdocx.Document.open(tmp_path / "out.docx").comments
+    assert (comment.id, comment.anchor_text) == (cid, "p3")
+    item = comment.anchor.start.item
+    assert item.kind == "paragraph" and item.text == "p3" and b"p3" in item.xml
+    assert all(i.text != "p3" or i.kind != "paragraph" for i in doc.story_items)   # the block is listed, not p3
+
+
 def test_a_partial_cut_keeps_the_comment_on_what_is_left(tmp_path):
     src, cid, rid = commented_thread(tmp_path / "c.docx")
     doc = rdocx.Document.open(src)

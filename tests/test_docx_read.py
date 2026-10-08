@@ -1,5 +1,6 @@
 """docx, reading: text, structure, JSON views, metadata, hyperlinks, sections, styles."""
 import json
+import re
 import zipfile
 
 import docx
@@ -218,6 +219,28 @@ def test_cli_text_keeps_the_body_when_a_header_is_truncated(rdocx_cli, tmp_path)
     assert res.returncode == 0 and res.stdout.startswith("x") and "Head" not in res.stdout and res.stderr
     data = json.loads(run([rdocx_cli, "text", "--json", bad], check=True).stdout)
     assert (data["scope"], data["stories"]) == ("main", [])
+
+
+def test_a_complex_field_item_reads_the_result_across_its_runs(tmp_path):
+    d = docx.Document()
+    d.add_paragraph("Page FIELD")
+    d.save(tmp_path / "plain.docx")
+    field = ('<w:r><w:t xml:space="preserve">Page </w:t></w:r>'
+             '<w:r><w:fldChar w:fldCharType="begin"/></w:r>'
+             '<w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r>'
+             '<w:r><w:fldChar w:fldCharType="separate"/></w:r>'
+             '<w:r><w:t>1</w:t></w:r><w:r><w:t>2</w:t></w:r>'
+             '<w:r><w:fldChar w:fldCharType="end"/></w:r>')
+    with zipfile.ZipFile(tmp_path / "plain.docx") as zin, zipfile.ZipFile(tmp_path / "f.docx", "w") as zout:
+        for info in zin.infolist():
+            data = zin.read(info.filename)
+            if info.filename == "word/document.xml":
+                data = re.sub(r"<w:r>(?:(?!<w:r>).)*?Page FIELD</w:t></w:r>", field, data.decode(), flags=re.S).encode()
+            zout.writestr(info, data)
+    doc = rdocx.Document.open(tmp_path / "f.docx")
+    assert doc.paragraphs[0].text == "Page 12"
+    assert [(i.kind, i.text) for i in doc.story_items if i.story.kind == "body"][:2] == [
+        ("paragraph", "Page 12"), ("field", "12")]
 
 
 def test_reopen_with_story_items_catches_a_truncated_header(tmp_path):
