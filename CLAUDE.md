@@ -44,13 +44,15 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
 
-## State on 06/10/2026
+## State on 08/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned, until the next upstream release: `integration/open-prs-2026-10-06` of hadim/rdocx (`e22641a8`,
-  upstream main `20888b7a` plus tensorbee/rdocx#271, the fix of gap comment-several-paragraphs), through this
-  repository's release `rdocx-20261006-e22641a8f20a` (five platforms). Next upstream release that carries
-  #271: `bump v<version>` with `upstream` set back to tensorbee/rdocx.
+- Pinned, until the next upstream release: `integration/open-prs-2026-10-08` of hadim/rdocx (`b9d0a16f`,
+  upstream main `20888b7a` plus tensorbee/rdocx#271, #274, #275, #279 and #280: comment threads keyed on the
+  last paragraph, cell `nil` borders, page breaks in table cells, a table's own `w:jc`, and table placement by
+  cell margin and compatibility mode), through this repository's release `rdocx-20261008-b9d0a16fd2d3` (five
+  platforms). Next upstream release that carries them: `bump v<version>` with `upstream` set back to
+  tensorbee/rdocx.
 - Before it, pinned: the upstream releases tensorbee/rdocx `v0.15.0` (rdocx 0.15.0) and `rpptx-v0.13.1` (rpptx 0.13.1),
   both at commit `9d019472` (sprint S88), the first ones that ship the CLIs and the wheels together under one
   tag per family, with `SHA256SUMS` and build provenance attestations (tensorbee/rdocx#266). The lock records
