@@ -1,12 +1,15 @@
 """The skills against the pinned build: every Python name and keyword argument and every CLI command and flag they
-cite exists, their gap pages match tests/gaps.py, and each SKILL.md stays under 200 lines. A pin that renames or
-drops an API fails here even when no recipe block runs it (the recipes themselves run in test_docs_snippets.py).
+cite exists, every public Python name, CLI command and flag of the build is cited or excluded with a reason, their gap
+pages match tests/gaps.py, and each SKILL.md stays under 200 lines. A pin that renames, drops or adds an API fails
+here even when no recipe block runs it (the recipes themselves run in test_docs_snippets.py).
 
 Positional parameters are written as short placeholders in the skills (`bi`, `rid`, `r, c`) and are not checked:
 a positional call works whatever the parameter is called. Keyword arguments are checked, since a wrong one raises."""
 import ast
 import builtins
 import functools
+import importlib
+import pkgutil
 import re
 import subprocess
 from pathlib import Path
@@ -162,6 +165,169 @@ def test_the_checks_catch_a_wrong_name(tmp_path, monkeypatch):
         "no no_such_method in the pinned build", "compare() takes no keyword granularty"]
     assert [p.split(": ", 1)[1].split(":")[0] for p in cli_problems(bad)] == [
         "rdocx compare has no --nope", "no command rdocx nosuch", "rdocx comment list has no --bogus"]
+
+
+# ---------------------------------------------------------------- the other way: every API is documented or excluded
+# Every public class of rdocx and rpptx (all their modules), its public methods and properties, and every CLI command
+# and flag must be cited in code in that skill's SKILL.md or references, or be listed here with the reason it is left
+# out. Not scanned: names with a leading underscore (dunder, internal), members a class inherits from a builtin base
+# (int, Exception), and ALL_CAPS enum values (covered by their enum). A class reachable under several names (python-pptx
+# aliases such as MSO_FILL_TYPE for MSO_FILL) is covered when one of them is cited. A command group is covered by its
+# subcommands; -h/--help and -V/--version are not scanned. A test fails on a new name a pin brings, and on an entry here
+# that is no longer needed.
+NOT_DOCUMENTED = {
+    # sequences returned by attributes the skills document (`doc.paragraphs`, `row.cells`...): indexed, iterated and
+    # measured with len(), never named or built
+    "rdocx.CellCollection": "the type of `row.cells`, used as a sequence",
+    "rdocx.CellParagraphCollection": "the type of `cell.paragraphs`, used as a sequence",
+    "rdocx.ParagraphCollection": "the type of `doc.paragraphs`, used as a sequence",
+    "rdocx.RowCollection": "the type of `table.rows`, used as a sequence",
+    "rdocx.RunCollection": "the type of `paragraph.runs`, used as a sequence",
+    "rdocx.TableCollection": "the type of `doc.tables`, used as a sequence",
+    "rpptx.AdjustmentCollection": "the type of `shape.adjustments`, used as a sequence",
+    "rpptx.ColumnCollection": "the type of `table.columns`, documented by its members",
+    "rpptx.ParagraphCollection": "the type of `text_frame.paragraphs`, used as a sequence",
+    "rpptx.PlaceholderCollection": "the type of `shapes.placeholders`, used as a sequence",
+    "rpptx.RowCollection": "the type of `table.rows`, documented by its members",
+    "rpptx.RunCollection": "the type of `paragraph.runs`, used as a sequence",
+    "rpptx.SlideCollection": "the type of `prs.slides`, documented by its members",
+    "rpptx.SlideLayoutCollection": "the type of `prs.slide_layouts`, documented by its members",
+    # handles reached through a documented attribute, which the skills describe by their members
+    "rpptx.Background": "the type of `slide.background`, documented by its members",
+    "rpptx.Cell": "the type of `table.cell(r, c)`, documented by its members",
+    "rpptx.ColorFormat": "the type of `fore_color` and `line.color`, documented by `rgb`",
+    "rpptx.Column": "the type of `table.columns[k]`, documented by its members",
+    "rpptx.Font": "the type of `run.font` and `paragraph.font`, documented by its members",
+    "rpptx.Hyperlink": "the type of `run.hyperlink`, documented by `address`",
+    "rpptx.Image": "the type of `shape.image`, documented by its members",
+    "rpptx.Row": "the type of `table.rows[k]`, documented by its members",
+    "rpptx.ShapeClickAction": "the type of `shape.click_action`, documented by its members",
+    "rpptx.ShapeHyperlink": "the type of `click_action.hyperlink`, documented by `address`",
+    "rpptx.SlideLayout": "the type of `prs.slide_layouts[k]` and `slide.slide_layout`, documented by its use",
+}
+SKILL_OF = {"rdocx": "docx", "rpptx": "pptx"}
+
+
+@functools.lru_cache(maxsize=None)
+def skill_code(skill):
+    """The code of a skill's SKILL.md and references: inline spans (also those that wrap a line) and fenced blocks."""
+    out = []
+    for path in [SKILLS / skill / "SKILL.md", *sorted((SKILLS / skill / "references").glob("*.md"))]:
+        for k, part in enumerate(re.split(r"^```.*$", path.read_text(), flags=re.M)):
+            out += [part] if k % 2 else re.findall(r"`([^`]+)`", part)
+    return "\n".join(out)
+
+
+def python_surface(module):
+    """{key: (names that cite it)}: "pkg.Class" for each class, "pkg.Class.member" for its public members."""
+    classes = {}
+    for info in [None, *pkgutil.walk_packages(module.__path__, module.__name__ + ".")]:
+        mod = importlib.import_module(info.name) if info else module
+        for name, obj in vars(mod).items():
+            if (not name.startswith("_") and isinstance(obj, type) and obj not in vars(builtins).values()
+                    and obj.__module__.split(".")[0] in (module.__name__, "builtins")):
+                classes.setdefault(obj, set()).add(name)
+    surface = {}
+    for obj, names in classes.items():
+        base = [b for b in obj.__mro__ if b in vars(builtins).values()]
+        surface[f"{module.__name__}.{obj.__name__}"] = names
+        for member in dir(obj):
+            if not (member.startswith("_") or member.isupper() or any(hasattr(b, member) for b in base)):
+                surface[f"{module.__name__}.{obj.__name__}.{member}"] = {member}
+    return surface
+
+
+def undocumented_python(surface, code, excluded):
+    words = set(re.findall(r"[A-Za-z_]\w*", code))
+    return sorted(k for k, names in surface.items() if not names & words and k not in excluded)
+
+
+@functools.lru_cache(maxsize=None)
+def cli_surface(tool):
+    """{(tool, command, ...): [flag aliases such as ("-o", "--output")]} for every command and subcommand."""
+    surface = {}
+
+    def walk(command):
+        text = cli_help(*command) or ""
+        flags = []
+        for line in text.split("Options:", 1)[1].splitlines() if "Options:" in text else []:
+            m = re.match(r"\s+(-\w)?(?:, )?(--[\w-]+)?", line)
+            names = tuple(x for x in m.groups() if x) if m else ()
+            if names and not set(names) & {"-h", "--help", "-V", "--version"}:
+                flags.append(names)
+        surface[command] = flags
+        for sub in sorted(subcommands(text)):
+            walk(command + (sub,))
+    walk((tool,))
+    return surface
+
+
+def cli_citations(code, tool, surface):
+    """{command: flags} for every invocation of `tool` in the code (`a/b` alternatives and `[...]` options read)."""
+    lines = []
+    for line in code.splitlines():
+        if lines and re.match(r"\s+[\[-]", line):          # an option list continued on the next line
+            lines[-1] += " " + line
+        else:
+            lines.append(line)
+    cited = {}
+    for line in lines:
+        for m in re.finditer(rf"(?:^|[\s/(]){tool}((?:\s+[^\s#`]+)*)", line):
+            tokens = m.group(1).replace("[", " ").replace("]", " ").split()
+            paths, i = [(tool,)], 0
+            while i < len(tokens):
+                deeper = [p + (w,) for p in paths for w in tokens[i].split("/") if p + (w,) in surface]
+                if not deeper:
+                    break
+                paths, i = deeper, i + 1
+            for p in paths:
+                cited.setdefault(p, set()).update(f for t in tokens[i:] for f in t.split("/") if f.startswith("-"))
+    return cited
+
+
+def undocumented_cli(surface, cited, excluded):
+    missing = []
+    for command, flags in surface.items():
+        name = " ".join(command)
+        if len(command) > 1 and not any(c[:len(command)] == command for c in cited) and name not in excluded:
+            missing.append(name)
+        missing += [f"{name} {f[-1]}" for f in flags                # keyed by the long name
+                    if not set(f) & cited.get(command, set()) and f"{name} {f[-1]}" not in excluded]
+    return missing
+
+
+@pytest.mark.parametrize("module", [rdocx, rpptx], ids=lambda m: m.__name__)
+def test_every_python_api_is_documented_or_excluded(module):
+    code = skill_code(SKILL_OF[module.__name__])
+    assert undocumented_python(python_surface(module), code, NOT_DOCUMENTED) == []
+
+
+@pytest.mark.parametrize("tool", ["rdocx", "rpptx"])
+def test_every_cli_command_and_flag_is_documented_or_excluded(tool):
+    surface = cli_surface(tool)
+    assert undocumented_cli(surface, cli_citations(skill_code(SKILL_OF[tool]), tool, surface), NOT_DOCUMENTED) == []
+
+
+def test_every_exclusion_is_still_needed():
+    """An entry names a scanned name that the skills still do not cite: drop it once the name is documented or gone."""
+    missing = set()
+    for tool in SKILL_OF:
+        code, surface = skill_code(SKILL_OF[tool]), cli_surface(tool)
+        missing.update(undocumented_python(python_surface(importlib.import_module(tool)), code, {}))
+        missing.update(undocumented_cli(surface, cli_citations(code, tool, surface), {}))
+    assert sorted(set(NOT_DOCUMENTED) - missing) == []
+
+
+def test_the_reverse_checks_catch_an_undocumented_name():
+    """A fake class, member, command and flag that no skill cites are reported; an excluded one is not."""
+    surface = {**python_surface(rdocx), "rdocx.NoSuchClass": {"NoSuchClass"}, "rdocx.Document.no_such_member": {"no_such_member"}}
+    code = skill_code("docx")
+    assert undocumented_python(surface, code, NOT_DOCUMENTED) == ["rdocx.Document.no_such_member", "rdocx.NoSuchClass"]
+    assert undocumented_python(surface, code, {**NOT_DOCUMENTED, "rdocx.NoSuchClass": "x"}) == ["rdocx.Document.no_such_member"]
+    cli = {**cli_surface("rdocx"), ("rdocx", "nosuch"): [("--zap",)]}
+    cli[("rdocx", "text")] = cli[("rdocx", "text")] + [("-Z", "--zebra")]
+    cited = cli_citations(code, "rdocx", cli)
+    assert undocumented_cli(cli, cited, NOT_DOCUMENTED) == ["rdocx text --zebra", "rdocx nosuch", "rdocx nosuch --zap"]
 
 
 # ---------------------------------------------------------------- gaps

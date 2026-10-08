@@ -8,7 +8,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## Map
 
 - `skills/<name>/SKILL.md`: what an agent reads first; keep it under 200 lines, details go to `references/`
-  (`tests/test_skill_docs.py` checks the size, and every Python name, keyword, CLI command and flag the skills cite).
+  (`tests/test_skill_docs.py` checks the size, every Python name, keyword, CLI command and flag the skills cite, and
+  the other way round that every public API of the build is cited or listed in its `NOT_DOCUMENTED` with a reason).
 - `skills/<name>/references/`: `cli.md`, `python-api.md`, `recipes.md` (every block is executed by
   `tests/test_docs_snippets.py`), `gaps.md`, and `interop.md` for docx.
 - `skills/<name>/scripts/`: helpers importable and runnable as commands; tested in `tests/test_skill_scripts.py`.
