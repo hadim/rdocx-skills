@@ -6,7 +6,9 @@ rendering). The modules have no docstrings: exact signatures are in the type stu
 to the installed module (`$R/python -c "import rdocx, os; print(os.path.dirname(rdocx.__file__))"`).
 
 Lengths are EMU integers; build them with `rdocx.Pt(12)`, `rdocx.Inches(1)`, `rdocx.Cm(2)`, `rdocx.Mm(5)`,
-`rdocx.Emu(n)` (each has `.pt`, `.inches`, `.cm`, `.mm`, `.emu`, `.twips`). Errors: `rdocx.RdocxError`
+`rdocx.Emu(n)` (each has `.pt`, `.inches`, `.cm`, `.mm`, `.emu`, `.twips`); widths, margins and font sizes
+read back as `rdocx.Length`, the int subclass they share. Colours: `rdocx.RGBColor(r, g, b)` or
+`rdocx.RGBColor.from_string("7B1E3A")`. Errors: `rdocx.RdocxError`
 (base), `XmlError`, `PackageError`, `LayoutError`, `StaleElementError`, `ReplacementCountError` (an
 `expect` count not met); lookups by text raise `ValueError`.
 
@@ -50,15 +52,19 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 | `set_style(style, *, based_on=, next_style=, font_name=, font_size=, bold=, italic=, color=, space_before=, space_after=, left_indent=, right_indent=, first_line_indent=)` → `Style` | changes an existing style, chosen by id or name, as `add_style` takes them; what it is not given keeps its value. It cannot remove a theme font or a theme colour the style already has, which Word keeps using over `font_name` / `color`. `KeyError` for an unknown style, and on any error the document is left unchanged |
 | `remove_style(style)` → bool, `set_default_style(style)` | |
 | `add_numbering_definition([rdocx.ListLevel(format="decimal", text="%1.", start=1, left_indent=, hanging_indent=), ...])` → definition id, `add_numbering_instance(definition_id)` → `num_id`, `link_style_to_numbering(style, num_id, level)` | a list: define its levels once, make an instance, then `paragraph.numbering = (num_id, level)` or link a style to it |
-| `add_paragraph(text)`, `insert_paragraph(bi, text)`, `add_table(rows, cols)` | append / insert with Normal formatting |
+| `add_paragraph(text)`, `insert_paragraph(bi, text)`, `add_table(rows, cols)`, `insert_table(bi, rows, cols)` → `Table` | append / insert with Normal formatting |
 | `add_picture(data, filename, width=None, height=None, *, after=None)` | inline picture in a new paragraph; width and height together or neither; returns the `StoryItem` |
 | `clone_content(handle, bi)` | copies a block to body index `bi`, with its formatting, fields and bookmarks (a copied bookmark is renamed, `MailMerge1`...); comment anchors are not copied |
 | `move_content(source, destination)`, `pop_content(bi)` → `ContentFragment`, `insert_content(bi, fragment)`, `remove_content(bi)` | `destination` of `move_content` is counted before the move (moving the 2nd of ABCDE to 3 gives ACBDE). Removing or popping content never leaves a comment without an anchor: a comment it covers whole goes with its replies, one it cuts in part stays on what is left, and a popped fragment carries its threads back on `insert_content` (re-read their ids) |
 | `set_story_text(item, text)` | replaces a paragraph's text, keeping the first run's formatting (any story) |
 | `split_run(body_index, run_index, character_offset)` | splits one run in two at a character offset; body paragraphs only (a table cell paragraph raises `ValueError`) |
 | `update_section(i, *, margin_top=, orientation=, page_width=, ...)` → `Section` | writes a section's page setup; `doc.sections` stays a snapshot |
+| `insert_section(i)`, `remove_section(i)` | `insert_section` adds an empty section at section index `i` (an empty paragraph carries its break: 0 before the first section, `len(doc.sections)` after the last one's content); `remove_section` removes that break, the paragraphs stay |
+| `create_section_story(i, kind, variant)` → `Story`, `unlink_section_story(i, kind, variant)` → `Story`, `link_section_story(i, kind, variant, story)` → `Story` | `kind` `"header"` / `"footer"`, `variant` `"default"` / `"first"` / `"even"`. `create_section_story` gives section `i` a new, empty header or footer (`"first"` turns on `different_first_page`), which the next sections inherit (`doc.header_footer_variants`); fill it with `insert_content(story, fragment)` (a fragment from `pop_content`). `unlink_section_story` gives a section that inherits one its own copy, to edit apart; `link_section_story` makes it use `story` again |
 | `try_replace_text(old, new, *, expect=None)` → int, `replace_all_regex([(pattern, repl), ...])` → int | literal and regex replacement across runs, in the body, its tables, content controls, tracked insertions, simple fields, smart tags and text boxes (a Word text box once), headers and footers with their tables (once per variant part), footnotes and endnotes. A match across the edge of a content control, an insertion or a simple field is not replaced. With `expect=N`, a different count raises `ReplacementCountError` and changes nothing; `docx_ops.replace_batch` also refuses text left out of reach |
+| `replace_all([(old, new), (old, new, expect), ...])` → tuple of counts | several literal replacements in one call, all or nothing: a pair whose `expect` is not met raises `ReplacementCountError` (naming the pair) and changes nothing |
 | `replace_story_text(item, old, new, *, expect=None)` → int | the same replacement in one `StoryItem` only (`doc.story_items`): a body paragraph or table, a table cell's paragraph, a header, footer or footnote paragraph. A text box or a comment raises `RdocxError` (the document-wide call edits both copies of a Word text box). For one body paragraph or cell, `Paragraph.replace_text` and `Cell.replace_text` |
+| `bookmarks` → tuple of `Bookmark` (`id`, `name`, `text`, `range`, `direct_range`, `issue`), `add_bookmark(name, range)` → id | `add_bookmark` takes a body `RunRange`; `direct_range` gives it back that way (None for a bookmark in a table cell or a content-control block), `range` counts paragraphs through tables; `issue` describes a broken marker, None otherwise |
 | `set_header(text)`, `set_footer(text)`, `add_hyperlink_to_story(story, text, url)` | `set_header` / `set_footer` replace the default story's content (fields included) |
 | `set_hyperlink_url(hyperlink, url)`, `remove_hyperlink(hyperlink)` | `hyperlink` from `doc.hyperlinks`. Removal keeps the text. Retargeting keeps the other entries of `doc.hyperlinks` valid. After a removal or an added link, the older entries of that story raise `RdocxError`: re-fetch `doc.hyperlinks` |
 | `image_data(rid)`, `replace_image(rid, bytes)`, `replace_image_for_story(story, rid, bytes)`, `set_picture_size(rid, width, height)` → count | the relationship id is the `r:embed` of the picture (`StoryItem.xml` of a `drawing` item). `replace_image` keeps the old extent, `set_picture_size` resizes every body picture of that relationship (EMU) |
@@ -67,12 +73,12 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 | `reply_to(parent_id, *, author, text, date=None)` → id, `resolve_comment(id, *, resolved=True)`, `remove_comment(id)` | |
 | `move_comment_to_text(id, anchor, *, occurrence=0)`, `move_comment(id, range)` | moves a thread onto exactly `anchor` (occurrences counted as `add_comment_on_text` does) or onto a `RunRange` / `StoryRunRange` (a `Comment.anchor` read back works), keeping its id, author, date, text, replies and resolved flag; an emptied Google `goog_rdk` wrapper goes. A reply id, an unknown id or a text not found raises `RdocxError` |
 | `accept_all()`, `reject_all()`, `accept_revision_id(id)`, `reject_revision_id(id)`, `accept_revisions_by_author(a)`, `reject_revisions_by_author(a)`, `accept_revisions_in_date_range(*, start, end)`, `reject_revisions_in_date_range(*, start, end)` | every supported story; dates as RFC 3339 strings |
-| `compare(edited, author, timestamp, *, granularity="run", ignore_comments=False, ...)` → diagnostics | turns `doc` into the redline of `doc` → `edited`; `granularity="word"` marks only the changed words, `ignore_comments=True` keeps `doc`'s comments and compares the rest |
-| `rebuild_toc()` → `TocRebuildReport` (`entry_count`, `bookmark_count`, `diagnostics`) | the entry of a numbered heading gets a left stop after its number |
+| `compare(edited, author, timestamp, *, granularity="run", ignore_comments=False, ...)` → diagnostics (`ComparisonDiagnostic`: `location`, `message`) | turns `doc` into the redline of `doc` → `edited`; `granularity="word"` marks only the changed words, `ignore_comments=True` keeps `doc`'s comments and compares the rest |
+| `rebuild_toc()` → `TocRebuildReport` (`entry_count`, `bookmark_count`, `diagnostics`, `diagnostic_count`) | the entry of a numbered heading gets a left stop after its number |
 | `insert_toc(bi, max_level=3)` | inserts a TOC field (`TOC \o "1-N" \h`) at body index `bi`; `rebuild_toc()` then fills it with entries linked to the headings, their page numbers and the `TOC1`... styles |
-| `update_page_fields()` → int, `update_layout_backed_fields()` → report (`page_fields`, `num_pages_fields`, `page_reference_fields`, `updated_count`, `diagnostics`), `update_fields(*, now=datetime, file_name=, file_path=, merge_fields=, ...)` → count, `update_fields_on_open` (get/set) | caches field results from rdocx's pagination |
-| `layout()` → tuple of `LayoutFragment` (`body_index`, `physical_page`, `displayed_page`, `bounds.x/.y/.width/.height` in points), `layout_page(i)` → `LayoutPage` (`page_number`, `displayed_page_number`, `width`, `height`) | rdocx's pagination, on Word's line heights |
-| `to_pdf(*, revision_view="accepted")` → bytes, `render_pages(*, dpi=150, format="png", quality=90, transparent=False, pages=None, revision_view="accepted")` → list of bytes, `render_page_to_png(i, dpi, *, revision_view="accepted")`, `render_all_pages(dpi, *, revision_view="accepted")` | `pages` zero-based. `revision_view="tracked"` shows tracked changes (deletions struck through, insertions underlined, a change bar); any other value raises `ValueError` |
+| `update_page_fields()` → int, `update_layout_backed_fields()` → `LayoutBackedFieldUpdateReport` (`page_fields`, `num_pages_fields`, `page_reference_fields`, `updated_count`, `diagnostics`, `diagnostic_count`), `update_fields(*, now=datetime, file_name=, file_path=, merge_fields=, ...)` → count, `update_fields_on_open` (get/set) | caches field results from rdocx's pagination |
+| `layout()` → tuple of `LayoutFragment` (`body_index`, `physical_page`, `displayed_page`, `bounds`: a `BoundingBox`, `x`, `y`, `width`, `height` in points), `layout_page(i)` → `LayoutPage` (`page_number`, `displayed_page_number`, `width`, `height`) | rdocx's pagination, on Word's line heights |
+| `to_pdf(*, revision_view="accepted")` → bytes, `render_pages(*, dpi=150, format="png", quality=90, transparent=False, pages=None, revision_view="accepted")` → list of bytes, `render_page_to_png(i, dpi, *, revision_view="accepted")`, `render_all_pages(dpi, *, revision_view="accepted")`, `render_page_to_svg(i)` → `SvgRenderResult` (`svg` text, `diagnostics`: `SvgDiagnostic` `path`, `message`) or None past the last page, `to_pdfa_deterministic(profile="pdfa-2b")` → bytes (PDF/A-2b, or `"pdfa-3b"`) | `pages` zero-based. `revision_view="tracked"` shows tracked changes (deletions struck through, insertions underlined, a change bar); any other value raises `ValueError` |
 
 ## Paragraph, Run, Font, ParagraphFormat
 
@@ -88,7 +94,9 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 - `ParagraphFormat`: `space_before`, `space_after`, `line_spacing` (float for multiples, length for exact),
   `left_indent`, `right_indent`, `first_line_indent`, `keep_with_next`, `keep_together`,
   `page_break_before`, `widow_control`, `alignment`. None means inherited.
-- `Run`: `text` (settable), `font`, `style_id`.
+- `Run`: `text` (settable), `font`, `style_id`, `add_tab()` (a tab at the end of the run), `add_field(instruction,
+  cached_result="")` (a simple field after the run, such as `"PAGE"`, showing `cached_result` until fields are
+  updated).
 - `Font`: `name`, `size` (length), `bold`, `italic`, `underline` (`WD_UNDERLINE` or bool), `strike`,
   `color` (set an `rdocx.RGBColor(r, g, b)`; reads back an `RGBColor`, a tuple: compare `str(font.color) ==
   "7B1E3A"`; a hex string is refused), `highlight` (Word colour name: "yellow", "green", ...), `shading`
@@ -101,10 +109,16 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 `Row.cells` (a merged cell appears once: use `cells[-1]` for the last column); `Cell`: `text` (settable),
 `replace_text(old, new, *, expect=None)` → int (as `Paragraph.replace_text`, over the cell), `paragraphs`, `add_paragraph(text)`, `width` (settable: writes the cell width, not the table grid),
 `vertical_alignment` (`WD_CELL_VERTICAL_ALIGNMENT`), `shading` (hex fill, settable), `grid_span`,
-`vertical_merge`. On the table: `set_cell_grid_span(r, c, n)` (consumes empty cells only, and invalidates
-the table handle), `set_cell_vertical_merge(r, c, "restart" | "continue" | None)`, `set_borders(style, *,
-size, color)`, `set_border(edge, ...)`, `set_cell_margins(...)`, `set_column_width(c, w)` (the grid);
-`Row.height` and `height_rule` (settable).
+`vertical_merge`, `border(edge)` and `set_border(edge, style, *, size, color)` (this cell), `margins` and
+`set_margins(*, top, right, bottom, left)`. On the table: `set_cell_grid_span(r, c, n)` (consumes empty
+cells only, and invalidates the table handle), `set_cell_vertical_merge(r, c, "restart" | "continue" |
+None)`, `set_borders(style, *, size, color)`, `set_border(edge, style, *, size, color)`, `border(edge)` →
+`(style, size, color)` or None, `set_cell_margins(*, top, right, bottom, left)`, `cell_margins` → `(top,
+right, bottom, left)` or None, `set_column_width(c, w)` and `grid_widths` (the grid, get and set). Edges:
+`top`, `bottom`, `left`, `right`, `insideH`, `insideV`; styles: `none`, `single`, `thick`, `double`,
+`dotted`, `dashed`, `dotDash`, `wave`; `size` in eighths of a point, `color` hex. `Row`: `height`,
+`height_rule` (`WD_ROW_HEIGHT_RULE.EXACTLY` or `AT_LEAST`), `is_header` (repeated at the top of each page),
+`cant_split` (settable).
 
 ## Stories other than the body
 
@@ -118,9 +132,11 @@ view, with its part and style id.
 
 ## Read-only records
 
-`Section` (orientation, page size, margins, gutter, columns, header and footer distances, `different_first_page`,
-`break_type`, `page_number_start`); `Style` (`style_id`, `name`, `style_type`, `based_on`, `linked_style`,
-`next_style`, flags); `HeaderFooterVariant` (`section_index`, `kind` header/footer, `variant`
+`Section` (`ordinal`, `is_final`, `orientation`, `page_width`, `page_height`, `margin_top`, `margin_right`,
+`margin_bottom`, `margin_left`, `gutter`, `header_distance`, `footer_distance`, `column_count`,
+`column_spacing`, `different_first_page`, `break_type`, `page_number_start`); `Style` (`style_id`, `name`,
+`style_type`, `based_on`, `linked_style`, `next_style`, and the flags `is_default`, `priority`, `hidden`,
+`semi_hidden`, `unhide_when_used`, `quick_format`, `locked`, `auto_redefine`); `HeaderFooterVariant` (`section_index`, `kind` header/footer, `variant`
 default/first/even, `story`, `inherited`, `source_section`); `Hyperlink` (`url`, `anchor`, `text`,
 `index_path`, `relationship_id`, `story`); `Comment` (`id`, `author`, `initials`, `date`, `text`,
 `parent_id`, `resolved`, `anchor_text`: the accepted-view text the comment covers, through Google `goog_rdk`

@@ -2,7 +2,8 @@
 
 `import rpptx` with the pinned Python (`$R/python`). The API follows python-pptx: `rpptx.Presentation`,
 `rpptx.util` (`Inches`, `Pt`, `Length` only: there is no `Emu`, `Cm` or `Mm`; lengths are plain EMU
-integers, 914400 per inch, 12700 per point), `rpptx.dml.color.RGBColor`, `rpptx.enum.shapes` (`MSO_SHAPE`,
+integers, 914400 per inch, 12700 per point, and `Inches(1)` or `Pt(12)` is a `Length`, an int with `.emu`,
+`.inches` and `.pt`), `rpptx.dml.color.RGBColor` (also `RGBColor.from_string("7B1E3A")`), `rpptx.enum.shapes` (`MSO_SHAPE`,
 `MSO_SHAPE_TYPE`, `MSO_CONNECTOR`), `rpptx.enum.text` (`PP_ALIGN`, `MSO_ANCHOR`, `MSO_AUTO_SIZE`,
 `MSO_UNDERLINE`), `rpptx.enum.dml` (`MSO_FILL`, `MSO_LINE_DASH_STYLE`, `MSO_ARROWHEAD_STYLE`,
 `MSO_ARROWHEAD_WIDTH`, `MSO_ARROWHEAD_LENGTH`). Errors: `rpptx.RpptxError`, `XmlError`, `PackageError`,
@@ -23,12 +24,12 @@ font, paragraph and frame setters, fills, lines and line ends, shadows, `theme_e
 | Member | Notes |
 |---|---|
 | `Presentation(path=None)`, `Presentation.from_bytes(b)`, `save(path)`, `to_bytes()` | `save` does not refuse the input (use `pptx_ops.save_atomic`); a new presentation is 16:9 with the eleven default layouts, and `save` writes the package class its extension names: a .potx saved as .pptx becomes a presentation |
-| `slides`, `slide_layouts`, `slide_width`, `slide_height`, `comment_authors` | |
+| `slides`, `slide_layouts`, `slide_width`, `slide_height`, `comment_authors` (each a `CommentAuthor`: `id`, `name`, `initials`, `user_id`, `provider_id`) | |
 | `slides.add_slide(layout)`, `slides.duplicate(slide)` → the copy, `slides.move(from_, to)`, `slides.remove(slide)`, `slide_layouts.index(layout)` | |
 | `slides.import_slide(slide, layout=None, index=None)` → the copy | copies a slide of another presentation (at the end, or at `index`); without `layout` it takes the destination layout of the same name and raises `RpptxError` ("no layout named ...") when there is none: pass `layout=prs.slide_layouts[k]` |
 | `try_replace_text(old, new, *, expect=None)` → int | slides and notes, across runs, keeping the first run's formatting; a count other than `expect` raises `ReplacementCountError` and changes nothing. `replace_text` is the same call |
 | `add_comment_author(*, id, name, user_id, provider_id, initials=None)` | id is a GUID in braces |
-| `text_layout(*, width_factor=1.0)` → list of `TextFrameLayout` (`slide_index`, `shape_id`, `name`, `overflow`, `autofit`, `font_scale`, `frame`, `usable`, `height`, `lines`: `text`, `font_size`, `baseline`, `bounds`, `paragraph_index`) | rpptx's own line breaks; `width_factor=0.95` asks whether text fits a narrower frame; percentage line spacing is laid out as LibreOffice does (100 % is 1.2 em) |
+| `text_layout(*, width_factor=1.0)` → list of `TextFrameLayout` (`slide_index`, `shape_id`, `name`, `overflow`, `autofit`, `font_scale`, `frame`, `usable`, `height`, `lines`: `TextLineLayout` with `text`, `font_size`, `baseline`, `bounds` (`BoundingBox`: `x`, `y`, `width`, `height`), `paragraph_index`) | rpptx's own line breaks; `width_factor=0.95` asks whether text fits a narrower frame; percentage line spacing is laid out as LibreOffice does (100 % is 1.2 em) |
 | `validate()` → tuple of `ValidationIssue` (`kind`, `message`) | empty when the deck is valid |
 | `to_pdf()`, `to_notes_pdf()`, `render_slide_to_png(i, dpi=150)`, `render_all_slides(dpi)`, `render_all_notes(dpi)` | zero-based slide index |
 
@@ -37,8 +38,8 @@ font, paragraph and frame setters, fills, lines and line ends, shadows, `theme_e
 `shapes`, `placeholders`, `slide_layout`, `hidden` (settable), `try_replace_text(old, new, *, expect=None,
 notes=True)` → int (this slide only, its notes unless `notes=False`; same all-or-nothing count as the
 presentation's), `notes_text` (None when the slide has no
-notes; setting it creates the notes slide), `background.fill`, `follow_master_background`, `comments` (each with `id`, `author_id`, `created`,
-`text`, `status`, `replies`), `add_comment(*, id, author_id, created, text, shape_id=None)` (on the slide, or on
+notes; setting it creates the notes slide), `background.fill`, `follow_master_background`, `comments` (each a `Comment` with `id`, `author_id`, `created`,
+`text`, `status`, `replies`: `CommentReply` with the same fields but `replies`), `add_comment(*, id, author_id, created, text, shape_id=None)` (on the slide, or on
 the shape `shape_id` names; an unknown shape or author raises `RpptxError` and changes nothing),
 `reply_to_comment(comment_id, *, id, author_id, created, text)`, `resolve_comment(comment_id)`, `remove_comment(comment_id)`, `move_comment(from_, to)`, `move_reply(comment_id, from_, to)`. `created`
 is RFC 3339 with its zone. Two handles of one slide compare equal (`==`); a `Slide` is unhashable (no sets, no
@@ -64,10 +65,11 @@ dict keys).
   `click_action` (`hyperlink.address`: a web link on the whole shape, get and set; `target_slide`: a `Slide` or
   None, get and set, a click jumps to that slide; for a jump `hyperlink.address` reads the target part, such as
   `"slide3.xml"`; removing the target slide leaves a link that does nothing), `adjustments`, `has_table`,
-  `table`, `image` (`blob`, `content_type`, `ext`), `replace_image(file)` (keeps position, size and crop), `shapes` (a group's
+  `table`, `image` (`blob`, `content_type`, `ext`), `replace_image(file)` (keeps position, size and crop),
+  `crop_left`, `crop_top`, `crop_right`, `crop_bottom` (a picture's crop, fractions of its size, settable), `shapes` (a group's
   children), `xml` (the shape element as bytes).
 - `TextFrame`: `paragraphs`, `add_paragraph()`, `text`, `try_replace_text(old, new, *, expect=None)` → int
-  (this frame only), `margin_left/right/top/bottom`, `word_wrap`,
+  (this frame only), `margin_left`, `margin_right`, `margin_top`, `margin_bottom`, `word_wrap`,
   `auto_size` (`MSO_AUTO_SIZE`), `autofit`, `vertical_anchor` (`MSO_ANCHOR`).
 - `Paragraph`: `runs`, `add_run(text="")`, `text`, `alignment` (`PP_ALIGN`), `level`, `bullet`,
   `line_spacing`, `space_before`, `space_after`, `left_indent`, `right_indent`, `first_line_indent`, `font`.
@@ -82,7 +84,9 @@ dict keys).
 - `ShadowFormat` (`shape.shadow`): `inherit` (False writes an empty `a:effectLst`: no theme shadow),
   `visible`, `color.rgb`, `alpha` (0 to 1), `blur_radius`, `distance` (EMU), `direction` (degrees), `align`
   (`"tl"` to `"br"`), `rotate_with_shape`; setting one writes `a:effectLst/a:outerShdw` in `spPr`.
-- `Table`: `cell(r, c)` (`text`, `merge(other)`, `split()`, `is_merge_origin`, `span_height`, `span_width`,
-  `fill`), `columns[k].width`, `rows[k].height`, `rows.add_row(index=None)` → the new row,
+- `Table`: `cell(r, c)` (`text`, `merge(other)`, `split()`, `is_merge_origin`, `is_spanned` (covered by a
+  merge), `span_height`, `span_width`, `fill`, `margin_left`, `margin_right`, `margin_top`, `margin_bottom`
+  (settable), `border_left`, `border_right`, `border_top`, `border_bottom` (each a `LineFormat`: set its
+  `width` and `color.rgb`)), `columns[k].width`, `rows[k].height`, `rows.add_row(index=None)` → the new row,
   `rows.remove(row)`, `columns.add_column(index=None)`, `columns.remove(column)`: a new row or column copies
   a neighbour's size. Re-fetch the table after each edit.

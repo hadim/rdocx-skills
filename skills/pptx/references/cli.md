@@ -33,20 +33,23 @@ Literal replacement in slide text, groups, tables and speaker notes, keeping run
 
 ```bash
 rpptx comment add F --slide N --author NAME [--initials I] --text T --date 2026-09-27T12:00:00Z -o OUT [--json]
-rpptx comment reply F --id ID --author NAME --text T --date RFC3339 -o OUT
-rpptx comment resolve F --id ID -o OUT
-rpptx comment remove F --id ID -o OUT      # a thread with its replies, or one reply
+rpptx comment reply F --id ID --author NAME --text T --date RFC3339 -o OUT [--json]
+rpptx comment resolve F --id ID -o OUT [--json]
+rpptx comment remove F --id ID -o OUT [--json]   # a thread with its replies, or one reply
 ```
 Comments are anchored on the slide (Python's `slide.add_comment(..., shape_id=)` anchors one on a shape). The
 author is reused by name or added to the author list. Ids are the GUIDs shown by `comment list --json`.
+With `--json`, each prints an operation record: `action`, `comment_id` (and `parent_id` for a reply), `slide`,
+`output`, `"schema": 1`.
 
 ## Rendering
 
 ```bash
-rpptx convert F --to pdf -o NEW.pdf
+rpptx convert F --to pdf -o NEW.pdf [--force]
 rpptx convert F --to png|jpeg|tiff -o OUT.png [--slides 1,3-5] [--dpi 150] [--quality 90] [--transparent]
-rpptx render F -o NEW_DIR [--slide N] [--dpi 150] [--format png|jpeg|tiff]
-rpptx thumbnail F -o NEW.png               # slide 1, 320 pixels wide
+rpptx render F -o NEW_DIR [--slide N] [--dpi 150] [--format png|jpeg|tiff] [--quality 90] [--transparent] [--force]
+rpptx thumbnail F -o NEW.png [--force]     # slide 1, 320 pixels wide
 ```
 `convert` to images writes `OUT.png` for one slide, `OUT_001.png`, `OUT_002.png`... for several; `render`
-writes `NEW_DIR/<name>_slide<N>.png`.
+writes `NEW_DIR/<name>_slide<N>.png`. `--quality` sets the JPEG quality (1 to 100), `--transparent` leaves unpainted PNG
+pixels transparent.

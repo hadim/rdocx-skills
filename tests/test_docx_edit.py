@@ -835,3 +835,113 @@ def test_set_footer_replaces_the_fields_too(report_docx, tmp_path):
     doc.save(tmp_path / "f.docx")
     footer = part(tmp_path / "f.docx", "word/footer1.xml")
     assert b"Plain footer" in footer and b"fldChar" not in footer and b"fldSimple" not in footer
+
+
+# ---------------------------------------------------------------- the rest of the API python-api.md documents
+def test_insert_table_and_replace_all(tmp_path):
+    doc = rdocx.Document.open(simple(tmp_path / "a.docx", "Alpha", "Beta", "Gamma"))
+    doc.insert_table(1, 2, 3)
+    assert doc.find_content_index(doc.tables[0]) == 1 and len(doc.tables[0].rows[0].cells) == 3
+    assert doc.replace_all([("Alpha", "A"), ("Beta", "B", 1)]) == (1, 1)
+    with pytest.raises(rdocx.ReplacementCountError, match="pair 0"):
+        doc.replace_all([("Gamma", "G", 2), ("A", "Z")])
+    assert [p.text for p in doc.paragraphs] == ["A", "B", "Gamma"]                # all or nothing
+
+
+def test_sections_and_section_stories(tmp_path):
+    doc = rdocx.Document()
+    for text in ("A", "B"):
+        doc.add_paragraph(text)
+    doc.insert_section(1)                                     # after the last section's content
+    assert len(doc.sections) == 2 and [p.text for p in doc.paragraphs] == ["A", "B", ""]
+    story = doc.create_section_story(0, "header", "first")
+    doc.add_paragraph("Cover header")
+    doc.insert_content(story, doc.pop_content(len(doc.paragraphs) - 1))
+
+    def first_headers():
+        return [(v.section_index, v.inherited, v.story.part_name) for v in doc.header_footer_variants
+                if v.kind == "header" and v.variant == "first"]
+    assert first_headers() == [(0, False, story.part_name), (1, True, story.part_name)]   # the next section inherits
+    assert doc.sections[0].different_first_page
+    own = doc.unlink_section_story(1, "header", "first")
+    assert own.part_name != story.part_name and first_headers()[1] == (1, False, own.part_name)
+    doc.set_story_text(next(i for i in doc.story_items if i.story.part_name == own.part_name), "Section 2 header")
+    doc.save(tmp_path / "s.docx")
+    assert [s.first_page_header.paragraphs[0].text for s in docx.Document(tmp_path / "s.docx").sections] == [
+        "Cover header", "Section 2 header"]
+    doc.link_section_story(1, "header", "first", story)
+    doc.save(tmp_path / "t.docx")
+    assert [s.first_page_header.paragraphs[0].text for s in docx.Document(tmp_path / "t.docx").sections] == [
+        "Cover header", "Cover header"]
+    doc.remove_section(0)
+    assert len(doc.sections) == 1 and [p.text for p in doc.paragraphs] == ["A", "B"]
+    doc.insert_section(0)                                     # before the first section
+    assert [p.text for p in doc.paragraphs] == ["", "A", "B"]
+
+
+def test_bookmarks_add_and_read(tmp_path):
+    doc = rdocx.Document.open(simple(tmp_path / "a.docx", "Intro text", "Body", table_after=1))
+    doc.add_bookmark("intro", rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=0),
+                                             end=rdocx.RunPosition(body_index=0, run_index=1)))
+    bookmark = next(b for b in doc.bookmarks if b.name == "intro")
+    assert isinstance(bookmark, rdocx.Bookmark) and (bookmark.text, bookmark.issue) == ("Intro text", None)
+    assert bookmark.direct_range.start.body_index == 0 and bookmark.range.start.body_index == 0
+    doc.save(tmp_path / "b.docx")
+    assert b'w:name="intro"' in part(tmp_path / "b.docx", "word/document.xml")
+
+
+def test_run_tab_and_simple_field(rdocx_cli, tmp_path):
+    doc = rdocx.Document()
+    doc.add_paragraph("Page")
+    doc.paragraphs[0].runs[0].add_tab()
+    doc.paragraphs[0].runs[0].add_field("PAGE", "1")
+    doc.save(tmp_path / "f.docx")
+    xml = part(tmp_path / "f.docx", "word/document.xml").decode()
+    assert re.search(r"<w:t>Page</w:t><w:tab/></w:r><w:fldSimple w:instr=\"PAGE\"><w:r><w:t>1</w:t>", xml)
+    assert run([rdocx_cli, "text", tmp_path / "f.docx"], check=True).stdout.splitlines()[0] == "Page\t1"
+
+
+def test_table_and_cell_borders_margins_grid_and_rows(tmp_path):
+    doc = rdocx.Document()
+    doc.add_table(2, 2)
+    assert doc.tables[0].border("top") is None and doc.tables[0].cell_margins is None
+    doc.tables[0].set_border("top", "double", size=8, color="FF0000")
+    doc.tables[0].set_cell_margins(top=rdocx.Pt(2), right=rdocx.Pt(4), bottom=rdocx.Pt(2), left=rdocx.Pt(4))
+    doc.tables[0].grid_widths = [rdocx.Inches(1), rdocx.Inches(2)]
+    t = doc.tables[0]
+    assert t.border("top") == ("double", 8, "FF0000") and t.cell_margins == (rdocx.Pt(2), rdocx.Pt(4), rdocx.Pt(2), rdocx.Pt(4))
+    assert t.grid_widths == (rdocx.Inches(1), rdocx.Inches(2))
+    t.cell(0, 0).set_border("left", "single", size=4, color="00FF00")
+    doc.tables[0].cell(0, 0).set_margins(top=rdocx.Pt(1), right=0, bottom=rdocx.Pt(1), left=0)
+    cell = doc.tables[0].cell(0, 0)
+    assert cell.border("left") == ("single", 4, "00FF00") and cell.margins == (rdocx.Pt(1), 0, rdocx.Pt(1), 0)
+    assert isinstance(cell.margins[0], rdocx.Length)
+    row = doc.tables[0].rows[0]
+    row.is_header, row.cant_split = True, True
+    doc.tables[0].rows[1].height = rdocx.Pt(20)
+    doc.tables[0].rows[1].height_rule = rdocx.WD_ROW_HEIGHT_RULE.EXACTLY
+    assert (doc.tables[0].rows[0].is_header, doc.tables[0].rows[0].cant_split) == (True, True)
+    doc.save(tmp_path / "t.docx")
+    xml = part(tmp_path / "t.docx", "word/document.xml").decode()
+    assert "<w:tblHeader/>" in xml and "<w:cantSplit/>" in xml and 'w:hRule="exact"' in xml
+    assert re.search(r'<w:top w:val="double" w:sz="8"[^>]*w:color="FF0000"', xml)
+
+
+def test_lengths_and_colours():
+    assert isinstance(rdocx.Pt(12), rdocx.Length) and isinstance(rdocx.Inches(1), int)
+    assert str(rdocx.RGBColor.from_string("7B1E3A")) == "7B1E3A" == str(rdocx.RGBColor(0x7B, 0x1E, 0x3A))
+
+
+def test_section_and_style_records(report_docx):
+    doc = rdocx.Document.open(report_docx)
+    sec = doc.sections[-1]
+    assert sec.is_final and sec.ordinal == len(doc.sections) - 1
+    assert all(isinstance(getattr(sec, n), int) for n in (
+        "page_width", "page_height", "margin_top", "margin_right", "margin_bottom", "margin_left", "header_distance",
+        "footer_distance"))
+    for name in ("gutter", "column_count", "column_spacing"):
+        getattr(sec, name)
+    normal = next(s for s in doc.styles if s.style_id == "Normal")
+    assert normal.is_default
+    for name in ("priority", "hidden", "semi_hidden", "unhide_when_used", "quick_format", "locked", "auto_redefine"):
+        getattr(normal, name)
