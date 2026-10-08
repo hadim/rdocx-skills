@@ -9,7 +9,7 @@ the next one must still open what you save. What matters when you edit with rdoc
 |---|---|---|
 | `w:rsid*` on paragraphs, runs and rows, `w14:paraId` / `w14:textId`, a `w:rsids` list in settings | Word, on every save | carry no content; rdocx keeps them, on table rows too |
 | explicit `w:val="0"` toggles (`w:b`, `w:i`, `w:rtl`, `keepNext`, `pageBreakBefore`), `xml:space="preserve"` on every `w:t`, `w:orient="portrait"` | Google Docs | equivalent to the defaults; a redline against an rdocx-edited copy shows only the edit |
-| content controls `w:sdt` with `w:tag goog_rdk_N` around runs or paragraphs | Google Docs | read, replaced and commented on like the text around them; a redline ignores a control that differs only by `w:id` or `w:tag` |
+| content controls `w:sdt` with `w:tag goog_rdk_N` around runs or paragraphs | Google Docs | read, replaced and commented on like the text around them (`Comment.anchor_text` reads through them, and a moved comment leaves no empty wrapper behind); a redline ignores a control that differs only by `w:id` or `w:tag` |
 | the table of contents in a `w:sdt` with `w:docPartObj` | Word, Google Docs | one body block: `find_content_indices(heading)` returns it too |
 | field instruction packed in one run (begin, instruction, separate), PAGE / NUMPAGES without a cached result | Google Docs | rdocx reads and refreshes them, and a redline after refreshing them compares |
 | a default namespace on the root of each part | Google Docs | harmless for reading and most edits |

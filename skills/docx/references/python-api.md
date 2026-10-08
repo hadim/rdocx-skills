@@ -7,7 +7,8 @@ to the installed module (`$R/python -c "import rdocx, os; print(os.path.dirname(
 
 Lengths are EMU integers; build them with `rdocx.Pt(12)`, `rdocx.Inches(1)`, `rdocx.Cm(2)`, `rdocx.Mm(5)`,
 `rdocx.Emu(n)` (each has `.pt`, `.inches`, `.cm`, `.mm`, `.emu`, `.twips`). Errors: `rdocx.RdocxError`
-(base), `XmlError`, `PackageError`, `LayoutError`, `StaleElementError`; lookups by text raise `ValueError`.
+(base), `XmlError`, `PackageError`, `LayoutError`, `StaleElementError`, `ReplacementCountError` (an
+`expect` count not met); lookups by text raise `ValueError`.
 
 ## Three index spaces
 
@@ -35,7 +36,7 @@ Every handle is checked: `Paragraph`, `Run`, `Table`, `Row`, `Cell` and `StoryIt
 formatting setters (font, paragraph format, style, alignment, numbering, widths) and `Run.text` keep handles
 valid. Everything else invalidates every handle: insert, remove, clone, move, pop, split, `add_*`,
 `set_story_text`, `paragraph.text = ...`, `cell.text = ...`, `try_replace_text`, `replace_all_regex`,
-`clone_row`, `remove_row`, `add_comment`. Re-navigate from `doc` after each such call (`doc.paragraphs[i].runs[j]`,
+`paragraph.replace_text`, `cell.replace_text`, `replace_story_text`, `clone_row`, `remove_row`, `add_comment`. Re-navigate from `doc` after each such call (`doc.paragraphs[i].runs[j]`,
 `doc.story_items`); never keep `p = doc.paragraphs[i]` across edits.
 
 ## Document
@@ -52,17 +53,19 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 | `add_paragraph(text)`, `insert_paragraph(bi, text)`, `add_table(rows, cols)` | append / insert with Normal formatting |
 | `add_picture(data, filename, width=None, height=None, *, after=None)` | inline picture in a new paragraph; width and height together or neither; returns the `StoryItem` |
 | `clone_content(handle, bi)` | copies a block to body index `bi`, with its formatting, fields and bookmarks (a copied bookmark is renamed, `MailMerge1`...); comment anchors are not copied |
-| `move_content(source, destination)`, `pop_content(bi)` → `ContentFragment`, `insert_content(bi, fragment)`, `remove_content(bi)` | `destination` of `move_content` is counted before the move (moving the 2nd of ABCDE to 3 gives ACBDE) |
+| `move_content(source, destination)`, `pop_content(bi)` → `ContentFragment`, `insert_content(bi, fragment)`, `remove_content(bi)` | `destination` of `move_content` is counted before the move (moving the 2nd of ABCDE to 3 gives ACBDE). Removing or popping content never leaves a comment without an anchor: a comment it covers whole goes with its replies, one it cuts in part stays on what is left, and a popped fragment carries its threads back on `insert_content` (re-read their ids) |
 | `set_story_text(item, text)` | replaces a paragraph's text, keeping the first run's formatting (any story) |
 | `split_run(body_index, run_index, character_offset)` | splits one run in two at a character offset; body paragraphs only (a table cell paragraph raises `ValueError`) |
 | `update_section(i, *, margin_top=, orientation=, page_width=, ...)` → `Section` | writes a section's page setup; `doc.sections` stays a snapshot |
-| `try_replace_text(old, new, *, expect=None)` → int, `replace_all_regex([(pattern, repl), ...])` → int | literal and regex replacement across runs, in the body, its tables, content controls, tracked insertions, simple fields, smart tags and text boxes (a Word text box once), headers and footers with their tables (once per variant part), footnotes and endnotes. A match across the edge of a content control, an insertion or a simple field is not replaced. With `expect=N`, a different count raises and changes nothing; `docx_ops.replace_batch` also refuses text left out of reach |
+| `try_replace_text(old, new, *, expect=None)` → int, `replace_all_regex([(pattern, repl), ...])` → int | literal and regex replacement across runs, in the body, its tables, content controls, tracked insertions, simple fields, smart tags and text boxes (a Word text box once), headers and footers with their tables (once per variant part), footnotes and endnotes. A match across the edge of a content control, an insertion or a simple field is not replaced. With `expect=N`, a different count raises `ReplacementCountError` and changes nothing; `docx_ops.replace_batch` also refuses text left out of reach |
+| `replace_story_text(item, old, new, *, expect=None)` → int | the same replacement in one `StoryItem` only (`doc.story_items`): a body paragraph or table, a table cell's paragraph, a header, footer or footnote paragraph. A text box or a comment raises `RdocxError` (the document-wide call edits both copies of a Word text box). For one body paragraph or cell, `Paragraph.replace_text` and `Cell.replace_text` |
 | `set_header(text)`, `set_footer(text)`, `add_hyperlink_to_story(story, text, url)` | `set_header` / `set_footer` replace the default story's content (fields included) |
 | `set_hyperlink_url(hyperlink, url)`, `remove_hyperlink(hyperlink)` | `hyperlink` from `doc.hyperlinks`. Removal keeps the text. Retargeting keeps the other entries of `doc.hyperlinks` valid. After a removal or an added link, the older entries of that story raise `RdocxError`: re-fetch `doc.hyperlinks` |
 | `image_data(rid)`, `replace_image(rid, bytes)`, `replace_image_for_story(story, rid, bytes)`, `set_picture_size(rid, width, height)` → count | the relationship id is the `r:embed` of the picture (`StoryItem.xml` of a `drawing` item). `replace_image` keeps the old extent, `set_picture_size` resizes every body picture of that relationship (EMU) |
 | `add_comment(RunRange or StoryRunRange, *, author, text, initials=None, date=None)` → id | `RunRange(start=RunPosition(body_index=, run_index=), end=...)`, end exclusive, body paragraphs; `StoryRunRange(start=StoryRunPosition(item=, run_index=), end=...)` for a table cell or another story's paragraph item. No `date`, no date in the file: pass an RFC 3339 string. Ids stay stable across saves |
 | `add_comment_on_text(anchor, *, author, text, occurrence=0, initials=None, date=None)` → id | anchors on exactly `anchor`, splitting runs with their format kept, table cells included: `occurrence` counts from 0 over the main story in document order, body and table cells together; an out-of-range occurrence raises `RdocxError`. `docx_ops.comment_on_text(..., in_tables=True)` counts cells only and checks the result |
 | `reply_to(parent_id, *, author, text, date=None)` → id, `resolve_comment(id, *, resolved=True)`, `remove_comment(id)` | |
+| `move_comment_to_text(id, anchor, *, occurrence=0)`, `move_comment(id, range)` | moves a thread onto exactly `anchor` (occurrences counted as `add_comment_on_text` does) or onto a `RunRange` / `StoryRunRange` (a `Comment.anchor` read back works), keeping its id, author, date, text, replies and resolved flag; an emptied Google `goog_rdk` wrapper goes. A reply id, an unknown id or a text not found raises `RdocxError` |
 | `accept_all()`, `reject_all()`, `accept_revision_id(id)`, `reject_revision_id(id)`, `accept_revisions_by_author(a)`, `reject_revisions_by_author(a)`, `accept_revisions_in_date_range(*, start, end)`, `reject_revisions_in_date_range(*, start, end)` | every supported story; dates as RFC 3339 strings |
 | `compare(edited, author, timestamp, *, granularity="run", ignore_comments=False, ...)` → diagnostics | turns `doc` into the redline of `doc` → `edited`; `granularity="word"` marks only the changed words, `ignore_comments=True` keeps `doc`'s comments and compares the rest |
 | `rebuild_toc()` → `TocRebuildReport` (`entry_count`, `bookmark_count`, `diagnostics`) | the entry of a numbered heading gets a left stop after its number |
@@ -79,7 +82,9 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
   style id. Set an id or a name the document defines, as python-docx does: `KeyError` when no paragraph
   style has it, `ValueError` for a character or table style), `alignment` (`WD_ALIGN_PARAGRAPH`),
   `numbering` (`(num_id, level)` or None, settable, unchecked), `paragraph_format`, `add_run(text)`,
-  `add_hyperlink(text, url)` (appends at the end).
+  `add_hyperlink(text, url)` (appends at the end), `replace_text(old, new, *, expect=None)` → int (counted
+  replacement in this paragraph only, body or table cell: across runs, comments kept; a count other than
+  `expect` raises `ReplacementCountError` and changes nothing).
 - `ParagraphFormat`: `space_before`, `space_after`, `line_spacing` (float for multiples, length for exact),
   `left_indent`, `right_indent`, `first_line_indent`, `keep_with_next`, `keep_together`,
   `page_break_before`, `widow_control`, `alignment`. None means inherited.
@@ -92,9 +97,9 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 ## Tables
 
 `Table`: `rows`, `cell(r, c)`, `clone_row(index, at=None)` (keeps cell and run formatting),
-`remove_row(index)`, `style` (style id, unchecked), `alignment` (`WD_TABLE_ALIGNMENT`), `width` (settable).
+`remove_row(index)` (a comment inside the row goes with it), `style` (style id, unchecked), `alignment` (`WD_TABLE_ALIGNMENT`), `width` (settable).
 `Row.cells` (a merged cell appears once: use `cells[-1]` for the last column); `Cell`: `text` (settable),
-`paragraphs`, `add_paragraph(text)`, `width` (settable: writes the cell width, not the table grid),
+`replace_text(old, new, *, expect=None)` → int (as `Paragraph.replace_text`, over the cell), `paragraphs`, `add_paragraph(text)`, `width` (settable: writes the cell width, not the table grid),
 `vertical_alignment` (`WD_CELL_VERTICAL_ALIGNMENT`), `shading` (hex fill, settable), `grid_span`,
 `vertical_merge`. On the table: `set_cell_grid_span(r, c, n)` (consumes empty cells only, and invalidates
 the table handle), `set_cell_vertical_merge(r, c, "restart" | "continue" | None)`, `set_borders(style, *,
@@ -118,6 +123,8 @@ view, with its part and style id.
 `next_style`, flags); `HeaderFooterVariant` (`section_index`, `kind` header/footer, `variant`
 default/first/even, `story`, `inherited`, `source_section`); `Hyperlink` (`url`, `anchor`, `text`,
 `index_path`, `relationship_id`, `story`); `Comment` (`id`, `author`, `initials`, `date`, `text`,
-`parent_id`, `resolved`); `Revision` (`id`, `kind`, `author`, `timestamp`, `story`); `StoryItem` (`kind` paragraph,
+`parent_id`, `resolved`, `anchor_text`: the accepted-view text the comment covers, through Google `goog_rdk`
+wrappers, paragraphs joined with `"\n"`, `""` for a reference without a range, None for a reply or a
+comment with no markers; `anchor`: its `StoryRunRange` or None); `Revision` (`id`, `kind`, `author`, `timestamp`, `story`); `StoryItem` (`kind` paragraph,
 table, drawing, content_control, field, preserved_node; `index_path`, `direct_body_index`, `text`, `xml`,
 `story`); `Story` (`kind`, `part_name`, `owner_index`).

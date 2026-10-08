@@ -52,6 +52,24 @@ stay out of reach of the replacement (a match across the edge of a content contr
 a simple field). The message says where they are. `rdocx replace` does not make that second check. The command line equivalent:
 `$R/python "$SKILL/scripts/docx_ops.py" replace IN OUT --edit OLD NEW COUNT --edit ...`.
 
+## Replace in one paragraph or one table cell
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document.open("report.docx")
+# "high points of the deck" is in several paragraphs: change it in the method paragraph only
+i = next(k for k, p in enumerate(doc.paragraphs) if p.text.startswith("Drainage performance was checked"))
+doc.paragraphs[i].replace_text("high points of the deck", "high points of each span", expect=1)
+t = next(k for k, tb in enumerate(doc.tables) if tb.cell(0, 0).text == "Ref")
+doc.tables[t].cell(1, 5).replace_text("No action", "Monitor", expect=1)   # F01's action, not the other rows'
+docx_ops.save_atomic(doc, "scoped.docx", "report.docx")
+```
+
+A count other than `expect` raises `rdocx.ReplacementCountError` and changes nothing. The match may cross
+runs, and a comment on the paragraph stays. `doc.replace_story_text(item, old, new, expect=N)` does
+the same in one item of `doc.story_items` (a header, footer or footnote paragraph, a table cell's
+paragraph); a text box or a comment is refused.
+
 ## A new paragraph after an anchor, with the anchor's formatting
 
 ```python
@@ -170,6 +188,32 @@ $R/rdocx comment list --json commented.docx
 $R/python "$SKILL/scripts/docx_ops.py" comment report.docx commented-cli.docx --anchor "about 12 mm" --text "Which reference?" --author "Reviewer"
 $R/python "$SKILL/scripts/docx_ops.py" comment report.docx commented-cell.docx --anchor "spalled concrete" --in-tables --text "Which face?" --author "Reviewer"
 ```
+
+## Review pass: what each comment is on, move a thread, delete a paragraph
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document.open("commented.docx")
+for c in doc.comments:                                   # a reply has no anchor of its own (None)
+    print(c.id, c.parent_id, c.author, repr(c.anchor_text), "->", c.text)
+# the bearing item is to go; its thread is about the measuring method: move it there first
+cid = next(c.id for c in doc.comments if c.parent_id is None and c.anchor_text == "about 12 mm")
+doc.move_comment_to_text(cid, "bearing positions")      # id, replies and resolved flag kept
+i = next(k for k, p in enumerate(doc.paragraphs) if p.text.startswith("the bearing at pier 2"))
+doc.remove_content(doc.find_content_index(doc.paragraphs[i]))
+docx_ops.save_atomic(doc, "reviewed.docx", "commented.docx")
+```
+
+```bash
+$R/rdocx comment list --json reviewed.docx                # anchor_text, anchor and reference of each comment
+$R/rdocx comment move commented.docx --id 0 --anchor "bearing positions" -o moved-cli.docx --json
+$R/rdocx validate reviewed.docx                           # exit 1 for a comment left without an anchor
+```
+
+Removing content never leaves a comment pointing at nothing: a comment the removed block covers whole goes
+with its replies (move it first to keep it), one it covers in part stays on what is left, and a block taken
+out with `pop_content` carries its threads back on `insert_content`. `Table.remove_row` does the same for a
+row.
 
 ## Redline two versions, then accept or reject
 

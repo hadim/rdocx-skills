@@ -157,6 +157,83 @@ def test_a_match_across_a_wrapper_edge_is_not_replaced(tmp_path, wrapper):
     assert doc.try_replace_text("MID", "X") == 1 and doc.paragraphs[0].text == "before X after"
 
 
+def test_paragraph_replace_text_is_scoped_to_its_paragraph(tmp_path):
+    """The same clause in two paragraphs: only the target one changes, across runs, its comment kept; a wrong
+    `expect` raises ReplacementCountError and changes nothing."""
+    d = docx.Document()
+    p = d.add_paragraph()
+    p.add_run("the old ")
+    p.add_run("clause").bold = True
+    p.add_run(" here")
+    d.add_paragraph("the old clause there")
+    d.save(tmp_path / "a.docx")
+    doc = rdocx.Document.open(tmp_path / "a.docx")
+    doc.add_comment(rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=0),
+                                   end=rdocx.RunPosition(body_index=0, run_index=3)), author="R", text="c")
+    assert rdocx.Document.from_bytes(doc.to_bytes()).try_replace_text("old clause", "x") == 2  # the document-wide call
+    assert doc.paragraphs[0].replace_text("old clause", "new clause", expect=1) == 1
+    assert [p.text for p in doc.paragraphs] == ["the new clause here", "the old clause there"]
+    assert doc.comments[0].anchor_text == "the new clause here"
+    with pytest.raises(rdocx.ReplacementCountError):
+        doc.paragraphs[1].replace_text("old clause", "x", expect=2)
+    assert issubclass(rdocx.ReplacementCountError, rdocx.RdocxError)
+    assert [p.text for p in doc.paragraphs] == ["the new clause here", "the old clause there"]
+    assert doc.paragraphs[1].replace_text("absent", "x") == 0
+
+
+def test_cell_replace_text_is_scoped_to_its_cell(tmp_path):
+    d = docx.Document()
+    d.add_paragraph("No action in the body")
+    t = d.add_table(rows=2, cols=2)
+    for r in range(2):
+        for c in range(2):
+            t.cell(r, c).text = "No action"
+    d.save(tmp_path / "a.docx")
+    doc = rdocx.Document.open(tmp_path / "a.docx")
+    assert doc.tables[0].cell(1, 1).replace_text("No action", "Monitor", expect=1) == 1
+    assert [c.text for row in doc.tables[0].rows for c in row.cells] == ["No action"] * 3 + ["Monitor"]
+    with pytest.raises(rdocx.ReplacementCountError):
+        doc.tables[0].cell(0, 0).replace_text("No action", "Monitor", expect=2)
+    assert doc.tables[0].cell(0, 0).text == "No action" and doc.paragraphs[0].text == "No action in the body"
+    cell_paragraph = doc.tables[0].cell(0, 1).paragraphs[0]                 # a paragraph of a cell works too
+    assert cell_paragraph.replace_text("action", "change", expect=1) == 1 and doc.tables[0].cell(0, 1).text == "No change"
+
+
+def test_replace_story_text_edits_one_item_of_another_story(tmp_path):
+    d = docx.Document()
+    d.add_paragraph("NEEDLE in the body")
+    d.add_table(rows=1, cols=2).cell(0, 1).text = "NEEDLE in a cell, NEEDLE"
+    d.sections[0].header.paragraphs[0].text = "NEEDLE in the header"
+    d.sections[0].footer.paragraphs[0].text = "NEEDLE in the footer"
+    d.save(tmp_path / "h.docx")
+    doc = rdocx.Document.open(tmp_path / "h.docx")
+
+    def item(story, kind="paragraph"):                                     # the last one: cell (0, 1) for a cell
+        return [i for i in doc.story_items if i.story.kind == story and i.kind == kind][-1]
+    for story in ("header", "footer"):
+        assert doc.replace_story_text(item(story), "NEEDLE", "PIN", expect=1) == 1
+    assert doc.replace_story_text(item("table_cell"), "NEEDLE", "PIN", expect=2) == 2
+    assert doc.paragraphs[0].text == "NEEDLE in the body"
+    assert [item(s).text for s in ("header", "footer", "table_cell")] == [
+        "PIN in the header", "PIN in the footer", "PIN in a cell, PIN"]
+    doc.tables[0].cell(0, 0).text = "NEEDLE"
+    assert doc.replace_story_text(item("body", "table"), "NEEDLE", "PIN", expect=1) == 1   # a whole body table
+    assert doc.tables[0].cell(0, 0).text == "PIN" and doc.paragraphs[0].text == "NEEDLE in the body"
+    with pytest.raises(rdocx.ReplacementCountError):
+        doc.replace_story_text(doc.story_items[0], "NEEDLE", "PIN", expect=3)
+    doc.add_comment_on_text("NEEDLE", author="R", text="NEEDLE here too")
+    comment = next(i for i in doc.story_items if i.story.kind == "comment" and i.kind == "paragraph")
+    with pytest.raises(rdocx.RdocxError):                                 # refused: comments are never searched
+        doc.replace_story_text(comment, "NEEDLE", "PIN")
+    box =rdocx.Document.open(word_textbox_docx(tmp_path / "t.docx"))
+    note = next(i for i in box.story_items if i.story.kind == "footnote" and i.kind == "paragraph")
+    assert box.replace_story_text(note, "NEEDLE", "PIN", expect=1) == 1
+    text_box = next(i for i in box.story_items if i.story.kind == "text_box" and i.kind == "paragraph")
+    with pytest.raises(rdocx.RdocxError):                                 # refused: the document-wide call edits both copies
+        box.replace_story_text(text_box, "NEEDLE", "PIN")
+    assert box.try_replace_text("NEEDLE", "PIN") == 1                     # the text box, counted once
+
+
 # ---------------------------------------------------------------- structure
 def test_clone_insert_remove_pop(tmp_path):
     path = simple(tmp_path / "a.docx", "Alpha paragraph here.", "Beta paragraph after.")
@@ -196,6 +273,9 @@ INVALIDATE = {
     "add_run": lambda d: d.paragraphs[1].add_run("more"),
     "clone_row": lambda d: d.tables[0].clone_row(0),
     "remove_row": lambda d: d.tables[0].remove_row(1),
+    "paragraph_replace_text": lambda d: d.paragraphs[1].replace_text("delta", "D"),
+    "cell_replace_text": lambda d: d.tables[0].cell(0, 0).replace_text("cell", "C"),
+    "replace_story_text": lambda d: d.replace_story_text(d.story_items[1], "delta", "D"),
     "add_comment": lambda d: d.add_comment(rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=0),
                                                           end=rdocx.RunPosition(body_index=0, run_index=1)), author="A", text="c"),
 }

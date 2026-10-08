@@ -8,7 +8,7 @@ command line; 101 an internal panic (report it).
 
 | Commands | An existing output |
 |---|---|
-| `replace`, `comment add/reply/resolve/remove`, `revision accept/reject`, `compare`, `toc rebuild` (`-o` required) | refused, exit 1, "output already exists": they never overwrite anything, the input included |
+| `replace`, `comment add/reply/resolve/move/remove`, `revision accept/reject`, `compare`, `toc rebuild` (`-o` required) | refused, exit 1, "output already exists": they never overwrite anything, the input included |
 | `render` (into `-o DIR`, default the current folder), `convert` (`-o` optional for pdf/md/html: default, the input name with the new extension) | refused the same way; `--force` replaces an existing output, never the input. Render into a new, empty folder each time |
 
 **JSON.** `--json` output carries `"schema": 1`. The editing commands that take `--json` (all but `replace`)
@@ -23,10 +23,10 @@ print an operation record: `output`, `scope` and the result (`comment_id`, `main
 | `rdocx text --json F` | `{"paragraphs": [...], "revision_view": "accepted", "scope": "all-supported-stories", "stories": [...]}`: `paragraphs` holds the body and its tables, as if tracked changes were accepted (a paragraph that a tracked deletion removes is left out, the others keep their `body_index`). Each paragraph: `body_index` (top-level block), `path` (list of `{kind, index}` from the block down to the paragraph, through tables and content controls; `[]` for a top-level paragraph), `style` (style id), `numbering` (`{num_id, level}` or null), `text`, `runs` (`index`, `text`, `formatting`: `bold`, `italic`, `underline`, `strike`, `size_points`, `font`, `color`, `highlight`, `language`, `style`, or null; the text inside smart tags, inline custom XML and simple fields is in `text`, not in `runs`). `stories` lists every other story: `kind` (`text_box`, `header`, `footer`, `footnote`, `endnote`, `comment`), `part_name`, `owner_index`, `items` (`index_path`, `kind`, `text`). When a story part cannot be read, `scope` is `main` and `stories` is empty |
 | `rdocx inspect [--json] F` | paragraph and table counts, `content_elements`, `styles_used`, `metadata` (title, author, subject, keywords); no images |
 | `rdocx layout --json F` | `body_items`: for each top-level block, `body_index`, `kind`, `fragments` (`physical_page`, `displayed_page`, `x`, `y`, `width`, `height` in points); a paragraph that a tracked deletion removes has none |
-| `rdocx comment list [--json] F` | `comments`: `id`, `author`, `initials`, `date`, `text`, `parent_id`, `resolved`, in package order |
+| `rdocx comment list [--json] F` | `comments`: `id`, `author`, `initials`, `date`, `text`, `parent_id`, `resolved`, in package order; with `--json` also `anchor_text` (the accepted-view text the comment covers, paragraphs joined with a newline; null for a reply), `anchor` (`story`, `start`, `end`, each position with `index_path`, `body_index` and `run_index`; null for a reply) and `reference` (`story`, `position`) |
 | `rdocx revision list [--json] F` | `revisions`: `id`, `kind` (insertion, deletion, paragraph_property_change, run_property_change, section_property_change, ...), `author`, `timestamp`, `story` (`kind`, `part_name`, `owner_index`): every supported story |
 | `rdocx diff A B` | paragraphs that differ in every story, `-` and `+` lines, each labelled with its body position or its story (`[4]`, `[header default, section 1, paragraph 1]`), with the paragraph and table counts of each file |
-| `rdocx validate F` | package and schema invariants: every XML part the main document relates to must be well formed (a truncated header fails, naming the part), and every paragraph, character or table style id used by the body, headers, footers, notes and comments must be defined. Warnings (empty paragraphs, missing title) keep exit 0 |
+| `rdocx validate F` | package and schema invariants: every XML part the main document relates to must be well formed (a truncated header fails, naming the part), and every paragraph, character or table style id used by the body, headers, footers, notes and comments must be defined; a comment with no range and no reference anywhere is an error too (`comment N has no range and no reference in any story`, exit 1, on stdout). Warnings (empty paragraphs, missing title) keep exit 0 |
 
 ## Editing
 
@@ -46,8 +46,11 @@ rdocx comment add F --start-paragraph P --start-run S --end-paragraph Q --end-ru
 rdocx comment add F --anchor TEXT [--occurrence K] --author A --text T [--date RFC3339] -o OUT   # K from 0, main story, cells included
 rdocx comment reply F --id ID --author A --text T [--date RFC3339] -o OUT
 rdocx comment resolve F --id ID -o OUT
+rdocx comment move F --id ID --anchor TEXT [--occurrence K] -o OUT [--json]   # a thread root onto TEXT
 rdocx comment remove F --id ID -o OUT        # removes the comment and its replies
 ```
+`comment move` keeps the thread's id, replies and resolved state; a reply id, an unknown id or a text not
+found exits 1 and writes nothing. `comment list --json` gives each thread's `anchor_text` first.
 `P` and `Q` are **body indices** (`body_index` of `text --json`, counting tables); runs are zero-based run
 boundaries, half-open: `--start-run 1 --end-run 2` covers run 1. Runs are counted as `text --json` lists them,
 those inside an inline content control or a tracked insertion included. Without `--date` a comment is
