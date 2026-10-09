@@ -1,0 +1,39 @@
+# Copies every branch and tag of this repository to the repository the variable MIRROR_REPO names (owner/name),
+# through the write deploy key the secret MIRROR_SSH_KEY holds; branches and tags deleted here go there too.
+# Release assets stay here. Skipped when the variable is unset (forks). Pushes made with GITHUB_TOKEN (build.yml's
+# release tags) start no workflow: the daily run catches them up.
+name: mirror
+
+on:
+  push:
+  delete:
+  schedule:
+    - cron: "43 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    if: vars.MIRROR_REPO != ''
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Push branches and tags
+        env:
+          MIRROR_REPO: ${{ vars.MIRROR_REPO }}
+          MIRROR_SSH_KEY: ${{ secrets.MIRROR_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$MIRROR_SSH_KEY" > ~/.ssh/mirror
+          chmod 600 ~/.ssh/mirror
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > ~/.ssh/known_hosts
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/mirror -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          git clone --bare --quiet "https://github.com/${GITHUB_REPOSITORY}.git" src.git
+          git -C src.git push --prune "git@github.com:${MIRROR_REPO}.git" \
+            '+refs/heads/*:refs/heads/*' '+refs/tags/*:refs/tags/*'

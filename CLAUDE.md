@@ -20,7 +20,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - `.github/workflows/`: `ci.yml` (suite on linux-x86_64, macos-arm64, macos-x86_64 and windows-x86_64, every
   push and PR), `build.yml` (only for a commit between two upstream releases: builds it on five runners and
   publishes the release `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first; by hand, and weekly on upstream
-  `main` HEAD as a candidate).
+  `main` HEAD as a candidate), `mirror.yml` (copies every branch and tag to the repository named by the
+  `MIRROR_REPO` variable, with the deploy key in the `MIRROR_SSH_KEY` secret; on every push and deletion, and daily).
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin.
