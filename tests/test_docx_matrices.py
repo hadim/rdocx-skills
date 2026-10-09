@@ -102,9 +102,10 @@ def test_producer_traits_matrix(row, column, rdocx_cli, tmp_path):
         d = rdocx.Document.open(f)
         d.update_page_fields()
         d.save(tmp_path / "fld.docx")
-        if column == "fields":
-            footer = zipfile.ZipFile(tmp_path / "fld.docx").read("word/footer1.xml").decode()
-            assert len(re.findall(r'fldCharType="separate"/>(?:</w:r><w:r>)?<w:t>([^<]*)</w:t>', footer)) == 2
+        if column == "fields":                     # header and footer fields keep their cached results, as in Word
+            cached = lambda path: re.findall(r'fldCharType="separate"/>(?:</w:r><w:r>)?<w:t>([^<]*)</w:t>',
+                                             zipfile.ZipFile(path).read("word/footer1.xml").decode())
+            assert cached(tmp_path / "fld.docx") == cached(f)
         else:
             revisions(rdocx_cli, f, tmp_path / "fld.docx", tmp_path / "out.docx")
     elif column == "render":

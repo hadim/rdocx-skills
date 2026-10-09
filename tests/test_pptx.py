@@ -15,7 +15,7 @@ from rpptx.dml.color import RGBColor
 from rpptx.enum.dml import MSO_ARROWHEAD_LENGTH, MSO_ARROWHEAD_STYLE, MSO_ARROWHEAD_WIDTH, MSO_LINE_DASH_STYLE
 from rpptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 
-from conftest import STAMP, digest, parts, run
+from conftest import MONOSPACE_FONTS, STAMP, digest, font_dir, parts, run
 
 EMU = 914400
 
@@ -803,3 +803,46 @@ def test_cli_operation_records_force_and_image_options(rpptx_cli, deck_pptx, tmp
             check=True)
         sizes.append(next(out.iterdir()).stat().st_size)
     assert sizes[0] < sizes[1]
+
+
+# ---------------------------------------------------------------- gaps reported 2026-10-09
+@pytest.mark.gap("table-cell-text-frame")
+def test_table_cell_text_is_formatted_through_its_text_frame(tmp_path):
+    prs = rpptx.Presentation()
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    slide.shapes.add_table(2, 2, rpptx.Inches(1), rpptx.Inches(1), rpptx.Inches(4), rpptx.Inches(1.5))
+    cell = prs.slides[0].shapes[0].table.cell(0, 0)
+    cell.text = "Header"
+    font = prs.slides[0].shapes[0].table.cell(0, 0).text_frame.paragraphs[0].runs[0].font
+    font.size, font.bold = rpptx.Pt(18), True
+    prs.save(tmp_path / "t.pptx")
+    slide_xml = parts(tmp_path / "t.pptx")["ppt/slides/slide1.xml"].decode()
+    assert re.search(r'<a:tc>.*?<a:rPr[^>]*\bsz="1800"[^>]*\bb="1"|<a:tc>.*?<a:rPr[^>]*\bb="1"[^>]*\bsz="1800"', slide_xml, re.S)
+
+
+@pytest.mark.gap("font-color-rgb-pptx")
+def test_run_font_color_rgb_as_in_python_pptx(tmp_path):
+    prs = rpptx.Presentation()
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    slide.shapes.add_textbox(rpptx.Inches(1), rpptx.Inches(1), rpptx.Inches(3), rpptx.Inches(1))
+    prs.slides[0].shapes[0].text_frame.paragraphs[0].add_run().text = "red"
+    run_ = prs.slides[0].shapes[0].text_frame.paragraphs[0].runs[0]
+    run_.font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
+    assert str(prs.slides[0].shapes[0].text_frame.paragraphs[0].runs[0].font.color.rgb) == "FF0000"
+
+
+@pytest.mark.gap("render-font-dir-pptx")
+def test_font_dir_reaches_rpptx_output(rpptx_cli, tmp_path):
+    fonts = font_dir(tmp_path, MONOSPACE_FONTS, "Monofamily")
+    prs = rpptx.Presentation()
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    slide.shapes.add_textbox(rpptx.Inches(1), rpptx.Inches(1), rpptx.Inches(6), rpptx.Inches(1))
+    prs.slides[0].shapes[0].text_frame.paragraphs[0].add_run().text = "Sample text in a font from a folder"
+    prs.slides[0].shapes[0].text_frame.paragraphs[0].runs[0].font.name = "Monofamily"
+    prs.save(tmp_path / "f.pptx")
+    for args in (["convert", "--to", "pdf"], ["convert", "--to", "png"], ["render"]):
+        res = run([rpptx_cli, *args, tmp_path / "f.pptx", "--font-dir", fonts, "-o", tmp_path / args[-1]])
+        assert res.returncode == 0, res.stderr
+    deck = rpptx.Presentation.from_bytes((tmp_path / "f.pptx").read_bytes())
+    assert digest(deck.render_slide_to_png(0, 100.0, font_dir=fonts)) != digest(deck.render_slide_to_png(0, 100.0))
+    assert deck.to_pdf(font_dir=fonts) != deck.to_pdf()

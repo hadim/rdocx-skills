@@ -199,7 +199,7 @@ def test_cell_replace_text_is_scoped_to_its_cell(tmp_path):
     assert cell_paragraph.replace_text("action", "change", expect=1) == 1 and doc.tables[0].cell(0, 1).text == "No change"
 
 
-def test_replace_story_text_edits_one_item_of_another_story(tmp_path):
+def test_replace_text_at_edits_one_item_of_another_story(tmp_path):
     d = docx.Document()
     d.add_paragraph("NEEDLE in the body")
     d.add_table(rows=1, cols=2).cell(0, 1).text = "NEEDLE in a cell, NEEDLE"
@@ -211,27 +211,40 @@ def test_replace_story_text_edits_one_item_of_another_story(tmp_path):
     def item(story, kind="paragraph"):                                     # the last one: cell (0, 1) for a cell
         return [i for i in doc.story_items if i.story.kind == story and i.kind == kind][-1]
     for story in ("header", "footer"):
-        assert doc.replace_story_text(item(story), "NEEDLE", "PIN", expect=1) == 1
-    assert doc.replace_story_text(item("table_cell"), "NEEDLE", "PIN", expect=2) == 2
+        assert doc.replace_text_at(item(story), "NEEDLE", "PIN", expect=1) == 1
+    assert doc.replace_text_at(item("table_cell"), "NEEDLE", "PIN", expect=2) == 2
     assert doc.paragraphs[0].text == "NEEDLE in the body"
     assert [item(s).text for s in ("header", "footer", "table_cell")] == [
         "PIN in the header", "PIN in the footer", "PIN in a cell, PIN"]
     doc.tables[0].cell(0, 0).text = "NEEDLE"
-    assert doc.replace_story_text(item("body", "table"), "NEEDLE", "PIN", expect=1) == 1   # a whole body table
+    assert doc.replace_text_at(item("body", "table"), "NEEDLE", "PIN", expect=1) == 1   # a whole body table
     assert doc.tables[0].cell(0, 0).text == "PIN" and doc.paragraphs[0].text == "NEEDLE in the body"
     with pytest.raises(rdocx.ReplacementCountError):
-        doc.replace_story_text(doc.story_items[0], "NEEDLE", "PIN", expect=3)
+        doc.replace_text_at(doc.story_items[0], "NEEDLE", "PIN", expect=3)
     doc.add_comment_on_text("NEEDLE", author="R", text="NEEDLE here too")
     comment = next(i for i in doc.story_items if i.story.kind == "comment" and i.kind == "paragraph")
-    with pytest.raises(rdocx.RdocxError):                                 # refused: comments are never searched
-        doc.replace_story_text(comment, "NEEDLE", "PIN")
-    box =rdocx.Document.open(word_textbox_docx(tmp_path / "t.docx"))
+    assert doc.replace_text_at(comment, "NEEDLE", "PIN", expect=1) == 1   # a comment's own text, not its anchor
+    assert doc.comments[0].text == "PIN here too" and doc.paragraphs[0].text == "NEEDLE in the body"
+    box = rdocx.Document.open(word_textbox_docx(tmp_path / "t.docx"))
     note = next(i for i in box.story_items if i.story.kind == "footnote" and i.kind == "paragraph")
-    assert box.replace_story_text(note, "NEEDLE", "PIN", expect=1) == 1
+    assert box.replace_text_at(note, "NEEDLE", "PIN", expect=1) == 1
+    assert box.try_replace_text("NEEDLE", "PIN") == 1                     # the text box, counted once, both copies
+    box.save(tmp_path / "all.docx")
+    assert part(tmp_path / "all.docx", "word/document.xml").count(b"PIN") == 2
+
+
+@pytest.mark.gap("replace-text-at-text-box-copy")
+def test_replace_text_at_a_text_box_edits_both_copies_or_refuses(tmp_path):
+    box = rdocx.Document.open(word_textbox_docx(tmp_path / "t.docx"))
     text_box = next(i for i in box.story_items if i.story.kind == "text_box" and i.kind == "paragraph")
-    with pytest.raises(rdocx.RdocxError):                                 # refused: the document-wide call edits both copies
-        box.replace_story_text(text_box, "NEEDLE", "PIN")
-    assert box.try_replace_text("NEEDLE", "PIN") == 1                     # the text box, counted once
+    try:
+        box.replace_text_at(text_box, "NEEDLE", "PIN")
+    except rdocx.RdocxError:
+        return                                                            # refused: nothing changed
+    box.save(tmp_path / "o.docx")
+    xml = part(tmp_path / "o.docx", "word/document.xml").decode()
+    copies = [re.search(r"<mc:%s\b.*?</mc:%s>" % (tag, tag), xml, re.S).group(0) for tag in ("Choice", "Fallback")]
+    assert ["PIN" in c and "NEEDLE" not in c for c in copies] == [True, True]   # Word's copy and the VML fallback
 
 
 # ---------------------------------------------------------------- structure
@@ -275,7 +288,7 @@ INVALIDATE = {
     "remove_row": lambda d: d.tables[0].remove_row(1),
     "paragraph_replace_text": lambda d: d.paragraphs[1].replace_text("delta", "D"),
     "cell_replace_text": lambda d: d.tables[0].cell(0, 0).replace_text("cell", "C"),
-    "replace_story_text": lambda d: d.replace_story_text(d.story_items[1], "delta", "D"),
+    "replace_text_at": lambda d: d.replace_text_at(d.story_items[1], "delta", "D"),
     "add_comment": lambda d: d.add_comment(rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=0),
                                                           end=rdocx.RunPosition(body_index=0, run_index=1)), author="A", text="c"),
 }
@@ -945,3 +958,46 @@ def test_section_and_style_records(report_docx):
     assert normal.is_default
     for name in ("priority", "hidden", "semi_hidden", "unhide_when_used", "quick_format", "locked", "auto_redefine"):
         getattr(normal, name)
+
+
+# ---------------------------------------------------------------- gaps reported 2026-10-09
+@pytest.mark.gap("validate-picture-paragraph")
+def test_validate_does_not_count_a_picture_paragraph_as_empty(rdocx_cli, tmp_path):
+    doc = rdocx.Document()
+    doc.add_paragraph("Before")
+    for _ in range(3):
+        doc.add_picture(png(), "red.png", rdocx.Inches(1), rdocx.Inches(0.5))
+    doc.add_paragraph("After")
+    doc.save(tmp_path / "p.docx")
+    assert len(rdocx.Document.open(tmp_path / "p.docx").paragraphs) == 5
+    res = run([rdocx_cli, "validate", tmp_path / "p.docx"])
+    assert res.returncode == 0 and "empty paragraph" not in res.stdout, res.stdout
+
+
+@pytest.mark.gap("colour-forms-docx")
+def test_every_colour_argument_takes_an_rgbcolor_and_a_hex_string(tmp_path):
+    doc = rdocx.Document()
+    doc.add_paragraph("text")
+    table = doc.add_table(1, 1)
+    red = rdocx.RGBColor(0xFF, 0x00, 0x00)
+    for colour in (red, "FF0000"):
+        doc.set_style("Normal", color=colour)
+        doc.paragraphs[0].runs[0].font.color = colour
+        doc.tables[0].set_borders("single", size=4, color=colour)
+        doc.tables[0].cell(0, 0).shading = colour
+        assert str(doc.paragraphs[0].runs[0].font.color) == "FF0000"
+    doc.paragraphs[0].runs[0].font.color.rgb = rdocx.RGBColor(0x00, 0x00, 0xFF)   # python-docx
+    assert str(doc.paragraphs[0].runs[0].font.color.rgb) == "0000FF"
+
+
+@pytest.mark.gap("table-indent")
+def test_table_indent_negative_included(tmp_path):
+    doc = rdocx.Document()
+    doc.add_table(1, 2)
+    doc.tables[0].indent = rdocx.Inches(0.25)
+    assert doc.tables[0].indent == rdocx.Inches(0.25)
+    doc.tables[0].indent = rdocx.Inches(-0.1)
+    doc.save(tmp_path / "t.docx")
+    assert re.search(rb'<w:tblInd w:w="-144" w:type="dxa"/>', part(tmp_path / "t.docx", "word/document.xml"))
+    doc.tables[0].indent = None
+    assert doc.tables[0].indent is None

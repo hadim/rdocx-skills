@@ -14,7 +14,7 @@ from docx.oxml.ns import nsdecls, qn
 from docx.shared import Pt
 from PIL import Image
 
-from conftest import BASH, STAMP, digest, part, poppler, run
+from conftest import BASH, MONOSPACE_FONTS, STAMP, VARIABLE_FONTS, digest, font_dir, part, poppler, run
 
 PDFTOTEXT = poppler("pdftotext")
 
@@ -47,13 +47,32 @@ def spaced(path, font, size, line, lines=3, picture=None):
 
 
 # ---------------------------------------------------------------- fields and TOC
-def test_page_fields_refresh_fills_cached_results(report_docx, tmp_path):
-    doc = rdocx.Document.open(report_docx)
+def page_field(p, instr, cached="9"):
+    for kind, code, text in (("begin", None, None), (None, instr, None), ("separate", None, None), (None, None, cached),
+                             ("end", None, None)):
+        field_run(p, kind=kind, instr=code, text=text)
+
+
+def test_page_fields_refresh_fills_body_results_and_keeps_header_footer_caches(tmp_path):
+    d = docx.Document()
+    p = d.add_paragraph("Page ")
+    page_field(p, " PAGE ")
+    p.add_run(" of ")
+    page_field(p, " NUMPAGES ")
+    for _ in range(80):
+        d.add_paragraph("filler " * 30)
+    page_field(d.sections[0].footer.paragraphs[0], " PAGE ")
+    d.save(tmp_path / "in.docx")
+    doc = rdocx.Document.open(tmp_path / "in.docx")
     rep = doc.update_layout_backed_fields()
-    assert rep.page_fields >= 1 and rep.num_pages_fields >= 1
+    assert (rep.page_fields, rep.num_pages_fields) == (1, 1)
+    assert any("retained cache" in x for x in rep.diagnostics)            # the footer's PAGE, as Word leaves it
     doc.save(tmp_path / "f.docx")
-    footer = part(tmp_path / "f.docx", "word/footer1.xml").decode()
-    assert re.search(r'fldCharType="separate"/><w:t>\d+</w:t>', footer)
+    cached = lambda name: re.findall(r'fldCharType="separate"/>(?:</w:r><w:r>)?<w:t>([^<]*)</w:t>',
+                                     part(tmp_path / "f.docx", name).decode())
+    pages = len(rdocx.Document.open(tmp_path / "in.docx").render_all_pages(10))
+    assert cached("word/document.xml")[:2] == ["1", str(pages)] and pages > 1
+    assert cached("word/footer1.xml") == ["9"]
 
 
 def field_run(p, kind=None, instr=None, text=None):
@@ -533,3 +552,58 @@ def test_editing_commands_print_an_operation_record(rdocx_cli, tmp_path):
     rec = step("revision", "reject", compare_out, out="h.docx")
     assert rec["schema"] == 1 and rec["resolved"] >= 1
     assert [p.text for p in docx.Document(tmp_path / "h.docx").paragraphs] == ["Alpha beta."]
+
+
+# ---------------------------------------------------------------- caller fonts
+def font_docx(path, family, bold=False, text="Sample text in a font from a folder"):
+    d = docx.Document()
+    r = d.add_paragraph().add_run(text)
+    r.font.name, r.font.bold, r.font.size = family, bold, Pt(24)
+    d.save(path)
+    return path
+
+
+def base_fonts(pdf):
+    return set(re.findall(rb"/BaseFont\s*/([A-Za-z0-9+_-]+)", pdf))
+
+
+def test_font_dir_reaches_the_pdf(rdocx_cli, tmp_path):
+    fonts = font_dir(tmp_path, MONOSPACE_FONTS, "Monofamily")
+    src = font_docx(tmp_path / "f.docx", "Monofamily")
+    run([rdocx_cli, "convert", src, "--to", "pdf", "-o", tmp_path / "plain.pdf"], check=True)
+    run([rdocx_cli, "convert", src, "--to", "pdf", "--font-dir", fonts, "-o", tmp_path / "fonts.pdf"], check=True)
+    assert base_fonts((tmp_path / "fonts.pdf").read_bytes()) != base_fonts((tmp_path / "plain.pdf").read_bytes())
+    assert base_fonts(rdocx.Document.open(src).to_pdf(font_dir=fonts)) == base_fonts((tmp_path / "fonts.pdf").read_bytes())
+
+
+@pytest.mark.gap("render-font-dir-docx")
+def test_font_dir_reaches_the_images(rdocx_cli, tmp_path):
+    fonts = font_dir(tmp_path, MONOSPACE_FONTS, "Monofamily")
+    src = font_docx(tmp_path / "f.docx", "Monofamily")
+    run([rdocx_cli, "convert", src, "--to", "png", "-o", tmp_path / "plain.png"], check=True)
+    run([rdocx_cli, "convert", src, "--to", "png", "--font-dir", fonts, "-o", tmp_path / "fonts.png"], check=True)
+    assert digest((tmp_path / "fonts.png").read_bytes()) != digest((tmp_path / "plain.png").read_bytes())
+    res = run([rdocx_cli, "render", src, "--font-dir", fonts, "-o", tmp_path / "pages"])
+    assert res.returncode == 0, res.stderr
+    doc = rdocx.Document.open(src)
+    assert digest(doc.render_page_to_png(0, 150.0, font_dir=fonts)) != digest(doc.render_page_to_png(0, 150.0))
+
+
+def ink(png):
+    with Image.open(io.BytesIO(png)) as im:
+        return sum(1 for v in im.convert("L").getdata() if v < 128)
+
+
+@pytest.mark.gap("variable-font-bold")
+def test_a_variable_font_from_a_folder_renders_bold(tmp_path):
+    pdftoppm = poppler("pdftoppm")
+    if not pdftoppm:
+        pytest.skip("Poppler's pdftoppm is not installed")
+    fonts = font_dir(tmp_path, VARIABLE_FONTS, "Varfamily")
+    weights = []
+    for bold in (False, True):
+        pdf = tmp_path / f"{bold}.pdf"
+        pdf.write_bytes(rdocx.Document.open(font_docx(tmp_path / f"{bold}.docx", "Varfamily", bold)).to_pdf(font_dir=fonts))
+        subprocess.run([pdftoppm, "-png", "-r", "100", "-singlefile", pdf, tmp_path / f"{bold}"], check=True)
+        weights.append(ink((tmp_path / f"{bold}.png").read_bytes()))
+    assert weights[1] > 1.15 * weights[0], weights                     # a bold run has visibly heavier strokes
