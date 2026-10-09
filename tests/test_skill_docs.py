@@ -194,7 +194,6 @@ NOT_DOCUMENTED = {
     "rpptx.SlideLayoutCollection": "the type of `prs.slide_layouts`, documented by its members",
     # handles reached through a documented attribute, which the skills describe by their members
     "rpptx.Background": "the type of `slide.background`, documented by its members",
-    "rpptx.Cell": "the type of `table.cell(r, c)`, documented by its members",
     "rpptx.ColorFormat": "the type of `fore_color` and `line.color`, documented by `rgb`",
     "rpptx.Column": "the type of `table.columns[k]`, documented by its members",
     "rpptx.Font": "the type of `run.font` and `paragraph.font`, documented by its members",

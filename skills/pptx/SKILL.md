@@ -8,7 +8,8 @@ description: "Use this skill any time a PowerPoint file (.pptx or .potx) is invo
 rpptx reads and writes the presentation package natively, keeps every part it does not touch byte for byte,
 lays text out with its own line breaker and renders slides itself (no LibreOffice). One pinned build serves
 the `rpptx` CLI (whole-deck operations) and the `rpptx` Python module (everything finer; its API follows
-python-pptx). Use them for every .pptx task. The tool is young: the gaps that force another tool for one step are in
+python-pptx, with differences: `font.color = RGBColor(...)` (gap font-color-rgb-pptx), handles to re-fetch after
+a structural change). Use them for every .pptx task. The tool is young: the gaps that force another tool for one step are in
 `references/gaps.md`, and every new one you meet is reported (last section).
 
 ## Setup, once per session
@@ -75,7 +76,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each; `add_shape` writes python-pptx's theme style (accent1 fill and line, theme effect 2), `add_textbox` none |
 | Z-order | | `shapes.move(from_, to)` | index 0 is the back |
 | Pictures | | `shape.replace_image(file)`, `shape.image.blob` | keeps position, size and crop |
-| Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each |
+| Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each; cell text format: gap table-cell-text-frame |
 | Slides | | `slides.add_slide(layout)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden` | |
 | Import a slide from another deck | | `prs.slides.import_slide(other.slides[k], layout=prs.slide_layouts[j], index=None)` | without `layout=`, a layout of the same name must exist here, else `RpptxError` |
 | Speaker notes | `rpptx text --notes F` | `slide.notes_text` (get and set) | None when the slide has no notes |
@@ -83,7 +84,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Metadata | `rpptx inspect --json F` | | read-only; no core properties API |
 | Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `resolve_comment`, `remove_comment`, `move_comment` | `slide.add_comment(..., shape_id=sh.shape_id)` anchors on a shape (the CLI on the slide); add the author first |
 | Text fit | | `prs.text_layout(width_factor=1.0)`, `pptx_ops.overflowing(F)` | rpptx's line breaks; `width_factor=0.95` for a margin |
-| PDF | `rpptx convert F --to pdf -o NEW.pdf` | `prs.to_pdf()`, `prs.to_notes_pdf()` | |
+| PDF | `rpptx convert F --to pdf -o NEW.pdf` | `prs.to_pdf()`, `prs.to_notes_pdf()` | installed fonts only: gap render-font-dir-pptx |
 | PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)` | CLI slides one-based, Python zero-based |
 | From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
 | Validity | `rpptx validate F` | `prs.validate()` | a tuple of issues (`kind`, `message`), empty when valid |

@@ -237,19 +237,26 @@ def test_comment_anchor_text_through_google_wrappers(rdocx_cli, tmp_path):
     assert (anchor.start.run_index, anchor.end.run_index) == (1, 2)
     listed = json.loads(run([rdocx_cli, "comment", "list", "--json", g], check=True).stdout)["comments"]
     assert [(x["id"], x["anchor_text"]) for x in listed] == [(cid, "paragraph"), (rid, None)]
-    assert listed[0]["anchor"]["story"]["kind"] == "body" and listed[0]["anchor"]["start"]["body_index"] == 0
-    assert (listed[0]["anchor"]["start"]["run_index"], listed[0]["anchor"]["end"]["run_index"]) == (1, 2)
-    assert listed[0]["reference"]["story"]["kind"] == "body" and listed[1]["anchor"] is listed[1]["reference"] is None
+    start, end = listed[0]["anchor"]["start"], listed[0]["anchor"]["end"]
+    assert (start["story_kind"], start["part_name"], start["item_kind"]) == ("body", "/word/document.xml", "paragraph")
+    assert (start["direct_body_index"], start["index_path"], start["run_index"], end["run_index"]) == (0, [0, 0], 1, 2)
+    assert listed[1]["anchor"] is None
 
 
 def test_comment_anchor_text_of_several_paragraphs_and_of_no_range(tmp_path):
     src, cid, _ = commented_thread(tmp_path / "c.docx")
     doc = rdocx.Document.open(src)
-    doc.move_comment(cid, rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=1),
-                                         end=rdocx.RunPosition(body_index=1, run_index=1)))
+    doc.move_comment(cid, body_range(doc, (0, 1), (1, 1)))
     assert doc.comments[0].anchor_text == "paragraph with some words here.\nBeta paragraph."
     bare = rewrite_body(src, tmp_path / "ref.docx", lambda x: re.sub(r'<w:commentRange(Start|End) w:id="0"/>', "", x))
     assert rdocx.Document.open(bare).comments[0].anchor_text == ""          # a reference, no range
+
+
+def body_range(doc, start, end):
+    """StoryRunRange from (body paragraph, run) to (body paragraph, run), end exclusive."""
+    items = [i for i in doc.story_items if i.story.kind == "body"]
+    pos = lambda bi, ri: rdocx.StoryRunPosition(item=items[bi], run_index=ri)
+    return rdocx.StoryRunRange(start=pos(*start), end=pos(*end))
 
 
 def thread_state(doc):
@@ -262,9 +269,11 @@ def test_move_comment_keeps_its_thread(tmp_path):
     before = thread_state(doc)
     doc.move_comment_to_text(cid, "Beta")
     assert thread_state(doc) == [before[0][:-1] + ("Beta",), before[1]]
-    doc.move_comment(cid, rdocx.RunRange(start=rdocx.RunPosition(body_index=2, run_index=0),
-                                         end=rdocx.RunPosition(body_index=2, run_index=1)))
+    doc.move_comment(cid, body_range(doc, (2, 0), (2, 1)))
     assert doc.comments[0].anchor_text == "Gamma paragraph." and doc.comments[0].resolved
+    with pytest.raises(TypeError):                                   # a range is a StoryRunRange
+        doc.move_comment(cid, rdocx.RunRange(start=rdocx.RunPosition(body_index=2, run_index=0),
+                                             end=rdocx.RunPosition(body_index=2, run_index=1)))
     for bad in (lambda: doc.move_comment_to_text(rid, "Beta"),       # a reply moves with its root
                 lambda: doc.move_comment_to_text(99, "Beta"),        # unknown id
                 lambda: doc.move_comment_to_text(cid, "Nowhere")):   # text not found
@@ -284,7 +293,7 @@ def test_move_comment_out_of_google_wrappers_cli(rdocx_cli, tmp_path):
     src, cid, rid = commented_thread(tmp_path / "c.docx")
     g = google_wrapped(src, tmp_path / "g.docx")
     out = tmp_path / "moved.docx"
-    rec = json.loads(run([rdocx_cli, "comment", "move", g, "--id", str(cid), "--anchor", "paragraph", "--occurrence", "1",
+    rec = json.loads(run([rdocx_cli, "comment", "move", g, str(cid), "--text", "paragraph", "--occurrence", "1",
                           "-o", out, "--json"], check=True).stdout)
     assert rec["comment_id"] == cid and rec["action"] == "move"
     doc = rdocx.Document.open(out)
@@ -294,9 +303,9 @@ def test_move_comment_out_of_google_wrappers_cli(rdocx_cli, tmp_path):
     xml = part(out, "word/document.xml").decode()
     assert "goog_rdk_0" not in xml and "goog_rdk_1" in xml               # the emptied wrapper went, the other stays
     assert run([rdocx_cli, "validate", out]).returncode == 0
-    refused = run([rdocx_cli, "comment", "move", g, "--id", str(cid), "--anchor", "paragraph", "-o", out])
+    refused = run([rdocx_cli, "comment", "move", g, str(cid), "--text", "paragraph", "-o", out])
     assert refused.returncode == 1 and "already exists" in refused.stderr
-    for bad in (["--id", str(cid), "--anchor", "Nowhere"], ["--id", str(rid), "--anchor", "Beta"]):
+    for bad in ([str(cid), "--text", "Nowhere"], [str(rid), "--text", "Beta"], ["99", "--text", "Beta"]):
         res = run([rdocx_cli, "comment", "move", g, *bad, "-o", tmp_path / "bad.docx"])
         assert res.returncode == 1 and not (tmp_path / "bad.docx").exists()
 
@@ -372,21 +381,27 @@ def test_a_comment_lands_on_a_paragraph_of_a_content_control_block(tmp_path):
     assert all(i.text != "p3" or i.kind != "paragraph" for i in doc.story_items)   # the block is listed, not p3
 
 
-def test_a_partial_cut_keeps_the_comment_on_what_is_left(tmp_path):
+def test_a_partial_cut_of_a_comment_range_is_refused(tmp_path):
     src, cid, rid = commented_thread(tmp_path / "c.docx")
     doc = rdocx.Document.open(src)
-    doc.move_comment(cid, rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=1),
-                                         end=rdocx.RunPosition(body_index=1, run_index=1)))
-    doc.remove_content(0)
-    assert [(c.id, c.parent_id, c.anchor_text) for c in doc.comments] == [(cid, None, "Beta paragraph."), (rid, cid, None)]
+    doc.move_comment(cid, body_range(doc, (0, 1), (1, 1)))
+    before = (doc.to_bytes(), thread_state(doc))
+    with pytest.raises(rdocx.RdocxError, match="cannot remove part of comment"):
+        doc.remove_content(0)
+    assert digest(doc.to_bytes()) == digest(before[0]) and thread_state(doc) == before[1]
+    doc.move_comment_to_text(cid, "Beta")                     # move the thread off the block first, then remove it
+    assert doc.remove_content(0)
+    assert [(c.id, c.parent_id, c.anchor_text) for c in doc.comments] == [(cid, None, "Beta"), (rid, cid, None)]
 
 
-def test_a_popped_paragraph_carries_its_thread_back(tmp_path):
+def test_popping_a_commented_paragraph_is_refused(tmp_path):
     src, _, _ = commented_thread(tmp_path / "c.docx")
     doc = rdocx.Document.open(src)
-    fragment = doc.pop_content(0)
-    assert len(doc.comments) == 0
-    doc.insert_content(2, fragment)
+    before = doc.to_bytes()
+    with pytest.raises(rdocx.RdocxError, match="fragments do not own comment threads"):
+        doc.pop_content(0)
+    assert digest(doc.to_bytes()) == digest(before) and len(doc.comments) == 2
+    doc.move_content(doc.paragraphs[0], 3)                    # move_content keeps the thread on the moved block
     assert [p.text for p in doc.paragraphs][-1].startswith("Alpha")
     root, reply = doc.comments
     assert (root.text, root.anchor_text, root.resolved, reply.text, reply.parent_id) == (
@@ -401,7 +416,7 @@ def test_validate_flags_a_comment_without_range_or_reference(rdocx_cli, tmp_path
     assert b"commentReference" not in part(bare, "word/document.xml")
     assert rdocx.Document.open(bare).comments[0].anchor is None and rdocx.Document.open(bare).comments[0].anchor_text is None
     res = run([rdocx_cli, "validate", bare])
-    assert res.returncode == 1 and f"comment {cid} has no range and no reference in any story" in res.stdout
+    assert res.returncode == 1 and f"comment {cid} is an orphan root with no source range or reference" in res.stdout
     assert run([rdocx_cli, "validate", src]).returncode == 0
 
 

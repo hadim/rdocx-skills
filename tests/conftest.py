@@ -136,3 +136,20 @@ def part(path, name):
 def parts(path):
     with zipfile.ZipFile(path) as z:
         return {n: z.read(n) for n in z.namelist()}
+
+
+MONOSPACE_FONTS = ("/System/Library/Fonts/Supplemental/Courier New.ttf", "C:/Windows/Fonts/cour.ttf",
+                   "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", "/usr/share/fonts/dejavu/DejaVuSansMono.ttf")
+VARIABLE_FONTS = ("/System/Library/Fonts/SFNS.ttf", "C:/Windows/Fonts/bahnschrift.ttf")
+
+
+def font_dir(tmp_path, candidates, family):
+    """A folder holding the first font of `candidates` found on this machine, under the file name `family`.ttf, so
+    that a document asking for `family` finds it only through that folder; skips the test when none is found."""
+    for path in map(Path, candidates):
+        if path.is_file():
+            folder = tmp_path / "fonts"
+            folder.mkdir(exist_ok=True)
+            shutil.copyfile(path, folder / f"{family}.ttf")
+            return folder
+    pytest.skip("no suitable font on this machine")

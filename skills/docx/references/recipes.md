@@ -66,7 +66,7 @@ docx_ops.save_atomic(doc, "scoped.docx", "report.docx")
 ```
 
 A count other than `expect` raises `rdocx.ReplacementCountError` and changes nothing. The match may cross
-runs, and a comment on the paragraph stays. `doc.replace_story_text(item, old, new, expect=N)` does
+runs, and a comment on the paragraph stays. `doc.replace_text_at(item, old, new, expect=N)` does
 the same in one item of `doc.story_items` (a header, footer or footnote paragraph, a table cell's
 paragraph); a text box or a comment is refused.
 
@@ -205,15 +205,16 @@ docx_ops.save_atomic(doc, "reviewed.docx", "commented.docx")
 ```
 
 ```bash
-$R/rdocx comment list --json reviewed.docx                # anchor_text, anchor and reference of each comment
-$R/rdocx comment move commented.docx --id 0 --anchor "bearing positions" -o moved-cli.docx --json
+$R/rdocx comment list --json reviewed.docx                # anchor_text and anchor of each comment
+$R/rdocx comment move commented.docx 0 --text "bearing positions" -o moved-cli.docx --json
 $R/rdocx validate reviewed.docx                           # exit 1 for a comment left without an anchor
 ```
 
 Removing content never leaves a comment pointing at nothing: a comment the removed block covers whole goes
-with its replies (move it first to keep it), one it covers in part stays on what is left, and a block taken
-out with `pop_content` carries its threads back on `insert_content`. `Table.remove_row` does the same for a
-row.
+with its replies (move it first to keep it). A removal that would cut a comment in part, and `pop_content` of
+a block that carries a comment, raise `RdocxError` and change nothing: move the thread off the block first, or
+move the block with `move_content`, which keeps its threads. `Table.remove_row` removes a comment the row
+covers whole the same way.
 
 ## Redline two versions, then accept or reject
 
