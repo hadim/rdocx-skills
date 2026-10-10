@@ -76,7 +76,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   macos-x86_64 (new: upstream builds it) and windows-x86_64. This repository's releases and the integration
   branches of hadim/rdocx are no longer used for the pin; `build.yml` stays for a commit between two
   upstream releases.
-- Suite against `154dc6bd`: 761 passed, 1 xfailed on macos-arm64 with Poppler; the build notes give 742 to 743 passed
+- Suite against `154dc6bd`: 761 passed, 1 xfailed on macos-arm64 with Poppler; with the two gaps triaged on
+  10/10/2026 and their docs: 761 passed, 9 skipped, 3 xfailed on macos-arm64 without Poppler; the build notes give 742 to 743 passed
   on the five platforms (18 to 19 skipped where Poppler is missing).
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
