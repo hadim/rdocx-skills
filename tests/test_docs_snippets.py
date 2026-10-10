@@ -51,6 +51,7 @@ def test_recipe_outputs(workdirs):
 
     import pptx
     import rdocx
+    import rpptx
     sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
     import docx_ops
     d = {r.parent.parent.name: w for r, w in workdirs.items()}["docx"]
@@ -140,3 +141,22 @@ def test_recipe_outputs(workdirs):
     with zipfile.ZipFile(p / "links.pptx") as z:
         comment = b"".join(z.read(n) for n in z.namelist() if n.startswith("ppt/comments/"))
     assert b"Which option did the board pick?" in comment and f'<ac:spMk id="{option_b.shape_id}"/>'.encode() in comment
+    one_shot = pptx.Presentation(p / "s5.pptx")
+    assert len(one_shot.slides) == 8 and one_shot.slides[7].notes_slide.notes_text_frame.text == "Questions from the board."
+    assert one_shot.core_properties.title == "Footbridge options" and one_shot.core_properties.author == "Claude"
+    footers = [sh.text_frame.text for s in list(one_shot.slides)[1:] for sh in s.placeholders
+               if sh.placeholder_format.type == pptx.enum.shapes.PP_PLACEHOLDER.FOOTER]
+    assert footers == ["Riverton Footbridge"] * 7
+    import json
+    assert json.loads((p / "fit.json").read_text())["fits"] is False
+    branded = rpptx.Presentation(p / "branded.pptx")
+    assert str(branded.slide_master.theme.colors["accent1"]) == "7B1E3A" and branded.slide_master.theme.fonts.major.latin == "Georgia"
+    assert branded.slide_master.shapes[len(branded.slide_master.shapes) - 1].alt_text == "Company logo"
+    assert {s.transition.type for s in branded.slides} == {"fade"} and branded.core_properties.title == "Footbridge options"
+    assert [s.header_footer.slide_number for s in branded.slides][:2] == [False, True]
+    steps = rpptx.Presentation(p / "steps.pptx").slides[7].shapes
+    assert [para.auto_number for para in steps[1].text_frame.paragraphs] == ["arabicPeriod"] * 3
+    assert steps[1].text_frame.paragraphs[0].runs[0].font.size <= rpptx.Pt(24) and steps[2].alt_text == "Survey"
+    assert b'<a:stCxn id="' in steps[4].xml and b"<a:endCxn" in steps[4].xml
+    raw = rpptx.Presentation(p / "raw.pptx").slides[3].shapes
+    assert any(b'numCol="2"' in sh.text_frame.xml for sh in raw if sh.has_text_frame)

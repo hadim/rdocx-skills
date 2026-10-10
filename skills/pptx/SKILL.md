@@ -47,13 +47,14 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 3. **Re-fetch the handles an edit retires**: each edit retires the handles of the kind it renumbers and
    those below it (slide > shape > paragraph > run), in every slide. Appends (`add_*`, `add_slide`) and
    setters retire none; `text_frame.text =` / `shape.text =` retire paragraphs and runs, a replacement
-   retires runs; removing, moving or grouping shapes retires shapes; moving or removing slides retires
-   everything. A retired handle raises `StaleElementError` naming the call: write `prs.slides[i].shapes[j]`
-   again.
+   retires runs; removing, moving, grouping or ungrouping shapes and `replace_xml` retire shapes; moving or
+   removing slides retires everything; layout edits and `apply_theme` retire layouts too. A retired handle
+   raises `StaleElementError` naming the call: write `prs.slides[i].shapes[j]` again.
 4. **Walk groups**: `slide.shapes` lists top-level shapes; a group's children are in `shape.shapes`
    (`shape_type == MSO_SHAPE_TYPE.GROUP`, value 6). `pptx_ops.walk(slide.shapes)` yields all of them.
-5. **Check the fit after any text change**: `prs.text_layout()` (or `pptx_ops.py overflow`) reports every
-   frame whose text overflows, with rpptx's own line breaks; then render the slide and look at it.
+5. **Check the fit after any text change**: `rpptx fit F` (exit 1 when a frame overflows, with the font scale
+   it needs) or `prs.text_layout()` reports every frame whose text overflows, with rpptx's own line breaks;
+   then render the slide and look at it.
 6. **The deck will be opened elsewhere** (PowerPoint, Google Slides, Keynote, LibreOffice): edit in place,
    keep placeholders and layouts, never rebuild a deck to change it.
 
@@ -65,31 +66,38 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Text with structure and formatting | `rpptx text --json F` | | paragraphs with `path`, `shape_id`, `level`, runs with bold, italic, underline, colour, font, size; notes |
 | Titles and outline | `rpptx outline [--json] [--notes] F` | `slide.shapes.title` | |
 | Structure, shapes, metadata | `rpptx inspect --json F` | `pptx_ops.py shapes F [--slide N]` | shape tree with ids, names, geometry |
-| Counted replacement | `rpptx replace F -p OLD -v NEW --expect N -o OUT` | `prs.try_replace_text(old, new, expect=n)`, `pptx_ops.replace_batch` | keeps run formatting |
+| Counted replacement | `rpptx replace F -p OLD -v NEW --expect N -o OUT`, many pairs: `rpptx replace F --map pairs.json -o OUT` | `prs.try_replace_text(old, new, expect=n)`, `pptx_ops.replace_batch` | keeps run formatting |
 | Replacement in one slide or one frame | | `slide.try_replace_text(old, new, expect=n)`, `shape.text_frame.try_replace_text(old, new, expect=n)` | the slide's notes too unless `notes=False`; same all-or-nothing count |
-| Edit a run, paragraph, text frame | | `run.text`, `run.font.*`, `paragraph.alignment/level/space_*/line_spacing`, `text_frame.margin_*/word_wrap/auto_size/vertical_anchor` | `shape.text = ...` drops run formatting, as in python-pptx |
+| Edit a run, paragraph, text frame | | `run.text`, `run.font.*` (also `highlight_color`, `small_caps`, `language`), `paragraph.alignment/level/space_*/line_spacing`, `text_frame.margin_*/word_wrap/auto_size/vertical_anchor` | `shape.text = ...` drops run formatting, as in python-pptx; a bare int is EMU: write `Pt(12)` (`font.size = 12` raises) |
+| Bullets, numbering | | `paragraph.bullet = "\u2022"`, `bullet_color`, `auto_number = "arabicPeriod"`, `auto_number_start` | |
 | Move, resize, rotate | | `shape.left/top/width/height/rotation` | a placeholder that inherits its geometry reads None: `shape.effective_geometry()` gives it, and a setter copies it first |
-| Fill, line | | `shape.fill.solid()`, `.fill.fore_color.rgb = RGBColor(...)`, `.line.width`, `.line.color.rgb` | |
+| Fill, line | | `shape.fill.solid()`, `.fill.fore_color.rgb = RGBColor(...)` (or `.theme_color`, `.alpha`), `.line.width`, `.line.color.rgb`; `fill.gradient()`, `fill.patterned()`, `fill.picture(file)` | |
 | Dashes, arrowheads | | `.line.dash_style = MSO_LINE_DASH_STYLE.DASH`, `.line.tail_end.type = MSO_ARROWHEAD_STYLE.TRIANGLE`, `.width`, `.length`; `head_end` likewise | enums in `rpptx.enum.dml` |
 | Shadow | | `shape.shadow.visible = True`, `.color.rgb`, `.alpha`, `.blur_radius`, `.distance`, `.direction`, `.align` | writes `a:outerShdw`; `shadow.inherit = False` removes the theme's shadow |
 | Connector without the theme effect | | `connector.theme_effect_index = 0` | `add_connector` references the theme's effect 1, an outer shadow in the default theme |
 | Change a shape's preset | | `shape.auto_shape_type = MSO_SHAPE.RECTANGLE` | autoshapes only |
 | Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each; `add_shape` writes python-pptx's theme style (accent1 fill and line, theme effect 2), `add_textbox` none |
-| Z-order | | `shapes.move(from_, to)` | index 0 is the back |
+| Z-order, arrange | | `shapes.move(from_, to)`, `shapes.group([...])`, `shape.ungroup()`, `shapes.align([...], "top")`, `shapes.distribute([...], "horizontal")`, `shape.flip_h` | index 0 is the back |
+| Alt text | | `shape.alt_text = "..."`, `shape.decorative = True` | every kind of shape |
+| Glued connector | | `connector.begin_connect(shape, site)`, `end_connect(shape, site)` | sites of a rectangle: 0 top, 1 left, 2 bottom, 3 right |
+| Picture into a placeholder | | `slide.placeholders[idx].insert_picture(file)` | cropped to fill; `shape.is_placeholder`, `placeholder_format.type` |
 | Pictures | | `shape.replace_image(file)`, `shape.image.blob` | keeps position, size and crop |
-| Tables | | `shape.table.cell(r, c).text`, `cell.text_frame.paragraphs[k].runs[j].font`, `cell.vertical_anchor`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each |
-| Slides | | `slides.add_slide(layout)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden` | |
+| Tables | | `table.first_row`, `horz_banding`, `style_id`, `shape.table.cell(r, c).text`, `cell.text_frame.paragraphs[k].runs[j].font`, `cell.vertical_anchor`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each |
+| Slides | `rpptx slide add/duplicate/remove/move/hide/show F ... -o OUT` | `slides.add_slide(layout)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden`, `slide.transition.type = "fade"` | |
+| Slide numbers, footer, date | `rpptx footer F --slide-number --footer T --skip-title -o OUT` | `prs.set_header_footer(footer=T)`, `slide.header_footer` | as PowerPoint's Header and Footer dialog; `add_field("slidenum")` in a text box |
+| Theme, master, layouts | | `prs.slide_master.theme.colors["accent1"] = ...`, `.theme.fonts.major.latin`, `prs.apply_theme(path)`, `prs.slide_master.shapes.add_picture(logo, ...)`, `slide_master.text_styles`, `slide_layouts.get_by_name(n)` | a logo on the master shows on every slide |
 | Import a slide from another deck | | `prs.slides.import_slide(other.slides[k], layout=prs.slide_layouts[j], index=None)` | without `layout=`, a layout of the same name must exist here, else `RpptxError` |
-| Speaker notes | `rpptx text --notes F` | `slide.notes_text` (get and set) | None when the slide has no notes |
+| Speaker notes | `rpptx text --notes F`, `rpptx notes set F N --text T -o OUT` | `slide.notes_text` (get and set) | None when the slide has no notes |
 | Hyperlinks, slide jumps | | `run.hyperlink.address`; `shape.click_action.hyperlink.address = url`, `shape.click_action.target_slide = prs.slides[k]` | any shape, group members included; set None to clear |
-| Metadata | `rpptx inspect --json F` | | read-only; no core properties API |
+| Metadata | `rpptx meta get F`, `rpptx meta set F --title T --author A -o OUT` | `prs.core_properties.title = ...` | |
 | Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `resolve_comment`, `remove_comment`, `move_comment` | `slide.add_comment(..., shape_id=sh.shape_id)` anchors on a shape (the CLI on the slide); add the author first |
-| Text fit | | `prs.text_layout(width_factor=1.0)`, `pptx_ops.overflowing(F)` | rpptx's line breaks; `width_factor=0.95` for a margin |
-| PDF | `rpptx convert F --to pdf -o NEW.pdf [--font-dir DIR]` | `prs.to_pdf(font_dir=)`, `prs.to_notes_pdf()` | `--font-dir` / `font_dir=` give fonts that are not installed, to every output and to the fit check |
-| PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)` | CLI slides one-based, Python zero-based |
+| Text fit | `rpptx fit [--json] F` | `prs.text_layout(width_factor=1.0)`, `text_frame.fit_text(max_size=18)`, `text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE` | rpptx's line breaks; `width_factor=0.95` for a margin; `auto_size` is written with PowerPoint's font scale at save |
+| PDF | `rpptx convert F --to pdf -o NEW.pdf [--font-dir DIR]` | `prs.to_pdf(font_dir=)`, `prs.to_notes_pdf()`, `to_pdfa()`, `to_handout_pdf(6)` | `--font-dir` / `font_dir=` give fonts that are not installed, to every output (not `to_pdfa` or handouts) and to the fit check |
+| PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)`, `render_slides(format="jpeg")` | CLI slides one-based, Python zero-based |
 | From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
 | Validity | `rpptx validate F` | `prs.validate()` | a tuple of issues (`kind`, `message`), empty when valid |
 | What changed | `rpptx diff A B` | | slide text only |
+| An element with no API | | `shape.xml` / `shape.replace_xml(xml)`, also on text frames, slides, layouts | instead of lxml; a bad replacement raises and changes nothing (`references/python-api.md`, Raw XML) |
 
 Commands and signatures: `references/cli.md`, `references/python-api.md` (and the `.pyi` stubs it points
 to). Tested examples: `references/recipes.md`. Ready-made commands: `scripts/pptx_ops.py` (`replace`,

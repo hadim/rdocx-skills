@@ -3,6 +3,7 @@
 
   python pptx_ops.py replace IN.pptx OUT.pptx --edit OLD NEW COUNT [--edit ...]   counted, all-or-nothing
   python pptx_ops.py overflow IN.pptx                                            text frames that overflow
+                                                                   (`rpptx fit IN.pptx` from the CLI: exit 1 on overflow)
   python pptx_ops.py shapes IN.pptx [--slide N]                                  shape tree with geometry
 
 `replace` chains `rpptx replace --expect` through temporary files and publishes the result only when every
@@ -154,7 +155,8 @@ def image_size(data):
 
 
 def overflowing(path, width_factor=1.0):
-    """[(slide_index, shape_id, name)] of text frames whose text does not fit, from rpptx's own line breaker."""
+    """[(slide_index, shape_id, name)] of text frames whose text does not fit, from rpptx's own line breaker (the
+    frames `rpptx fit` reports, which also gives the font scale each one needs)."""
     return [(f.slide_index, f.shape_id, f.name) for f in rpptx.Presentation(path).text_layout(width_factor=width_factor)
             if f.overflow]
 

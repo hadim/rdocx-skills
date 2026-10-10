@@ -207,6 +207,8 @@ NOT_DOCUMENTED = {
     "rpptx.ShapeClickAction": "the type of `shape.click_action`, documented by its members",
     "rpptx.ShapeHyperlink": "the type of `click_action.hyperlink`, documented by `address`",
     "rpptx.SlideLayout": "the type of `prs.slide_layouts[k]` and `slide.slide_layout`, documented by its use",
+    # rpptx names of the 2026-10-10 pin left out
+    "rpptx.SlideMasterCollection": "the type of `prs.slide_masters`, used as a sequence",
 }
 SKILL_OF = {"rdocx": "docx", "rpptx": "pptx"}
 

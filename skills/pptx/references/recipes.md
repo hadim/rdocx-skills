@@ -159,6 +159,76 @@ prs.slides[0].shapes[i].replace_image(io.BytesIO(pptx_ops.solid_png(w, h, (60, 1
 pptx_ops.save_atomic(prs, "picture.pptx", "deck.pptx")
 ```
 
+## One-shot slide edits, footers and metadata from the CLI
+
+```bash
+$R/rpptx slide add deck.pptx --layout "Title Only" --at 8 -o s1.pptx    # layout name or one-based number
+$R/rpptx slide move s1.pptx 6 --to 5 -o s2.pptx
+$R/rpptx notes set s2.pptx 8 --text "Questions from the board." -o s3.pptx
+$R/rpptx footer s3.pptx --slide-number --footer "Riverton Footbridge" --skip-title -o s4.pptx
+$R/rpptx meta set s4.pptx --title "Footbridge options" --author "Claude" -o s5.pptx
+$R/rpptx meta get s5.pptx
+$R/rpptx fit --json s5.pptx > fit.json || [ $? -eq 1 ]      # exit 1: a frame overflows, listed in fit.json
+```
+
+## Brand a deck: theme, logo, slide numbers, transitions, alt text
+
+```python
+import io, pptx_ops, rpptx
+from rpptx.util import Inches
+prs = rpptx.Presentation("deck.pptx")
+theme = prs.slide_master.theme
+theme.colors["accent1"] = "7B1E3A"                    # every shape that uses accent1 follows
+theme.fonts.major.latin = "Georgia"                   # headings
+logo = io.BytesIO(pptx_ops.solid_png(60, 60, (123, 30, 58)))
+prs.slide_master.shapes.add_picture(logo, Inches(9.2), Inches(0.1), width=Inches(0.6))   # on every slide
+prs.slide_master.shapes[len(prs.slide_master.shapes) - 1].alt_text = "Company logo"
+prs.set_header_footer(footer="Riverton Footbridge")  # slide numbers on, title slides skipped
+prs.slides[0].transition.type = "fade"
+prs.slides[0].transition.apply_to_all()
+prs.core_properties.title = "Footbridge options"
+pptx_ops.save_atomic(prs, "branded.pptx", "deck.pptx")
+```
+
+## Bullets, numbering, a fitted text box, a glued connector
+
+```python
+import pptx_ops, rpptx
+from rpptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
+from rpptx.util import Inches, Pt
+prs = rpptx.Presentation("deck.pptx")
+slide = prs.slides.add_slide(prs.slide_layouts.get_by_name("Title Only"))
+slide.shapes.title.text = "Next steps"
+box = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(4), Inches(1.5))
+box.text_frame.text = "Confirm the bearing survey"
+for text in ("Price option B", "Book the closure"):
+    box.text_frame.add_paragraph().text = text
+for p in box.text_frame.paragraphs:
+    p.auto_number = "arabicPeriod"                    # 1. 2. 3.; p.bullet = "\u2022" for bullets
+box.text_frame.fit_text(max_size=24)                  # the largest whole size that fits
+a = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(5), Inches(2), Inches(1.5), Inches(0.8))
+b = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(7.5), Inches(4), Inches(1.5), Inches(0.8))
+line = slide.shapes.add_connector(MSO_CONNECTOR.ELBOW, 0, 0, 0, 0)
+line.begin_connect(a, 3); line.end_connect(b, 1)      # right side of a to left side of b, glued
+a.alt_text, b.alt_text = "Survey", "Closure"
+pptx_ops.save_atomic(prs, "steps.pptx", "deck.pptx")
+```
+
+## Raw XML when no API exists
+
+```python
+import pptx_ops, rpptx
+prs = rpptx.Presentation("deck.pptx")
+k = next(i for i, sh in enumerate(prs.slides[3].shapes) if sh.has_text_frame and sh.text.startswith("Option B is recommended"))
+xml = prs.slides[3].shapes[k].text_frame.xml          # bytes: the p:txBody
+prs.slides[3].shapes[k].text_frame.replace_xml(xml.replace(b"<a:bodyPr", b'<a:bodyPr numCol="2"', 1))  # two columns
+try:
+    prs.slides[3].shapes[k].replace_xml(b"<p:sp/>")   # refused, deck unchanged
+except ValueError as e:
+    print("refused:", e)
+pptx_ops.save_atomic(prs, "raw.pptx", "deck.pptx")
+```
+
 ## Comments
 
 ```bash
