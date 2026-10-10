@@ -18,8 +18,27 @@ the next one must still open what you save. What matters when you edit with rdoc
 | a `customXML` part with Google's round-trip data | Google Docs | keep it; rdocx does |
 | several `w:style` elements with one id (`TableNormal`, `Normal`, `Table1`, ...), the later ones sometimes with other contents | Google Docs | `rebuild_toc()` and the style edits (`add_style()`) use the first definition |
 | several default styles of one type under different ids (`TableNormal` and `TableauNormal`, up to four paragraph defaults) | Google Docs | `rebuild_toc()` and `add_style()` accept them |
+| table of contents entries regenerated without their `TOC 1`, `TOC 2`... paragraph styles | Word, Google Docs, when they update the TOC | `rebuild_toc()` writes the entries back in the TOC styles |
+| pictures re-encoded, `pageBreakBefore` and `keepNext` rewritten, styles added | Google Docs, on every save | nothing shows to the eye; see the next section |
 | style ids in the interface language (`Titre1`, `Policepardfaut`) | Word in another language | assign styles by the id the file uses (`doc.styles`), never by an English name |
 | `w:lineRule="auto"` spacing of 276 (Word) or 264 / 276 (Google) | both | rdocx lays lines at Word's heights; still check page breaks in the target application when they matter |
+
+## What a save in Google Docs does
+
+Observed behaviour of Google Docs on a .docx it opens; no test here can exercise it.
+
+- **It re-serializes the whole package on every save**: content controls around comment anchors, fields packed,
+  table-of-contents styles stripped, pictures re-encoded, `pageBreakBefore` and `keepNext` rewritten, styles
+  added. Nothing shows to the eye. Resolving a thread in Google Docs saves again and drops the resolved comments
+  from the .docx.
+- **It keeps its own copy of the comments** of a .docx it has opened and writes it back at each save. A comment
+  added with rdocx is taken in at Google's next read; a change to the author or the text of a comment Google
+  already holds is undone at its next save, so such a change is made in Google Docs. The resolved state passes:
+  a thread resolved with rdocx (`resolve_comment`) shows resolved in Google Docs, on a first open and on a file
+  already open in Docs while the change syncs, and leaves the .docx at Google's next save, as above.
+- **A read in Google Docs can change a header or footer unnoticed.** Before writing over a file someone has
+  opened in Google Docs, compare its headers and footers with your last write: `rdocx diff LAST CURRENT` covers
+  every story.
 
 ## Rules
 
@@ -30,6 +49,11 @@ the next one must still open what you save. What matters when you edit with rdoc
 - **Do not round-trip through python-docx or LibreOffice** to finish an rdocx edit: each rewrites the whole
   package its own way. When a gap forces python-docx for one step, do that step on the file rdocx saved,
   and verify with rdocx afterwards.
+- **A file annotated in Google Docs is rebased, never repaired.** Take the file as you last wrote it, before
+  the reviewer's save; diff its text (`rdocx diff`) and its formatting (the runs of `rdocx text --json`, with
+  their `formatting`) against the annotated file, to isolate the reviewer's own edits; make every edit on the
+  clean copy; then carry the reviewer's comments across to it. Repairing the Google-saved file instead inherits
+  everything its save rewrote (previous section).
 - **Tracked changes and comments are shared state.** A file under review in Word or Google Docs carries the
   reviewers' threads and revisions: never accept, reject or remove them unless asked; add yours with an
   author name that says it is a machine (for example "Claude"), never the user's name, and a date (an undated
@@ -38,5 +62,17 @@ the next one must still open what you save. What matters when you edit with rdoc
 - **Fields and the TOC**: cached field results (TOC page numbers, PAGE, NUMPAGES) come from rdocx's
   pagination when you refresh them, which is close to Word's and not equal. When exact page numbers matter,
   say so and let Word update the fields (`doc.update_fields_on_open = True` asks Word to do it on open).
+  Otherwise, after a save in Google Docs or Word, which leaves the page fields packed without a cached result,
+  refresh the fields with `update_layout_backed_fields()` and set `doc.update_fields_on_open = False`
+  (`<w:updateFields w:val="false"/>`): Word asks to update fields on open unless the settings say false
+  (recipes.md, "Table of contents and page fields"). Word and Google Docs can also regenerate a table of
+  contents without its TOC styles: `rebuild_toc()` writes them back.
+- **Page count is a layout question first.** Before cutting text to save a page, list the active page breaks
+  before paragraphs: Google Docs writes `pageBreakBefore` on every paragraph, mostly as `w:val="0"`, and
+  `paragraph_format.page_break_before` is True only for an active one. Render a variant without each break and
+  compare; a page count predicted without a render is often wrong (recipes.md, "Page breaks before cutting
+  text").
+- **Read text through rdocx, not the XML.** rdocx writes the apostrophe and the double quote as `&apos;` and
+  `&quot;`: a check that searches `document.xml` as text does not find `owner's`.
 - **Check in the target**: for a file going back to Word or Google Docs, the final check is opening it there;
   `rdocx validate` and a render catch most problems, not all.
