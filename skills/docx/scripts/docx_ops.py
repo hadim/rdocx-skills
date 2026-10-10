@@ -118,8 +118,8 @@ def _package(source):
 
 def _part_paragraphs(xml):
     """[(style id, text)] for every w:p of one XML part, in document order. A paragraph's text is its own
-    w:t (a text box's paragraphs are listed on their own, not inside the paragraph that anchors them),
-    content controls, tracked insertions, hyperlinks and fields included, deletions (w:delText) out, and
+    w:t and w:tab ("\\t") (a text box's paragraphs are listed on their own, not inside the paragraph that anchors
+    them), content controls, tracked insertions, hyperlinks and fields included, deletions (w:delText) out, and
     mc:Fallback copies skipped, so a Word text box counts once."""
     out = []
 
@@ -138,6 +138,9 @@ def _part_paragraphs(xml):
         if el.tag == W_NS + "t":
             acc.append(el.text or "")
         for child in el:
+            if child.tag == W_NS + "tab" and el.tag == W_NS + "r":  # a tab character, not a tab stop of w:pPr
+                acc.append("\t")
+                continue
             walk(child, acc)
 
     walk(ET.fromstring(xml), [])

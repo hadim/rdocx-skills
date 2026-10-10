@@ -341,3 +341,21 @@ def test_measurements_read_back_where_the_decimal_tests_look(tmp_path):
         assert template.format(integer).encode() in zipfile.ZipFile(tmp_path / "a.docx").read(f"word/{part}.xml")
         assert read is None or read(doc) == integer, template
 
+
+
+@pytest.mark.gap("story-text-tab")
+def test_a_tab_reads_as_a_tab_in_every_story_view(rdocx_cli, tmp_path):
+    """A w:tab between two runs, as Word writes a footer "title<tab>page": every text view keeps it."""
+    d = docx.Document()
+    for p in (d.add_paragraph(), d.sections[0].header.paragraphs[0], d.sections[0].footer.paragraphs[0]):
+        p.add_run("left")
+        p.add_run().add_tab()
+        p.add_run("right")
+    d.save(tmp_path / "t.docx")
+    doc = rdocx.Document.open(tmp_path / "t.docx")
+    assert doc.sections[0].footer.paragraphs[0].text == "left\tright"  # the handle keeps it already
+    assert {it.text for it in doc.story_items if it.kind == "paragraph"} == {"left\tright"}
+    plain = run([rdocx_cli, "text", tmp_path / "t.docx"], check=True).stdout
+    assert plain.count("left\tright") == 3
+    record = json.loads(run([rdocx_cli, "text", "--json", tmp_path / "t.docx"], check=True).stdout)
+    assert {i["text"] for s in record["stories"] for i in s["items"]} == {"left\tright"}
