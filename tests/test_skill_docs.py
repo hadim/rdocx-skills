@@ -176,6 +176,11 @@ def test_the_checks_catch_a_wrong_name(tmp_path, monkeypatch):
 # subcommands; -h/--help and -V/--version are not scanned. A test fails on a new name a pin brings, and on an entry here
 # that is no longer needed.
 NOT_DOCUMENTED = {
+    # rdocx names of the 2026-10-10 pin left out
+    "rdocx.HeaderFooterCell": "the type of a header table's `cell(r, c)`, documented by its members",
+    "rdocx.HeaderFooterRow": "the type of a header table's `rows[i]`, documented by `cells`",
+    "rdocx.TabStops": "the type of `paragraph_format.tab_stops`, documented by its members",
+    "rdocx.WD_ORIENTATION": "python-docx's orientation enum (`WD_ORIENT`); `update_section` takes `orientation=\"landscape\"`",
     # sequences returned by attributes the skills document (`doc.paragraphs`, `row.cells`...): indexed, iterated and
     # measured with len(), never named or built
     "rdocx.CellCollection": "the type of `row.cells`, used as a sequence",
@@ -194,7 +199,6 @@ NOT_DOCUMENTED = {
     "rpptx.SlideLayoutCollection": "the type of `prs.slide_layouts`, documented by its members",
     # handles reached through a documented attribute, which the skills describe by their members
     "rpptx.Background": "the type of `slide.background`, documented by its members",
-    "rpptx.ColorFormat": "the type of `fore_color` and `line.color`, documented by `rgb`",
     "rpptx.Column": "the type of `table.columns[k]`, documented by its members",
     "rpptx.Font": "the type of `run.font` and `paragraph.font`, documented by its members",
     "rpptx.Hyperlink": "the type of `run.hyperlink`, documented by `address`",
@@ -203,6 +207,8 @@ NOT_DOCUMENTED = {
     "rpptx.ShapeClickAction": "the type of `shape.click_action`, documented by its members",
     "rpptx.ShapeHyperlink": "the type of `click_action.hyperlink`, documented by `address`",
     "rpptx.SlideLayout": "the type of `prs.slide_layouts[k]` and `slide.slide_layout`, documented by its use",
+    # rpptx names of the 2026-10-10 pin left out
+    "rpptx.SlideMasterCollection": "the type of `prs.slide_masters`, used as a sequence",
 }
 SKILL_OF = {"rdocx": "docx", "rpptx": "pptx"}
 

@@ -576,7 +576,6 @@ def test_font_dir_reaches_the_pdf(rdocx_cli, tmp_path):
     assert base_fonts(rdocx.Document.open(src).to_pdf(font_dir=fonts)) == base_fonts((tmp_path / "fonts.pdf").read_bytes())
 
 
-@pytest.mark.gap("render-font-dir-docx")
 def test_font_dir_reaches_the_images(rdocx_cli, tmp_path):
     fonts = font_dir(tmp_path, MONOSPACE_FONTS, "Monofamily")
     src = font_docx(tmp_path / "f.docx", "Monofamily")
@@ -587,6 +586,11 @@ def test_font_dir_reaches_the_images(rdocx_cli, tmp_path):
     assert res.returncode == 0, res.stderr
     doc = rdocx.Document.open(src)
     assert digest(doc.render_page_to_png(0, 150.0, font_dir=fonts)) != digest(doc.render_page_to_png(0, 150.0))
+    assert digest(doc.render_pages(dpi=100, pages=[0], font_dir=fonts)[0]) != digest(doc.render_pages(dpi=100, pages=[0])[0])
+    assert run([rdocx_cli, "layout", "--json", src, "--font-dir", fonts]).returncode == 0
+    assert run([rdocx_cli, "convert", src, "--to", "md", "--font-dir", fonts, "-o", tmp_path / "f.md"]).returncode != 0
+    missing = run([rdocx_cli, "convert", src, "--to", "pdf", "--font-dir", tmp_path / "nowhere", "-o", tmp_path / "m.pdf"])
+    assert missing.returncode != 0 and not (tmp_path / "m.pdf").exists()
 
 
 def ink(png):
@@ -594,7 +598,6 @@ def ink(png):
         return sum(1 for v in im.convert("L").getdata() if v < 128)
 
 
-@pytest.mark.gap("variable-font-bold")
 def test_a_variable_font_from_a_folder_renders_bold(tmp_path):
     pdftoppm = poppler("pdftoppm")
     if not pdftoppm:
@@ -607,3 +610,11 @@ def test_a_variable_font_from_a_folder_renders_bold(tmp_path):
         subprocess.run([pdftoppm, "-png", "-r", "100", "-singlefile", pdf, tmp_path / f"{bold}"], check=True)
         weights.append(ink((tmp_path / f"{bold}.png").read_bytes()))
     assert weights[1] > 1.15 * weights[0], weights                     # a bold run has visibly heavier strokes
+
+
+def test_a_font_without_a_bold_face_gets_a_synthetic_bold(tmp_path):
+    """A bold run in a family that has only a regular face draws heavier, as Word does (no Poppler needed)."""
+    fonts = font_dir(tmp_path, MONOSPACE_FONTS, "Monofamily")
+    weights = [ink(rdocx.Document.open(font_docx(tmp_path / f"{bold}.docx", "Monofamily", bold)).render_page_to_png(
+        0, 100.0, font_dir=fonts)) for bold in (False, True)]
+    assert weights[1] > 1.15 * weights[0], weights

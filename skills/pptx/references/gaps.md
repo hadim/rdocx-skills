@@ -4,14 +4,16 @@ Each gap is a strict expected failure in `tests/` (key in brackets): the day a n
 says so and this page is updated. "Fallback" means: do that step only with the default `pptx` skill
 (python-pptx), and keep rpptx for the rest and for the verification.
 
-A step that rpptx blocks, or gets wrong, and that this page does not list is a new gap: report it as
-`SKILL.md` describes (Reporting a bug or a missing feature).
+Before reaching for lxml, try the raw XML of the element (`shape.xml` / `replace_xml`, also on text frames,
+slides and layouts: `references/python-api.md`, "Raw XML").
 
 | Gap | What happens | Workaround / fallback |
 |---|---|---|
-| Formatting the text of a table cell [table-cell-text-frame] | `Cell` has `text` but no `text_frame`: no font, size, colour, bold or alignment for a cell's text | fallback: format the cells' runs with python-pptx (`cell.text_frame.paragraphs[0].runs[0].font`) on the file rpptx saved, then reopen it with rpptx; do not redraw the table as shapes |
-| `font.color.rgb` [font-color-rgb-pptx] | python-pptx's `run.font.color.rgb = RGBColor(...)` raises `AttributeError` (`font.color` is None or a hex string) | `run.font.color = RGBColor(...)`; fills, lines and shadows do take `.rgb` as in python-pptx |
-| Fonts from a folder [render-font-dir-pptx] | no `--font-dir` on `rpptx convert`, `render` or `thumbnail`, and no `fonts=` / `font_dir=` on `to_pdf`, `render_slide_to_png`, `render_all_slides` or `text_layout`: a font that is not installed renders, and is measured for the fit check, in a fallback | install the deck's fonts for the user first, or say that the render and the fit check use a fallback font |
+| A bare int for character spacing [font-spacing-bare-int] | `font.spacing = 2` is read as 2 EMU and written as `spc="0"`, without an error | always give a length: `font.spacing = Pt(2)` |
+| A held footer placeholder [header-footer-stale-shape] | after `slide.header_footer.slide_number = False` (or `set_header_footer(slide_number=False)`), a handle to the removed placeholder that was the slide's last shape reads None instead of raising | re-fetch `prs.slides[i].shapes` after switching a footer element off |
+
+A step that rpptx blocks, or gets wrong, and that this page does not list is a new gap: report it as
+`SKILL.md` describes (Reporting a bug or a missing feature).
 
 Also: `shape.text = ...`, `text_frame.text = ...` and `paragraph.text = ...` drop run formatting, as in
 python-pptx; edit `runs[k].text` to keep it.

@@ -74,9 +74,11 @@ def test_new_document_has_no_title_or_author(rdocx_cli, tmp_path):
     assert res.returncode == 0 and "title" in (res.stdout + res.stderr).lower()
 
 
-def test_add_picture_needs_both_dimensions():
+def test_add_picture_with_one_dimension_keeps_the_aspect_ratio():
+    """As python-docx: a width alone (or a height alone) scales the other side."""
     d = rdocx.Document()
     png = io.BytesIO()
-    Image.new("RGB", (10, 10)).save(png, "PNG")
-    with pytest.raises(rdocx.RdocxError, match="width and height"):
-        d.add_picture(png.getvalue(), "x.png", width=rdocx.Inches(1))
+    Image.new("RGB", (20, 10)).save(png, "PNG")
+    d.add_picture(png.getvalue(), "x.png", width=rdocx.Inches(2))
+    d.add_picture(png.getvalue(), height=rdocx.Inches(2))
+    assert [(p.width, p.height) for p in d.pictures] == [(rdocx.Inches(2), rdocx.Inches(1)), (rdocx.Inches(4), rdocx.Inches(2))]

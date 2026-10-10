@@ -233,7 +233,6 @@ def test_replace_text_at_edits_one_item_of_another_story(tmp_path):
     assert part(tmp_path / "all.docx", "word/document.xml").count(b"PIN") == 2
 
 
-@pytest.mark.gap("replace-text-at-text-box-copy")
 def test_replace_text_at_a_text_box_edits_both_copies_or_refuses(tmp_path):
     box = rdocx.Document.open(word_textbox_docx(tmp_path / "t.docx"))
     text_box = next(i for i in box.story_items if i.story.kind == "text_box" and i.kind == "paragraph")
@@ -278,37 +277,81 @@ KEEP = {
     "cell_width": lambda d: setattr(d.tables[0].cell(0, 0), "width", rdocx.Inches(2)),
     "run_text": lambda d: setattr(d.paragraphs[1].runs[0], "text", "X"),
 }
-INVALIDATE = {
-    "cell_text": lambda d: setattr(d.tables[0].cell(1, 1), "text", "Y"),
-    "paragraph_text": lambda d: setattr(d.paragraphs[1], "text", "Z"),
-    "try_replace_text": lambda d: d.try_replace_text("delta", "D"),
-    "replace_all_regex": lambda d: d.replace_all_regex([("delta", "D")]),
+# Appends, inserts and text setters keep the paragraph, run, table, row and cell handles they do not replace; story
+# items still go stale.
+KEEP_NODES = {
+    "add_paragraph": lambda d: d.add_paragraph("more"),
+    "add_heading": lambda d: d.add_heading("Head", 1),
+    "add_table": lambda d: d.add_table(1, 1),
+    "add_page_break": lambda d: d.add_page_break(),
+    "insert_paragraph": lambda d: d.insert_paragraph(0, "first"),
+    "insert_paragraph_before": lambda d: d.paragraphs[1].insert_paragraph_before("before"),
     "add_run": lambda d: d.paragraphs[1].add_run("more"),
+    "paragraph_text": lambda d: setattr(d.paragraphs[1], "text", "Z"),
+    "cell_text": lambda d: setattr(d.tables[0].cell(1, 1), "text", "Y"),
+    "paragraph_replace_xml": lambda d: d.paragraphs[1].replace_xml(d.paragraphs[1].xml),
+    "table_add_row": lambda d: d.tables[0].add_row(),
+    "table_add_column": lambda d: d.tables[0].add_column(rdocx.Inches(1)),
+}
+# Row and grid edits keep the table handle and retire its rows and cells.
+TABLE_EDITS = {
     "clone_row": lambda d: d.tables[0].clone_row(0),
     "remove_row": lambda d: d.tables[0].remove_row(1),
+    "insert_column": lambda d: d.tables[0].insert_column(0),
+    "remove_column": lambda d: d.tables[0].remove_column(1),
+    "set_cell_grid_span": lambda d: d.tables[0].set_cell_grid_span(1, 0, 2),
+}
+INVALIDATE = {
+    "try_replace_text": lambda d: d.try_replace_text("delta", "D"),
+    "replace_all_regex": lambda d: d.replace_all_regex([("delta", "D")]),
     "paragraph_replace_text": lambda d: d.paragraphs[1].replace_text("delta", "D"),
     "cell_replace_text": lambda d: d.tables[0].cell(0, 0).replace_text("cell", "C"),
     "replace_text_at": lambda d: d.replace_text_at(d.story_items[1], "delta", "D"),
     "add_comment": lambda d: d.add_comment(rdocx.RunRange(start=rdocx.RunPosition(body_index=0, run_index=0),
                                                           end=rdocx.RunPosition(body_index=0, run_index=1)), author="A", text="c"),
+    "remove_content": lambda d: d.remove_content(2),
+    "split_run": lambda d: d.split_run(1, 0, 2),
+    "set_story_text": lambda d: d.set_story_text(d.story_items[1], "Q"),
+    "pop_content": lambda d: d.pop_content(1),
+    "move_content": lambda d: d.move_content(d.paragraphs[1], 0),
+    "clone_content": lambda d: d.clone_content(d.paragraphs[1], 0),
+    "add_picture": lambda d: d.add_picture(png(), "red.png", rdocx.Inches(1), rdocx.Inches(0.5)),
 }
 
 
-@pytest.mark.parametrize("op", sorted(KEEP) + sorted(INVALIDATE))
+@pytest.mark.parametrize("op", sorted(KEEP) + sorted(KEEP_NODES) + sorted(TABLE_EDITS) + sorted(INVALIDATE))
 def test_which_calls_invalidate_handles(tmp_path, op):
-    """The rule in python-api.md, "Handles": formatting setters and Run.text keep every handle valid, the
-    other edits invalidate every handle (paragraph, run, table, story item)."""
+    """The rule in python-api.md, "Handles": formatting setters and Run.text keep every handle valid; appends,
+    inserts and text setters keep the other paragraph, run, table and cell handles; row edits retire the rows and
+    cells of that table; the other edits invalidate every handle (paragraph, run, table, cell, story item)."""
     path = simple(tmp_path / "a.docx", "Alpha beta", "Gamma delta", table_after=1)
     doc = rdocx.Document.open(path)
-    held = [lambda p=doc.paragraphs[0]: p.text, lambda r=doc.paragraphs[0].runs[0]: r.text,
-            lambda t=doc.tables[0]: len(t.rows), lambda i=doc.story_items[0]: doc.set_story_text(i, "Alpha beta")]
-    (KEEP.get(op) or INVALIDATE[op])(doc)
-    for h in held:
-        if op in KEEP:
+    doc.tables[0].cell(1, 1).text = ""                 # an empty cell for set_cell_grid_span to consume
+    nodes = [lambda p=doc.paragraphs[0]: p.text, lambda r=doc.paragraphs[0].runs[0]: r.text,
+             lambda t=doc.tables[0]: len(t.rows)]
+    cell = [lambda c=doc.tables[0].cell(0, 0): c.text]
+    item = [lambda i=doc.story_items[0]: doc.set_story_text(i, "Alpha beta")]
+    edited = [lambda r=doc.paragraphs[1].runs[0]: r.text] if op in ("paragraph_text", "paragraph_replace_xml") else []
+    edited += [lambda p=doc.tables[0].cell(1, 1).paragraphs[0]: p.text] if op == "cell_text" else []
+    (KEEP.get(op) or KEEP_NODES.get(op) or TABLE_EDITS.get(op) or INVALIDATE[op])(doc)
+    valid = (nodes + cell + item if op in KEEP else nodes + cell if op in KEEP_NODES
+             else nodes if op in TABLE_EDITS else [])
+    for h in nodes + cell + item + edited:
+        if h in valid:
             h()
         else:
             with pytest.raises(rdocx.StaleElementError):
                 h()
+    if op == "insert_paragraph":
+        assert nodes[0]() == "Alpha beta"                 # a held handle follows its paragraph, not its index
+
+
+def test_a_stale_handle_names_the_call_that_retired_it(tmp_path):
+    doc = rdocx.Document.open(simple(tmp_path / "a.docx", "Alpha", "Beta"))
+    held = doc.paragraphs[0]
+    doc.remove_content(1)
+    with pytest.raises(rdocx.StaleElementError, match="remove_content"):
+        held.text
 
 
 def test_story_items_are_checked_handles(tmp_path):
@@ -350,7 +393,7 @@ def test_clone_content_renames_bookmarks_and_drops_comment_anchors(tmp_path):
 def test_handles_go_stale_after_structural_edits(tmp_path):
     doc = rdocx.Document.open(simple(tmp_path / "a.docx", "Alpha", "Beta"))
     held = doc.paragraphs[0]
-    doc.insert_paragraph(0, "x")
+    doc.move_content(doc.paragraphs[1], 0)
     with pytest.raises(rdocx.StaleElementError):
         held.text
 
@@ -438,10 +481,11 @@ def test_table_merge_borders_shading_widths_and_row_height_from_python(tmp_path)
     with pytest.raises(rdocx.RdocxError):
         doc.tables[0].set_cell_grid_span(1, 0, 2)  # a span consumes empty cells only
     t = doc.tables[0]
-    t.set_cell_grid_span(0, 0, 2)  # consumes the empty cell to its right; a structural change
+    held = t.cell(1, 0)
+    t.set_cell_grid_span(0, 0, 2)  # consumes the empty cell to its right; retires the table's rows and cells
     with pytest.raises(rdocx.StaleElementError):
-        t.cell(0, 0)
-    t = doc.tables[0]
+        held.text
+    assert t.cell(0, 0).grid_span == 2                 # the table handle stays valid
     t.cell(1, 1).shading = "FFEE00"
     t.set_borders("single", size=4, color="000000")
     t.set_column_width(0, rdocx.Inches(1))
@@ -716,14 +760,27 @@ def test_core_properties_are_writable(tmp_path):
 
 
 # ---------------------------------------------------------------- formatting values and units
-def test_font_color_reads_back_an_rgbcolor(tmp_path):
+def test_font_color_is_a_colour_format(tmp_path):
+    """python-docx's shape: `font.color` is a ColorFormat (`rgb`, `type`, `theme_color`), never None."""
     doc = rdocx.Document()
     doc.add_paragraph("x")
-    doc.paragraphs[0].runs[0].font.color = rdocx.RGBColor(0x7B, 0x1E, 0x3A)
+    font = doc.paragraphs[0].runs[0].font
+    assert (font.color.rgb, font.color.type) == (None, None)
+    font.color = rdocx.RGBColor(0x7B, 0x1E, 0x3A)                      # shortcut for font.color.rgb = ...
+    rgb = doc.paragraphs[0].runs[0].font.color.rgb
+    assert tuple(rgb) == (0x7B, 0x1E, 0x3A) and str(rgb) == "7B1E3A" and rgb != "7B1E3A"
+    assert doc.paragraphs[0].runs[0].font.color.type == rdocx.MSO_COLOR_TYPE.RGB
+    doc.paragraphs[0].runs[0].font.color.theme_color = rdocx.MSO_THEME_COLOR.ACCENT_1
     color = doc.paragraphs[0].runs[0].font.color
-    assert tuple(color) == (0x7B, 0x1E, 0x3A) and str(color) == "7B1E3A" and color != "7B1E3A"
-    with pytest.raises(TypeError):
-        doc.paragraphs[0].runs[0].font.color = "7B1E3A"
+    assert (color.type, color.theme_color) == (rdocx.MSO_COLOR_TYPE.THEME, rdocx.MSO_THEME_COLOR.ACCENT_1)
+    doc.paragraphs[0].runs[0].font.color = "auto"
+    assert doc.paragraphs[0].runs[0].font.color.type == rdocx.MSO_COLOR_TYPE.AUTO
+    doc.paragraphs[0].runs[0].font.color = None                        # removes the colour
+    assert doc.paragraphs[0].runs[0].font.color.type is None
+    with pytest.raises(TypeError, match="RGBColor or a hex string"):
+        doc.paragraphs[0].runs[0].font.color = 0x7B1E3A
+    with pytest.raises(ValueError, match="six hexadecimal digits"):
+        doc.paragraphs[0].runs[0].font.color = "GG0000"
 
 
 def test_length_helpers():
@@ -922,12 +979,12 @@ def test_table_and_cell_borders_margins_grid_and_rows(tmp_path):
     doc.tables[0].set_cell_margins(top=rdocx.Pt(2), right=rdocx.Pt(4), bottom=rdocx.Pt(2), left=rdocx.Pt(4))
     doc.tables[0].grid_widths = [rdocx.Inches(1), rdocx.Inches(2)]
     t = doc.tables[0]
-    assert t.border("top") == ("double", 8, "FF0000") and t.cell_margins == (rdocx.Pt(2), rdocx.Pt(4), rdocx.Pt(2), rdocx.Pt(4))
+    assert t.border("top") == ("double", 8, (255, 0, 0)) and t.cell_margins == (rdocx.Pt(2), rdocx.Pt(4), rdocx.Pt(2), rdocx.Pt(4))
     assert t.grid_widths == (rdocx.Inches(1), rdocx.Inches(2))
-    t.cell(0, 0).set_border("left", "single", size=4, color="00FF00")
+    t.cell(0, 0).set_border("left", "single", size=4, color="#00FF00")
     doc.tables[0].cell(0, 0).set_margins(top=rdocx.Pt(1), right=0, bottom=rdocx.Pt(1), left=0)
     cell = doc.tables[0].cell(0, 0)
-    assert cell.border("left") == ("single", 4, "00FF00") and cell.margins == (rdocx.Pt(1), 0, rdocx.Pt(1), 0)
+    assert cell.border("left") == ("single", 4, (0, 255, 0)) and cell.margins == (rdocx.Pt(1), 0, rdocx.Pt(1), 0)
     assert isinstance(cell.margins[0], rdocx.Length)
     row = doc.tables[0].rows[0]
     row.is_header, row.cant_split = True, True
@@ -960,8 +1017,7 @@ def test_section_and_style_records(report_docx):
         getattr(normal, name)
 
 
-# ---------------------------------------------------------------- gaps reported 2026-10-09
-@pytest.mark.gap("validate-picture-paragraph")
+# ---------------------------------------------------------------- gaps reported 2026-10-09, closed by the 2026-10-10 pin
 def test_validate_does_not_count_a_picture_paragraph_as_empty(rdocx_cli, tmp_path):
     doc = rdocx.Document()
     doc.add_paragraph("Before")
@@ -974,23 +1030,25 @@ def test_validate_does_not_count_a_picture_paragraph_as_empty(rdocx_cli, tmp_pat
     assert res.returncode == 0 and "empty paragraph" not in res.stdout, res.stdout
 
 
-@pytest.mark.gap("colour-forms-docx")
 def test_every_colour_argument_takes_an_rgbcolor_and_a_hex_string(tmp_path):
     doc = rdocx.Document()
     doc.add_paragraph("text")
     table = doc.add_table(1, 1)
     red = rdocx.RGBColor(0xFF, 0x00, 0x00)
-    for colour in (red, "FF0000"):
+    for colour in (red, "FF0000", "#FF0000", (255, 0, 0)):
         doc.set_style("Normal", color=colour)
         doc.paragraphs[0].runs[0].font.color = colour
+        doc.paragraphs[0].runs[0].font.shading = colour
         doc.tables[0].set_borders("single", size=4, color=colour)
+        doc.tables[0].set_border("top", "single", size=4, color=colour)
+        doc.tables[0].cell(0, 0).set_border("left", "single", size=4, color=colour)
         doc.tables[0].cell(0, 0).shading = colour
-        assert str(doc.paragraphs[0].runs[0].font.color) == "FF0000"
+        assert str(doc.paragraphs[0].runs[0].font.color.rgb) == "FF0000"
+        assert doc.paragraphs[0].runs[0].font.shading == doc.tables[0].cell(0, 0).shading == red
     doc.paragraphs[0].runs[0].font.color.rgb = rdocx.RGBColor(0x00, 0x00, 0xFF)   # python-docx
     assert str(doc.paragraphs[0].runs[0].font.color.rgb) == "0000FF"
 
 
-@pytest.mark.gap("table-indent")
 def test_table_indent_negative_included(tmp_path):
     doc = rdocx.Document()
     doc.add_table(1, 2)

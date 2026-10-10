@@ -14,29 +14,11 @@ issue's state decides nothing: the suite run on each new build (the build workfl
 gaps closed.
 """
 
+# The nine gaps of the v0.16.0 pin (tensorbee/rdocx#295 to #301) closed with the integration build of 2026-10-10.
 GAPS = {
-    # docx and pptx: rendering
-    # upstream: tensorbee/rdocx#296
-    "render-font-dir-docx": "caller fonts reach only the PDF: rdocx convert --to png/jpeg/tiff ignores --font-dir silently, rdocx render has no --font-dir, Document.render_page_to_png / render_all_pages / render_pages take no fonts",
-    # upstream: tensorbee/rdocx#296
-    "render-font-dir-pptx": "rpptx has no way to give fonts: no --font-dir on convert, render or thumbnail, no fonts= on Presentation.to_pdf, render_slide_to_png, render_all_slides or text_layout",
-    # upstream: tensorbee/rdocx#297
-    "variable-font-bold": "a variable font given through --font-dir / font_dir renders a bold run with the regular glyphs under a -Bold font name: the wght axis is not instanced and no synthetic bold is applied",
-    # docx: validation
-    # upstream: tensorbee/rdocx#298
-    "validate-picture-paragraph": "rdocx validate counts a paragraph that holds only a picture as an empty paragraph",
-    # docx and pptx: Python colours
-    # upstream: tensorbee/rdocx#299
-    "colour-forms-docx": "colour arguments take an RGBColor (set_style, add_style, font.color) or a hex string (set_borders, set_border, shading) but not both, and font.color.rgb (python-docx) raises AttributeError",
-    # upstream: tensorbee/rdocx#299
-    "font-color-rgb-pptx": "run.font.color.rgb = RGBColor(...) (python-pptx) raises AttributeError: rpptx takes font.color = RGBColor(...) and reads back a hex string",
-    # docx: tables
-    # upstream: tensorbee/rdocx#300
-    "table-indent": "the Python Table has no indent (w:tblInd); the Rust set_indent_checked refuses a negative indent, which Word writes and honours",
-    # pptx: tables
-    # upstream: tensorbee/rdocx#295
-    "table-cell-text-frame": "a table Cell has text but no text_frame in Python, so the text of a cell cannot be formatted (font, size, colour, alignment)",
-    # docx: editing
-    # upstream: tensorbee/rdocx#301
-    "replace-text-at-text-box-copy": "replace_text_at on a text box paragraph edits the DrawingML copy (mc:Choice) only; the VML fallback (mc:Fallback) keeps the old text, so the two copies of the box disagree",
+    # docx: headers and footers
+    # pptx: Python
+    "font-spacing-bare-int": "font.spacing = 2 (a bare int, read as EMU) writes spc=\"0\" without a word, where the other length setters raise naming Pt",
+    "header-footer-stale-shape": "slide.header_footer.slide_number = False removes the slide-number placeholder but does not retire a held handle to it when it is the last shape: it reads None and a write raises RpptxError instead of StaleElementError",
+    "header-footer-picture": "a picture cannot be added to a header or footer from Python: Run.add_picture in a header or footer run raises NotImplementedError, and raw XML (Paragraph.xml / replace_xml) is refused there too",
 }

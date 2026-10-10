@@ -21,17 +21,19 @@ print an operation record: `output`, `scope` and the result (`comment_id`, `main
 |---|---|
 | `rdocx text F` | plain text, accepted view of tracked changes (insertions in, deletions out; a paragraph or a table row that a tracked deletion removes prints no line): the body first, one line per paragraph, a table row on one line, then every other story (text boxes, headers, footers, footnotes, endnotes, comments), each part under a line such as `--- header (/word/header1.xml) ---`, a part without text left out. A story part that cannot be read is left out with a warning on stderr (exit 0): `validate` names it |
 | `rdocx text --json F` | `{"paragraphs": [...], "revision_view": "accepted", "scope": "all-supported-stories", "stories": [...]}`: `paragraphs` holds the body and its tables, as if tracked changes were accepted (a paragraph that a tracked deletion removes is left out, the others keep their `body_index`). Each paragraph: `body_index` (top-level block), `path` (list of `{kind, index}` from the block down to the paragraph, through tables and content controls; `[]` for a top-level paragraph), `style` (style id), `numbering` (`{num_id, level}` or null), `text`, `runs` (`index`, `text`, `formatting`: `bold`, `italic`, `underline`, `strike`, `size_points`, `font`, `color`, `highlight`, `language`, `style`, or null; the text inside smart tags, inline custom XML and simple fields is in `text`, not in `runs`). `stories` lists every other story: `kind` (`text_box`, `header`, `footer`, `footnote`, `endnote`, `comment`), `part_name`, `owner_index`, `items` (`index_path`, `kind`, `text`). When a story part cannot be read, `scope` is `main` and `stories` is empty |
-| `rdocx inspect [--json] F` | paragraph and table counts, `content_elements`, `styles_used`, `metadata` (title, author, subject, keywords); no images |
+| `rdocx inspect [--json] F` | paragraph and table counts, `content_elements`, `styles_used`, `metadata` (title, author, subject, keywords), `words`, `characters`, `characters_no_spaces`, `pages` (rdocx's pagination), `pictures` of the body (`relationship_id`, `name`, `alt_text`, `width_emu`, `height_emu`, `anchored`), `content_controls` of the body (tag, alias, id, text) |
 | `rdocx layout --json F` | `body_items`: for each top-level block, `body_index`, `kind`, `fragments` (`physical_page`, `displayed_page`, `x`, `y`, `width`, `height` in points); a paragraph that a tracked deletion removes has none |
 | `rdocx comment list [--json] F` | `comments`: `id`, `author`, `initials`, `date`, `text`, `parent_id`, `resolved`, in package order; with `--json` also `anchor_text` (the accepted-view text the comment covers, paragraphs joined with a newline; null for a reply), `anchor` (`start` and `end`, each with `story_kind`, `part_name`, `owner_index`, `item_kind`, `index_path`, `direct_body_index` and `run_index`, end exclusive; null for a reply) |
 | `rdocx revision list [--json] F` | `revisions`: `id`, `kind` (insertion, deletion, paragraph_property_change, run_property_change, section_property_change, ...), `author`, `timestamp`, `story` (`kind`, `part_name`, `owner_index`): every supported story |
 | `rdocx diff A B [--json] [--exit-code]` | paragraphs that differ in every story, `-` and `+` lines, each labelled with its body position or its story (`[4]`, `[header default, section 1, paragraph 1]`), with the paragraph and table counts of each file. `--json`: `differences` (`change`, `story`, `location_a`, `location_b`, `text_a`, `text_b`) with `added`, `removed`, `changed` counts. Exit 0 whether or not they differ, unless `--exit-code`: 1 when they differ, as `diff` does |
-| `rdocx validate F` | package and schema invariants: every XML part the main document relates to must be well formed (a truncated header fails, naming the part), and every paragraph, character or table style id used by the body, headers, footers, notes and comments must be defined; a comment with no range and no reference anywhere is an error too (`invalid comment ownership: comment N is an orphan root with no source range or reference`, exit 1, on stdout). Warnings (empty paragraphs, missing title) keep exit 0 |
+| `rdocx validate F` | package and schema invariants: every XML part the main document relates to must be well formed (a truncated header fails, naming the part), and every paragraph, character or table style id used by the body, headers, footers, notes and comments must be defined; a comment with no range and no reference anywhere is an error too (`invalid comment ownership: comment N is an orphan root with no source range or reference`, exit 1, on stdout). Warnings (empty paragraphs, a paragraph holding only a picture not counted; missing title) keep exit 0 |
 
 ## Editing
 
 ```bash
 rdocx replace F -p OLD -v NEW --expect N -o OUT
+rdocx replace F --map pairs.json -o OUT [--json]          # [{"placeholder": "{{name}}", "value": "Ada", "expect": 2}, ...]
+rdocx replace F --regex -p '(\d{4})-(\d{2})-(\d{2})' -v '$3/$2/$1' --expect N -o OUT
 ```
 Literal, run-aware (a match may cross runs; the new text takes the first matched run's formatting). Reaches
 the body, its tables, content controls, tracked insertions, simple fields, smart tags and text boxes, headers
@@ -40,6 +42,26 @@ and footers with their tables, footnotes and endnotes, counting a header or foot
 insertion, a simple field or a smart tag is not replaced. Always pass `--expect N`: nothing is written unless
 exactly N matches were replaced (without it, any count is written). Occurrences it cannot reach are not in N:
 `docx_ops.py replace` checks that none is left behind.
+`--map` applies the pairs in order (a later pair sees what an earlier one wrote), all or nothing: a pair whose
+`expect` is not met, or a pair without `expect` that finds nothing (`"expect": 0` allows none), stops with an
+error naming it and writes nothing; `--json` gives `pairs` (each with its `count`) and `total`. `--regex`
+reads the placeholder as a regular expression and `$1` in the value as its first group.
+
+```bash
+rdocx fields update F -o OUT [--now 2026-10-10] [--json]
+rdocx fill F --tag client=Acme --alias 'Due date=2026-10-31' -o OUT [--json]
+rdocx meta get [--json] F
+rdocx meta set F [--title T] [--author A] [--subject S] [--keywords K] [--description D] [--category C] [--custom NAME=VALUE] [--remove-custom NAME] -o OUT [--json]
+rdocx images extract F DIR [--force] [--json]
+```
+`fields update` recomputes DATE, TIME (at `--now`, `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SS`), SEQ, REF, FILENAME and
+the others, then the page fields from rdocx's pagination (`update_fields` then `update_layout_backed_fields`).
+`fill` sets body content controls by tag or alias as `set_content_control_value` does; an unknown name exits
+1, listing the known ones, and writes nothing. `meta set` writes the core properties it is given and custom
+properties (`--custom` repeatable; a new one is a string, an existing typed one keeps its type);
+`meta get --json` prints them all. `images extract` writes each picture part of the body once into `DIR`
+(`image1.png`...) and lists every picture (`images`: `relationship_id`, `alt_text`, `format`, sizes in EMU
+and pixels, `file`); an existing file is refused unless `--force`.
 
 ```bash
 rdocx comment add F --start-paragraph P --start-run S --end-paragraph Q --end-run E --author A [--initials I] --text T [--date RFC3339] -o OUT [--json]
@@ -89,13 +111,14 @@ number, so its title stays on the left when the TOC style has only the page-numb
 
 ```bash
 rdocx convert F --to pdf -o NEW.pdf [--font-dir DIR] [--revision-view accepted|tracked] [--force]
-rdocx convert F --to png|jpeg|tiff -o OUT.png [--dpi 150] [--pages 1,3-5] [--quality 90] [--transparent] [--revision-view tracked]
+rdocx convert F --to png|jpeg|tiff -o OUT.png [--dpi 150] [--pages 1,3-5] [--quality 90] [--transparent] [--revision-view tracked] [--font-dir DIR]
 rdocx convert F --to md|html -o NEW.md
-rdocx render F -o NEW_DIR [--dpi 150] [--pages 1,3-5 | --page 0] [--format png|jpeg|tiff] [--quality 90] [--transparent] [--revision-view tracked] [--force]
+rdocx render F -o NEW_DIR [--dpi 150] [--pages 1,3-5 | --page 0] [--format png|jpeg|tiff] [--quality 90] [--transparent] [--revision-view tracked] [--font-dir DIR] [--force]
+rdocx layout --json F [--font-dir DIR]
 ```
 Images from `convert`: one page goes to `OUT.png`, several to `OUT_001.png`, `OUT_002.png`... (tiff: one
 multi-page file). `render` writes `NEW_DIR/<name>_page<N>.png` with N one-based; `--pages` is one-based,
-`--page` zero-based. `--font-dir` adds fonts for PDF output only (gap render-font-dir-docx; a variable font: gap variable-font-bold); without it, rdocx uses its bundled
+`--page` zero-based. `--font-dir DIR` (`convert` to PDF or images, `render`, `layout`) puts the fonts of a folder (`.ttf`, `.otf`, `.ttc`) before every other font, a variable font drawn at the weight a run asks for (a bold run without a bold face gets a synthetic bold); a missing folder is an error, and Markdown and HTML refuse the flag. Without it, rdocx uses its bundled
 metric-compatible families (Liberation for Arial, Times New Roman, Courier New; Carlito for Calibri; Caladea
 for Cambria) and the system fonts. Markdown and HTML hold the body, then text boxes, headers, footers,
 footnotes and endnotes, one section per part, and leave comments out.
