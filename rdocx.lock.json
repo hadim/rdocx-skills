@@ -1,8 +1,8 @@
 {
   "upstream": "https://github.com/hadim/rdocx",
   "source": "git",
-  "commit": "a13019ad3b58589698ea8d476b66b8aeb419da5f",
-  "ref": "a13019ad3b58589698ea8d476b66b8aeb419da5f",
+  "commit": "dfe5bb08db768a553c349a836a910c59445cfb99",
+  "ref": "dfe5bb08db768a553c349a836a910c59445cfb99",
   "release": "",
   "versions": {},
   "artifacts": {},
