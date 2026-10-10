@@ -20,7 +20,9 @@ GAPS = {
     # docx: headers and footers
     "header-footer-picture": "a picture cannot be added to a header or footer from Python: Run.add_picture in a header or footer run raises NotImplementedError, and raw XML (Paragraph.xml / replace_xml) is refused there too",
     # docx: reading
+    # upstream: tensorbee/rdocx#339
     "story-text-tab": "a w:tab in a run is dropped from StoryItem.text in every story, from the header and footer text of plain `rdocx text` and from the stories of `rdocx text --json` (Paragraph.text keeps it as a tab)",
     # docx: fields and the table of contents
+    # upstream: tensorbee/rdocx#340
     "toc-rebuild-empty-paragraph": "rebuild_toc moves the TOC field's begin out of the first entry and its end out of the last into two empty paragraphs of their own: an empty line above the first entry",
 }
