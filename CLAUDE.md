@@ -41,6 +41,11 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   upstream releases is pinned through a release published by `build.yml` instead.
 - The plugin has no version number: each commit of `main` is a version, so `main` always pairs a lock whose
   release exists and is recorded with the tests and skills that match it (docs/setup.md, Moving the pin).
+- No release is asked of upstream: the pin takes what upstream publishes, and a commit needed between two
+  upstream releases goes through `build.yml` (above).
+- Git on a clone reached through a shell on another machine (a remote or sandboxed shell over a synced folder):
+  run git with `GIT_OPTIONAL_LOCKS=0`; switching branches needs the permission to delete files there. The
+  session commits on a branch; the maintainer pushes and files any upstream issue.
 - Compare file contents in asserts through `conftest.digest`: pytest diffs byte strings in full under
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
@@ -58,7 +63,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   slide > shape > paragraph > run) instead of on every edit; `add_picture` takes one dimension and keeps the
   aspect ratio; raw XML on paragraphs, runs, tables and shapes. A skills `main` pinned on the fork steps back
   from upstream releases: go back to tensorbee/rdocx with `bump v<version>` once a release carries these PRs.
-- Open gap (1): `header-footer-picture` (docx, a missing API, not reported upstream). The nine gaps of the v0.16.0
+- Open gaps (3, docx, none reported upstream): `header-footer-picture` (a missing API), `story-text-tab` and
+  `toc-rebuild-empty-paragraph` (met in real use, triaged on this pin). The nine gaps of the v0.16.0
   pin are closed, and so are `font-spacing-bare-int` and `header-footer-stale-shape`, fixed in #318 and on the
   integration branch.
 - Before it, pinned: the upstream releases tensorbee/rdocx `v0.16.0` (rdocx 0.16.0) and `rpptx-v0.14.0` (rpptx
@@ -70,7 +76,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   macos-x86_64 (new: upstream builds it) and windows-x86_64. This repository's releases and the integration
   branches of hadim/rdocx are no longer used for the pin; `build.yml` stays for a commit between two
   upstream releases.
-- Suite against `154dc6bd`: 761 passed, 1 xfailed on macos-arm64 with Poppler; the build notes give 742 to 743 passed
+- Suite against `154dc6bd`: 761 passed, 1 xfailed on macos-arm64 with Poppler; with the two gaps triaged on
+  10/10/2026 and their docs: 761 passed, 9 skipped, 3 xfailed on macos-arm64 without Poppler; the build notes give 742 to 743 passed
   on the five platforms (18 to 19 skipped where Poppler is missing).
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the

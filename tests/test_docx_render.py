@@ -109,6 +109,32 @@ def test_toc_rebuild_on_a_fresh_open_of_a_word_file(report_docx):
     assert rdocx.Document.open(report_docx).rebuild_toc().entry_count == 21
 
 
+def test_toc_rebuild_restores_the_toc_styles(report_docx, tmp_path):
+    """Word and Google Docs can regenerate a TOC whose entries lost their TOC N styles: rebuild_toc writes the
+    entries back in them."""
+    doc = rdocx.Document.open(report_docx)
+    levels = [p.style for p in doc.paragraphs if (p.style or "").startswith("TOC") and p.style != "TOCHeading"]
+    for p in doc.paragraphs:
+        if (p.style or "").startswith("TOC") and p.style != "TOCHeading":
+            p.style = "Normal"
+    doc.save(tmp_path / "stripped.docx")
+    doc = rdocx.Document.open(tmp_path / "stripped.docx")
+    assert doc.rebuild_toc().entry_count == 21
+    styles = [p.style for p in doc.paragraphs if p.text and (p.style or "").startswith("TOC") and p.style != "TOCHeading"]
+    assert styles == levels
+
+
+@pytest.mark.gap("toc-rebuild-empty-paragraph")
+def test_toc_rebuild_adds_no_empty_paragraph(report_docx):
+    """The fixture's TOC field begins in its first entry and ends in its last, as Google Docs and Word write it;
+    a rebuild with as many entries keeps as many paragraphs, none of them empty."""
+    doc = rdocx.Document.open(report_docx)
+    before = len(doc.paragraphs)
+    assert doc.rebuild_toc().entry_count == 21
+    toc = [p.text for p in doc.paragraphs if (p.style or "").startswith("TOC") and p.style != "TOCHeading"]
+    assert (len(doc.paragraphs), toc.count("")) == (before, 0)
+
+
 def test_toc_rebuild_after_an_edit(report_docx):
     doc = rdocx.Document.open(report_docx)
     doc.try_replace_text("described", "outlined")

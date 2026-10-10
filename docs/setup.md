@@ -109,7 +109,11 @@ your package manager; the script never installs a toolchain). It takes 10 to 30 
   releases and verifies them; it takes seconds.
 - **No network**: bring a dist folder in (a synced folder, or `install --from DIR` on staged files).
 - **Small or short-lived sandboxes** (little memory, short command timeouts, a home folder reset between
-  sessions): never build there; `install` once per session.
+  sessions): never build there; `install` once per session. Where the home folder is wiped between sessions
+  or its disk is full, install under `/tmp` (seconds, hash-checked):
+  `git clone --depth 1 https://github.com/hadim/rdocx-skills /tmp/rdocx-skills-src && RDOCX_HOME=/tmp/rdocx python3 /tmp/rdocx-skills-src/scripts/rdocx_env.py install`,
+  and keep `RDOCX_HOME=/tmp/rdocx` set in each command, so that the skills' `R=${RDOCX_HOME:-...}/current/bin`
+  finds it.
 - **No verified build available**: the skills tell the user and fall back to the built-in skills for the
   task at hand, and offer `install --build` in the background.
 - **Windows** (x86_64): the commands run in Git Bash, the shell Claude Code uses there, with `python` (or

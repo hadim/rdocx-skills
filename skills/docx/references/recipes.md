@@ -70,6 +70,29 @@ runs, and a comment on the paragraph stays. `doc.replace_text_at(item, old, new,
 the same in one item of `doc.story_items` (a header, footer or footnote paragraph, a table cell's
 paragraph); a text box or a comment is refused.
 
+## Rewrite without losing or spreading run formatting
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document()
+p = doc.add_paragraph("")
+p.add_run("Note:").font.bold = True                      # a bold run-in lead
+p.add_run(" access to the soffit needs a permit.")
+docx_ops.save_atomic(doc, "lead.docx")
+doc = rdocx.Document.open("lead.docx")
+doc.paragraphs[0].replace_text("a permit", "two permits", expect=1)   # anchored after the lead
+docx_ops.save_atomic(doc, "lead-edited.docx", "lead.docx")
+runs = lambda f: [[(r["text"], r["formatting"]) for r in q["runs"]] for q in docx_ops.textmap(f)]
+before, after = runs("lead.docx"), runs("lead-edited.docx")
+assert after[0][0] == before[0][0] and after[0][1][1] == before[0][1][1]   # the lead and the rest keep their format
+```
+
+`p.text = ...` leaves one unformatted run, and `set_story_text` gives the whole text the first run's format:
+on this paragraph both lose the lead, one by dropping its bold, the other by making the whole paragraph bold. A
+replacement whose old text starts inside the bold lead makes its new text bold too: anchor after the lead, or
+edit `runs[k].text`. A placeholder filled in its own highlighted run keeps the highlight. `rdocx diff` compares
+text only: compare the runs and their `formatting` (`rdocx text --json`, `docx_ops.textmap`) as well.
+
 ## A new paragraph after an anchor, with the anchor's formatting
 
 ```python
@@ -125,6 +148,49 @@ j = next(k for k, p in enumerate(doc.paragraphs) if p.numbering)
 doc.paragraphs[j].numbering = (doc.paragraphs[j].numbering[0], 1)   # one level deeper
 docx_ops.save_atomic(doc, "styled.docx", "report.docx")
 ```
+
+## A heading numbered by its style
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document()
+steps = doc.add_numbering_instance(doc.add_numbering_definition([rdocx.ListLevel(format="decimal", text="%1.")]))
+doc.link_style_to_numbering("Heading 1", steps, 0)          # every Heading 1 is numbered by its style
+doc.add_paragraph("Scope")
+doc.paragraphs[0].style = "Heading 1"
+docx_ops.save_atomic(doc, "style-numbered.docx")
+p = rdocx.Document.open("style-numbered.docx").paragraphs[0]
+assert p.numbering is None and p.text == "Scope"           # the page shows "1. Scope"
+```
+
+`Paragraph.numbering` and the text views show only a paragraph's own numbering: a heading numbered by its
+style reads unnumbered. Read the render before calling a numbering a defect; typing a number into its text
+doubles it.
+
+## A new list item, and the lead-in kept with its list
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document.open("report.docx")
+words = doc.word_count()
+lead = next(k for k, p in enumerate(doc.paragraphs) if p.text == "The main findings are:")
+last = lead + 1
+while doc.paragraphs[last + 1].numbering == doc.paragraphs[lead + 1].numbering:
+    last += 1
+doc.clone_content(doc.paragraphs[last], doc.find_content_index(doc.paragraphs[last]) + 1)  # an item of this list
+doc.paragraphs[last + 1].runs[0].text = "the lighting columns need repainting."
+for k in range(1, len(doc.paragraphs[last + 1].runs)):
+    doc.paragraphs[last + 1].runs[k].text = ""
+doc.paragraphs[lead].paragraph_format.keep_with_next = True   # the lead-in never ends a page alone
+docx_ops.save_atomic(doc, "list.docx", "report.docx")
+new = rdocx.Document.open("list.docx")
+assert new.paragraphs[last + 1].numbering == new.paragraphs[last].numbering
+print(words, new.word_count())                               # count the words before and after
+```
+
+A new item takes the paragraph properties of an existing item of the same list (clone it), so its numbering,
+indents and spacing match. To split a highlighted paragraph, cut it run by run (`runs[k].text`) so that the
+highlight survives.
 
 ## Tables
 
@@ -250,6 +316,19 @@ docx_ops.save_atomic(doc, "fields.docx", "report.docx")
 print(rep.entry_count, fields.updated_count)
 ```
 
+After a save in Google Docs or Word (the fixture's footer fields are packed with no cached result), refresh the
+fields and stop Word from asking to update them on open:
+
+```python
+import docx_ops, rdocx, zipfile
+doc = rdocx.Document.open("report.docx")
+doc.update_layout_backed_fields()
+doc.update_fields_on_open = False
+docx_ops.save_atomic(doc, "no-prompt.docx", "report.docx")
+with zipfile.ZipFile("no-prompt.docx") as z:
+    assert b'<w:updateFields w:val="false"/>' in z.read("word/settings.xml")
+```
+
 A document without a table of contents gets one with `insert_toc`, then `rebuild_toc` fills it:
 
 ```python
@@ -281,6 +360,37 @@ ls "$pages"
 `validate` reads every part the document relates to and checks every style id. Look at the PNG of every
 page you touched. Page numbers come from rdocx's layout, which
 lays lines at Word's heights: still check in Word before quoting one as Word's.
+
+## Page breaks before cutting text
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document.open("report.docx")
+breaks = [i for i, p in enumerate(doc.paragraphs) if p.paragraph_format.page_break_before]   # active ones only
+print(doc.page_count(), [(i, doc.paragraphs[i].text[:40]) for i in breaks])
+for i in breaks:
+    variant = rdocx.Document.open("report.docx")
+    variant.paragraphs[i].paragraph_format.page_break_before = False
+    docx_ops.save_atomic(variant, f"no-break-{i}.docx", "report.docx")
+    print(i, variant.page_count())          # then render the variant and look at the pages around the break
+```
+
+Google Docs writes `pageBreakBefore` on every paragraph, mostly as `w:val="0"`: `page_break_before` is True
+only for an active break (None or False otherwise). Whether a page goes away depends on the layout around the
+break: render each variant before cutting any text.
+
+## Before deleting a package part
+
+```python
+import posixpath, zipfile
+part = "word/media/image1.png"
+with zipfile.ZipFile("report.docx") as z:
+    users = [n for n in z.namelist() if n.endswith(".rels") and posixpath.basename(part).encode() in z.read(n)]
+print(part, users)                          # an empty list only: no part relates to it
+```
+
+A part is not orphan until its name has been searched in every `.rels` of the package, not only the
+document's: an image can be used by the theme, a header or a chart alone.
 
 ## A new document from a template
 

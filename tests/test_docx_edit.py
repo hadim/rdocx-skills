@@ -1059,3 +1059,14 @@ def test_table_indent_negative_included(tmp_path):
     assert re.search(rb'<w:tblInd w:w="-144" w:type="dxa"/>', part(tmp_path / "t.docx", "word/document.xml"))
     doc.tables[0].indent = None
     assert doc.tables[0].indent is None
+
+
+def test_apostrophes_and_quotes_are_written_as_entities(tmp_path):
+    """rdocx writes ' and " in text as &apos; and &quot;: a check that reads document.xml as text misses them, rdocx
+    reads them back as typed."""
+    doc = rdocx.Document()
+    doc.add_paragraph('The owner\'s "final" copy')
+    doc.save(tmp_path / "q.docx")
+    xml = part(tmp_path / "q.docx", "word/document.xml")
+    assert b"owner&apos;s &quot;final&quot;" in xml and b"owner's" not in xml
+    assert rdocx.Document.open(tmp_path / "q.docx").paragraphs[0].text == 'The owner\'s "final" copy'

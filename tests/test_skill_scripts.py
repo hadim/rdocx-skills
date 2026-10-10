@@ -252,6 +252,21 @@ def test_count_reads_text_inside_simple_fields_smart_tags_and_custom_xml(tmp_pat
     assert docx_ops.all_text(path) == [("body", "before MID after")]
 
 
+def test_all_text_keeps_the_tabs_of_every_story(tmp_path):
+    """A w:tab in a run is a tab character in every story (the workaround for story-text-tab); the tab stops of
+    the paragraph properties add nothing."""
+    import docx
+    d = docx.Document()
+    for p in (d.add_paragraph(), d.sections[0].header.paragraphs[0], d.sections[0].footer.paragraphs[0]):
+        p.paragraph_format.tab_stops.add_tab_stop(docx.shared.Inches(3))
+        p.add_run("left")
+        p.add_run().add_tab()
+        p.add_run("right")
+    d.save(tmp_path / "t.docx")
+    assert sorted(docx_ops.all_text(tmp_path / "t.docx")) == [("body", "left\tright"), ("footer", "left\tright"),
+                                                              ("header", "left\tright")]
+
+
 def test_story_paragraphs_lists_a_paragraph_removed_by_a_tracked_deletion(tmp_path):
     a, b = rdocx.Document(), rdocx.Document()
     for text in ("Alpha", "Gone", "Omega"):
