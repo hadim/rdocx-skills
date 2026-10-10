@@ -16,4 +16,6 @@ gaps closed.
 
 # The nine gaps of the v0.16.0 pin (tensorbee/rdocx#295 to #301) closed with the integration build of 2026-10-10.
 GAPS = {
+    # docx: headers and footers
+    "header-footer-picture": "a picture cannot be added to a header or footer from Python: Run.add_picture in a header or footer run raises NotImplementedError, and raw XML (Paragraph.xml / replace_xml) is refused there too",
 }

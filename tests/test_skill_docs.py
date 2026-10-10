@@ -176,6 +176,11 @@ def test_the_checks_catch_a_wrong_name(tmp_path, monkeypatch):
 # subcommands; -h/--help and -V/--version are not scanned. A test fails on a new name a pin brings, and on an entry here
 # that is no longer needed.
 NOT_DOCUMENTED = {
+    # rdocx names of the 2026-10-10 pin left out
+    "rdocx.HeaderFooterCell": "the type of a header table's `cell(r, c)`, documented by its members",
+    "rdocx.HeaderFooterRow": "the type of a header table's `rows[i]`, documented by `cells`",
+    "rdocx.TabStops": "the type of `paragraph_format.tab_stops`, documented by its members",
+    "rdocx.WD_ORIENTATION": "python-docx's orientation enum (`WD_ORIENT`); `update_section` takes `orientation=\"landscape\"`",
     # sequences returned by attributes the skills document (`doc.paragraphs`, `row.cells`...): indexed, iterated and
     # measured with len(), never named or built
     "rdocx.CellCollection": "the type of `row.cells`, used as a sequence",
