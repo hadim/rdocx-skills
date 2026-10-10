@@ -705,6 +705,8 @@ def test_raw_xml_replace_and_refusals():
             prs.slides[0].shapes[1].text_frame.xml.replace(b"<a:r>", b"<a:bogus/><a:r>", 1)), "cannot sit directly in a:p"),
         "unknown in p:sld": (lambda: prs.slides[0].replace_xml(prs.slides[0].xml.replace(
             b"<p:clrMapOvr>", b"<p:bogus/><p:clrMapOvr>")), "cannot sit directly in p:sld"),
+        "unknown deeper": (lambda: prs.slides[0].shapes[1].replace_xml(sp.replace(b"<a:avLst/>", b"<a:avLst/><a:bogus/>", 1)),
+                           "cannot sit directly in a:prstGeom"),
     }
     for name, (call, message) in refused.items():
         before = prs.to_bytes()
@@ -825,8 +827,7 @@ def test_cli_font_dir_on_thumbnail(rpptx_cli, tmp_path):
     assert res.returncode == 1 and "does not exist" in res.stderr
 
 
-# ---------------------------------------------------------------- gaps found on the 2026-10-10 pin
-@pytest.mark.gap("font-spacing-bare-int")
+# ---------------------------------------------------------------- silent failures the 2026-10-10 pins closed
 def test_a_bare_int_character_spacing_raises():
     """A bare int is EMU: 2 would round to spc="0", nothing visible; the other length setters raise naming Pt."""
     prs = rpptx.Presentation()
@@ -835,7 +836,14 @@ def test_a_bare_int_character_spacing_raises():
         prs.slides[0].shapes[0].text_frame.paragraphs[0].runs[0].font.spacing = 2
 
 
-@pytest.mark.gap("header-footer-stale-shape")
+@pytest.mark.parametrize("value", [0, -1, Pt(0)])
+def test_a_line_spacing_of_zero_or_less_raises(value):
+    prs = rpptx.Presentation()
+    prs.slides.add_slide(prs.slide_layouts[6]).shapes.add_textbox(0, 0, 914400, 914400).text_frame.text = "x"
+    with pytest.raises(ValueError, match="line_spacing must be a positive"):
+        prs.slides[0].shapes[0].text_frame.paragraphs[0].line_spacing = value
+
+
 def test_removing_the_last_footer_placeholder_retires_its_handle():
     prs = rpptx.Presentation()
     prs.slides.add_slide(prs.slide_layouts[6]).shapes.add_textbox(0, 0, 914400, 914400)

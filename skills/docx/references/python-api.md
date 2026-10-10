@@ -179,7 +179,7 @@ edits work.
 
 | Member | Notes |
 |---|---|
-| `paragraphs`, `add_paragraph(text="", style=None)` | a new header holds one empty paragraph, as in python-docx: write `header.paragraphs[0].text`. pass `style="Footer"` (or `"Header"`) for Word's look: a new paragraph gets no style by itself |
+| `paragraphs`, `add_paragraph(text="", style=None)` | a new header holds one empty paragraph, as in python-docx: write `header.paragraphs[0].text`. a new paragraph takes the document's Header or Footer style by itself when it defines one; `style=` overrides it |
 | `add_page_number(template="Page {PAGE} of {NUMPAGES}", *, alignment=CENTER)` → `Paragraph` | `{PAGE}`, `{NUMPAGES}`, `{SECTIONPAGES}` fields that Word, Google Docs and rdocx fill on every page |
 | `add_table(rows, cols, width=None)` → `HeaderFooterTable`, `tables` | `cell(r, c)` and `rows[i].cells` (`text`, `paragraphs`, `add_paragraph`), `row_count`, `column_count`, `style` |
 | `is_linked_to_previous` (get and set) | setting False gives the section an empty story of its own; writing into a linked one edits the earlier section's story |
