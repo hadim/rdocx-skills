@@ -48,10 +48,11 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
    counts cover the body, its tables, content controls, tracked insertions, simple fields, smart tags and
    text boxes (a Word text box once), headers and footers with their tables (once per variant part),
    footnotes and endnotes.
-3. **Re-fetch handles after every edit that is not a formatting setter.** Paragraphs, runs, tables and
-   `story_items` all raise `StaleElementError` after an insertion, removal, clone, split, replacement,
-   `paragraph.text =`, `cell.text =`, `add_*` or comment. Write `doc.paragraphs[i].runs[j]` again after
-   each; never keep `p = doc.paragraphs[i]` across edits (`references/python-api.md`, "Handles").
+3. **Re-fetch handles after a structural edit.** Formatting setters, `Run.text`, appends and inserts keep
+   paragraph, run, table and cell handles valid (`p.text =` and `cell.text =` retire only what was inside);
+   a removal, move, clone, split, replacement, picture or comment retires every handle, and `story_items` go
+   stale after any edit: the next use raises `StaleElementError` naming the call. Re-navigate from `doc`
+   (`doc.paragraphs[i].runs[j]`) after such an edit (`references/python-api.md`, "Handles").
 4. **Know which index an API takes** (`references/python-api.md`, "Three index spaces"): the body index
    (`find_content_index`, `insert_paragraph`, `remove_content`, `split_run`, `RunPosition`, `rdocx comment
    add --start-paragraph`, `layout()`) counts tables and content-control blocks; `doc.paragraphs[i]` counts
@@ -85,7 +86,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Counts, styles used, metadata | `rdocx inspect --json F` | `doc.styles`, `doc.sections`, `doc.header_footer_variants`, `doc.core_properties` | title, author, subject, keywords, dates: read and write |
 | Page of every block | `rdocx layout --json F` | `doc.layout()`, `doc.layout_page(i)` | rdocx's own pagination, on Word's line heights: confirm a page number in Word when it matters |
 | Counted replacement | `docx_ops.py replace IN OUT --edit OLD NEW N` | `docx_ops.replace_batch` | crosses runs; `rdocx replace --expect N` does not check what it could not reach |
-| Replacement in one paragraph, cell or story item | | `doc.paragraphs[i].replace_text(old, new, expect=1)`, `cell.replace_text(old, new, expect=1)`, `doc.replace_text_at(item, old, new, expect=1)` | the same clause elsewhere stays; a wrong count raises `ReplacementCountError`, nothing changed; a text box: gap replace-text-at-text-box-copy |
+| Replacement in one paragraph, cell or story item | | `doc.paragraphs[i].replace_text(old, new, expect=1)`, `cell.replace_text(old, new, expect=1)`, `doc.replace_text_at(item, old, new, expect=1)` | the same clause elsewhere stays; a wrong count raises `ReplacementCountError`, nothing changed; a Word text box: both its copies, counted once |
 | Regex replacement | | `doc.replace_all_regex([(pattern, repl)])` | returns the count, no contract: check it |
 | Paragraph after an anchor, same format | | `doc.clone_content(doc.paragraphs[i], bi + 1)` then set run texts | copies fields, renamed bookmarks; not comment anchors |
 | Plain new paragraph | | `doc.insert_paragraph(bi, text)` | Normal style |
@@ -94,8 +95,8 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Format part of a run | | `docx_ops.locate` + `docx_ops.isolate`, then `.font.bold = True` | |
 | Paragraph format, style, numbering | | `.paragraph_format.*`, `.style = "Heading1"` or `"Heading 1"`, `.numbering = (num_id, level)` | style id or name, checked (`KeyError`), numbering unchecked |
 | New or changed styles, lists | | `doc.add_style(name, based_on=, ...)`, `doc.set_style(style, bold=, ...)`, `add_numbering_definition([ListLevel(...)])`, `add_numbering_instance(d)`, `link_style_to_numbering(style, num_id, level)` | `set_style` keeps what it is not given |
-| Tables | | `doc.add_table`, `.cell(r, c).text`, `.clone_row(i, at)`, `.remove_row(i)`, `.width` | no indent: gap table-indent |
-| Table merges and format | | `.set_cell_grid_span(r, c, n)`, `.set_cell_vertical_merge(r, c, "restart")`, `.set_borders(...)`, `.set_column_width(c, w)`, `cell.shading = "RRGGBB"`, `row.height = w` | colours: `RGBColor` for styles and fonts, hex for borders and shading (gap colour-forms-docx); a span consumes empty cells only; re-fetch the table after a merge |
+| Tables | | `doc.add_table`, `.cell(r, c).text`, `.clone_row(i, at)`, `.remove_row(i)`, `.width`, `.indent` | a negative `indent` pulls the table left, `None` removes it |
+| Table merges and format | | `.set_cell_grid_span(r, c, n)`, `.set_cell_vertical_merge(r, c, "restart")`, `.set_borders(...)`, `.set_column_width(c, w)`, `cell.shading = "RRGGBB"`, `row.height = w` | colours: `RGBColor`, hex with or without `#`, or `(r, g, b)`; a span consumes empty cells only; re-fetch its rows and cells after a merge |
 | Page setup | | `doc.update_section(i, margin_top=rdocx.Inches(0.5), ...)` | `doc.sections` are read-only snapshots |
 | Pictures | | `doc.add_picture(bytes, name, width=, height=)`, `doc.replace_image(rid, bytes)`, `doc.set_picture_size(rid, width, height)` | `replace_image` keeps the old size: resize for a new aspect ratio |
 | Hyperlinks | | `doc.hyperlinks`, `paragraph.add_hyperlink(text, url)`, `doc.set_hyperlink_url(hyperlink, url)`, `doc.remove_hyperlink(hyperlink)` | removal keeps the text, re-fetch `doc.hyperlinks` after one |
@@ -106,9 +107,9 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Table of contents | `rdocx toc rebuild F -o OUT`, `docx_ops.py toc IN OUT` | `doc.rebuild_toc()`; a new one: `doc.insert_toc(bi, max_level=3)`, then `rebuild_toc()` | the entry of a numbered heading gets a stop after its number |
 | Page fields | | `doc.update_layout_backed_fields()`, `update_page_fields()` | header and footer page numbers keep their cached text, as Word does; they render right |
 | PDF | `rdocx convert F --to pdf [--revision-view tracked] -o NEW.pdf` | `doc.to_pdf(revision_view="tracked")` | the accepted view of tracked changes by default; `tracked` shows deletions struck through, insertions underlined and a change bar |
-| PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100` | `doc.render_pages(dpi=, pages=[0, 1])` | CLI pages one-based, Python zero-based; fonts from a folder: gap render-font-dir-docx |
+| PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100 [--font-dir DIR]` | `doc.render_pages(dpi=, pages=[0, 1], font_dir=)` | CLI pages one-based, Python zero-based; `--font-dir` / `font_dir=` give fonts that are not installed, to every output |
 | Markdown, HTML | `rdocx convert F --to md -o NEW.md` / `--to html` | | body, then text boxes, headers, footers, notes, no comments; the accepted view of tracked changes |
-| Validity | `rdocx validate F` | `Document.open(F).story_items` | every related part and every style id; picture paragraphs counted as empty: gap validate-picture-paragraph |
+| Validity | `rdocx validate F` | `Document.open(F).story_items` | every related part and every style id |
 | What changed between two files | `rdocx diff A B` | | by paragraph, in every story |
 | New document | | `rdocx.Document()`, or a template .docx or .dotx emptied | Word's usual styles (Title, Heading 1 to 9, Quote, List Paragraph, Caption, Table Grid...), and a .dotx saved as .docx becomes a document |
 

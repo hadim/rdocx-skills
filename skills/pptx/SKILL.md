@@ -8,8 +8,7 @@ description: "Use this skill any time a PowerPoint file (.pptx or .potx) is invo
 rpptx reads and writes the presentation package natively, keeps every part it does not touch byte for byte,
 lays text out with its own line breaker and renders slides itself (no LibreOffice). One pinned build serves
 the `rpptx` CLI (whole-deck operations) and the `rpptx` Python module (everything finer; its API follows
-python-pptx, with differences: `font.color = RGBColor(...)` (gap font-color-rgb-pptx), handles to re-fetch after
-a structural change). Use them for every .pptx task. The tool is young: the gaps that force another tool for one step are in
+python-pptx, with one difference: handles to re-fetch after a structural change). Use them for every .pptx task. The tool is young: the gaps that force another tool for one step are in
 `references/gaps.md`, and every new one you meet is reported (last section).
 
 ## Setup, once per session
@@ -45,10 +44,12 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 2. **Every text replacement declares its expected count**: `rpptx replace ... --expect N` (slides and
    notes), `prs.try_replace_text(old, new, expect=n)`, or `pptx_ops.replace_batch(src, out, [(old, new, n),
    ...])`, all or nothing.
-3. **Re-fetch handles after every change that is not a geometry, font, paragraph or frame setter**: write
-   `prs.slides[i].shapes[j]` again. Any `add_*` invalidates the handles of every slide; setting
-   `text_frame.text`, `shape.text` or `notes_text` invalidates everything, the shape an `add_*` just returned
-   included: `box = add_textbox(...); box.text_frame.text = "x"; box.left` raises. `run.text` keeps them.
+3. **Re-fetch the handles an edit retires**: each edit retires the handles of the kind it renumbers and
+   those below it (slide > shape > paragraph > run), in every slide. Appends (`add_*`, `add_slide`) and
+   setters retire none; `text_frame.text =` / `shape.text =` retire paragraphs and runs, a replacement
+   retires runs; removing, moving or grouping shapes retires shapes; moving or removing slides retires
+   everything. A retired handle raises `StaleElementError` naming the call: write `prs.slides[i].shapes[j]`
+   again.
 4. **Walk groups**: `slide.shapes` lists top-level shapes; a group's children are in `shape.shapes`
    (`shape_type == MSO_SHAPE_TYPE.GROUP`, value 6). `pptx_ops.walk(slide.shapes)` yields all of them.
 5. **Check the fit after any text change**: `prs.text_layout()` (or `pptx_ops.py overflow`) reports every
@@ -76,7 +77,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each; `add_shape` writes python-pptx's theme style (accent1 fill and line, theme effect 2), `add_textbox` none |
 | Z-order | | `shapes.move(from_, to)` | index 0 is the back |
 | Pictures | | `shape.replace_image(file)`, `shape.image.blob` | keeps position, size and crop |
-| Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each; cell text format: gap table-cell-text-frame |
+| Tables | | `shape.table.cell(r, c).text`, `cell.text_frame.paragraphs[k].runs[j].font`, `cell.vertical_anchor`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each |
 | Slides | | `slides.add_slide(layout)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden` | |
 | Import a slide from another deck | | `prs.slides.import_slide(other.slides[k], layout=prs.slide_layouts[j], index=None)` | without `layout=`, a layout of the same name must exist here, else `RpptxError` |
 | Speaker notes | `rpptx text --notes F` | `slide.notes_text` (get and set) | None when the slide has no notes |
@@ -84,7 +85,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Metadata | `rpptx inspect --json F` | | read-only; no core properties API |
 | Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `resolve_comment`, `remove_comment`, `move_comment` | `slide.add_comment(..., shape_id=sh.shape_id)` anchors on a shape (the CLI on the slide); add the author first |
 | Text fit | | `prs.text_layout(width_factor=1.0)`, `pptx_ops.overflowing(F)` | rpptx's line breaks; `width_factor=0.95` for a margin |
-| PDF | `rpptx convert F --to pdf -o NEW.pdf` | `prs.to_pdf()`, `prs.to_notes_pdf()` | installed fonts only: gap render-font-dir-pptx |
+| PDF | `rpptx convert F --to pdf -o NEW.pdf [--font-dir DIR]` | `prs.to_pdf(font_dir=)`, `prs.to_notes_pdf()` | `--font-dir` / `font_dir=` give fonts that are not installed, to every output and to the fit check |
 | PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)` | CLI slides one-based, Python zero-based |
 | From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
 | Validity | `rpptx validate F` | `prs.validate()` | a tuple of issues (`kind`, `message`), empty when valid |

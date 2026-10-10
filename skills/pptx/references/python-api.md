@@ -3,7 +3,7 @@
 `import rpptx` with the pinned Python (`$R/python`). The API follows python-pptx: `rpptx.Presentation`,
 `rpptx.util` (`Inches`, `Pt`, `Length` only: there is no `Emu`, `Cm` or `Mm`; lengths are plain EMU
 integers, 914400 per inch, 12700 per point, and `Inches(1)` or `Pt(12)` is a `Length`, an int with `.emu`,
-`.inches` and `.pt`), `rpptx.dml.color.RGBColor` (also `RGBColor.from_string("7B1E3A")`), `rpptx.enum.shapes` (`MSO_SHAPE`,
+`.inches` and `.pt`), `rpptx.dml.color.RGBColor` (also `RGBColor.from_string("7B1E3A")`; every colour setter also takes a hex string, with or without `#`, or an `(r, g, b)` triple), `rpptx.enum.shapes` (`MSO_SHAPE`,
 `MSO_SHAPE_TYPE`, `MSO_CONNECTOR`), `rpptx.enum.text` (`PP_ALIGN`, `MSO_ANCHOR`, `MSO_AUTO_SIZE`,
 `MSO_UNDERLINE`), `rpptx.enum.dml` (`MSO_FILL`, `MSO_LINE_DASH_STYLE`, `MSO_ARROWHEAD_STYLE`,
 `MSO_ARROWHEAD_WIDTH`, `MSO_ARROWHEAD_LENGTH`). Errors: `rpptx.RpptxError`, `XmlError`, `PackageError`,
@@ -12,12 +12,18 @@ installed module (`$R/python -c "import rpptx, os; print(os.path.dirname(rpptx._
 
 ## Handles
 
-`Slide`, `Shape`, `Paragraph`, `Run` handles are checked against the presentation's revision. Geometry,
-font, paragraph and frame setters, fills, lines and line ends, shadows, `theme_effect_index`,
-`auto_shape_type`, click actions and `slide.hidden` keep every handle valid. Any `add_*` call, `remove`, `move`,
-`add_slide`, `import_slide` and every `try_replace_text` invalidate the handles of every slide. Setting `text_frame.text`,
-`shape.text` or `notes_text` invalidates every handle, the shape an `add_*` just returned included;
-`run.text` keeps them. Write `prs.slides[i].shapes[j]` again after each edit.
+`Slide`, `Shape`, `Paragraph` and `Run` handles (table cells too) are checked: an edit retires the handles of
+the kind it renumbers and those below it (slide > shape > paragraph > run), in every slide, and a retired
+handle raises `StaleElementError` naming the call and how to re-fetch it. Layouts and `prs.slides` never go
+stale.
+
+| Edit | Retires |
+|---|---|
+| geometry, font, paragraph and frame setters, fills, lines, shadows, click actions, `run.text`, `notes_text`, `slide.hidden`; appends: `add_slide`, `add_textbox` and the other `add_*`, `add_paragraph`, `add_run` | nothing |
+| `text_frame.text = ...`, `shape.text = ...` | paragraphs and runs |
+| `try_replace_text` (deck, slide or frame) | runs |
+| `shapes.remove`, `shapes.move`, `group`, `ungroup`, `insert_picture` | shapes, paragraphs and runs |
+| `slides.move`, `slides.remove` | slides and everything below |
 
 ## Presentation
 
@@ -73,9 +79,8 @@ dict keys).
   `auto_size` (`MSO_AUTO_SIZE`), `autofit`, `vertical_anchor` (`MSO_ANCHOR`).
 - `Paragraph`: `runs`, `add_run(text="")`, `text`, `alignment` (`PP_ALIGN`), `level`, `bullet`,
   `line_spacing`, `space_before`, `space_after`, `left_indent`, `right_indent`, `first_line_indent`, `font`.
-- `Run`: `text`, `font` (`name`, `size`, `bold`, `italic`, `underline`, `strike`, `all_caps`, `color`: reads
-  a hex string such as `"123456"`, set it with `font.color = RGBColor(...)`, not python-pptx's
-  `font.color.rgb`), `hyperlink.address` (get and set). Shape fills and lines use
+- `Run`: `text`, `font` (`name`, `size`, `bold`, `italic`, `underline`, `strike`, `all_caps`, `color`: a `ColorFormat` as in
+  python-pptx, `font.color.rgb = ...` or the shortcut `font.color = ...`), `hyperlink.address` (get and set). Shape fills and lines use
   `fill.fore_color.rgb` and `line.color.rgb`, as in python-pptx.
 - `FillFormat`: `solid()`, `background()` (no fill), `fore_color.rgb`, `type` (`MSO_FILL`). `LineFormat`:
   `width`, `color.rgb`, `fill`, `dash_style` (`MSO_LINE_DASH_STYLE`), `head_end` and `tail_end`

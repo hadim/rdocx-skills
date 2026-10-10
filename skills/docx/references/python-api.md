@@ -7,8 +7,10 @@ to the installed module (`$R/python -c "import rdocx, os; print(os.path.dirname(
 
 Lengths are EMU integers; build them with `rdocx.Pt(12)`, `rdocx.Inches(1)`, `rdocx.Cm(2)`, `rdocx.Mm(5)`,
 `rdocx.Emu(n)` (each has `.pt`, `.inches`, `.cm`, `.mm`, `.emu`, `.twips`); widths, margins and font sizes
-read back as `rdocx.Length`, the int subclass they share. Colours: `rdocx.RGBColor(r, g, b)` or
-`rdocx.RGBColor.from_string("7B1E3A")`. Errors: `rdocx.RdocxError`
+read back as `rdocx.Length`, the int subclass they share. Colours: every colour argument takes an
+`rdocx.RGBColor(r, g, b)`, a hex string with or without `#` (`"7B1E3A"`), or an `(r, g, b)` triple, and reads
+back as an `RGBColor` (a tuple whose `str()` is the hex); a wrong type raises `TypeError`, a malformed value
+`ValueError`. Errors: `rdocx.RdocxError`
 (base), `XmlError`, `PackageError`, `LayoutError`, `StaleElementError`, `ReplacementCountError` (an
 `expect` count not met); lookups by text raise `ValueError`.
 
@@ -34,12 +36,19 @@ read back as `rdocx.Length`, the int subclass they share. Colours: `rdocx.RGBCol
 ## Handles
 
 Every handle is checked: `Paragraph`, `Run`, `Table`, `Row`, `Cell` and `StoryItem` (and the
-`StoryRunRange` built on one) raise `StaleElementError` once the document has changed structure. Only
-formatting setters (font, paragraph format, style, alignment, numbering, widths) and `Run.text` keep handles
-valid. Everything else invalidates every handle: insert, remove, clone, move, pop, split, `add_*`,
-`set_story_text`, `paragraph.text = ...`, `cell.text = ...`, `try_replace_text`, `replace_all_regex`,
-`paragraph.replace_text`, `cell.replace_text`, `replace_text_at`, `clone_row`, `remove_row`, `add_comment`. Re-navigate from `doc` after each such call (`doc.paragraphs[i].runs[j]`,
-`doc.story_items`); never keep `p = doc.paragraphs[i]` across edits.
+`StoryRunRange` built on one) raise `StaleElementError` once an edit has retired them, and the message names
+the call that did (`Document.remove_content invalidated it`). What each edit retires:
+
+| Edit | Retires |
+|---|---|
+| formatting setters (font, paragraph format, style, alignment, numbering, widths, borders, shading), `Run.text` | nothing |
+| appends and inserts: `add_paragraph`, `add_heading`, `add_table`, `add_page_break`, `insert_paragraph`, `paragraph.insert_paragraph_before`, `paragraph.add_run`, `table.add_row`, `table.add_column` | story items only: a held paragraph follows its paragraph, not its index |
+| `paragraph.text = ...`, `cell.text = ...`, `replace_xml` on a paragraph, run, table or cell | the handles inside that element (the element's own handle stays valid), and story items |
+| row and grid edits: `clone_row`, `remove_row`, `insert_column`, `remove_column`, `set_cell_grid_span`, `cell.split()` | that table's rows and cells (the `Table` stays valid), and story items |
+| everything else: `remove_content`, `pop_content`, `move_content`, `clone_content`, `split_run`, `set_story_text`, `add_picture`, `add_comment`, `try_replace_text`, `replace_all_regex`, `paragraph.replace_text`, `cell.replace_text`, `replace_text_at` | every handle |
+
+Re-navigate from `doc` after an edit of the last row (`doc.paragraphs[i].runs[j]`, `doc.story_items`); when
+in doubt, re-fetch: a retired handle always raises, it never points at the wrong element.
 
 ## Document
 
@@ -63,7 +72,7 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 | `create_section_story(i, kind, variant)` → `Story`, `unlink_section_story(i, kind, variant)` → `Story`, `link_section_story(i, kind, variant, story)` → `Story` | `kind` `"header"` / `"footer"`, `variant` `"default"` / `"first"` / `"even"`. `create_section_story` gives section `i` a new, empty header or footer (`"first"` turns on `different_first_page`), which the next sections inherit (`doc.header_footer_variants`); fill it with `insert_content(story, fragment)` (a fragment from `pop_content`). `unlink_section_story` gives a section that inherits one its own copy, to edit apart; `link_section_story` makes it use `story` again |
 | `try_replace_text(old, new, *, expect=None)` → int, `replace_all_regex([(pattern, repl), ...])` → int | literal and regex replacement across runs, in the body, its tables, content controls, tracked insertions, simple fields, smart tags and text boxes (a Word text box once), headers and footers with their tables (once per variant part), footnotes and endnotes. A match across the edge of a content control, an insertion or a simple field is not replaced. With `expect=N`, a different count raises `ReplacementCountError` and changes nothing; `docx_ops.replace_batch` also refuses text left out of reach |
 | `replace_all([(old, new), (old, new, expect), ...])` → tuple of counts | several literal replacements in one call, all or nothing: a pair whose `expect` is not met raises `ReplacementCountError` (naming the pair) and changes nothing |
-| `replace_text_at(item, old, new, *, expect=None)` → int | the same replacement in one `StoryItem` only (`doc.story_items`): a body paragraph or table, a table cell's paragraph, a header, footer or footnote paragraph. A comment paragraph is its own text (not the anchor). A text box: gap replace-text-at-text-box-copy, use the document-wide call, which edits both copies of a Word text box. For one body paragraph or cell, `Paragraph.replace_text` and `Cell.replace_text` |
+| `replace_text_at(item, old, new, *, expect=None)` → int | the same replacement in one `StoryItem` only (`doc.story_items`): a body paragraph or table, a table cell's paragraph, a header, footer or footnote paragraph. A comment paragraph is its own text (not the anchor). A Word text box: both its copies (DrawingML and the VML fallback) are edited and counted once; copies that differ raise `RdocxError`, nothing changed. For one body paragraph or cell, `Paragraph.replace_text` and `Cell.replace_text` |
 | `bookmarks` → tuple of `Bookmark` (`id`, `name`, `text`, `range`, `direct_range`, `issue`), `add_bookmark(name, range)` → id | `add_bookmark` takes a body `RunRange`; `direct_range` gives it back that way (None for a bookmark in a table cell or a content-control block), `range` counts paragraphs through tables; `issue` describes a broken marker, None otherwise |
 | `set_header(text)`, `set_footer(text)`, `add_hyperlink_to_story(story, text, url)` | `set_header` / `set_footer` replace the default story's content (fields included); a comment anchored only in the replaced header or footer goes with it, replies included |
 | `set_hyperlink_url(hyperlink, url)`, `remove_hyperlink(hyperlink)` | `hyperlink` from `doc.hyperlinks`. Removal keeps the text. Retargeting keeps the other entries of `doc.hyperlinks` valid. After a removal or an added link, the older entries of that story raise `RdocxError`: re-fetch `doc.hyperlinks` |
@@ -98,9 +107,10 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
   cached_result="")` (a simple field after the run, such as `"PAGE"`, showing `cached_result` until fields are
   updated).
 - `Font`: `name`, `size` (length), `bold`, `italic`, `underline` (`WD_UNDERLINE` or bool), `strike`,
-  `color` (set an `rdocx.RGBColor(r, g, b)`; reads back an `RGBColor`, a tuple: compare `str(font.color) ==
-  "7B1E3A"`; a hex string is refused), `highlight` (Word colour name: "yellow", "green", ...), `shading`
-  (hex fill). None means inherited.
+  `color` (a `ColorFormat` as in python-docx: `rgb`, `type` `MSO_COLOR_TYPE` RGB / THEME / AUTO,
+  `theme_color` `MSO_THEME_COLOR`, get and set; `font.color = ...` is a shortcut for `font.color.rgb = ...`,
+  `"auto"` and None accepted), `highlight` (Word colour name: "yellow", "green", ...), `shading` (fill,
+  `RGBColor` or None). None means inherited.
 
 ## Tables
 
@@ -108,15 +118,15 @@ valid. Everything else invalidates every handle: insert, remove, clone, move, po
 `remove_row(index)` (a comment inside the row goes with it), `style` (style id, unchecked), `alignment` (`WD_TABLE_ALIGNMENT`), `width` (settable).
 `Row.cells` (a merged cell appears once: use `cells[-1]` for the last column); `Cell`: `text` (settable),
 `replace_text(old, new, *, expect=None)` → int (as `Paragraph.replace_text`, over the cell), `paragraphs`, `add_paragraph(text)`, `width` (settable: writes the cell width, not the table grid),
-`vertical_alignment` (`WD_CELL_VERTICAL_ALIGNMENT`), `shading` (hex fill, settable), `grid_span`,
+`vertical_alignment` (`WD_CELL_VERTICAL_ALIGNMENT`), `shading` (fill, settable, reads an `RGBColor`), `grid_span`,
 `vertical_merge`, `border(edge)` and `set_border(edge, style, *, size, color)` (this cell), `margins` and
 `set_margins(*, top, right, bottom, left)`. On the table: `set_cell_grid_span(r, c, n)` (consumes empty
 cells only, and invalidates the table handle), `set_cell_vertical_merge(r, c, "restart" | "continue" |
 None)`, `set_borders(style, *, size, color)`, `set_border(edge, style, *, size, color)`, `border(edge)` →
-`(style, size, color)` or None, `set_cell_margins(*, top, right, bottom, left)`, `cell_margins` → `(top,
+`(style, size, RGBColor)` or None, `set_cell_margins(*, top, right, bottom, left)`, `cell_margins` → `(top,
 right, bottom, left)` or None, `set_column_width(c, w)` and `grid_widths` (the grid, get and set). Edges:
 `top`, `bottom`, `left`, `right`, `insideH`, `insideV`; styles: `none`, `single`, `thick`, `double`,
-`dotted`, `dashed`, `dotDash`, `wave`; `size` in eighths of a point, `color` hex. `Row`: `height`,
+`dotted`, `dashed`, `dotDash`, `wave`; `size` in eighths of a point. `Row`: `height`,
 `height_rule` (`WD_ROW_HEIGHT_RULE.EXACTLY` or `AT_LEAST`), `is_header` (repeated at the top of each page),
 `cant_split` (settable).
 
