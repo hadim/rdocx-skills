@@ -14,11 +14,9 @@ issue's state decides nothing: the suite run on each new build (the build workfl
 gaps closed.
 """
 
-# The nine gaps of the v0.16.0 pin (tensorbee/rdocx#295 to #301) closed with the integration build of 2026-10-10.
+# The nine gaps of the v0.16.0 pin (tensorbee/rdocx#295 to #301) closed with the integration build of 2026-10-10;
+# font-spacing-bare-int and header-footer-stale-shape closed with integration/open-prs-2026-10-10-3.
 GAPS = {
     # docx: headers and footers
-    # pptx: Python
-    "font-spacing-bare-int": "font.spacing = 2 (a bare int, read as EMU) writes spc=\"0\" without a word, where the other length setters raise naming Pt",
-    "header-footer-stale-shape": "slide.header_footer.slide_number = False removes the slide-number placeholder but does not retire a held handle to it when it is the last shape: it reads None and a write raises RpptxError instead of StaleElementError",
     "header-footer-picture": "a picture cannot be added to a header or footer from Python: Run.add_picture in a header or footer run raises NotImplementedError, and raw XML (Paragraph.xml / replace_xml) is refused there too",
 }

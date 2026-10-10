@@ -67,7 +67,7 @@ dict keys).
 
 - `header_footer` (`HeaderFooter`: `slide_number` bool, `footer` text or None, `date` text, `"auto"` or None,
   `date_format`): read and write this slide's own placeholders, as `set_header_footer` does for all. Re-fetch
-  the shapes after switching one off (gap header-footer-stale-shape).
+  the shapes after switching one off: a handle to a removed placeholder raises `StaleElementError`.
 - `transition` (`SlideTransition`): `type` (`"fade"`, `"push"`, `"wipe"`, `"split"`, `"cover"`, `"uncover"`, `"cut"`,
   `"zoom"` or None), `direction` (checked per type: `"left"`, `"up"`, `"in"`...), `duration` (seconds),
   `advance_on_click`, `advance_after` (seconds or None), `apply_to_all()` copies it to every slide.
@@ -134,10 +134,10 @@ dict keys).
 - `Paragraph`: `runs`, `add_run(text="")`, `text`, `alignment` (`PP_ALIGN`), `level`, `bullet` (a character, or
   False), `bullet_color`, `bullet_size` (a multiple of the text size), `bullet_font`, `auto_number` (a numbering
   scheme such as `"arabicPeriod"`, `"alphaLcParenR"`, `"romanUcPeriod"`), `auto_number_start`,
-  `line_spacing`, `space_before`, `space_after`, `left_indent`, `right_indent`, `first_line_indent`, `font`,
+  `line_spacing` (a multiple such as 1.5 or a `Length`; zero or less raises), `space_before`, `space_after`, `left_indent`, `right_indent`, `first_line_indent`, `font`,
   `add_field("slidenum")` (or `"datetime1"` to `"datetime13"`, optional cached text second; another type raises).
 - `Run`: `text`, `font` (`name`, `size`, `bold`, `italic`, `underline`, `strike`, `all_caps`, `small_caps`,
-  `baseline` (0.3 superscript, -0.25 subscript), `spacing` (character spacing, a `Length`: `Pt(2)`; a bare int is written as 0, gap font-spacing-bare-int),
+  `baseline` (0.3 superscript, -0.25 subscript), `spacing` (character spacing, a `Length`: `Pt(2)`; a bare int is EMU and one under 127 raises),
   `highlight_color`, `language` (a tag, `"fr-FR"`) or `language_id` (`MSO_LANGUAGE_ID.FRENCH`), `east_asian_name`,
   `complex_script_name`, `color`: a `ColorFormat` as in
   python-pptx, `font.color.rgb = ...` or the shortcut `font.color = ...`), `hyperlink.address` (get and set). Shape fills and lines use
@@ -187,8 +187,9 @@ this): `xml` gives bytes, `replace_xml(xml)` (str or bytes) replaces the element
 `p:cxnSp`...: the same kind), `TextFrame` (`p:txBody`), `Slide` (`p:sld`) and a layout (`p:sldLayout`).
 A replacement raises `ValueError` and leaves the presentation unchanged when the XML is malformed, has a
 DOCTYPE, has another root element, references an `r:id` the part lacks (add the picture or link first), or puts
-an unknown or misplaced element directly under `p:sld`, `p:sp`, `p:txBody`, `a:p` or `a:r`. Keep the rest to the schema (PowerPoint repairs or refuses a file with an unknown
-element), then run `rpptx validate` and render. A replacement retires handles (Handles above).
+an unknown or misplaced `p:` or `a:` element anywhere in the slide, shape or text XML (`a:graphicData`, `p:timing`
+and `p:transition` stay unchecked; `mc:AlternateContent` and `mc:Ignorable` content are allowed). Then run
+`rpptx validate` and render. A replacement retires handles (Handles above).
 
 ## Errors instead of silent results
 

@@ -598,7 +598,7 @@ def test_breaks_header_styles_and_nested_table_limits(tmp_path):
     assert "<w:br/>" in xml and '<w:br w:type="page"/>' in xml and '<w:br w:type="column"/>' in xml
     docx.Document().save(tmp_path / "styled.docx")                # python-docx's template defines Header and Footer
     styled = rdocx.Document.open(tmp_path / "styled.docx")
-    styled.sections[0].footer.add_paragraph("Foot", style="Footer")    # #328 says it is applied by itself; this build does not
+    styled.sections[0].footer.add_paragraph("Foot")                  # takes the Footer style by itself
     styled.save(tmp_path / "s.docx")
     assert docx.Document(tmp_path / "s.docx").sections[0].footer.paragraphs[-1].style.name == "Footer"
 
