@@ -45,28 +45,32 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
 
-## State on 09/10/2026
+## State on 10/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: the upstream releases tensorbee/rdocx `v0.16.0` (rdocx 0.16.0) and `rpptx-v0.14.0` (rpptx 0.14.0), both
-  at commit `733ce6f7` (sprint S90), which carry, reimplemented, the fixes this repository had pinned from the
-  integration branch `integration/open-prs-2026-10-08-3` of hadim/rdocx (tensorbee/rdocx#271, #274, #275, #279,
-  #280, #286, #287, #290). API and behaviour that changed on the way: `replace_story_text` is `replace_text_at`
-  (and edits a comment's own text); `move_comment` takes a `StoryRunRange` only; `rdocx comment move F ID --text T`;
-  a removal that cuts a comment in part and `pop_content` of commented content raise instead of carrying the
-  thread; `comment list --json` positions are flat (`story_kind`, `part_name`, ...); PAGE and NUMPAGES in headers
-  and footers keep their cached results on `update_layout_backed_fields`, as Word does.
-- Open gaps (9), all reported upstream: tensorbee/rdocx#295 to #301 (table cell text frame, fonts from a folder in
-  images and in rpptx, bold from a variable font, validate and picture paragraphs, colour argument forms and
-  `font.color.rgb`, table indent, `replace_text_at` on a text box).
-- Before it, pinned: the integration branch above, and before it the upstream releases tensorbee/rdocx `v0.15.0` (rdocx 0.15.0) and `rpptx-v0.13.1` (rpptx 0.13.1),
+- Pinned: the integration branch `integration/open-prs-2026-10-10-2` of hadim/rdocx (commit `dfe5bb08`) through
+  this repository's release `rdocx-20261010-dfe5bb08db76`: tensorbee/rdocx `v0.16.0` (`733ce6f7`) plus the open
+  PRs tensorbee/rdocx#315, #317 to #320, #322, #324 to #330, #333, #335 and #336 (everyday Word and PowerPoint
+  coverage of #314, agent-first API of #316, fixes for #295 to #301, #321, #323, #331). API and behaviour that
+  changed: one colour rule in both bindings (RGBColor, hex with or without `#`, int triple; `font.color` is a
+  ColorFormat with `.rgb`); caller fonts reach every render; handles are retired by scope (rdocx: removals,
+  moves, clones and replacements retire everything, row and grid edits that table's rows and cells; rpptx: by kind,
+  slide > shape > paragraph > run) instead of on every edit; `add_picture` takes one dimension and keeps the
+  aspect ratio; raw XML on paragraphs, runs, tables and shapes. A skills `main` pinned on the fork steps back
+  from upstream releases: go back to tensorbee/rdocx with `bump v<version>` once a release carries these PRs.
+- Open gaps (3), found while documenting this build, not reported upstream yet: `header-footer-picture` (docx),
+  `font-spacing-bare-int` and `header-footer-stale-shape` (pptx). The nine gaps of the v0.16.0 pin are closed.
+- Before it, pinned: the upstream releases tensorbee/rdocx `v0.16.0` (rdocx 0.16.0) and `rpptx-v0.14.0` (rpptx
+  0.14.0), both at commit `733ce6f7` (sprint S90).
+- Earlier: the integration branch `integration/open-prs-2026-10-08-3`, and before it the upstream releases tensorbee/rdocx `v0.15.0` (rdocx 0.15.0) and `rpptx-v0.13.1` (rpptx 0.13.1),
   both at commit `9d019472` (sprint S88), the first ones that ship the CLIs and the wheels together under one
   tag per family, with `SHA256SUMS` and build provenance attestations (tensorbee/rdocx#266). The lock records
   five platforms: linux-x86_64, linux-aarch64 (CLIs need glibc 2.35, wheels manylinux_2_28), macos-arm64,
   macos-x86_64 (new: upstream builds it) and windows-x86_64. This repository's releases and the integration
   branches of hadim/rdocx are no longer used for the pin; `build.yml` stays for a commit between two
   upstream releases.
-- Suite on macos-arm64 against 0.16.0 / 0.14.0: 627 passed, 9 skipped, 8 xfailed (variable-font-bold needs Poppler).
+- Suite against `dfe5bb08`: 756 passed, 3 xfailed on macos-arm64 with Poppler; the build notes give 737 to 738 passed
+  on the five platforms (18 to 19 skipped where Poppler is missing).
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
