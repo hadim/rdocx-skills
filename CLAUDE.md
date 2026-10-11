@@ -54,7 +54,7 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
 - Pinned: the integration branch `integration/open-prs-2026-10-11` of hadim/rdocx (commit `37c02616`) through
-  this repository's release `RELEASE_TAG`: tensorbee/rdocx `v0.16.0` (`733ce6f7`) plus every open PR of the
+  this repository's release `rdocx-20261011-37c0261661ad`: tensorbee/rdocx `v0.16.0` (`733ce6f7`) plus every open PR of the
   user, tensorbee/rdocx#315, #317 to #320, #322, #324 to #330, #333, #335, #336, #338, #341 to #343 (everyday Word
   and PowerPoint coverage of #314, agent-first API of #316, fixes for #295 to #301, #321, #323, #331, #337, #339,
   #340), and one integration fix: `Run.add_picture` in a header or footer run (#322 with #328, through #343's
@@ -68,7 +68,7 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - Open gaps: none. `story-text-tab` (#342), `toc-rebuild-empty-paragraph` (#341) and `header-footer-picture`
   closed on this pin, after the nine gaps of the v0.16.0 pin, `font-spacing-bare-int` and
   `header-footer-stale-shape`. Raw XML stays refused in headers and footers (documented, not a gap).
-- Suite against `37c02616`: SUITE_RESULTS.
+- Suite against `37c02616`: 773 passed, 1 skipped, no xfail on linux-x86_64 from the release files; the build notes give 750 to 751 passed on the five platforms (18 to 19 skipped), with 4 failures there that are the three closed gaps and the dropped `NotImplementedError` check, all fixed on this branch.
 - Before it, pinned: the integration branch `integration/open-prs-2026-10-10-4` (commit `154dc6bd`, release
   `rdocx-20261010-154dc6bd1190`), with three docx gaps open.
 - Before it, pinned: the upstream releases tensorbee/rdocx `v0.16.0` (rdocx 0.16.0) and `rpptx-v0.14.0` (rpptx
