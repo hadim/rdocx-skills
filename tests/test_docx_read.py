@@ -343,7 +343,6 @@ def test_measurements_read_back_where_the_decimal_tests_look(tmp_path):
 
 
 
-@pytest.mark.gap("story-text-tab")
 def test_a_tab_reads_as_a_tab_in_every_story_view(rdocx_cli, tmp_path):
     """A w:tab between two runs, as Word writes a footer "title<tab>page": every text view keeps it."""
     d = docx.Document()
@@ -359,3 +358,24 @@ def test_a_tab_reads_as_a_tab_in_every_story_view(rdocx_cli, tmp_path):
     assert plain.count("left\tright") == 3
     record = json.loads(run([rdocx_cli, "text", "--json", tmp_path / "t.docx"], check=True).stdout)
     assert {i["text"] for s in record["stories"] for i in s["items"]} == {"left\tright"}
+
+
+def test_a_break_reads_as_in_paragraph_text_and_set_story_text_writes_tabs_and_breaks(tmp_path):
+    """A line break in a header run reads as a newline in StoryItem.text, as in Paragraph.text; set_story_text
+    writes a tab and a newline as a w:tab and a w:br, never as literal characters in w:t."""
+    d = docx.Document()
+    p = d.sections[0].header.paragraphs[0]
+    p.add_run("line one")
+    p.add_run().add_break()
+    p.add_run("line two")
+    d.save(tmp_path / "b.docx")
+    doc = rdocx.Document.open(tmp_path / "b.docx")
+    item = next(it for it in doc.story_items if it.story.kind == "header" and it.kind == "paragraph")
+    assert item.text == doc.sections[0].header.paragraphs[0].text == "line one\nline two"
+    doc.set_story_text(item, "Title\tPage\nSecond line")
+    doc.save(tmp_path / "s.docx")
+    doc = rdocx.Document.open(tmp_path / "s.docx")
+    assert doc.sections[0].header.paragraphs[0].text == "Title\tPage\nSecond line"
+    header = next(n for n in zipfile.ZipFile(tmp_path / "s.docx").namelist() if re.match(r"word/header\d+\.xml$", n))
+    xml = zipfile.ZipFile(tmp_path / "s.docx").read(header).decode()
+    assert "<w:tab/>" in xml and "<w:br/>" in xml and "\t" not in xml

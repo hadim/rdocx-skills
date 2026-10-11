@@ -15,14 +15,7 @@ gaps closed.
 """
 
 # The nine gaps of the v0.16.0 pin (tensorbee/rdocx#295 to #301) closed with the integration build of 2026-10-10;
-# font-spacing-bare-int and header-footer-stale-shape closed with integration/open-prs-2026-10-10-3.
-GAPS = {
-    # docx: headers and footers
-    "header-footer-picture": "a picture cannot be added to a header or footer from Python: Run.add_picture in a header or footer run raises NotImplementedError, and raw XML (Paragraph.xml / replace_xml) is refused there too",
-    # docx: reading
-    # upstream: tensorbee/rdocx#339
-    "story-text-tab": "a w:tab in a run is dropped from StoryItem.text in every story, from the header and footer text of plain `rdocx text` and from the stories of `rdocx text --json` (Paragraph.text keeps it as a tab)",
-    # docx: fields and the table of contents
-    # upstream: tensorbee/rdocx#340
-    "toc-rebuild-empty-paragraph": "rebuild_toc moves the TOC field's begin out of the first entry and its end out of the last into two empty paragraphs of their own: an empty line above the first entry",
-}
+# font-spacing-bare-int and header-footer-stale-shape closed with integration/open-prs-2026-10-10-3;
+# story-text-tab (#342), toc-rebuild-empty-paragraph (#341) and header-footer-picture (#343 and an integration fix
+# of #322 with #328) closed with integration/open-prs-2026-10-11.
+GAPS = {}

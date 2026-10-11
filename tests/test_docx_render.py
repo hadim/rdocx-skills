@@ -124,7 +124,6 @@ def test_toc_rebuild_restores_the_toc_styles(report_docx, tmp_path):
     assert styles == levels
 
 
-@pytest.mark.gap("toc-rebuild-empty-paragraph")
 def test_toc_rebuild_adds_no_empty_paragraph(report_docx):
     """The fixture's TOC field begins in its first entry and ends in its last, as Google Docs and Word write it;
     a rebuild with as many entries keeps as many paragraphs, none of them empty."""

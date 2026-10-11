@@ -275,8 +275,6 @@ def test_headers_footers_page_numbers_the_python_docx_way(rdocx_cli, tmp_path):
     assert (doc.sections[0].header.kind, doc.sections[0].header.variant, doc.sections[0].header.is_linked_to_previous) == (
         "header", "default", False)
     with pytest.raises(NotImplementedError):
-        doc.sections[0].header.paragraphs[0].runs[0].add_picture(png())    # header pictures: gap header-footer-picture
-    with pytest.raises(NotImplementedError):
         doc.sections[0].header.paragraphs[0].xml                           # raw XML: body and cells only
     doc.save(tmp_path / "h.docx")
     parts_ = {n: part(tmp_path / "h.docx", n).decode() for n in zipfile.ZipFile(tmp_path / "h.docx").namelist()
@@ -344,14 +342,29 @@ def test_page_colour_watermarks_and_page_borders(rdocx_cli, tmp_path):
     assert run([rdocx_cli, "validate", tmp_path / "w.docx"]).returncode == 0
 
 
-@pytest.mark.gap("header-footer-picture")
-def test_a_picture_in_a_header(tmp_path):
+def test_a_picture_in_a_header_and_a_footer(rdocx_cli, tmp_path):
+    """A logo next to the header text: the image is related from the header part (Word reports a picture related
+    from document.xml as broken there), and doc.pictures stays the body's list."""
     doc = rdocx.Document()
+    doc.add_paragraph("Body")
     doc.sections[0].header.paragraphs[0].text = "Logo: "
-    doc.sections[0].header.paragraphs[0].runs[0].add_picture(png(), rdocx.Inches(1))
+    logo = doc.sections[0].header.paragraphs[0].runs[0].add_picture(png(), rdocx.Inches(1), description="Logo")
+    doc.sections[0].footer.paragraphs[0].text = "Seal "
+    doc.sections[0].footer.paragraphs[0].runs[0].add_picture(png(), rdocx.Inches(0.5))
+    assert (logo.content_type, logo.description, logo.width) == ("image/png", "Logo", rdocx.Inches(1))
+    assert doc.pictures == ()
+    with pytest.raises(ValueError, match="not in document.pictures"):
+        doc.set_picture_size(logo, rdocx.Inches(2), rdocx.Inches(1))
     doc.save(tmp_path / "h.docx")
-    rels = [n for n in zipfile.ZipFile(tmp_path / "h.docx").namelist() if re.match(r"word/_rels/header\d+\.xml\.rels$", n)]
-    assert any(b"/image" in part(tmp_path / "h.docx", n) for n in rels)
+    names = zipfile.ZipFile(tmp_path / "h.docx").namelist()
+    for story in ("header", "footer"):
+        rels = [n for n in names if re.match(rf"word/_rels/{story}\d+\.xml\.rels$", n)]
+        assert [n for n in rels if b"/image" in part(tmp_path / "h.docx", n)] != [], story
+    assert b"/image" not in part(tmp_path / "h.docx", "word/_rels/document.xml.rels")
+    assert run([rdocx_cli, "validate", tmp_path / "h.docx"]).returncode == 0
+    header = docx.Document(tmp_path / "h.docx").sections[0].header
+    blip = header._element.xpath(".//a:blip/@r:embed")[0]
+    assert header.paragraphs[0].text == "Logo: " and header.part.related_parts[blip].blob == png()
 
 
 # ---------------------------------------------------------------- document-level views, exports, checks

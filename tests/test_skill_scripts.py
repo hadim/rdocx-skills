@@ -253,7 +253,7 @@ def test_count_reads_text_inside_simple_fields_smart_tags_and_custom_xml(tmp_pat
 
 
 def test_all_text_keeps_the_tabs_of_every_story(tmp_path):
-    """A w:tab in a run is a tab character in every story (the workaround for story-text-tab); the tab stops of
+    """A w:tab in a run is a tab character in every story (as `StoryItem.text` reads it); the tab stops of
     the paragraph properties add nothing."""
     import docx
     d = docx.Document()

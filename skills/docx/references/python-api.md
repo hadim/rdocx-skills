@@ -67,7 +67,7 @@ in doubt, re-fetch: a retired handle always raises, it never points at the wrong
 | `pictures` → tuple of `Picture` (`relationship_id`, `name`, `description`, `title`, `decorative`, `width`, `height`, `inline`, `content_type`, `filename`, `blob`), `set_picture_size(picture, width, height)` | body and table-cell pictures; a `Picture` resizes that picture only, a relationship id every picture showing it |
 | `clone_content(handle, bi)` | copies a block to body index `bi`, with its formatting, fields and bookmarks (a copied bookmark is renamed, `MailMerge1`...); comment anchors are not copied |
 | `move_content(source, destination)`, `pop_content(bi)` → `ContentFragment`, `insert_content(bi, fragment)`, `remove_content(bi)` | `destination` of `move_content` is counted before the move (moving the 2nd of ABCDE to 3 gives ACBDE). Removing content never leaves a comment without an anchor: a comment it covers whole goes with its replies; a removal that would cut a comment in part, and `pop_content` of content that carries a comment (fragments do not own threads), raise `RdocxError` and change nothing. Move the thread first, or use `move_content`, which keeps it on the moved block |
-| `set_story_text(item, text)` | replaces a paragraph's text, keeping the first run's formatting (any story) |
+| `set_story_text(item, text)` | replaces a paragraph's text, keeping the first run's formatting (any story); a `\t` or `\n` in `text` is written as a tab or a line break |
 | `split_run(body_index, run_index, character_offset)` | splits one run in two at a character offset; body paragraphs only (a table cell paragraph raises `ValueError`) |
 | `update_section(i, *, margin_top=, orientation=, page_width=, ...)` → `Section`, `add_section(start_type=WD_SECTION.NEW_PAGE)` → `Section` | writes a section's page setup (`doc.sections` stays a snapshot: `section.left_margin = ...` raises `AttributeError` naming the keyword); lengths in EMU, `rdocx.Twips(1440)` for twips, and a nonzero page length under 0.01 inch raises `ValueError`. Switching the orientation swaps width and height. A new section copies the previous one's page size, margins and columns |
 | `insert_section(i)`, `remove_section(i)` | `insert_section` adds an empty section at section index `i` (an empty paragraph carries its break: 0 before the first section, `len(doc.sections)` after the last one's content); `remove_section` removes that break, the paragraphs stay |
@@ -131,8 +131,9 @@ in doubt, re-fetch: a retired handle always raises, it never points at the wrong
   `add_tab()` (a tab at the end of the run), `add_break(WD_BREAK.LINE)` (`PAGE`, `COLUMN`, `TEXT_WRAPPING`...;
   refused in headers and footers), `add_field(instruction, cached_result="")` (a simple field after the
   run, such as `"PAGE"`, showing `cached_result` until fields are updated), `add_picture(image, width=None,
-  height=None, *, filename=, description=, ...)` → `Picture` (the options of `Document.add_picture`; body
-  and table-cell runs: in a header or footer it raises, gap header-footer-picture), `xml` / `replace_xml(xml)`.
+  height=None, *, filename=, description=, ...)` → `Picture` (the options of `Document.add_picture`; in a
+  body, table-cell, header or footer run; a header or footer picture is related from its own part and is not
+  in `doc.pictures`, so `set_picture_size` refuses it with `ValueError`), `xml` / `replace_xml(xml)`.
 - `Font`: `name`, `size` (length), `bold`, `italic`, `underline` (`WD_UNDERLINE` or bool), `strike`,
   `double_strike`, `all_caps`, `small_caps` (written, not drawn by rdocx's renderer), `hidden`,
   `superscript` / `subscript` (python-docx's tri-state: setting one False clears only itself),
@@ -185,8 +186,8 @@ edits work.
 | `is_linked_to_previous` (get and set) | setting False gives the section an empty story of its own; writing into a linked one edits the earlier section's story |
 
 Writing into a first-page story turns `different_first_page_header_footer` on for the section, into an even
-story turns `doc.settings.odd_and_even_pages_header_footer` on (Word ignores even headers without it). No
-picture in a header or footer from Python yet (gap header-footer-picture), and raw XML is refused there.
+story turns `doc.settings.odd_and_even_pages_header_footer` on (Word ignores even headers without it). A logo
+goes into a header or footer run with `run.add_picture(...)`; raw XML is refused there.
 The lower-level story calls (`create_section_story`, `insert_content`) stay available.
 
 ## Raw XML
