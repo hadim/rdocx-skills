@@ -50,23 +50,27 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
 
-## State on 10/10/2026
+## State on 11/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: the integration branch `integration/open-prs-2026-10-10-4` of hadim/rdocx (commit `154dc6bd`) through
-  this repository's release `rdocx-20261010-154dc6bd1190`: tensorbee/rdocx `v0.16.0` (`733ce6f7`) plus every open
-  PR of the user, tensorbee/rdocx#315, #317 to #320, #322, #324 to #330, #333, #335, #336 and #338 (everyday Word
-  and PowerPoint coverage of #314, agent-first API of #316, fixes for #295 to #301, #321, #323, #331, #337). API and behaviour that
-  changed: one colour rule in both bindings (RGBColor, hex with or without `#`, int triple; `font.color` is a
-  ColorFormat with `.rgb`); caller fonts reach every render; handles are retired by scope (rdocx: removals,
-  moves, clones and replacements retire everything, row and grid edits that table's rows and cells; rpptx: by kind,
-  slide > shape > paragraph > run) instead of on every edit; `add_picture` takes one dimension and keeps the
-  aspect ratio; raw XML on paragraphs, runs, tables and shapes. A skills `main` pinned on the fork steps back
-  from upstream releases: go back to tensorbee/rdocx with `bump v<version>` once a release carries these PRs.
-- Open gaps (3, docx, none reported upstream): `header-footer-picture` (a missing API), `story-text-tab` and
-  `toc-rebuild-empty-paragraph` (met in real use, triaged on this pin). The nine gaps of the v0.16.0
-  pin are closed, and so are `font-spacing-bare-int` and `header-footer-stale-shape`, fixed in #318 and on the
-  integration branch.
+- Pinned: the integration branch `integration/open-prs-2026-10-11` of hadim/rdocx (commit `37c02616`) through
+  this repository's release `rdocx-20261011-37c0261661ad`: tensorbee/rdocx `v0.16.0` (`733ce6f7`) plus every open PR of the
+  user, tensorbee/rdocx#315, #317 to #320, #322, #324 to #330, #333, #335, #336, #338, #341 to #343 (everyday Word
+  and PowerPoint coverage of #314, agent-first API of #316, fixes for #295 to #301, #321, #323, #331, #337, #339,
+  #340), and one integration fix: `Run.add_picture` in a header or footer run (#322 with #328, through #343's
+  `embed_image_in_story`). What changed since `integration/open-prs-2026-10-10-4`: story text (`StoryItem.text`,
+  the stories of `rdocx text` and `text --json`) reads run tabs and breaks as `Paragraph.text` does and hides
+  field instructions; `set_story_text` writes `\t` and `\n` as `w:tab` and `w:br`; `rebuild_toc` keeps the field
+  markers in the first and last entries (no empty line) and rebuilds a one-paragraph TOC; a header or footer
+  picture (not listed in `doc.pictures`, refused by `set_picture_size` with ValueError). A skills `main` pinned
+  on the fork steps back from upstream releases: go back to tensorbee/rdocx with `bump v<version>` once a release
+  carries these PRs.
+- Open gaps: none. `story-text-tab` (#342), `toc-rebuild-empty-paragraph` (#341) and `header-footer-picture`
+  closed on this pin, after the nine gaps of the v0.16.0 pin, `font-spacing-bare-int` and
+  `header-footer-stale-shape`. Raw XML stays refused in headers and footers (documented, not a gap).
+- Suite against `37c02616`: 773 passed, 1 skipped, no xfail on linux-x86_64 from the release files; the build notes give 750 to 751 passed on the five platforms (18 to 19 skipped), with 4 failures there that are the three closed gaps and the dropped `NotImplementedError` check, all fixed on this branch.
+- Before it, pinned: the integration branch `integration/open-prs-2026-10-10-4` (commit `154dc6bd`, release
+  `rdocx-20261010-154dc6bd1190`), with three docx gaps open.
 - Before it, pinned: the upstream releases tensorbee/rdocx `v0.16.0` (rdocx 0.16.0) and `rpptx-v0.14.0` (rpptx
   0.14.0), both at commit `733ce6f7` (sprint S90).
 - Earlier: the integration branch `integration/open-prs-2026-10-08-3`, and before it the upstream releases tensorbee/rdocx `v0.15.0` (rdocx 0.15.0) and `rpptx-v0.13.1` (rpptx 0.13.1),
@@ -76,9 +80,6 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   macos-x86_64 (new: upstream builds it) and windows-x86_64. This repository's releases and the integration
   branches of hadim/rdocx are no longer used for the pin; `build.yml` stays for a commit between two
   upstream releases.
-- Suite against `154dc6bd`: 761 passed, 1 xfailed on macos-arm64 with Poppler; with the two gaps triaged on
-  10/10/2026 and their docs: 761 passed, 9 skipped, 3 xfailed on macos-arm64 without Poppler; the build notes give 742 to 743 passed
-  on the five platforms (18 to 19 skipped where Poppler is missing).
 - The skills load ahead of Anthropic's docx and pptx skills: 8 of 8 headless sessions (summary, replace,
   new memo; add slide, outline, new deck) called `rdocx:docx` / `rdocx:pptx` first, with the
   document-skills plugin loaded alongside.
