@@ -1235,9 +1235,9 @@ def test_a_caller_font_wins_over_an_embedded_face(rpptx_cli, tmp_path, free_font
     assert pdf_uses_font((tmp_path / "cli.pdf").read_bytes(), b"Aileron")
 
 
-@pytest.mark.gap("font-dir-alias-below-embedded-face")
 def test_a_font_dir_file_named_after_the_typeface_wins_over_an_embedded_face(tmp_path, free_font):
-    """A font_dir file counts as the family its file name gives; it should win over an embedded face as well."""
+    """A font_dir file counts as the family its file name gives, and wins over an embedded face of that typeface
+    even when its own family differs."""
     src = embedded_font_deck(tmp_path / "f.pptx", free_font)
     plain = rpptx.Presentation(src)
     plain.remove_font("Aileron")

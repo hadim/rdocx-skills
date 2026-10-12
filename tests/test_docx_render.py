@@ -14,7 +14,7 @@ from docx.oxml.ns import nsdecls, qn
 from docx.shared import Pt
 from PIL import Image
 
-from conftest import BASH, MONOSPACE_FONTS, STAMP, VARIABLE_FONTS, digest, font_dir, part, poppler, run
+from conftest import BASH, FREE_FONT_LICENSE, MONOSPACE_FONTS, STAMP, VARIABLE_FONTS, digest, font_dir, part, poppler, run
 
 PDFTOTEXT = poppler("pdftotext")
 
@@ -616,6 +616,28 @@ def test_font_dir_reaches_the_images(rdocx_cli, tmp_path):
     assert run([rdocx_cli, "convert", src, "--to", "md", "--font-dir", fonts, "-o", tmp_path / "f.md"]).returncode != 0
     missing = run([rdocx_cli, "convert", src, "--to", "pdf", "--font-dir", tmp_path / "nowhere", "-o", tmp_path / "m.pdf"])
     assert missing.returncode != 0 and not (tmp_path / "m.pdf").exists()
+
+
+def test_a_font_dir_file_named_after_the_font_wins_over_an_embedded_face(rdocx_cli, tmp_path, free_font):
+    """A font_dir / --font-dir file counts as the family its file name gives, and wins over the embedded face of
+    that font even when its own family differs: the folder holds a monospace face saved as Aileron.ttf."""
+    doc = rdocx.Document()
+    doc.add_paragraph("Embedded face text").runs[0].font.name = "Aileron"
+    doc.embed_font("Aileron", free_font, license=rdocx.FontEmbeddingLicense(authorized=True, identity=FREE_FONT_LICENSE))
+    doc.save(tmp_path / "f.docx")
+    plain = rdocx.Document.open(tmp_path / "f.docx")
+    plain.remove_embedded_font("Aileron", "regular")
+    plain.save(tmp_path / "plain.docx")
+    fonts = font_dir(tmp_path, MONOSPACE_FONTS, "Aileron")
+    embedded = rdocx.Document.open(tmp_path / "f.docx")
+    assert digest(embedded.render_page_to_png(0, 50.0)) != digest(plain.render_page_to_png(0, 50.0))
+    assert digest(plain.render_page_to_png(0, 50.0, font_dir=fonts)) != digest(plain.render_page_to_png(0, 50.0))
+    assert digest(embedded.render_page_to_png(0, 50.0, font_dir=fonts)) == digest(
+        plain.render_page_to_png(0, 50.0, font_dir=fonts))
+    for name in ("f", "plain"):
+        run([rdocx_cli, "convert", tmp_path / f"{name}.docx", "--to", "png", "--dpi", "50", "--font-dir", fonts, "-o",
+             tmp_path / f"{name}.png"], check=True)
+    assert digest((tmp_path / "f.png").read_bytes()) == digest((tmp_path / "plain.png").read_bytes())
 
 
 def ink(png):
