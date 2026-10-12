@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from conftest import BASH
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -25,15 +27,23 @@ SUMMARY_A = "### linux-x86_64\n\n`10 passed in 1s`\n"
 SUMMARY_B = "### linux-x86_64\n\n`9 passed, 1 failed in 1s`\n"
 
 
-def test_only_this_repositorys_own_builds_are_named():
-    own = f"https://github.com/{REPO}/releases/download/rdocx-20261012-{COMMIT[:12]}"
-    assert release_notes.own_release_tag(own, REPO, COMMIT) == f"rdocx-20261012-{COMMIT[:12]}"
+@pytest.mark.parametrize("stamp", ["202610121405", "20261012"])  # build date and time; date only (older)
+def test_only_this_repositorys_own_builds_are_named(stamp):
+    own = f"https://github.com/{REPO}/releases/download/rdocx-{stamp}-{COMMIT[:12]}"
+    assert release_notes.own_release_tag(own, REPO, COMMIT) == f"rdocx-{stamp}-{COMMIT[:12]}"
+    assert release_notes.own_release_tag(own + "/", REPO, COMMIT) == f"rdocx-{stamp}-{COMMIT[:12]}"
     upstream = {"rdocx": "https://github.com/tensorbee/rdocx/releases/tag/v0.16.0"}
     assert release_notes.own_release_tag(upstream, REPO, COMMIT) is None
     assert release_notes.own_release_tag(own.replace(REPO, "tensorbee/rdocx"), REPO, COMMIT) is None
     assert release_notes.own_release_tag(own, REPO, "f" * 40) is None  # a release of another commit
     assert release_notes.own_release_tag(f"https://github.com/{REPO}/releases/download/v0.16.0", REPO, COMMIT) is None
     assert release_notes.own_release_tag("", REPO, COMMIT) is None
+
+
+@pytest.mark.parametrize("stamp", ["2026101214", "2026101214051", "2026-10-12", "2026101"])
+def test_a_tag_stamped_otherwise_is_not_named(stamp):
+    url = f"https://github.com/{REPO}/releases/download/rdocx-{stamp}-{COMMIT[:12]}"
+    assert release_notes.own_release_tag(url, REPO, COMMIT) is None
 
 
 def test_the_final_suite_heads_the_notes_and_the_build_time_suite_is_kept():

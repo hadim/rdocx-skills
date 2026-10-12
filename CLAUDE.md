@@ -20,7 +20,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - `.github/workflows/`: `ci.yml` (suite on the five platforms, every push and PR; on a push to `main` whose lock pins
   one of this repository's releases, its summaries become the final "Acceptance suite" section of that release's
   notes, through `.github/scripts/release_notes.py`), `build.yml` (only for a commit between two upstream releases:
-  builds it on five runners and publishes the release `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first, with a
+  builds it on five runners and publishes the release `rdocx-<YYYYMMDDHHMM>-<commit12>`, UTC build date and time
+  first since GitHub lists releases by tag name (older releases: `rdocx-<YYYYMMDD>-<commit12>`, still valid), with a
   preliminary "Build-time suite" run with the skills tests of the commit it runs from; by hand, and weekly on
   upstream `main` HEAD as a candidate). `.github/scripts/suite-summary.sh` groups a suite log (gaps closed, docs
   not yet updated, other failures); both scripts are tested in `tests/test_ci_scripts.py`.

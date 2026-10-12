@@ -46,11 +46,13 @@ Releases. Upstream publishes one release per family and version (tags `v<version
 families have a release at the pinned commit, the lock's `release` maps each family to its download URL and
 `downloads` records, per platform, the SHA-256 of the two archives and the two wheels; the CLIs come out of the
 archives once those match. For a commit between two upstream releases, the build workflow of this repository
-publishes a release `rdocx-<UTC build date YYYYMMDD>-<first 12 characters of the commit>` whose assets are
-`<platform>.<file>` plus a SHA256SUMS listing them, and `release` is its URL (found through the GitHub API
-listing of the releases, with GH_TOKEN or GITHUB_TOKEN when set). A downloaded file is trusted only through the
-lock: it lands in RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the same staging and hash check as any
-dist folder.
+publishes a release `rdocx-<UTC build date and time YYYYMMDDHHMM>-<first 12 characters of the commit>` (GitHub
+lists releases by tag name: the time keeps two builds of the same day in build order; the older releases are
+`rdocx-<YYYYMMDD>-<commit12>`, still valid) whose assets are `<platform>.<file>` plus a SHA256SUMS listing them,
+and `release` is its URL (found through the GitHub API listing of the releases, the one whose tag ends with
+`-<commit12>` whatever its format, with GH_TOKEN or GITHUB_TOKEN when set). A downloaded file is trusted only
+through the lock: it lands in RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the same staging and hash
+check as any dist folder.
 
 Environment: RDOCX_HOME (default ~/.local/share/rdocx-skills), RDOCX_SRC (a local clone of rdocx; default:
 a sibling `rdocx` folder of this repository), RDOCX_DIST (a folder holding <commit>/<platform>/),
@@ -847,8 +849,8 @@ def main():
         write_lock(lock)
         say(f"pinned {args.ref} = {commit}; no release nor hashes recorded yet. Next: `lock --write --release` "
             "records the upstream releases of that commit (rdocx and rpptx tags). Between two upstream releases, "
-            f"run the build workflow on it first: it publishes the release rdocx-<date>-{commit[:12]}, which "
-            "`lock --write --release` then finds and records.")
+            "run the build workflow on it first: it publishes the release "
+            f"rdocx-<YYYYMMDDHHMM>-{commit[:12]}, which `lock --write --release` then finds and records.")
         return
     if args.cmd == "lock" and args.release:
         if not args.write:
