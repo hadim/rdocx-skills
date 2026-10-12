@@ -1,6 +1,7 @@
 """docx: the everyday surface of the 2026-10-10 pin, written the python-docx way: authoring, lists, run and paragraph
 formatting, styles, tables, pictures, links, headers and footers, notes, page setup, document-level views and
-exports, properties, content controls, equations, raw XML, and the one-shot CLI commands. Each test builds its own
+exports, properties, content controls, equations, raw XML, and the one-shot CLI commands; and from the 2026-10-12 pin,
+documents from Markdown and HTML, charts and embedded fonts. Each test builds its own
 input and checks the saved file (XML, python-docx, `rdocx validate`)."""
 import datetime
 import io
@@ -13,7 +14,7 @@ import pytest
 import rdocx
 from PIL import Image
 
-from conftest import part, run
+from conftest import FREE_FONT_LICENSE, digest, libreoffice_pdf, part, pdf_uses_font, run
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
@@ -634,3 +635,260 @@ def test_a_heading_link_adds_a_heading_bookmark():
     doc.add_heading("Results", 1)
     doc.add_paragraph("See ").add_hyperlink("results", anchor=doc.paragraphs[0])
     assert doc.bookmarks[0].name.startswith("Heading_") and doc.hyperlinks[0].anchor == doc.bookmarks[0].name
+
+
+# ---------------------------------------------------------------- the 2026-10-12 pin: import, charts, embedded fonts
+def compat_mode(path):
+    return re.search(r'w:name="compatibilityMode"[^>]*w:val="(\d+)"', part(path, "word/settings.xml").decode())
+
+
+def test_new_documents_name_compatibility_mode_15(tmp_path):
+    """Word opens a document that names no compatibility mode in Compatibility Mode; new ones name 15."""
+    rdocx.Document().save(tmp_path / "new.docx")
+    rdocx.Document.from_markdown("# Title\n")[0].save(tmp_path / "md.docx")
+    rdocx.Document.from_html("<p>x</p>")[0].save(tmp_path / "html.docx")
+    for name in ("new.docx", "md.docx", "html.docx"):
+        assert compat_mode(tmp_path / name).group(1) == "15", name
+    with zipfile.ZipFile(tmp_path / "new.docx") as src, zipfile.ZipFile(tmp_path / "legacy.docx", "w") as dst:
+        for info in src.infolist():                                       # a file that names no mode keeps none
+            data = src.read(info.filename)
+            if info.filename == "word/settings.xml":
+                data = re.sub(rb"<w:compat>.*?</w:compat>", b"", data)
+            dst.writestr(info, data)
+    rdocx.Document.open(tmp_path / "legacy.docx").save(tmp_path / "resaved.docx")
+    assert compat_mode(tmp_path / "resaved.docx") is None
+
+
+def test_markdown_becomes_a_styled_document(rdocx_cli, tmp_path):
+    (tmp_path / "pic.png").write_bytes(png())
+    (tmp_path / "notes.md").write_text(
+        "# Site visit\n\nVisited on **27 September**, see [the survey](https://example.com/s).\n\n"
+        "- bearings\n  - pier 2\n- joints\n\n1. first\n2. second\n\n| Item | State |\n|---|---|\n| Pier 2 | Good |\n\n"
+        "> A quote.\n\n```\ncode line\n```\n\n![Deck photo](pic.png)\n")
+    template = rdocx.Document()
+    template.sections[0].header.paragraphs[0].text = "Template header"
+    template.save(tmp_path / "brand.docx")
+    res = run([rdocx_cli, "convert", tmp_path / "notes.md", "--template", tmp_path / "brand.docx", "-o", tmp_path / "n.docx"])
+    assert res.returncode == 0, res.stderr
+    doc = rdocx.Document.open(tmp_path / "n.docx")
+    styles = {p.text: p.style for p in doc.paragraphs}
+    assert styles["Site visit"] == "Heading1" and styles["A quote."] == "Quote"
+    assert doc.styles[styles["code line"]].name == "HTML Preformatted"
+    assert [p.numbering is not None for p in doc.paragraphs if p.text in ("bearings", "pier 2", "first")] == [True] * 3
+    levels = {p.text: p.numbering[1] for p in doc.paragraphs if p.numbering}
+    assert (levels["bearings"], levels["pier 2"]) == (0, 1)
+    assert doc.tables[0].cell(1, 0).text == "Pier 2" and doc.tables[0].rows[0].is_header
+    assert [(h.text, h.url) for h in doc.hyperlinks] == [("the survey", "https://example.com/s")]
+    assert any(r.text.strip() == "27 September" and r.bold for p in doc.paragraphs for r in p.runs)
+    assert [p.description for p in doc.pictures] == ["Deck photo"]
+    assert doc.sections[0].header.paragraphs[0].text == "Template header"
+    assert run([rdocx_cli, "validate", tmp_path / "n.docx"]).returncode == 0
+    # the default output is the input name with .docx; a DOCX input still needs --to
+    assert run([rdocx_cli, "convert", tmp_path / "notes.md"]).returncode == 0 and (tmp_path / "notes.docx").exists()
+    assert run([rdocx_cli, "convert", tmp_path / "n.docx", "-o", tmp_path / "x.pdf"]).returncode != 0
+    # Python: the same import, with the diagnostics of what was dropped, and the folder images come from
+    md, diagnostics = rdocx.Document.open_markdown(tmp_path / "notes.md")
+    assert [p.description for p in md.pictures] == ["Deck photo"] and diagnostics == ()
+    _, diagnostics = rdocx.Document.from_markdown("![missing](nowhere.png)\n", base_dir=tmp_path)
+    assert diagnostics and diagnostics[0].location == "line 1" and diagnostics[0].message
+    (tmp_path / "bad.md").write_text("![missing](nowhere.png)\n")
+    res = run([rdocx_cli, "convert", tmp_path / "bad.md", "-o", tmp_path / "bad.docx"])
+    assert res.returncode == 0 and "Warning: line 1:" in res.stderr
+
+
+def test_html_becomes_a_document_and_inserts_after_an_item(rdocx_cli, tmp_path):
+    pic = "data:image/png;base64," + __import__("base64").b64encode(png()).decode()
+    html = (f"<h1>Findings</h1><p>See <a href='https://example.com/s'>the survey</a> and "
+            f"<a href='javascript:alert(1)'>this</a>.</p><ul><li>Pier 2</li></ul><img src='{pic}' alt='Deck'>")
+    doc, diagnostics = rdocx.Document.from_html(html)
+    assert doc.paragraphs[0].style == "Heading1" and doc.paragraphs[0].text == "Findings"
+    assert [h.url for h in doc.hyperlinks] == ["https://example.com/s"]          # the unsafe link keeps its text only
+    assert "this" in doc.paragraphs[1].text and [p.description for p in doc.pictures] == ["Deck"]
+    assert diagnostics and all(d.location and d.message for d in diagnostics)
+    assert all(d.property is None or isinstance(d.property, str) for d in diagnostics)
+    heading = next(item for item in doc.story_items if item.text == "Findings")
+    assert doc.insert_html("<p><em>After the heading.</em></p>", after=heading) == ()
+    assert doc.paragraphs[1].text == "After the heading." and doc.paragraphs[1].runs[0].italic
+    (tmp_path / "page.html").write_text(html)
+    res = run([rdocx_cli, "convert", tmp_path / "page.html", "-o", tmp_path / "page.docx"])
+    assert res.returncode == 0 and "Warning:" in res.stderr
+    opened, _ = rdocx.Document.open_html(tmp_path / "page.html")
+    assert [p.text for p in opened.paragraphs] == [p.text for p in rdocx.Document.open(tmp_path / "page.docx").paragraphs]
+
+
+def test_markdown_export_reads_as_the_document_means():
+    """Edge spaces go outside the emphasis, two bold runs share one pair, a list ends before what follows."""
+    doc = rdocx.Document()
+    p = doc.add_paragraph("A")
+    p.add_run(" rose").bold = True
+    p.add_run(" bush").bold = True
+    doc.add_bullet_list_item("item")
+    doc.add_paragraph("After the list.")
+    md = doc.to_markdown()
+    assert "A **rose bush**" in md and "****" not in md and "** rose" not in md
+    assert "- item\n\nAfter the list." in md
+
+
+def test_charts_are_added_and_read_back(rdocx_cli, tmp_path):
+    from rdocx.chart.data import CategoryChartData, XyChartData
+    from rdocx.enum.chart import XL_CHART_TYPE
+    doc = rdocx.Document()
+    doc.add_heading("Costs", 1)
+    doc.add_paragraph("End.")
+    data = CategoryChartData()
+    data.categories = ["2024", "2025"]
+    data.add_series("Inspections", (12, 15))
+    heading = next(item for item in doc.story_items if item.text == "Costs")
+    item = doc.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, rdocx.Inches(5), rdocx.Inches(3), data, after=heading)
+    assert item.direct_body_index == 1
+    xy = XyChartData()
+    s = xy.add_series("Deflection")
+    for x, y in ((0, 1.5), (1, 2.5)):
+        s.add_data_point(x, y)
+    doc.add_chart(XL_CHART_TYPE.XY_SCATTER_LINES, rdocx.Inches(5), rdocx.Inches(3), xy)
+    doc.save(tmp_path / "c.docx")
+    charts = rdocx.Document.open(tmp_path / "c.docx").charts
+    assert [(c.chart_type, c.categories, [(x.name, x.values) for x in c.series]) for c in charts] == [
+        (XL_CHART_TYPE.COLUMN_CLUSTERED, ("2024", "2025"), [("Inspections", (12.0, 15.0))]),
+        (XL_CHART_TYPE.XY_SCATTER_LINES, ("0", "1"), [("Deflection", (1.5, 2.5))])]
+    with zipfile.ZipFile(tmp_path / "c.docx") as z:
+        assert any(n.startswith("word/embeddings/") and n.endswith(".xlsx") for n in z.namelist())   # editable
+    assert run([rdocx_cli, "validate", tmp_path / "c.docx"]).returncode == 0
+    before = doc.to_bytes()
+    bad = CategoryChartData()
+    bad.categories = ["a"]
+    bad.add_series("one", (1,), number_format="0.0")
+    bad.add_series("two", (2,), number_format="0%")
+    with pytest.raises(ValueError):                                # one number format per chart
+        doc.add_chart(XL_CHART_TYPE.PIE, rdocx.Inches(2), rdocx.Inches(2), bad)
+    assert doc.to_bytes() == before
+    assert not hasattr(charts[0], "replace_data")
+    assert len(XL_CHART_TYPE) == 7
+
+
+def test_embed_list_and_remove_a_font(tmp_path, free_font):
+    doc = rdocx.Document()
+    doc.add_paragraph("Embedded").runs[0].font.name = "Aileron"
+    licence = rdocx.FontEmbeddingLicense(authorized=True, identity=FREE_FONT_LICENSE)
+    doc.embed_font("Aileron", free_font, "regular", license=licence)
+    doc.embed_font("Aileron", free_font.read_bytes(), "bold", license=licence)       # bytes, or a binary file
+    assert doc.embed_true_type_fonts is True
+    doc.save(tmp_path / "f.docx")
+    reopened = rdocx.Document.open(tmp_path / "f.docx")
+    font = next(f for f in reopened.fonts if f.name == "Aileron")
+    assert [(e.kind, e.data == free_font.read_bytes(), e.license.authorized, e.license.identity, e.subsetted)
+            for e in font.embedded_fonts] == [("regular", True, True, FREE_FONT_LICENSE, False),
+                                              ("bold", True, True, FREE_FONT_LICENSE, False)]
+    assert re.fullmatch(r"\{[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\}", font.embedded_fonts[0].font_key)
+    assert "<w:embedTrueTypeFonts/>" in part(tmp_path / "f.docx", "word/settings.xml").decode()
+    with zipfile.ZipFile(tmp_path / "f.docx") as z:
+        stored = [z.read(n) for n in z.namelist() if n.endswith(".odttf")]
+    assert len(stored) == 2 and free_font.read_bytes() not in stored                  # obfuscated as Word does
+    removed = reopened.remove_embedded_font("Aileron", "bold")
+    assert removed.kind == "bold" and [e.kind for e in next(f for f in reopened.fonts if f.name == "Aileron").embedded_fonts] == ["regular"]
+    assert reopened.remove_embedded_font("Aileron", "italic") is None
+    reopened.set_font("Aileron", family="swiss", pitch="variable")
+    font = next(f for f in reopened.fonts if f.name == "Aileron")
+    assert (font.family, font.pitch, len(font.embedded_fonts)) == ("swiss", "variable", 1)    # faces kept
+    assert reopened.remove_font("Aileron").name == "Aileron" and reopened.remove_font("Aileron") is None
+    reopened.save_subset_fonts = True
+    reopened.embed_system_fonts = False
+    assert (reopened.save_subset_fonts, reopened.embed_system_fonts) == (True, False)
+    reopened.embed_true_type_fonts = None
+    assert reopened.embed_true_type_fonts is None
+
+
+def test_a_font_is_embedded_only_with_an_explicit_licence(tmp_path, free_font):
+    doc = rdocx.Document()
+    doc.add_paragraph("x")
+    before = doc.to_bytes()
+    for licence in (rdocx.FontEmbeddingLicense(authorized=False, identity="CC0-1.0: Aileron"),
+                    rdocx.FontEmbeddingLicense(authorized=True, identity=" ")):
+        with pytest.raises(rdocx.RdocxError):
+            doc.embed_font("Aileron", free_font, license=licence)
+    with pytest.raises(TypeError):
+        doc.embed_font("Aileron", free_font)                                          # no licence, no embedding
+    with pytest.raises(TypeError):
+        rdocx.FontEmbeddingLicense(identity="CC0-1.0: Aileron")                       # authorized has no default
+    for bad in (b"\x00\x01\x00\x00" + bytes(64), free_font.read_bytes().replace(b"name", b"nam_", 1)):
+        with pytest.raises(rdocx.RdocxError):                                        # not a whole face
+            doc.embed_font("Aileron", bad, license=rdocx.FontEmbeddingLicense(authorized=True, identity="CC0-1.0: Aileron"))
+    ttc = b"ttcf" + free_font.read_bytes()[4:]
+    with pytest.raises(rdocx.RdocxError):                                            # a collection is refused
+        doc.embed_font("Aileron", ttc, license=rdocx.FontEmbeddingLicense(authorized=True, identity="CC0-1.0: Aileron"))
+    assert digest(doc.to_bytes()) == digest(before)
+
+
+def test_cli_font_commands(rdocx_cli, tmp_path, free_font):
+    rdocx.Document().save(tmp_path / "d.docx")
+    res = run([rdocx_cli, "font", "embed", tmp_path / "d.docx", free_font, "--name", "Aileron",
+               "--license-identity", FREE_FONT_LICENSE, "-o", tmp_path / "no.docx"])
+    assert res.returncode == 1 and "authorization" in res.stderr and not (tmp_path / "no.docx").exists()
+    res = run([rdocx_cli, "font", "embed", tmp_path / "d.docx", free_font, "--name", "Aileron", "--face", "bold",
+               "--license-authorized", "--license-identity", FREE_FONT_LICENSE, "-o", tmp_path / "e.docx", "--json"])
+    assert res.returncode == 0, res.stderr
+    record = json.loads(res.stdout)
+    assert (record["name"], record["face"], record["byte_count"]) == ("Aileron", "bold", len(free_font.read_bytes()))
+    listed = json.loads(run([rdocx_cli, "font", "list", "--json", tmp_path / "e.docx"], check=True).stdout)
+    aileron = next(f for f in listed["fonts"] if f["name"] == "Aileron")
+    assert [(e["face"], e["license_authorized"], e["license_identity"]) for e in aileron["embedded"]] == [
+        ("bold", True, FREE_FONT_LICENSE)]
+    assert listed["settings"]["embed_true_type_fonts"] is True
+    assert "Aileron\tembedded: bold" in run([rdocx_cli, "font", "list", tmp_path / "e.docx"], check=True).stdout
+    res = run([rdocx_cli, "font", "settings", tmp_path / "e.docx", "--save-subset-fonts", "true",
+               "--embed-system-fonts", "false", "-o", tmp_path / "s.docx", "--json"])
+    assert res.returncode == 0, res.stderr
+    assert json.loads(res.stdout)["settings"] == {"embed_true_type_fonts": True, "embed_system_fonts": False,
+                                                  "save_subset_fonts": True}
+    assert run([rdocx_cli, "font", "remove", tmp_path / "s.docx", "--name", "Aileron", "--face", "bold",
+                "-o", tmp_path / "r.docx"]).returncode == 0
+    assert rdocx.Document.open(tmp_path / "r.docx").fonts[[f.name for f in rdocx.Document.open(tmp_path / "r.docx").fonts].index("Aileron")].embedded_fonts == ()
+    assert run([rdocx_cli, "font", "remove", tmp_path / "s.docx", "--name", "Aileron", "-o", tmp_path / "g.docx"]).returncode == 0
+    assert "Aileron" not in [f.name for f in rdocx.Document.open(tmp_path / "g.docx").fonts]
+    res = run([rdocx_cli, "font", "remove", tmp_path / "s.docx", "--name", "Aileron", "-o", tmp_path / "r.docx"])
+    assert res.returncode == 1 and "already exists" in res.stderr                                  # never overwrites
+
+
+def test_what_the_new_edits_retire(free_font):
+    """Font-table edits retire no handle; a chart or inserted HTML retires every handle, as a picture does."""
+    from rdocx.chart.data import CategoryChartData
+    from rdocx.enum.chart import XL_CHART_TYPE
+    licence = rdocx.FontEmbeddingLicense(authorized=True, identity=FREE_FONT_LICENSE)
+    data = CategoryChartData()
+    data.categories = ["a"]
+    data.add_series("s", (1,))
+    edits = {
+        "fonts": lambda d: (d.embed_font("Aileron", free_font, license=licence), d.set_font("Aileron", family="swiss"),
+                            d.remove_embedded_font("Aileron", "regular"), d.remove_font("Aileron"),
+                            setattr(d, "save_subset_fonts", True)),
+        "chart": lambda d: d.add_chart(XL_CHART_TYPE.PIE, rdocx.Inches(1), rdocx.Inches(1), data),
+        "html": lambda d: d.insert_html("<p>x</p>"),
+    }
+    retired = {}
+    for name, edit in edits.items():
+        doc = rdocx.Document()
+        doc.add_paragraph("a").add_run("b")
+        doc.add_table(1, 1)
+        held = {"paragraph": doc.paragraphs[0], "run": doc.paragraphs[0].runs[0], "cell": doc.tables[0].cell(0, 0)}
+        edit(doc)
+        retired[name] = []
+        for kind, handle in held.items():
+            try:
+                handle.text
+            except rdocx.StaleElementError:
+                retired[name].append(kind)
+    assert retired == {"fonts": [], "chart": ["paragraph", "run", "cell"], "html": ["paragraph", "run", "cell"]}
+
+
+def test_an_embedded_font_is_drawn_by_rdocx_and_libreoffice(rdocx_cli, tmp_path, free_font):
+    """The font is installed nowhere: without the embedded face the render falls back to another font."""
+    for embed in (False, True):
+        doc = rdocx.Document()
+        doc.add_paragraph("Embedded face text").runs[0].font.name = "Aileron"
+        if embed:
+            doc.embed_font("Aileron", free_font, license=rdocx.FontEmbeddingLicense(authorized=True, identity=FREE_FONT_LICENSE))
+        doc.save(tmp_path / f"{embed}.docx")
+        assert pdf_uses_font(rdocx.Document.open(tmp_path / f"{embed}.docx").to_pdf(), b"Aileron") is embed
+    run([rdocx_cli, "convert", tmp_path / "True.docx", "--to", "pdf", "-o", tmp_path / "cli.pdf"], check=True)
+    assert pdf_uses_font((tmp_path / "cli.pdf").read_bytes(), b"Aileron")
+    assert pdf_uses_font(libreoffice_pdf(tmp_path / "True.docx", tmp_path), b"Aileron")

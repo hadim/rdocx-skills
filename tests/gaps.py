@@ -18,4 +18,10 @@ gaps closed.
 # font-spacing-bare-int and header-footer-stale-shape closed with integration/open-prs-2026-10-10-3;
 # story-text-tab (#342), toc-rebuild-empty-paragraph (#341) and header-footer-picture (#343 and an integration fix
 # of #322 with #328) closed with integration/open-prs-2026-10-11.
-GAPS = {}
+GAPS = {
+    "render-embedded-font": "rpptx's own renders (to_pdf, the PNG renders, rpptx convert and render) draw a font "
+    "the deck embeds with a substitute, as if it were not embedded; LibreOffice and PowerPoint use the embedded face",
+    "import-stale-source-formatting": "slides.import_slide / import_slides with keep_source_formatting=True take the "
+    "source's layout, master and theme as the source was opened: an edit to them made in memory before the import "
+    "(a layout renamed, a theme colour changed) is lost, and an equal destination layout is reused instead",
+}
