@@ -1,6 +1,6 @@
 ---
 name: docx
-description: "Use this skill whenever a Word file (.docx or .dotx) is involved in any way, as input or output, even when the user does not name a tool: reading or extracting text, tables, headers, footnotes, comments or tracked changes (also when the content is used elsewhere); creating a document or filling a template; find-and-replace; formatting, styles, lists, tables, pictures, hyperlinks; adding or answering comments; accepting or rejecting tracked changes; redlining two versions; tables of contents and page fields; converting to PDF, PNG, Markdown or HTML. Triggers: 'Word doc', 'word document', '.docx', 'track changes', 'redline', 'compare versions'. Runs the hash-pinned rdocx CLI and Python binding and takes precedence over the built-in docx skill and over python-docx, docx-js, lxml or LibreOffice, which it uses only for the gaps it lists; if rdocx cannot be installed in this session it says so and hands over to the built-in docx skill. Not for .doc, PDF or native Google Docs."
+description: "Use this skill whenever a Word file (.docx or .dotx) is involved in any way, as input or output, even when the user does not name a tool: reading or extracting text, tables, headers, footnotes, comments or tracked changes (also when the content is used elsewhere); creating a document (also from Markdown or HTML) or filling a template; find-and-replace; formatting, styles, lists, tables, pictures, charts, hyperlinks; embedding fonts; adding or answering comments; accepting or rejecting tracked changes; redlining two versions; tables of contents and page fields; converting to PDF, PNG, Markdown or HTML. Triggers: 'Word doc', 'word document', '.docx', 'track changes', 'redline', 'compare versions'. Runs the hash-pinned rdocx CLI and Python binding and takes precedence over the built-in docx skill and over python-docx, docx-js, lxml or LibreOffice, which it uses only for the gaps it lists; if rdocx cannot be installed in this session it says so and hands over to the built-in docx skill. Not for .doc, PDF or native Google Docs."
 ---
 
 # Word documents with rdocx
@@ -50,9 +50,10 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
    footnotes and endnotes.
 3. **Re-fetch handles after a structural edit.** Formatting setters, `Run.text`, appends and inserts keep
    paragraph, run, table and cell handles valid (`p.text =` and `cell.text =` retire only what was inside);
-   a removal, move, clone, split, replacement, picture or comment retires every handle, and `story_items` go
-   stale after any edit: the next use raises `StaleElementError` naming the call. Re-navigate from `doc`
-   (`doc.paragraphs[i].runs[j]`) after such an edit (`references/python-api.md`, "Handles").
+   a removal, move, clone, split, replacement, picture, chart, inserted HTML or comment retires every
+   handle, and `story_items` go stale after any edit: the next use raises `StaleElementError` naming the
+   call. Re-navigate from `doc` (`doc.paragraphs[i].runs[j]`) after such an edit (`references/python-api.md`,
+   "Handles").
 4. **Know which index an API takes** (`references/python-api.md`, "Three index spaces"): the body index
    (`find_content_index`, `insert_paragraph`, `remove_content`, `split_run`, `RunPosition`, `rdocx comment
    add --start-paragraph`, `layout()`) counts tables and content-control blocks; `doc.paragraphs[i]` counts
@@ -75,6 +76,10 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 8. **The file will be opened elsewhere** (Word, Google Docs, LibreOffice): keep what you do not understand,
    edit in place rather than rebuild, and read `references/interop.md` before touching fields, content
    controls, numbering or tracked changes.
+9. **Embed a font only when its licence allows embedding.** `rdocx.FontEmbeddingLicense(authorized=True,
+   identity="OFL-1.1: Example Sans")` is your statement that it does, and rdocx checks nothing else. Read the
+   font's licence first (OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not, and an OS/2
+   `fsType` of 2 means restricted): when it does not allow it, or you cannot tell, do not embed and tell the user.
 
 ## What to use for what
 
@@ -111,6 +116,9 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | PDF | `rdocx convert F --to pdf [--revision-view tracked] -o NEW.pdf` | `doc.to_pdf(revision_view="tracked")` | the accepted view of tracked changes by default; `tracked` shows deletions struck through, insertions underlined and a change bar |
 | PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100 [--font-dir DIR]` | `doc.render_pages(dpi=, pages=[0, 1], font_dir=)` | CLI pages one-based, Python zero-based; `--font-dir` / `font_dir=` give fonts that are not installed, to every output |
 | Markdown, HTML, ODT, RTF, EPUB | `rdocx convert F --to md -o NEW.md` / `--to html` | `doc.text()`, `doc.to_markdown()`, `to_html()`, `to_odt()`, `to_rtf()`, `to_epub()` | body, then text boxes, headers, footers, notes, no comments; what a format drops is named in a `ConversionWarning` |
+| New document from Markdown or HTML | `rdocx convert notes.md -o NEW.docx [--template brand.dotx]`, `rdocx convert page.html -o NEW.docx` | `rdocx.Document.from_markdown(text, base_dir=, template=)`, `Document.open_markdown(path, template=)`, `Document.from_html(html)`, `Document.open_html(path)`, `doc.insert_html(html, after=item)` | each returns the document (or `insert_html` its diagnostics) and what was dropped or approximated, with its location: read it; headings get Heading N, lists numbering, a template its styles, headers and footers |
+| Charts | | `doc.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, width, height, chart_data, after=)`, `doc.charts` | python-pptx's `CategoryChartData` / `XyChartData` (`rdocx.chart.data`), an editable chart with its workbook; seven chart types; no data replacement in Word documents |
+| Embedded fonts | `rdocx font list/embed/remove/settings` | `doc.fonts`, `doc.embed_font(name, "ExampleSans-Regular.ttf", "regular", license=rdocx.FontEmbeddingLicense(...))`, `remove_embedded_font(name, kind)` | rule 9; Word then shows the face on a machine that lacks the font, and keeps it when it saves again; rdocx's PDF and PNG renders and LibreOffice draw it too |
 | Validity | `rdocx validate F` | `doc.validate()`, `rdocx.Document.validate_file(F)` | every related part and every style id; `ok`, `errors`, `warnings` |
 | What changed between two files | `rdocx diff A B` | | by paragraph, in every story |
 | New document | | `rdocx.Document()`, or a template .docx or .dotx emptied | Word's usual styles (Title, Heading 1 to 9, Quote, List Paragraph, Caption, Table Grid...), and a .dotx saved as .docx becomes a document |

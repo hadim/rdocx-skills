@@ -50,25 +50,34 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `CI=true`, which took 20 minutes per failing comparison on the runners.
 - Commits: Conventional Commits.
 
-## State on 11/10/2026
+## State on 12/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: the integration branch `integration/open-prs-2026-10-11` of hadim/rdocx (commit `37c02616`) through
-  this repository's release `rdocx-20261011-37c0261661ad`: tensorbee/rdocx `v0.16.0` (`733ce6f7`) plus every open PR of the
-  user, tensorbee/rdocx#315, #317 to #320, #322, #324 to #330, #333, #335, #336, #338, #341 to #343 (everyday Word
-  and PowerPoint coverage of #314, agent-first API of #316, fixes for #295 to #301, #321, #323, #331, #337, #339,
-  #340), and one integration fix: `Run.add_picture` in a header or footer run (#322 with #328, through #343's
-  `embed_image_in_story`). What changed since `integration/open-prs-2026-10-10-4`: story text (`StoryItem.text`,
-  the stories of `rdocx text` and `text --json`) reads run tabs and breaks as `Paragraph.text` does and hides
-  field instructions; `set_story_text` writes `\t` and `\n` as `w:tab` and `w:br`; `rebuild_toc` keeps the field
-  markers in the first and last entries (no empty line) and rebuilds a one-paragraph TOC; a header or footer
-  picture (not listed in `doc.pictures`, refused by `set_picture_size` with ValueError). A skills `main` pinned
+- Pinned: the integration branch `integration/open-prs-2026-10-12` of hadim/rdocx (commit `ffb8d3d6`) through
+  this repository's release `rdocx-20261012-ffb8d3d67f42`: tensorbee/rdocx `v0.16.0` (`733ce6f7`) plus every open PR of
+  the user, those of the previous pin (tensorbee/rdocx#315, #317 to #320, #322, #324 to #330, #333, #335, #336, #338,
+  #341 to #343) and the newly carried #354 to #359 and #361, with two integration fixes (a group pushing nesting past
+  the limit, #326 with #355; slide handles retired after font embedding edits). What changed since
+  `integration/open-prs-2026-10-11`: new Word documents name `compatibilityMode` 15 and the Markdown export is
+  CommonMark-safe (#354); a deck nested deeper than 16 levels raises `XmlError` at open and `add_group_shape` refuses a
+  17th level (#355); `add_chart` from Python in both bindings, `Document.charts`, `shape.chart` and
+  `Chart.replace_data` (#356); `import_slide` carries charts, embedded objects, comments and jumps,
+  `keep_source_formatting`, `import_slides` and `rpptx slide import` (#357); `Presentation.to_markdown` / `to_html` and
+  `rpptx convert --to md|html` (#358); `Document.from_html`, `open_html`, `insert_html`, `from_markdown`,
+  `open_markdown` and `rdocx convert` from `.md` / `.html` with `--template` (#359); font embedding with an explicit
+  `FontEmbeddingLicense` in both bindings and `rdocx font` / `rpptx font list|embed|remove|settings` (#361). The
+  recipes and tests embed Aileron (CC0-1.0), the subset Pillow bundles (`conftest.free_font`). A skills `main` pinned
   on the fork steps back from upstream releases: go back to tensorbee/rdocx with `bump v<version>` once a release
   carries these PRs.
-- Open gaps: none. `story-text-tab` (#342), `toc-rebuild-empty-paragraph` (#341) and `header-footer-picture`
-  closed on this pin, after the nine gaps of the v0.16.0 pin, `font-spacing-bare-int` and
-  `header-footer-stale-shape`. Raw XML stays refused in headers and footers (documented, not a gap).
-- Suite against `37c02616`: 773 passed, 1 skipped, no xfail on linux-x86_64 from the release files; the build notes give 750 to 751 passed on the five platforms (18 to 19 skipped), with 4 failures there that are the three closed gaps and the dropped `NotImplementedError` check, all fixed on this branch.
+- Open gaps (pptx): `render-embedded-font` (rpptx's own renders draw an embedded font with a substitute; workaround
+  `font_dir=` / `--font-dir`) and `import-stale-source-formatting` (`keep_source_formatting` takes the source's layout,
+  master and theme as opened, not as edited in memory; workaround: reopen the source from its bytes). None closed:
+  the previous pin had none open.
+- Suite against `ffb8d3d6`: 797 passed, 9 skipped (Poppler absent), 2 xfailed on macos-arm64 from the release files;
+  the build notes give 750 to 751 passed on the five platforms (18 to 19 skipped), with 5 failures there, all in
+  `test_skill_docs.py` (the new APIs not yet documented), fixed on this branch.
+- Before it, pinned: the integration branch `integration/open-prs-2026-10-11` (commit `37c02616`, release
+  `rdocx-20261011-37c0261661ad`), no gap open.
 - Before it, pinned: the integration branch `integration/open-prs-2026-10-10-4` (commit `154dc6bd`, release
   `rdocx-20261010-154dc6bd1190`), with three docx gaps open.
 - Before it, pinned: the upstream releases tensorbee/rdocx `v0.16.0` (rdocx 0.16.0) and `rpptx-v0.14.0` (rpptx
@@ -89,3 +98,5 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 1. When rdocx tags a release: `bump v<version>`, `lock --write --release`, `install`, `test`, as
    docs/setup.md (Moving the pin) describes. The weekly `build.yml` run on upstream `main` says beforehand
    which gaps the next release closes.
+2. Report the two pptx gaps of this pin upstream (`render-embedded-font`, `import-stale-source-formatting`), then
+   name each issue on its entry in `tests/gaps.py`.

@@ -2,7 +2,8 @@
 
 Conventions, as set up in SKILL.md: `R=${RDOCX_HOME:-~/.local/share/rdocx-skills}/current/bin`, `SKILL` is
 this skill's folder, and Python blocks run with `PYTHONPATH="$SKILL/scripts" $R/python`, so that
-`import docx_ops` works. `report.docx` is the input; outputs go to new files. Blocks run in order in one
+`import docx_ops` works. `report.docx` is the input (`Aileron-Regular.ttf`, a CC0-1.0 font, stands for a
+font file the user supplies); outputs go to new files. Blocks run in order in one
 folder: a later block may read a file an earlier one wrote.
 
 ## Read the text and find where things are
@@ -449,3 +450,65 @@ docx_ops.save_atomic(doc, "checklist.docx")
 `add_style` derives the id from the name as Word does (`"Note box"` → `Notebox`). Assign by that id or by
 the name. `set_style` changes only the properties it is given, on a style chosen by id or name.
 `link_style_to_numbering(style, num_id, level)` numbers every paragraph of a style instead.
+
+## A document from Markdown or HTML
+
+```bash
+printf '# Site visit\n\nVisited on **27 September**.\n\n- bearings\n- deck joints\n\n| Item | State |\n|---|---|\n| Pier 2 | Good |\n' > visit.md
+$R/rdocx convert visit.md --template report.docx -o visit.docx 2> visit-warnings.txt   # styles, headers, footers of report.docx
+cat visit-warnings.txt                                     # "Warning: line N: ..." for what was dropped
+$R/rdocx validate visit.docx
+```
+
+```python
+import docx_ops, rdocx
+doc, warnings = rdocx.Document.from_html(
+    "<h1>Findings</h1><p>See <a href='https://example.com/survey'>the survey</a>.</p><ul><li>Pier 2</li></ul>")
+for w in warnings:
+    print(w.location, w.message)                           # what the import dropped or approximated
+heading = next(item for item in doc.story_items if item.text == "Findings")
+doc.insert_html("<p><em>Inserted after the heading.</em></p>", after=heading)
+docx_ops.save_atomic(doc, "findings.docx")
+```
+
+`from_markdown(text, template=rdocx.Document.open("brand.dotx"))` and `open_markdown(path)` do what
+`convert` does from Python; each returns the document and its diagnostics.
+
+## A chart
+
+```python
+import docx_ops, rdocx
+from rdocx.chart.data import CategoryChartData
+from rdocx.enum.chart import XL_CHART_TYPE
+doc = rdocx.Document.open("report.docx")
+data = CategoryChartData()
+data.categories = ["2024", "2025", "2026"]
+data.add_series("Inspections", (12, 15, 9))
+heading = next(item for item in doc.story_items if item.text == "Recommendations")
+doc.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, rdocx.Inches(5), rdocx.Inches(3), data, after=heading)
+chart = doc.charts[0]
+print(chart.chart_type, chart.categories, [(s.name, s.values) for s in chart.series])
+docx_ops.save_atomic(doc, "chart.docx", "report.docx")
+```
+
+## Embed a font
+
+First check that the font's licence allows embedding (SKILL.md, rule 9); here Aileron, CC0-1.0.
+
+```bash
+$R/rdocx font embed report.docx Aileron-Regular.ttf --name Aileron --license-authorized \
+    --license-identity "CC0-1.0: Aileron" -o embedded.docx --json
+$R/rdocx font list --json embedded.docx                    # the face, its licence, embed_true_type_fonts true
+```
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document.open("report.docx")
+doc.embed_font("Aileron", "Aileron-Regular.ttf", "regular",
+               license=rdocx.FontEmbeddingLicense(authorized=True, identity="CC0-1.0: Aileron"))
+doc.paragraphs[0].runs[0].font.name = "Aileron"            # the runs that should show it
+docx_ops.save_atomic(doc, "embedded-py.docx", "report.docx")
+font = next(f for f in rdocx.Document.open("embedded-py.docx").fonts if f.name == "Aileron")
+print([(e.kind, e.license.identity) for e in font.embedded_fonts])
+```
+

@@ -74,5 +74,13 @@ Observed behaviour of Google Docs on a .docx it opens; no test here can exercise
   text").
 - **Read text through rdocx, not the XML.** rdocx writes the apostrophe and the double quote as `&apos;` and
   `&quot;`: a check that searches `document.xml` as text does not find `owner's`.
+- **New documents open in Word's current mode.** `rdocx.Document()`, `from_markdown` and `from_html` (and
+  `rdocx convert` from Markdown or HTML) write `compatibilityMode` 15, as Word does, so Word does not open them
+  in Compatibility Mode and lays them out under its current rules; an opened file keeps its own mode.
+- **A font the reader lacks is substituted**, and the text reflows. When the look matters and the font's
+  licence allows it (SKILL.md, rule 9), embed it (`embed_font`, `rdocx font embed`): Word uses an embedded face
+  whether or not `embed_true_type_fonts` is set (observed upstream, tensorbee/rdocx#361), and the setting,
+  which embedding turns on, makes Word keep the fonts when it saves the document again. LibreOffice and rdocx's
+  own renders draw the embedded face too.
 - **Check in the target**: for a file going back to Word or Google Docs, the final check is opening it there;
   `rdocx validate` and a render catch most problems, not all.
