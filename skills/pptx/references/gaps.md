@@ -9,7 +9,6 @@ slides and layouts: `references/python-api.md`, "Raw XML").
 
 | Gap | What happens | Workaround / fallback |
 |---|---|---|
-| Renders of an embedded font [render-embedded-font] | `to_pdf()`, the PNG renders and `rpptx convert` / `render` draw a font the deck embeds with a substitute (Carlito, for example); LibreOffice and PowerPoint show the embedded face | give the font file to the render as well: `font_dir=` / `--font-dir DIR` with the `.ttf` in `DIR` |
 | A font_dir file named after the typeface [font-dir-alias-below-embedded-face] | a `font_dir=` / `--font-dir` file counts as the family its file name gives (`Aileron.ttf`), but when the deck embeds a face of that typeface the embedded face still draws; a font whose own family is the typeface wins | give the font of that family itself, or render a copy with the embedded face removed (`remove_font(typeface)`) |
 
 A step that rpptx blocks, or gets wrong, and that this page does not list is a new gap: report it as

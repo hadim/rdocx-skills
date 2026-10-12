@@ -18,8 +18,8 @@ gaps closed.
 # font-spacing-bare-int and header-footer-stale-shape closed with integration/open-prs-2026-10-10-3;
 # story-text-tab (#342), toc-rebuild-empty-paragraph (#341) and header-footer-picture (#343 and an integration fix
 # of #322 with #328) closed with integration/open-prs-2026-10-11.
-# html-space-inside-emphasis (#359) and import-stale-source-formatting (#357) closed with
-# integration/open-prs-2026-10-12-2.
+# html-space-inside-emphasis (#359), import-stale-source-formatting (#357) and render-embedded-font (#361) closed
+# with integration/open-prs-2026-10-12-2.
 GAPS = {
     "font-dir-alias-below-embedded-face": "a font_dir / --font-dir file counts as the family its file name gives, "
     "but rpptx's renders still draw the face the deck embeds for that typeface; a font whose own family is the "
@@ -27,6 +27,4 @@ GAPS = {
     "html-space-doubled-at-span-edge": "Document.from_html, insert_html and from_markdown (and rdocx convert from "
     ".html or .md) keep two spaces where a browser draws one: a space ending a span and one after it, or one before "
     "a span and one starting it (a <s>b </s> c, a link [b ](url) c)",
-    "render-embedded-font": "rpptx's own renders (to_pdf, the PNG renders, rpptx convert and render) draw a font "
-    "the deck embeds with a substitute, as if it were not embedded; LibreOffice and PowerPoint use the embedded face",
 }

@@ -83,11 +83,14 @@ rpptx font settings F [--embed-true-type-fonts true|false] [--save-subset-fonts 
 ```
 `font list --json` gives `fonts` (`name`, `panose`, `pitch_family`, `charset`, `embedded`: `face`,
 `relationship_id`, `part`, `format`, `byte_count`, `stored_byte_count`) and `settings` (`embed_true_type_fonts`,
-`save_subset_fonts`). `font embed` writes the face as the uncompressed Embedded OpenType PowerPoint reads
-(`format` `eot`) and turns `embedTrueTypeFonts` on: PowerPoint ignores embedded fonts without it, so leave it
-on. Without `--license-authorized`, or with an empty `--license-identity`, it exits 1 and writes nothing:
-pass them only for a font whose licence allows embedding (SKILL.md, rule 7). `rpptx convert` and `render` draw an
-embedded font with a substitute (gap render-embedded-font): add `--font-dir DIR` with the font file in `DIR`.
+`save_subset_fonts`). `font embed` writes the face as the uncompressed Embedded OpenType PowerPoint reads (`format`
+`eot`) and turns `embedTrueTypeFonts` on: PowerPoint ignores embedded fonts without it, so leave it on. Without
+`--license-authorized`, or with an empty `--license-identity`, it exits 1 and writes nothing: pass them only for a
+font whose licence allows embedding (SKILL.md, rule 7). `rpptx convert` and `render` draw the faces a deck embeds,
+except a MicroType Express one (`format` `compressed_eot`, which PowerPoint writes: observed upstream,
+tensorbee/rdocx#361), which gets a substitute: add `--font-dir DIR` with the font file in `DIR`. A `--font-dir`
+font of the same family wins over an embedded face (a file only named after it does not: gap
+font-dir-alias-below-embedded-face).
 
 ## Rendering
 

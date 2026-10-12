@@ -8,6 +8,7 @@ import io
 import json
 import re
 import zipfile
+from pathlib import Path
 
 import pptx
 import pytest
@@ -1194,20 +1195,44 @@ def embedded_font_deck(path, free_font):
     return path
 
 
-def test_an_embedded_font_is_drawn_by_libreoffice_and_by_rpptx_given_the_file(rpptx_cli, tmp_path, free_font):
+def test_rpptx_draws_an_embedded_font(rpptx_cli, tmp_path, free_font):
+    """The font is installed nowhere: rpptx's renders, the CLI and LibreOffice draw the face the deck embeds."""
     src = embedded_font_deck(tmp_path / "f.pptx", free_font)
-    (tmp_path / "fonts").mkdir()
-    (tmp_path / "fonts" / free_font.name).write_bytes(free_font.read_bytes())
-    assert pdf_uses_font(rpptx.Presentation(src).to_pdf(font_dir=tmp_path / "fonts"), b"Aileron")   # the workaround
-    run([rpptx_cli, "convert", src, "--to", "pdf", "--font-dir", tmp_path / "fonts", "-o", tmp_path / "cli.pdf"], check=True)
+    plain = rpptx.Presentation(src)
+    plain.remove_font("Aileron")
+    assert pdf_uses_font(rpptx.Presentation(src).to_pdf(), b"Aileron") and not pdf_uses_font(plain.to_pdf(), b"Aileron")
+    assert digest(rpptx.Presentation(src).render_slide_to_png(0, 50.0)) != digest(plain.render_slide_to_png(0, 50.0))
+    run([rpptx_cli, "convert", src, "--to", "pdf", "-o", tmp_path / "cli.pdf"], check=True)
     assert pdf_uses_font((tmp_path / "cli.pdf").read_bytes(), b"Aileron")
+    plain.save(tmp_path / "plain.pptx")
+    for name in ("f", "plain"):
+        run([rpptx_cli, "render", tmp_path / f"{name}.pptx", "--slide", "1", "--dpi", "50", "-o", tmp_path / name],
+            check=True)
+    assert [digest(p.read_bytes()) for p in (tmp_path / "f").iterdir()] != [
+        digest(p.read_bytes()) for p in (tmp_path / "plain").iterdir()]
     assert pdf_uses_font(libreoffice_pdf(src, tmp_path), b"Aileron")
 
 
-@pytest.mark.gap("render-embedded-font")
-def test_rpptx_draws_an_embedded_font(tmp_path, free_font):
-    src = embedded_font_deck(tmp_path / "f.pptx", free_font)
-    assert pdf_uses_font(rpptx.Presentation(src).to_pdf(), b"Aileron")
+def test_a_caller_font_wins_over_an_embedded_face(rpptx_cli, tmp_path, free_font):
+    """A font_dir / --font-dir font of the typeface the deck embeds draws instead of the embedded face. The deck
+    embeds a monospace face under the typeface Aileron; the folder holds Aileron itself."""
+    embedded = next((Path(c) for c in MONOSPACE_FONTS if Path(c).is_file()), None)
+    if embedded is None:
+        pytest.skip("no suitable font on this machine")
+    prs = deck()
+    box = prs.slides[0].shapes.add_textbox(Inches(1), Inches(1), Inches(6), Inches(1))
+    box.text_frame.text = "Caller or embedded"
+    box.text_frame.paragraphs[0].runs[0].font.name = "Aileron"
+    prs.embed_font("Aileron", embedded, license=rpptx.FontEmbeddingLicense(authorized=True, identity="test"))
+    prs.save(tmp_path / "f.pptx")
+    (tmp_path / "fonts").mkdir()
+    (tmp_path / "fonts" / "Aileron.ttf").write_bytes(free_font.read_bytes())
+    prs = rpptx.Presentation(tmp_path / "f.pptx")
+    assert not pdf_uses_font(prs.to_pdf(), b"Aileron")                    # the embedded monospace face
+    assert pdf_uses_font(prs.to_pdf(font_dir=tmp_path / "fonts"), b"Aileron")
+    run([rpptx_cli, "convert", tmp_path / "f.pptx", "--to", "pdf", "--font-dir", tmp_path / "fonts", "-o",
+         tmp_path / "cli.pdf"], check=True)
+    assert pdf_uses_font((tmp_path / "cli.pdf").read_bytes(), b"Aileron")
 
 
 @pytest.mark.gap("font-dir-alias-below-embedded-face")
@@ -1220,3 +1245,22 @@ def test_a_font_dir_file_named_after_the_typeface_wins_over_an_embedded_face(tmp
     assert digest(plain.render_slide_to_png(0, 50.0, font_dir=fonts)) != digest(plain.render_slide_to_png(0, 50.0))
     assert digest(rpptx.Presentation(src).render_slide_to_png(0, 50.0, font_dir=fonts)) == digest(
         plain.render_slide_to_png(0, 50.0, font_dir=fonts))
+
+
+def test_a_compressed_embedded_face_is_drawn_with_a_substitute(tmp_path, free_font):
+    """A MicroType Express face (EOT flag 0x4) is not decoded: renders fall back, and font_dir= gives the face."""
+    src = embedded_font_deck(tmp_path / "f.pptx", free_font)
+    with zipfile.ZipFile(src) as z:
+        entries = [(info, z.read(info)) for info in z.infolist()]
+    with zipfile.ZipFile(tmp_path / "mtx.pptx", "w", zipfile.ZIP_DEFLATED) as z:
+        for info, data in entries:
+            if info.filename.startswith("ppt/fonts/"):
+                flags = int.from_bytes(data[12:16], "little") | 0x4
+                data = data[:12] + flags.to_bytes(4, "little") + data[16:]
+            z.writestr(info, data)
+    prs = rpptx.Presentation(tmp_path / "mtx.pptx")
+    assert [(f.format, f.data) for f in prs.embedded_fonts[0].faces] == [("compressed_eot", None)]
+    assert not pdf_uses_font(prs.to_pdf(), b"Aileron")
+    (tmp_path / "fonts").mkdir()
+    (tmp_path / "fonts" / "Aileron.ttf").write_bytes(free_font.read_bytes())
+    assert pdf_uses_font(prs.to_pdf(font_dir=tmp_path / "fonts"), b"Aileron")
