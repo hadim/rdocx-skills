@@ -19,6 +19,9 @@ gaps closed.
 # story-text-tab (#342), toc-rebuild-empty-paragraph (#341) and header-footer-picture (#343 and an integration fix
 # of #322 with #328) closed with integration/open-prs-2026-10-11.
 GAPS = {
+    "html-space-doubled-at-span-edge": "Document.from_html, insert_html and from_markdown (and rdocx convert from "
+    ".html or .md) keep two spaces where a browser draws one: a space ending a span and one after it, or one before "
+    "a span and one starting it (a <s>b </s> c, a link [b ](url) c)",
     "html-space-inside-emphasis": "Document.from_html and from_markdown (and rdocx convert from .html or .md) put the "
     "space before an underlined, struck, bold or italic span inside its run, so Word draws the underline or the "
     "strikethrough under that space; links are fixed",

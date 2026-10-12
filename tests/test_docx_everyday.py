@@ -926,3 +926,32 @@ def test_the_space_before_emphasis_can_be_moved_out_after_the_import():
             runs[k].text = runs[k].text[1:]
             runs[k - 1].text += " "
     assert [(r.text, bool(r.underline)) for r in doc.paragraphs[0].runs] == [("see ", False), ("this", True), (" now", False)]
+
+
+DOUBLED_SPACES = {"<p>a <s>b </s> c</p>": "a b c", "<p>and <s> that</s></p>": "and that",
+                  '<p>a <a href="https://example.com">b </a> c</p>': "a b c"}
+
+
+@pytest.mark.gap("html-space-doubled-at-span-edge")
+def test_spaces_on_both_sides_of_a_span_edge_collapse_into_one(rdocx_cli, tmp_path):
+    """As a browser draws it: two collapsible spaces with a span edge between them are one space."""
+    for html, text in DOUBLED_SPACES.items():
+        assert rdocx.Document.from_html(html)[0].paragraphs[0].text == text, html
+    (tmp_path / "page.html").write_text("<p>a <s>b </s> c</p>")
+    run([rdocx_cli, "convert", tmp_path / "page.html", "-o", tmp_path / "page.docx"], check=True)
+    assert rdocx.Document.open(tmp_path / "page.docx").paragraphs[0].text == "a b c"
+    assert rdocx.Document.from_markdown("a [b ](https://example.com) c\n")[0].paragraphs[0].text == "a b c"
+    doc = rdocx.Document()
+    doc.insert_html("<p>a <s>b </s> c</p>")
+    assert doc.paragraphs[-1].text == "a b c"
+
+
+def test_a_doubled_space_can_be_dropped_after_the_import():
+    """The workaround of gap html-space-doubled-at-span-edge."""
+    for html, text in DOUBLED_SPACES.items():
+        doc = rdocx.Document.from_html(html)[0]
+        runs = doc.paragraphs[0].runs
+        for k in range(1, len(runs)):
+            if runs[k].text.startswith(" ") and runs[k - 1].text.endswith(" "):
+                runs[k].text = runs[k].text[1:]
+        assert doc.paragraphs[0].text == text, html
