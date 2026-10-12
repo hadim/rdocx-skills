@@ -21,6 +21,9 @@ gaps closed.
 # html-space-inside-emphasis (#359) and import-stale-source-formatting (#357) closed with
 # integration/open-prs-2026-10-12-2.
 GAPS = {
+    "font-dir-alias-below-embedded-face": "a font_dir / --font-dir file counts as the family its file name gives, "
+    "but rpptx's renders still draw the face the deck embeds for that typeface; a font whose own family is the "
+    "typeface wins",
     "html-space-doubled-at-span-edge": "Document.from_html, insert_html and from_markdown (and rdocx convert from "
     ".html or .md) keep two spaces where a browser draws one: a space ending a span and one after it, or one before "
     "a span and one starting it (a <s>b </s> c, a link [b ](url) c)",

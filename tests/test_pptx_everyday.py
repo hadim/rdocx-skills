@@ -1208,3 +1208,15 @@ def test_an_embedded_font_is_drawn_by_libreoffice_and_by_rpptx_given_the_file(rp
 def test_rpptx_draws_an_embedded_font(tmp_path, free_font):
     src = embedded_font_deck(tmp_path / "f.pptx", free_font)
     assert pdf_uses_font(rpptx.Presentation(src).to_pdf(), b"Aileron")
+
+
+@pytest.mark.gap("font-dir-alias-below-embedded-face")
+def test_a_font_dir_file_named_after_the_typeface_wins_over_an_embedded_face(tmp_path, free_font):
+    """A font_dir file counts as the family its file name gives; it should win over an embedded face as well."""
+    src = embedded_font_deck(tmp_path / "f.pptx", free_font)
+    plain = rpptx.Presentation(src)
+    plain.remove_font("Aileron")
+    fonts = font_dir(tmp_path, MONOSPACE_FONTS, "Aileron")
+    assert digest(plain.render_slide_to_png(0, 50.0, font_dir=fonts)) != digest(plain.render_slide_to_png(0, 50.0))
+    assert digest(rpptx.Presentation(src).render_slide_to_png(0, 50.0, font_dir=fonts)) == digest(
+        plain.render_slide_to_png(0, 50.0, font_dir=fonts))
