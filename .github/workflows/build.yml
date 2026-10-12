@@ -6,7 +6,9 @@
 # with the suite's results); a lock that pins upstream releases has nothing to build. A commit has at most one release: one
 # whose tag ends with -<commit12> is never rebuilt nor overwritten, but a platform added to this workflow later is
 # built and added to it (its files, its lines in SHA256SUMS, its suite summary in the notes). A failing suite does
-# not block the release (a bump that closes gaps fails it on purpose): its summary goes into the release notes.
+# not block the release (a bump that closes gaps fails it on purpose): its summary goes into the release notes, as
+# the preliminary build-time suite (the skills tests of the commit this runs from, which predate the docs pass for
+# the new build); ci.yml writes the final suite above it once main pins the release.
 name: build
 
 on:
@@ -232,6 +234,8 @@ jobs:
               echo
               echo "$built"
               echo
+              echo "Build-time suite (preliminary, skills ${GITHUB_SHA:0:12}):"
+              echo
               cat "$RUNNER_TEMP"/artifacts/suite-*/suite-*.md
             } >> notes.md
             new=()
@@ -247,7 +251,11 @@ jobs:
             echo "These files are trusted only through rdocx.lock.json: \`rdocx_env.py bump $COMMIT\`, then"
             echo "\`rdocx_env.py lock --write --release\` after review. Provenance: \`gh attestation verify FILE -R $GITHUB_REPOSITORY\`."
             echo
-            echo "## Acceptance suite"
+            echo "## Build-time suite (preliminary, skills ${GITHUB_SHA:0:12})"
+            echo
+            echo "Run with the skills tests of $GITHUB_REPOSITORY@${GITHUB_SHA:0:12}, before the skills and tests catch up with"
+            echo "this build. Once main pins this release, ci.yml writes the final suite above."
+            echo
             cat "$RUNNER_TEMP"/artifacts/suite-*/suite-*.md
           } > notes.md
           gh release create "$TAG" assets/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \

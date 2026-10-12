@@ -1,7 +1,9 @@
-# The acceptance suite on linux-x86_64, macos-arm64, macos-x86_64 and windows-x86_64: the pinned files from the
-# releases the lock names (upstream's, or this repository's build of a commit between two upstream releases),
-# checked against the lock (seconds), or a build of the pinned commit when no release has them yet (right after a
-# bump, or a platform the release lacks; minutes).
+# The acceptance suite on linux-x86_64, linux-aarch64, macos-arm64, macos-x86_64 and windows-x86_64: the pinned
+# files from the releases the lock names (upstream's, or this repository's build of a commit between two upstream
+# releases), checked against the lock (seconds), or a build of the pinned commit when no release has them yet (right
+# after a bump, or a platform the release lacks; minutes). On a push to main, when the lock pins one of this
+# repository's releases, the suite summaries of the five platforms become the final "Acceptance suite" section of
+# that release's notes, above the preliminary build-time suite of build.yml (re-running replaces it).
 name: ci
 
 on:
@@ -24,6 +26,7 @@ jobs:
       matrix:
         include:
           - { platform: linux-x86_64, runner: ubuntu-24.04 }
+          - { platform: linux-aarch64, runner: ubuntu-22.04-arm }
           - { platform: macos-arm64, runner: macos-14 }
           - { platform: macos-x86_64, runner: macos-15-intel }
           - { platform: windows-x86_64, runner: windows-2025 }
@@ -88,4 +91,55 @@ jobs:
         run: .github/scripts/poppler.sh
 
       - name: Acceptance suite
-        run: python scripts/rdocx_env.py test --allow-local
+        run: python scripts/rdocx_env.py test --allow-local 2>&1 | tee "$RUNNER_TEMP/pytest.log"
+
+      - name: Suite summary
+        if: always()
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          BUILT: ${{ steps.release.outcome == 'failure' }}
+        run: |
+          heading=$PLATFORM
+          if [ "$BUILT" = true ]; then heading="$PLATFORM (built from the pinned commit: the release lacks its files)"; fi
+          .github/scripts/suite-summary.sh "$RUNNER_TEMP/pytest.log" "$heading" > "$RUNNER_TEMP/suite-$PLATFORM.md"
+          cat "$RUNNER_TEMP/suite-$PLATFORM.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: suite-${{ matrix.platform }}
+          path: ${{ runner.temp }}/suite-${{ matrix.platform }}.md
+          overwrite: true  # a re-run job uploads it again in the same run
+
+  # The final suite in the notes of the release the lock pins, when it is one of this repository's builds
+  # (rdocx-<YYYYMMDD>-<commit12>); upstream releases are never touched. Also after a failing leg: its failures are
+  # what the notes must show.
+  release-notes:
+    needs: test
+    if: ${{ !cancelled() && github.event_name == 'push' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: suite-*
+          path: ${{ runner.temp }}/suites
+
+      - name: Final suite in the release notes
+        run: |
+          tag=$(python3 .github/scripts/release_notes.py tag --repo "$GITHUB_REPOSITORY" rdocx.lock.json)
+          if [ -z "$tag" ]; then
+            echo "The lock does not pin a release of this repository: no release notes to update." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh release view "$tag" -R "$GITHUB_REPOSITORY" --json body --jq .body > "$RUNNER_TEMP/notes.md"
+          python3 .github/scripts/release_notes.py rewrite "$RUNNER_TEMP/notes.md" --sha "$GITHUB_SHA" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            "$RUNNER_TEMP"/suites/suite-*/suite-*.md > "$RUNNER_TEMP/final-notes.md"
+          gh release edit "$tag" -R "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/final-notes.md"
+          echo "Final suite written into the notes of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
