@@ -1,9 +1,11 @@
 # The acceptance suite on linux-x86_64, linux-aarch64, macos-arm64, macos-x86_64 and windows-x86_64: the pinned
 # files from the releases the lock names (upstream's, or this repository's build of a commit between two upstream
 # releases), checked against the lock (seconds), or a build of the pinned commit when no release has them yet (right
-# after a bump, or a platform the release lacks; minutes). On a push to main, when the lock pins one of this
-# repository's releases, the suite summaries of the five platforms become the final "Acceptance suite" section of
-# that release's notes, above the preliminary build-time suite of build.yml (re-running replaces it).
+# after a bump, or a platform the release lacks; minutes). The whole suite runs on the five platforms for a push to
+# main, a run by hand, and a pull request that changes the lock (a new build to accept); any other pull request runs
+# it on linux-x86_64 and the platform smoke subset (`-m smoke`, SMOKE in tests/conftest.py) on the four others. On a
+# push to main, when the lock pins one of this repository's releases, the suite summaries of the five platforms
+# become the "Acceptance suite" section of that release's notes (re-running replaces it).
 name: ci
 
 on:
@@ -20,16 +22,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # What each platform runs: `full` (the whole suite) or `smoke` (the platform subset).
+  scope:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.scope.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2  # a pull request checks out its merge commit: HEAD^1 is the base branch
+
+      - name: Full suite everywhere, or on linux-x86_64 only
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          PLATFORMS: >-
+            [{"platform": "linux-x86_64", "runner": "ubuntu-24.04"},
+            {"platform": "linux-aarch64", "runner": "ubuntu-22.04-arm"},
+            {"platform": "macos-arm64", "runner": "macos-14"},
+            {"platform": "macos-x86_64", "runner": "macos-15-intel"},
+            {"platform": "windows-x86_64", "runner": "windows-2025"}]
+        run: |
+          full=true
+          if [ "$EVENT" = pull_request ] && git diff --quiet HEAD^1 HEAD -- rdocx.lock.json; then full=false; fi
+          matrix=$(FULL=$full python3 -c 'import json, os; full = os.environ["FULL"] == "true"; print(json.dumps([dict(p, suite="full" if full or p["platform"] == "linux-x86_64" else "smoke") for p in json.loads(os.environ["PLATFORMS"])]))')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          if [ "$full" = true ]; then
+            echo "The whole suite on the five platforms ($EVENT)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "The lock is unchanged: the whole suite on linux-x86_64, the smoke subset on the four others." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   test:
+    needs: scope
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { platform: linux-x86_64, runner: ubuntu-24.04 }
-          - { platform: linux-aarch64, runner: ubuntu-22.04-arm }
-          - { platform: macos-arm64, runner: macos-14 }
-          - { platform: macos-x86_64, runner: macos-15-intel }
-          - { platform: windows-x86_64, runner: windows-2025 }
+        include: ${{ fromJSON(needs.scope.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
     defaults:
@@ -91,16 +120,22 @@ jobs:
         run: .github/scripts/poppler.sh
 
       - name: Acceptance suite
-        run: python scripts/rdocx_env.py test --allow-local 2>&1 | tee "$RUNNER_TEMP/pytest.log"
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: |
+          if [ "$SUITE" = smoke ]; then set -- -m smoke; fi
+          python scripts/rdocx_env.py test --allow-local "$@" 2>&1 | tee "$RUNNER_TEMP/pytest.log"
 
       - name: Suite summary
         if: always()
         env:
           PLATFORM: ${{ matrix.platform }}
+          SUITE: ${{ matrix.suite }}
           BUILT: ${{ steps.release.outcome == 'failure' }}
         run: |
           heading=$PLATFORM
-          if [ "$BUILT" = true ]; then heading="$PLATFORM (built from the pinned commit: the release lacks its files)"; fi
+          if [ "$SUITE" = smoke ]; then heading="$PLATFORM (smoke subset)"; fi
+          if [ "$BUILT" = true ]; then heading="$heading (built from the pinned commit: the release lacks its files)"; fi
           .github/scripts/suite-summary.sh "$RUNNER_TEMP/pytest.log" "$heading" > "$RUNNER_TEMP/suite-$PLATFORM.md"
           cat "$RUNNER_TEMP/suite-$PLATFORM.md" >> "$GITHUB_STEP_SUMMARY"
 
@@ -111,9 +146,10 @@ jobs:
           path: ${{ runner.temp }}/suite-${{ matrix.platform }}.md
           overwrite: true  # a re-run job uploads it again in the same run
 
-  # The final suite in the notes of the release the lock pins, when it is one of this repository's builds
+  # The suite in the notes of the release the lock pins, when it is one of this repository's builds
   # (rdocx-<YYYYMMDDHHMM>-<commit12>, or rdocx-<YYYYMMDD>-<commit12> for the older ones); upstream releases are
-  # never touched. Also after a failing leg: its failures are what the notes must show.
+  # never touched. A push to main runs the whole suite on the five platforms. Also after a failing leg: its failures
+  # are what the notes must show.
   release-notes:
     needs: test
     if: ${{ !cancelled() && github.event_name == 'push' }}

@@ -1,15 +1,17 @@
 # Builds the rdocx and rpptx CLIs and wheels of one upstream commit between two upstream releases on five native
-# runners, runs the acceptance suite on each, and publishes them as the release rdocx-<UTC build date and time
+# runners, checks that they install and run, and publishes them as the release rdocx-<UTC build date and time
 # YYYYMMDDHHMM>-<first 12 characters of the commit> of this repository (GitHub lists releases by tag name: the time
 # keeps two builds of the same day in build order; releases before it are rdocx-<YYYYMMDD>-<commit12>, still
 # valid), which `rdocx_env.py lock --write --release` records in the lock when upstream has no release of that
-# commit, and `rdocx_env.py install` downloads and checks against it. Runs by hand on any upstream tag, branch or commit, and weekly on upstream main HEAD (a candidate
-# with the suite's results); a lock that pins upstream releases has nothing to build. A commit has at most one release: one
-# whose tag ends with -<commit12> is never rebuilt nor overwritten, but a platform added to this workflow later is
-# built and added to it (its files, its lines in SHA256SUMS, its suite summary in the notes). A failing suite does
-# not block the release (a bump that closes gaps fails it on purpose): its summary goes into the release notes, as
-# the preliminary build-time suite (the skills tests of the commit this runs from, which predate the docs pass for
-# the new build); ci.yml writes the final suite above it once main pins the release.
+# commit, and `rdocx_env.py install` downloads and checks against it. Runs by hand on any upstream tag, branch or
+# commit; a lock that pins upstream releases has nothing to build. A commit has at most one release: one whose tag
+# ends with -<commit12> is never rebuilt nor overwritten, but a platform added to this workflow later is built and
+# added to it (its files, its lines in SHA256SUMS). The acceptance suite is not run here: ci.yml runs it on the pull
+# request that pins the release, and on main writes its results into the release notes.
+#
+# `lto`: `fat` builds with upstream's release profile (fat LTO, one codegen unit); `thin` with ThinLTO and 16 codegen
+# units, a faster build of slightly larger and slower binaries that behave the same. `dry_run`: builds every
+# platform from scratch (no build cache) and publishes nothing, to time a profile.
 name: build
 
 on:
@@ -19,8 +21,15 @@ on:
         description: "Upstream tag, branch or full commit hash (empty: the commit pinned in rdocx.lock.json)"
         required: false
         default: ""
-  schedule:
-    - cron: "17 5 * * 1"
+      lto:
+        description: "fat: upstream's release profile; thin: ThinLTO and 16 codegen units (faster build)"
+        type: choice
+        options: [fat, thin]
+        default: fat
+      dry_run:
+        description: "Build every platform from scratch and publish nothing (to time a profile)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -46,7 +55,8 @@ jobs:
       - name: Commit to build
         id: plan
         env:
-          REF: ${{ github.event_name == 'schedule' && 'main' || inputs.ref }}
+          REF: ${{ inputs.ref }}
+          DRY_RUN: ${{ inputs.dry_run }}
           GH_TOKEN: ${{ github.token }}
           # every platform of a release, with the native runner that builds it
           PLATFORMS: >-
@@ -85,12 +95,12 @@ jobs:
           # What to build: every platform for a new release; for an existing one, only the platforms its SHA256SUMS
           # does not list (lines `<sha256>  <platform>.<file>`), so that its files are never rebuilt.
           have=
-          if [ "$exists" = true ]; then
+          if [ "$exists" = true ] && [ "$DRY_RUN" != true ]; then
             have=$(gh release download "$tag" -R "$GITHUB_REPOSITORY" -p SHA256SUMS -O - | awk '{ sub(/\..*/, "", $2); print $2 }')
           fi
           matrix=$(HAVE="$have" python -c 'import json, os; have = os.environ["HAVE"].split(); print(json.dumps([p for p in json.loads(os.environ["PLATFORMS"]) if p["platform"] not in have]))')
           { echo "commit=$commit"; echo "ref=$ref"; echo "repo=$repo"; echo "tag=$tag"; echo "date=$date"; echo "exists=$exists"; echo "matrix=$matrix"; } >> "$GITHUB_OUTPUT"
-          echo "$repo@$commit ($ref): release $tag, exists already: $exists, to build: $matrix" >> "$GITHUB_STEP_SUMMARY"
+          echo "$repo@$commit ($ref): release $tag, exists already: $exists, to build: $matrix, dry run: $DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
 
   build:
     needs: plan
@@ -122,7 +132,14 @@ jobs:
       - name: Rust toolchain named by rdocx's rust-toolchain.toml
         run: .github/scripts/rust-toolchain.sh "$COMMIT"
 
+      - name: ThinLTO and 16 codegen units
+        if: inputs.lto == 'thin'
+        run: |
+          echo "CARGO_PROFILE_RELEASE_LTO=thin" >> "$GITHUB_ENV"
+          echo "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16" >> "$GITHUB_ENV"
+
       - name: Restore the cargo registry and the build folder
+        if: ${{ !inputs.dry_run }}
         id: cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -131,16 +148,24 @@ jobs:
             ~/.cargo/registry/cache
             ~/.cargo/git/db
             ~/.local/share/rdocx-skills/target
-          key: rdocx-build-${{ matrix.platform }}-${{ needs.plan.outputs.commit }}
-          restore-keys: rdocx-build-${{ matrix.platform }}-
+          key: rdocx-build-${{ inputs.lto == 'thin' && 'thin-' || '' }}${{ matrix.platform }}-${{ needs.plan.outputs.commit }}
+          restore-keys: rdocx-build-${{ inputs.lto == 'thin' && 'thin-' || '' }}${{ matrix.platform }}-
 
       # No release exists for this commit, so this builds it (the download attempt fails first).
       - name: Build and install
+        if: ${{ !inputs.dry_run }}
         run: python scripts/rdocx_env.py install --build
+
+      # A dry run builds even a commit whose release exists (install would download it).
+      - name: Build only (dry run)
+        if: ${{ inputs.dry_run }}
+        run: |
+          python scripts/rdocx_env.py build
+          for cli in rdocx rpptx; do "dist/$COMMIT/$PLATFORM/$cli" --version; done
 
       # also after a failed build: the next attempt starts from what compiled
       - name: Save the cargo registry and the build folder
-        if: ${{ !cancelled() && steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ !cancelled() && !inputs.dry_run && steps.cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -150,37 +175,25 @@ jobs:
             ~/.local/share/rdocx-skills/target
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
+      - name: The installed CLIs and modules run
+        if: ${{ !inputs.dry_run }}
+        run: |
+          bin=~/.local/share/rdocx-skills/current/bin
+          "$bin/rdocx" --version
+          "$bin/rpptx" --version
+          "$bin/python" -c "import rdocx, rpptx"
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !inputs.dry_run }}
         with:
           name: dist-${{ matrix.platform }}
           path: dist/${{ needs.plan.outputs.commit }}/${{ matrix.platform }}/
           if-no-files-found: error
 
-      - name: Poppler, for the PDF text and raster checks
-        run: .github/scripts/poppler.sh
-
-      - name: Acceptance suite
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          python scripts/rdocx_env.py test --allow-local 2>&1 | tee "$RUNNER_TEMP/pytest.log"
-
-      - name: Suite summary
-        if: always()
-        run: |
-          .github/scripts/suite-summary.sh "$RUNNER_TEMP/pytest.log" "$PLATFORM" > "$RUNNER_TEMP/suite-$PLATFORM.md"
-          cat "$RUNNER_TEMP/suite-$PLATFORM.md" >> "$GITHUB_STEP_SUMMARY"
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: suite-${{ matrix.platform }}
-          path: ${{ runner.temp }}/suite-${{ matrix.platform }}.md
-
   # A new release, or the files of the platforms an existing one lacked, added to it.
   release:
     needs: [plan, build]
-    if: needs.plan.outputs.matrix != '[]'
+    if: ${{ needs.plan.outputs.matrix != '[]' && !inputs.dry_run }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -197,6 +210,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
+          pattern: dist-*
           path: ${{ runner.temp }}/artifacts
 
       - name: Release assets
@@ -238,10 +252,6 @@ jobs:
               echo "## Added later: $plats"
               echo
               echo "$built"
-              echo
-              echo "Build-time suite (preliminary, skills ${GITHUB_SHA:0:12}):"
-              echo
-              cat "$RUNNER_TEMP"/artifacts/suite-*/suite-*.md
             } >> notes.md
             new=()
             for f in assets/*; do [ "${f##*/}" = SHA256SUMS ] || new+=("$f"); done
@@ -256,12 +266,8 @@ jobs:
             echo "These files are trusted only through rdocx.lock.json: \`rdocx_env.py bump $COMMIT\`, then"
             echo "\`rdocx_env.py lock --write --release\` after review. Provenance: \`gh attestation verify FILE -R $GITHUB_REPOSITORY\`."
             echo
-            echo "## Build-time suite (preliminary, skills ${GITHUB_SHA:0:12})"
-            echo
-            echo "Run with the skills tests of $GITHUB_REPOSITORY@${GITHUB_SHA:0:12}, before the skills and tests catch up with"
-            echo "this build. Once main pins this release, ci.yml writes the final suite above."
-            echo
-            cat "$RUNNER_TEMP"/artifacts/suite-*/suite-*.md
+            echo "The acceptance suite runs in ci.yml on the pull request that pins this release; once main pins it, its"
+            echo "results on the five platforms are written below."
           } > notes.md
           gh release create "$TAG" assets/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "rdocx $DATE ${COMMIT:0:12} ($REF)" --notes-file notes.md --latest=false

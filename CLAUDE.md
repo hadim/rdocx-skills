@@ -17,14 +17,16 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   standard library only, Python >= 3.9, Linux, macOS and Windows (Git Bash: `.exe` CLIs, `current` a junction).
 - `rdocx.lock.json`: the pin (upstream commit and ref, release URLs, SHA-256 per platform). `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
-- `.github/workflows/`: `ci.yml` (suite on the five platforms, every push and PR; on a push to `main` whose lock pins
-  one of this repository's releases, its summaries become the final "Acceptance suite" section of that release's
-  notes, through `.github/scripts/release_notes.py`), `build.yml` (only for a commit between two upstream releases:
-  builds it on five runners and publishes the release `rdocx-<YYYYMMDDHHMM>-<commit12>`, UTC build date and time
-  first since GitHub lists releases by tag name (older releases: `rdocx-<YYYYMMDD>-<commit12>`, still valid), with a
-  preliminary "Build-time suite" run with the skills tests of the commit it runs from; by hand, and weekly on
-  upstream `main` HEAD as a candidate). `.github/scripts/suite-summary.sh` groups a suite log (gaps closed, docs
-  not yet updated, other failures); both scripts are tested in `tests/test_ci_scripts.py`.
+- `.github/workflows/`: `ci.yml` (the whole suite on the five platforms for a push to `main`, a run by hand and a PR
+  that changes the lock; any other PR runs it on linux-x86_64 and the platform smoke subset, `-m smoke` from `SMOKE`
+  in `tests/conftest.py`, on the four others; on a push to `main` whose lock pins one of this repository's releases,
+  its summaries become the "Acceptance suite" section of that release's notes, through
+  `.github/scripts/release_notes.py`), `build.yml` (only for a commit between two upstream releases, by hand: builds
+  it on five runners, checks that it installs and runs, and publishes the release `rdocx-<YYYYMMDDHHMM>-<commit12>`,
+  UTC build date and time first since GitHub lists releases by tag name (older releases: `rdocx-<YYYYMMDD>-<commit12>`,
+  still valid); no suite there; inputs `lto` (`fat` upstream's profile, `thin` a faster build) and `dry_run` (build
+  from scratch, publish nothing, to time a profile)). `.github/scripts/suite-summary.sh` groups a suite log (gaps
+  closed, docs not yet updated, other failures); both scripts are tested in `tests/test_ci_scripts.py`.
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin.
@@ -122,5 +124,4 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## Next steps
 
 1. When rdocx tags a release: `bump v<version>`, `lock --write --release`, `install`, `test`, as
-   docs/setup.md (Moving the pin) describes. The weekly `build.yml` run on upstream `main` says beforehand
-   which gaps the next release closes.
+   docs/setup.md (Moving the pin) describes.

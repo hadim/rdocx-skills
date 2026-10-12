@@ -40,6 +40,17 @@ def test_only_this_repositorys_own_builds_are_named(stamp):
     assert release_notes.own_release_tag("", REPO, COMMIT) is None
 
 
+def test_a_release_built_without_a_suite_gets_the_suite_after_its_preamble():
+    """build.yml no longer runs the suite: the notes of a new release are a preamble only."""
+    body = PREAMBLE + "\nThe acceptance suite runs in ci.yml on the pull request that pins this release.\n"
+    out = release_notes.rewrite(body, [SUMMARY_A], MAIN_SHA, RUN)
+    assert out.startswith(PREAMBLE.rstrip("\n"))
+    assert out.count("## Acceptance suite (skills main") == 1 and "## Build-time suite" not in out
+    assert out.index("pins this release.") < out.index("## Acceptance suite (skills main") < out.index("### linux-x86_64")
+    again = release_notes.rewrite(out, [SUMMARY_B], MAIN_SHA, RUN)
+    assert again.count("## Acceptance suite") == 1 and "9 passed, 1 failed" in again
+
+
 @pytest.mark.parametrize("stamp", ["2026101214", "2026101214051", "2026-10-12", "2026101"])
 def test_a_tag_stamped_otherwise_is_not_named(stamp):
     url = f"https://github.com/{REPO}/releases/download/rdocx-{stamp}-{COMMIT[:12]}"

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """The final acceptance suite in the notes of the release the lock pins, for ci.yml on a push to main.
 
-`build.yml` runs the suite with the skills tests of the commit it builds from, before the skills and tests catch
-up with the new build, so its results are preliminary. Once `main` pins the release, ci.yml runs the suite of
-`main` on it and writes those results at the head of the release notes, as the section
-`## Acceptance suite (skills main <sha12>, <run url>)`, right after the notes' preamble. The build-time results
-stay below it, under `## Build-time suite (preliminary, skills <sha12>)` (an older release titled them
-`## Acceptance suite`: renamed). Running it again replaces the final section, it never adds a second one.
+Once `main` pins the release, ci.yml runs the suite of `main` on it and writes those results at the head of the
+release notes, as the section `## Acceptance suite (skills main <sha12>, <run url>)`, right after the notes'
+preamble. Releases that `build.yml` built while it still ran the suite keep those preliminary results below it,
+under `## Build-time suite (preliminary, skills <sha12>)` (an older release titled them `## Acceptance suite`:
+renamed). Running it again replaces the final section, it never adds a second one.
 
     release_notes.py tag [--repo OWNER/REPO] [LOCK]
         the tag of the lock's release when it is one of this repository's own builds
