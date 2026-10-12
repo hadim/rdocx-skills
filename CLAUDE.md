@@ -49,6 +49,12 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   upstream releases is pinned through a release published by `build.yml` instead.
 - The plugin has no version number: each commit of `main` is a version, so `main` always pairs a lock whose
   release exists and is recorded with the tests and skills that match it (docs/setup.md, Moving the pin).
+- Moving the pin, a new integration snapshot included, always brings the skills along in the same PR, without being
+  asked: fix every cited name that moved, keep the recipes running, make the behaviour tests pass, and document what
+  the new build adds that an agent would use (a SKILL.md table row or a references entry, a recipe when it helps). The
+  coverage check only asks a pointer per public class and CLI command, so a new method or flag gets no line unless
+  this pass writes it. Onto an upstream release, also delete the behaviour tests that pass on it. Stop before the
+  merge: a short brief, and the merge asked as a question.
 - No release is asked of upstream: the pin takes what upstream publishes, and a commit needed between two
   upstream releases goes through `build.yml` (above).
 - Git on a clone reached through a shell on another machine (a remote or sandboxed shell over a synced folder):
