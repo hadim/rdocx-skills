@@ -1,5 +1,5 @@
-# Builds the rdocx and rpptx CLIs and wheels of one upstream commit between two upstream releases on five native
-# runners, checks that they install and run, and publishes them as the release rdocx-<UTC build date and time
+# Builds the rdocx and rpptx CLIs and wheels of one upstream commit between two upstream releases on four native
+# runners (no macos-x86_64: Intel Macs are not built for nor tested here), checks that they install and run, and publishes them as the release rdocx-<UTC build date and time
 # YYYYMMDDHHMM>-<first 12 characters of the commit> of this repository (GitHub lists releases by tag name: the time
 # keeps two builds of the same day in build order; releases before it are rdocx-<YYYYMMDD>-<commit12>, still
 # valid), which `rdocx_env.py lock --write --release` records in the lock when upstream has no release of that
@@ -9,9 +9,10 @@
 # added to it (its files, its lines in SHA256SUMS). The acceptance suite is not run here: ci.yml runs it on the pull
 # request that pins the release, and on main writes its results into the release notes.
 #
-# `lto`: `fat` builds with upstream's release profile (fat LTO, one codegen unit); `thin` with ThinLTO and 16 codegen
-# units, a faster build of slightly larger and slower binaries that behave the same. `dry_run`: builds every
-# platform from scratch (no build cache) and publishes nothing, to time a profile.
+# `lto`: `thin` (the default) builds with ThinLTO and 16 codegen units, `fat` with upstream's release profile (fat LTO,
+# one codegen unit): built from scratch on 2026-10-12, thin took 7.4 to 11.2 minutes per platform where fat took 13.4
+# to 25.9, for slightly larger and slower binaries that behave the same. `dry_run`: builds every platform from
+# scratch (no build cache) and publishes nothing, to time a profile.
 name: build
 
 on:
@@ -22,10 +23,10 @@ on:
         required: false
         default: ""
       lto:
-        description: "fat: upstream's release profile; thin: ThinLTO and 16 codegen units (faster build)"
+        description: "thin: ThinLTO and 16 codegen units (about half the build time); fat: upstream's release profile"
         type: choice
-        options: [fat, thin]
-        default: fat
+        options: [thin, fat]
+        default: thin
       dry_run:
         description: "Build every platform from scratch and publish nothing (to time a profile)"
         type: boolean
@@ -63,7 +64,6 @@ jobs:
             [{"platform": "linux-x86_64", "runner": "ubuntu-22.04"},
             {"platform": "linux-aarch64", "runner": "ubuntu-22.04-arm"},
             {"platform": "macos-arm64", "runner": "macos-14"},
-            {"platform": "macos-x86_64", "runner": "macos-15-intel"},
             {"platform": "windows-x86_64", "runner": "windows-2025"}]
         run: |
           if [ -n "$REF" ]; then python scripts/rdocx_env.py bump "$REF"; fi
@@ -267,7 +267,7 @@ jobs:
             echo "\`rdocx_env.py lock --write --release\` after review. Provenance: \`gh attestation verify FILE -R $GITHUB_REPOSITORY\`."
             echo
             echo "The acceptance suite runs in ci.yml on the pull request that pins this release; once main pins it, its"
-            echo "results on the five platforms are written below."
+            echo "results on the four platforms are written below."
           } > notes.md
           gh release create "$TAG" assets/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "rdocx $DATE ${COMMIT:0:12} ($REF)" --notes-file notes.md --latest=false

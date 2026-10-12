@@ -127,32 +127,32 @@ your package manager; the script never installs a toolchain). It takes 10 to 30 
   runtime (`vcruntime140.dll`), as Rust programs built with MSVC do. A build needs the MSVC build tools
   (Visual Studio Build Tools, C++ workload) besides rustup.
 
-The Linux CLIs need glibc 2.35 or later (the wheels 2.28). The Windows files are built with MSVC. The
-`macos-x86_64` files of this repository's releases are built on `macos-15-intel`.
+The Linux CLIs need glibc 2.35 or later (the wheels 2.28). The Windows files are built with MSVC.
+Intel Macs (`macos-x86_64`) are neither built nor tested here: the lock records their files when upstream releases
+them, and on a pin of this repository's build `install` exits 2 there and the skills hand over to the built-in ones.
 
 ## Continuous integration
 
 - `.github/workflows/ci.yml`, on every push to `main` and every pull request: `install --build` on
-  linux-x86_64, linux-aarch64 (ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64, macos-x86_64 and
-  windows-x86_64 (the release download, or a build when the release lacks the platform's files, as right after a
+  linux-x86_64, linux-aarch64 (ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64 and windows-x86_64 (the release download, or a build when the release lacks the platform's files, as right after a
   bump; its summary then says so), then the acceptance suite, summarised per platform by
   `.github/scripts/suite-summary.sh`. On Windows it runs from Git Bash, as an agent does. On a push to `main`, a
-  last job (the only one with `contents: write`) writes the five summaries into the notes of the release the lock pins, when it is one of this repository's builds
+  last job (the only one with `contents: write`) writes the four summaries into the notes of the release the lock pins, when it is one of this repository's builds
   (`rdocx-<YYYYMMDDHHMM>-<commit12>`, or `rdocx-<YYYYMMDD>-<commit12>` for the releases built before the time was
   added, of this repository and of the pinned commit; upstream releases are never touched), as the section
   `Acceptance suite (skills main <sha12>, <run URL>)` right after the notes' preamble: the results of the skills and
   tests that ship with the release. It runs after a failing leg too, and running it again replaces that section
   (`.github/scripts/release_notes.py`).
 - `.github/workflows/build.yml`, only for a commit between two upstream releases, by hand (Actions, build, Run
-  workflow, `ref`: any upstream tag, branch or commit): builds it on five native runners (ubuntu-22.04,
-  ubuntu-22.04-arm, macos-14, macos-15-intel, windows-2025), checks that each build installs, verifies and runs,
+  workflow, `ref`: any upstream tag, branch or commit): builds it on four native runners (ubuntu-22.04,
+  ubuntu-22.04-arm, macos-14, windows-2025), checks that each build installs, verifies and runs,
   and publishes the release `rdocx-<YYYYMMDDHHMM>-<first 12 characters of the commit>` (the UTC build date and time
   to the minute first: GitHub lists releases by tag name, so the time keeps two builds of the same day in build
   order; title `rdocx <YYYY-MM-DD HH:MM> UTC <commit12> (<ref>)`) with `SHA256SUMS` and provenance attestations. It
   runs no suite: `ci.yml` runs it on the pull request that pins the release, and writes it into the notes once
   `main` pins it (above); releases built before carry a `Build-time suite (preliminary, ...)` section too. Inputs:
-  `lto` (`fat`, upstream's release profile, or `thin`: ThinLTO and 16 codegen units, a faster build of slightly
-  larger and slower binaries with the same behaviour; each has its own build cache) and `dry_run` (every platform
+  `lto` (`thin`, the default: ThinLTO and 16 codegen units, about half the build time of `fat`, upstream's release
+  profile, for slightly larger and slower binaries with the same behaviour; each has its own build cache) and `dry_run` (every platform
   built from scratch, nothing published: to time a profile). It builds nothing when the lock pins the upstream
   releases of that commit. A commit has at most one release: when a release tag already ends with `-<commit12>`
   (in either format), its files are never rebuilt or overwritten, but a platform added to the workflow later is
@@ -186,7 +186,7 @@ whose releases exist and whose hashes are recorded, together with the tests and 
    useless, advice about a behaviour that changed, and a limitation stated without its gap key. An agent can do
    this pass in a few minutes (report only); fix what it finds on the same branch.
 3. Commit the lock, the tests and the skill changes together, and merge into `main`. CI runs the suite on the
-   pinned files on five platforms (the pull request changes the lock); when the pin is one of this repository's
+   pinned files on four platforms; when the pin is one of this repository's
    releases, the push to `main` writes those results into the release notes as `Acceptance suite (skills main
    <sha12>, <run URL>)` (above the preliminary build-time suite of the releases built while `build.yml` still ran
    one). Every later push to `main` that keeps the pin replaces it with its own run.
@@ -195,5 +195,5 @@ A commit between two upstream releases (a fix the skills need before the next re
 repository's build first: Actions, build, Run workflow, with `ref` set to the upstream branch or full commit
 hash. It publishes the release `rdocx-<YYYYMMDDHHMM>-<commit12>` without running the suite. Then `bump REF` and the
 steps above: `lock --write --release` finds no upstream release of that commit and records this one instead, the
-pull request runs the suite on five platforms (failures of `tests/test_skill_docs.py` there are the docs pass still
+pull request runs the suite on four platforms (failures of `tests/test_skill_docs.py` there are the docs pass still
 to do, not regressions), and the merge into `main` writes it into the release notes.
