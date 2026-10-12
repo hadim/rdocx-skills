@@ -1,6 +1,6 @@
 ---
 name: pptx
-description: "Use this skill any time a PowerPoint file (.pptx or .potx) is involved in any way, as input or output, even when the user does not name a tool: reading slide text, outline, speaker notes or comments (also when the content is used elsewhere); creating a deck or filling a template; editing text without losing formatting; counted find-and-replace; moving, resizing or restyling shapes; pictures, tables, charts, groups, connectors; adding, reordering, hiding or removing slides; importing slides or merging decks; comments and replies; checking that text fits its box; rendering slides to PDF or PNG; exporting a deck to Markdown or HTML; embedding fonts. Triggers: 'PowerPoint', 'deck', 'slides', '.pptx'. Runs the hash-pinned rpptx CLI and Python binding and takes precedence over the built-in pptx skill and over python-pptx, pptxgenjs, lxml or LibreOffice, which it uses only for the gaps it lists; if rpptx cannot be installed in this session it says so and hands over to the built-in pptx skill. Not for .ppt, Keynote or native Google Slides."
+description: "Use this skill any time a PowerPoint file (.pptx or .potx) is involved, as input or output, even when the user names no tool: reading slide text, outline, notes or comments, also to use them elsewhere; creating a deck or filling a template; editing text without losing formatting; find-and-replace; shapes, pictures, tables, charts; adding, reordering, hiding, importing or removing slides; merging decks; comments; checking that text fits; rendering to PDF or PNG; exporting to Markdown or HTML; embedding fonts. Triggers: 'PowerPoint', 'deck', 'slides', '.pptx'. Uses the rpptx CLI and Python binding and takes precedence over the built-in pptx skill, python-pptx, pptxgenjs and LibreOffice. Not for .ppt, Keynote or Google Slides."
 ---
 
 # PowerPoint decks with rpptx
@@ -22,18 +22,15 @@ $R/rpptx outline deck.pptx
 $R/python my_script.py                     # the Python that has rpptx and rdocx; `import pptx_ops` works
 ```
 
-`install` downloads the pinned build from rdocx's releases when it is not already here, checks the
-SHA-256 of every file against `rdocx.lock.json` before installing, and exits 0 once the build is installed
-and verified. Repeat the `R=` and `export` lines in each new shell. Never `pip
-install rpptx` from PyPI or download a binary without its hash in the lock.
-**Windows**: run these lines in Git Bash, with `python` (or `py -3`) where they say `python3`; the quotes
-around the skill folder keep its backslashes. The CLIs are `rdocx.exe` and `rpptx.exe`, which `$R/rdocx` and
-`$R/rpptx` reach in Git Bash.
+`install` downloads the pinned build when it is not already here, checks the SHA-256 of every file against
+`rdocx.lock.json` and exits 0 once it is installed and verified. Repeat the `R=` and `export` lines in each new
+shell. Never `pip install rpptx` from PyPI or download a binary without its hash in the lock. **Windows**: Git
+Bash, with `python` (or `py -3`) for `python3`; `$R/rpptx` reaches `rpptx.exe` (`../../docs/setup.md`).
 
-**If `install` exits 2** (no verified build for this machine, for example no network access): tell the user in one line that the pinned
-rpptx build is not available here, do the task with the built-in `pptx` skill, and offer to build it for
-next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in the background). Details:
-`../../docs/setup.md`.
+**If `install` exits 2** (no verified build for this machine, for example no network access): tell the user in
+one line that the pinned rpptx build is not available here, do the task with the built-in `pptx` skill, and
+offer to build it for next time (`install --build`, 10 to 30 minutes with a Rust toolchain, in the
+background).
 
 ## Rules that prevent damage
 
@@ -44,13 +41,11 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 2. **Every text replacement declares its expected count**: `rpptx replace ... --expect N` (slides and
    notes), `prs.try_replace_text(old, new, expect=n)`, or `pptx_ops.replace_batch(src, out, [(old, new, n),
    ...])`, all or nothing.
-3. **Re-fetch the handles an edit retires**: each edit retires the handles of the kind it renumbers and
-   those below it (slide > shape > paragraph > run), in every slide. Appends (`add_*`, `add_slide`) and
-   setters retire none; `text_frame.text =` / `shape.text =` retire paragraphs and runs, a replacement
-   retires runs; removing, moving, grouping or ungrouping shapes and `replace_xml` retire shapes; moving or
-   removing slides, importing at an index, and embedding or removing a font retire everything; layout edits,
-   `apply_theme` and an import that keeps the source formatting retire layouts too. A retired handle raises
-   `StaleElementError` naming the call: write `prs.slides[i].shapes[j]` again.
+3. **Re-fetch the handles an edit retires**: appends (`add_*`, `add_slide`) and setters retire none;
+   `text_frame.text =` / `shape.text =` retire paragraphs and runs, a replacement retires runs; removing,
+   moving, grouping or ungrouping shapes and `replace_xml` retire shapes; moving or removing slides, importing
+   at an index and font changes retire everything. A retired handle raises `StaleElementError` naming the
+   call: write `prs.slides[i].shapes[j]` again (`references/python-api.md`, "Handles").
 4. **Walk groups**: `slide.shapes` lists top-level shapes; a group's children are in `shape.shapes`
    (`shape_type == MSO_SHAPE_TYPE.GROUP`, value 6). `pptx_ops.walk(slide.shapes)` yields all of them.
 5. **Check the fit after any text change**: `rpptx fit F` (exit 1 when a frame overflows, with the font scale
@@ -59,63 +54,66 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 6. **The deck will be opened elsewhere** (PowerPoint, Google Slides, Keynote, LibreOffice): edit in place,
    keep placeholders and layouts, never rebuild a deck to change it.
 7. **Embed a font only when its licence allows embedding.** `rpptx.FontEmbeddingLicense(authorized=True,
-   identity="OFL-1.1: Example Sans")` is your statement that it does: rpptx checks nothing else, not even the font's OS/2 `fsType`. Read the
-   licence first (OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not, and an `fsType`
-   with bit 0x0002 set means Restricted License): when it does not allow it, or you cannot tell, do not embed
-   and tell the user.
+   identity="OFL-1.1: Example Sans")` is your statement that it does: rpptx checks nothing, not even `fsType`.
+   OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not (`fsType` bit 0x0002: Restricted
+   License). When it does not, or you cannot tell, do not embed and tell the user.
 
 ## What to use for what
 
 | Task | CLI | Python | Notes |
 |---|---|---|---|
 | Slide text | `rpptx text [--notes] F` | `shape.text`, `shape.text_frame.paragraphs[k].runs` | |
-| Text with structure and formatting | `rpptx text --json F` | | paragraphs with `path`, `shape_id`, `level`, runs with bold, italic, underline, colour, font, size; notes |
+| Text with structure and formatting | `rpptx text --json F` | | paragraphs with `path`, `shape_id`, `level`, runs with their formatting; notes |
 | Titles and outline | `rpptx outline [--json] [--notes] F` | `slide.shapes.title` | |
 | Structure, shapes, metadata | `rpptx inspect --json F` | `pptx_ops.py shapes F [--slide N]` | shape tree with ids, names, geometry |
 | Counted replacement | `rpptx replace F -p OLD -v NEW --expect N -o OUT`, many pairs: `rpptx replace F --map pairs.json -o OUT` | `prs.try_replace_text(old, new, expect=n)`, `pptx_ops.replace_batch` | keeps run formatting |
-| Replacement in one slide or one frame | | `slide.try_replace_text(old, new, expect=n)`, `shape.text_frame.try_replace_text(old, new, expect=n)` | the slide's notes too unless `notes=False`; same all-or-nothing count |
-| Edit a run, paragraph, text frame | | `run.text`, `run.font.*` (also `highlight_color`, `small_caps`, `language`), `paragraph.alignment/level/space_*/line_spacing`, `text_frame.margin_*/word_wrap/auto_size/vertical_anchor` | `shape.text = ...` drops run formatting, as in python-pptx; a bare int is EMU: write `Pt(12)` (`font.size = 12` raises) |
+| Replacement in one slide or one frame | | `slide.try_replace_text(old, new, expect=n)`, `shape.text_frame.try_replace_text(old, new, expect=n)` | the slide's notes too unless `notes=False` |
+| Edit a run, paragraph, text frame | | `run.text`, `run.font.*`, `paragraph.alignment/level/space_*/line_spacing`, `text_frame.margin_*/word_wrap/auto_size/vertical_anchor` | `shape.text = ...` drops run formatting; a bare int is EMU: write `Pt(12)` |
 | Bullets, numbering | | `paragraph.bullet = "\u2022"`, `bullet_color`, `auto_number = "arabicPeriod"`, `auto_number_start` | |
-| Move, resize, rotate | | `shape.left/top/width/height/rotation` | a placeholder that inherits its geometry reads None: `shape.effective_geometry()` gives it, and a setter copies it first |
-| Fill, line | | `shape.fill.solid()`, `.fill.fore_color.rgb = RGBColor(...)` (or `.theme_color`, `.alpha`), `.line.width`, `.line.color.rgb`; `fill.gradient()`, `fill.patterned()`, `fill.picture(file)` | |
+| Move, resize, rotate | | `shape.left/top/width/height/rotation` | an inherited placeholder geometry reads None: `shape.effective_geometry()` |
+| Fill, line | | `shape.fill.solid()`, `.fill.fore_color.rgb = RGBColor(...)`, `.line.width`, `.line.color.rgb`; `fill.gradient()`, `fill.picture(file)` | |
 | Dashes, arrowheads | | `.line.dash_style = MSO_LINE_DASH_STYLE.DASH`, `.line.tail_end.type = MSO_ARROWHEAD_STYLE.TRIANGLE`, `.width`, `.length`; `head_end` likewise | enums in `rpptx.enum.dml` |
-| Shadow | | `shape.shadow.visible = True`, `.color.rgb`, `.alpha`, `.blur_radius`, `.distance`, `.direction`, `.align` | writes `a:outerShdw`; `shadow.inherit = False` removes the theme's shadow |
-| Connector without the theme effect | | `connector.theme_effect_index = 0` | `add_connector` references the theme's effect 1, an outer shadow in the default theme |
+| Shadow | | `shape.shadow.visible = True`, `.color.rgb`, `.blur_radius`, `.distance` | `shadow.inherit = False` removes the theme's shadow |
+| Connector without the theme effect | | `connector.theme_effect_index = 0` | `add_connector` takes the theme's effect 1, a shadow in the default theme |
 | Change a shape's preset | | `shape.auto_shape_type = MSO_SHAPE.RECTANGLE` | autoshapes only |
-| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group's `shapes` take the same `add_*` calls, re-fetch the group after each; `add_shape` writes python-pptx's theme style (accent1 fill and line, theme effect 2), `add_textbox` none |
+| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | re-fetch a group after each `add_*` on its `shapes`; `add_shape` writes python-pptx's theme style, `add_textbox` none |
 | Z-order, arrange | | `shapes.move(from_, to)`, `shapes.group([...])`, `shape.ungroup()`, `shapes.align([...], "top")`, `shapes.distribute([...], "horizontal")`, `shape.flip_h` | index 0 is the back |
 | Alt text | | `shape.alt_text = "..."`, `shape.decorative = True` | every kind of shape |
 | Glued connector | | `connector.begin_connect(shape, site)`, `end_connect(shape, site)` | sites of a rectangle: 0 top, 1 left, 2 bottom, 3 right |
 | Picture into a placeholder | | `slide.placeholders[idx].insert_picture(file)` | cropped to fill; `shape.is_placeholder`, `placeholder_format.type` |
 | Pictures | | `shape.replace_image(file)`, `shape.image.blob` | keeps position, size and crop |
-| Tables | | `table.first_row`, `horz_banding`, `style_id`, `shape.table.cell(r, c).text`, `cell.text_frame.paragraphs[k].runs[j].font`, `cell.vertical_anchor`, `.merge(other)`, `.fill`, `table.columns[k].width`, `table.rows[k].height`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)` | a new row or column copies a neighbour's size, re-fetch the table after each |
+| Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)`, `table.first_row`, `style_id` | re-fetch the table after adding a row or column |
 | Slides | `rpptx slide add/duplicate/remove/move/hide/show F ... -o OUT` | `slides.add_slide(layout)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden`, `slide.transition.type = "fade"` | |
 | Slide numbers, footer, date | `rpptx footer F --slide-number --footer T --skip-title -o OUT` | `prs.set_header_footer(footer=T)`, `slide.header_footer` | as PowerPoint's Header and Footer dialog; `add_field("slidenum")` in a text box |
-| Theme, master, layouts | | `prs.slide_master.theme.colors["accent1"] = ...`, `.theme.fonts.major.latin`, `prs.apply_theme(path)`, `prs.slide_master.shapes.add_picture(logo, ...)`, `slide_master.text_styles`, `slide_layouts.get_by_name(n)` | a logo on the master shows on every slide |
-| Import slides, merge decks | `rpptx slide import DEST SOURCE [--slides 1,3-5] [--at N] [--keep-source-formatting] -o OUT` | `prs.slides.import_slides(other, [0, 2], index=1, keep_source_formatting=True)`, `prs.slides.import_slide(other.slides[k], layout=prs.slide_layouts[j], index=None)` | charts, embedded objects, comments and notes travel; a jump to a slide not imported is dropped with a warning; without `layout=` or `keep_source_formatting`, a layout of the same name must exist here, else `RpptxError` |
-| Charts | | `slide.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, left, top, width, height, chart_data)`, `shape.has_chart`, `shape.chart.categories` / `.series`, `shape.chart.replace_data(chart_data)` | python-pptx's `CategoryChartData` / `XyChartData` (`rpptx.chart.data`); `replace_data` keeps the series formatting and rewrites the embedded workbook |
+| Theme, master, layouts | | `prs.slide_master.theme.colors["accent1"] = ...`, `prs.apply_theme(path)`, `prs.slide_master.shapes.add_picture(logo, ...)`, `slide_layouts.get_by_name(n)` | a logo on the master shows on every slide |
+| Import slides, merge decks | `rpptx slide import DEST SOURCE [--slides 1,3-5] [--at N] [--keep-source-formatting] -o OUT` | `prs.slides.import_slides(other, [0, 2], index=1, keep_source_formatting=True)`, `prs.slides.import_slide(other.slides[k], layout=prs.slide_layouts[j], index=None)` | charts, objects, comments and notes travel; without `layout=` or `keep_source_formatting`, a layout of the same name must exist here |
+| Charts | | `slide.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, left, top, width, height, chart_data)`, `shape.has_chart`, `shape.chart.categories` / `.series`, `shape.chart.replace_data(chart_data)` | chart data as in python-pptx (`rpptx.chart.data`); `replace_data` keeps the series formatting |
 | Speaker notes | `rpptx text --notes F`, `rpptx notes set F N --text T -o OUT` | `slide.notes_text` (get and set) | None when the slide has no notes |
 | Hyperlinks, slide jumps | | `run.hyperlink.address`; `shape.click_action.hyperlink.address = url`, `shape.click_action.target_slide = prs.slides[k]` | any shape, group members included; set None to clear |
 | Metadata | `rpptx meta get F`, `rpptx meta set F --title T --author A -o OUT` | `prs.core_properties.title = ...` | |
-| Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `resolve_comment`, `remove_comment`, `move_comment` | `slide.add_comment(..., shape_id=sh.shape_id)` anchors on a shape (the CLI on the slide); add the author first |
-| Text fit | `rpptx fit [--json] F` | `prs.text_layout(width_factor=1.0)`, `text_frame.fit_text(max_size=18)`, `text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE` | rpptx's line breaks; `width_factor=0.95` for a margin; `auto_size` is written with PowerPoint's font scale at save |
-| PDF | `rpptx convert F --to pdf -o NEW.pdf [--font-dir DIR]` | `prs.to_pdf(font_dir=)`, `prs.to_notes_pdf()`, `to_pdfa()`, `to_handout_pdf(6)` | `--font-dir` / `font_dir=` give fonts that are not installed, to every output (not `to_pdfa` or handouts) and to the fit check |
+| Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `resolve_comment`, `remove_comment`, `move_comment` | `shape_id=` anchors on a shape; add the author first |
+| Text fit | `rpptx fit [--json] F` | `prs.text_layout(width_factor=1.0)`, `text_frame.fit_text(max_size=18)`, `text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE` | rpptx's line breaks; `auto_size` is written with PowerPoint's font scale at save |
+| PDF | `rpptx convert F --to pdf -o NEW.pdf [--font-dir DIR]` | `prs.to_pdf(font_dir=)`, `prs.to_notes_pdf()`, `to_pdfa()`, `to_handout_pdf(6)` | `font_dir` for fonts that are not installed |
 | PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)`, `render_slides(format="jpeg")` | CLI slides one-based, Python zero-based |
-| Markdown, HTML | `rpptx convert F --to md -o NEW.md [--notes] [--skip-hidden]`, `--to html` | `prs.to_markdown(notes=True, skip_hidden=True)`, `prs.to_html(...)` | one section per slide in outline order: lists, tables, links, pictures with their alt text (HTML embeds them) |
-| Embedded fonts | `rpptx font list/embed/remove/settings` | `prs.embedded_fonts`, `prs.embed_font(typeface, "ExampleSans-Regular.ttf", "regular", license=rpptx.FontEmbeddingLicense(...))`, `remove_embedded_font`, `remove_font` | rule 7; embedding sets `embed_true_type_fonts`, without which PowerPoint ignores the fonts: leave it on. Embed last: PowerPoint for Mac drops embedded fonts when it saves the deck again. rpptx's renders draw the embedded faces, except a compressed one (`format` `compressed_eot`, as PowerPoint writes them, observed upstream): pass that font's file with `font_dir=` / `--font-dir`; a font there of that typeface, by its own family or by its file name (`Aileron.ttf`), wins over an embedded face |
+| Markdown, HTML | `rpptx convert F --to md -o NEW.md [--notes] [--skip-hidden]`, `--to html` | `prs.to_markdown(notes=True, skip_hidden=True)`, `prs.to_html(...)` | one section per slide, in outline order |
+| Embedded fonts | `rpptx font list/embed/remove/settings` | `prs.embedded_fonts`, `prs.embed_font(typeface, "ExampleSans-Regular.ttf", "regular", license=rpptx.FontEmbeddingLicense(...))`, `remove_embedded_font`, `remove_font` | rule 7; leave `embed_true_type_fonts` on; embed last (PowerPoint for Mac drops embedded fonts when it saves); a compressed embedded face is not rendered: pass its file with `font_dir` |
 | From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
 | Validity | `rpptx validate F` | `prs.validate()` | a tuple of issues (`kind`, `message`), empty when valid |
 | What changed | `rpptx diff A B` | | slide text only |
-| An element with no API | | `shape.xml` / `shape.replace_xml(xml)`, also on text frames, slides, layouts | instead of lxml; a bad replacement raises and changes nothing (`references/python-api.md`, Raw XML) |
+| An element with no API | | `shape.xml` / `shape.replace_xml(xml)`, also on text frames, slides, layouts | instead of lxml; a bad replacement raises and changes nothing |
 
 Commands and signatures: `references/cli.md`, `references/python-api.md` (and the `.pyi` stubs it points
 to). Tested examples: `references/recipes.md`. Ready-made commands: `scripts/pptx_ops.py` (`replace`,
-`overflow`, `shapes`).
+`overflow`, `shapes`). In a reference, look a name up (`grep -n NAME references/python-api.md`) rather than
+reading the whole file. The skill does not list every method or flag: before concluding that rpptx cannot do
+something, search the build itself, `grep -n -i WORD` in its type stubs (`_rpptx.pyi`, in the folder
+`$R/python -c "import rpptx, os; print(os.path.dirname(rpptx.__file__))"` prints) and `$R/rpptx --help`,
+`$R/rpptx COMMAND --help`.
 
 ## When rpptx cannot do a step
 
-`references/gaps.md` lists each known gap with its workaround and fallback. When a step is blocked: say so in
-one line to the user, use the workaround if there is one, otherwise do **that step only** with the default
+`references/gaps.md` lists each known gap with its workaround and fallback. When a step is blocked: search the
+stubs and `--help` (above), say so in one line to the user, use the workaround if there is one, otherwise do **that step only** with the default
 `pptx` skill (python-pptx), on the file rpptx saved, keep rpptx for everything else and for the verification, and report the gap
 unless it is listed.
 

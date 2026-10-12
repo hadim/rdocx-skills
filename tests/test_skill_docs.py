@@ -1,7 +1,8 @@
 """The skills against the pinned build: every Python name and keyword argument and every CLI command and flag they
-cite exists, every public Python name, CLI command and flag of the build is cited or excluded with a reason, their gap
-pages match tests/gaps.py, and each SKILL.md stays under 200 lines. A pin that renames, drops or adds an API fails
-here even when no recipe block runs it (the recipes themselves run in test_docs_snippets.py).
+cite exists, every public class and CLI command of the build is cited or excluded with a reason (methods and flags are
+found in the stubs and `--help`), their gap pages match tests/gaps.py, and each SKILL.md and its description stay within
+their budgets. A pin that renames or drops an API the skills cite fails here even when no recipe block runs it (the
+recipes themselves run in test_docs_snippets.py), and so does a new class or command.
 
 Positional parameters are written as short placeholders in the skills (`bi`, `rid`, `r, c`) and are not checked:
 a positional call works whatever the parameter is called. Keyword arguments are checked, since a wrong one raises."""
@@ -9,6 +10,7 @@ import ast
 import builtins
 import functools
 import importlib
+import json
 import pkgutil
 import re
 import subprocess
@@ -167,14 +169,14 @@ def test_the_checks_catch_a_wrong_name(tmp_path, monkeypatch):
         "rdocx compare has no --nope", "no command rdocx nosuch", "rdocx comment list has no --bogus"]
 
 
-# ---------------------------------------------------------------- the other way: every API is documented or excluded
-# Every public class of rdocx and rpptx (all their modules), its public methods and properties, and every CLI command
-# and flag must be cited in code in that skill's SKILL.md or references, or be listed here with the reason it is left
-# out. Not scanned: names with a leading underscore (dunder, internal), members a class inherits from a builtin base
-# (int, Exception), and ALL_CAPS enum values (covered by their enum). A class reachable under several names (python-pptx
-# aliases such as MSO_FILL_TYPE for MSO_FILL) is covered when one of them is cited. A command group is covered by its
-# subcommands; -h/--help and -V/--version are not scanned. A test fails on a new name a pin brings, and on an entry here
-# that is no longer needed.
+# ---------------------------------------------------------------- the other way: every capability has a pointer
+# Every public class of rdocx and rpptx (all their modules) and every CLI command must be cited in code in that skill's
+# SKILL.md or references, or be listed here with the reason it is left out: a new capability gets at least a pointer.
+# Methods, properties and flags are not scanned: an agent finds them in the type stubs and `--help`, which SKILL.md
+# tells it to search. Not scanned either: names with a leading underscore and ALL_CAPS enum values. A class reachable
+# under several names (python-pptx aliases such as MSO_FILL_TYPE for MSO_FILL) is covered when one of them is cited; a
+# command group is covered by its subcommands. A test fails on a new class or command a pin brings, and on an entry
+# here that is no longer needed.
 NOT_DOCUMENTED = {
     # rdocx names of the 2026-10-10 pin left out
     "rdocx.HeaderFooterCell": "the type of a header table's `cell(r, c)`, documented by its members",
@@ -224,7 +226,7 @@ def skill_code(skill):
 
 
 def python_surface(module):
-    """{key: (names that cite it)}: "pkg.Class" for each class, "pkg.Class.member" for its public members."""
+    """The public classes of `module` and its submodules, each with the names it is reachable under."""
     classes = {}
     for info in [None, *pkgutil.walk_packages(module.__path__, module.__name__ + ".")]:
         mod = importlib.import_module(info.name) if info else module
@@ -232,14 +234,7 @@ def python_surface(module):
             if (not name.startswith("_") and isinstance(obj, type) and obj not in vars(builtins).values()
                     and obj.__module__.split(".")[0] in (module.__name__, "builtins")):
                 classes.setdefault(obj, set()).add(name)
-    surface = {}
-    for obj, names in classes.items():
-        base = [b for b in obj.__mro__ if b in vars(builtins).values()]
-        surface[f"{module.__name__}.{obj.__name__}"] = names
-        for member in dir(obj):
-            if not (member.startswith("_") or member.isupper() or any(hasattr(b, member) for b in base)):
-                surface[f"{module.__name__}.{obj.__name__}.{member}"] = {member}
-    return surface
+    return {f"{module.__name__}.{obj.__name__}": names for obj, names in classes.items()}
 
 
 def undocumented_python(surface, code, excluded):
@@ -249,22 +244,15 @@ def undocumented_python(surface, code, excluded):
 
 @functools.lru_cache(maxsize=None)
 def cli_surface(tool):
-    """{(tool, command, ...): [flag aliases such as ("-o", "--output")]} for every command and subcommand."""
-    surface = {}
+    """Every command path of `tool`, from `--help`."""
+    surface = set()
 
     def walk(command):
-        text = cli_help(*command) or ""
-        flags = []
-        for line in text.split("Options:", 1)[1].splitlines() if "Options:" in text else []:
-            m = re.match(r"\s+(-\w)?(?:, )?(--[\w-]+)?", line)
-            names = tuple(x for x in m.groups() if x) if m else ()
-            if names and not set(names) & {"-h", "--help", "-V", "--version"}:
-                flags.append(names)
-        surface[command] = flags
-        for sub in sorted(subcommands(text)):
+        surface.add(command)
+        for sub in sorted(subcommands(cli_help(*command) or "")):
             walk(command + (sub,))
     walk((tool,))
-    return surface
+    return frozenset(surface)
 
 
 def cli_citations(code, tool, surface):
@@ -291,30 +279,23 @@ def cli_citations(code, tool, surface):
 
 
 def undocumented_cli(surface, cited, excluded):
-    missing = []
-    for command, flags in surface.items():
-        name = " ".join(command)
-        if len(command) > 1 and not any(c[:len(command)] == command for c in cited) and name not in excluded:
-            missing.append(name)
-        missing += [f"{name} {f[-1]}" for f in flags                # keyed by the long name
-                    if not set(f) & cited.get(command, set()) and f"{name} {f[-1]}" not in excluded]
-    return missing
+    return [" ".join(c) for c in sorted(surface)
+            if len(c) > 1 and not any(k[:len(c)] == c for k in cited) and " ".join(c) not in excluded]
 
 
 @pytest.mark.parametrize("module", [rdocx, rpptx], ids=lambda m: m.__name__)
-def test_every_python_api_is_documented_or_excluded(module):
+def test_every_public_class_is_documented_or_excluded(module):
     code = skill_code(SKILL_OF[module.__name__])
     assert undocumented_python(python_surface(module), code, NOT_DOCUMENTED) == []
 
 
 @pytest.mark.parametrize("tool", ["rdocx", "rpptx"])
-def test_every_cli_command_and_flag_is_documented_or_excluded(tool):
+def test_every_cli_command_is_documented_or_excluded(tool):
     surface = cli_surface(tool)
     assert undocumented_cli(surface, cli_citations(skill_code(SKILL_OF[tool]), tool, surface), NOT_DOCUMENTED) == []
 
 
 def test_every_exclusion_is_still_needed():
-    """An entry names a scanned name that the skills still do not cite: drop it once the name is documented or gone."""
     missing = set()
     for tool in SKILL_OF:
         code, surface = skill_code(SKILL_OF[tool]), cli_surface(tool)
@@ -324,15 +305,13 @@ def test_every_exclusion_is_still_needed():
 
 
 def test_the_reverse_checks_catch_an_undocumented_name():
-    """A fake class, member, command and flag that no skill cites are reported; an excluded one is not."""
-    surface = {**python_surface(rdocx), "rdocx.NoSuchClass": {"NoSuchClass"}, "rdocx.Document.no_such_member": {"no_such_member"}}
+    """A fake class and a fake command that no skill cites are reported; an excluded one is not."""
+    surface = {**python_surface(rdocx), "rdocx.NoSuchClass": {"NoSuchClass"}}
     code = skill_code("docx")
-    assert undocumented_python(surface, code, NOT_DOCUMENTED) == ["rdocx.Document.no_such_member", "rdocx.NoSuchClass"]
-    assert undocumented_python(surface, code, {**NOT_DOCUMENTED, "rdocx.NoSuchClass": "x"}) == ["rdocx.Document.no_such_member"]
-    cli = {**cli_surface("rdocx"), ("rdocx", "nosuch"): [("--zap",)]}
-    cli[("rdocx", "text")] = cli[("rdocx", "text")] + [("-Z", "--zebra")]
-    cited = cli_citations(code, "rdocx", cli)
-    assert undocumented_cli(cli, cited, NOT_DOCUMENTED) == ["rdocx text --zebra", "rdocx nosuch", "rdocx nosuch --zap"]
+    assert undocumented_python(surface, code, NOT_DOCUMENTED) == ["rdocx.NoSuchClass"]
+    assert undocumented_python(surface, code, {**NOT_DOCUMENTED, "rdocx.NoSuchClass": "x"}) == []
+    cli = cli_surface("rdocx") | {("rdocx", "nosuch")}
+    assert undocumented_cli(cli, cli_citations(code, "rdocx", cli), NOT_DOCUMENTED) == ["rdocx nosuch"]
 
 
 # ---------------------------------------------------------------- gaps
@@ -370,6 +349,25 @@ def test_no_gap_is_claimed_outside_the_registry():
 
 
 # ---------------------------------------------------------------- size
+# SKILL.md is read in full each time the skill loads: a byte budget (about 4,000 tokens), since its table rows are
+# single long lines that a line count does not see grow. Details belong in the references, looked up with grep.
+SKILL_MD_MAX_BYTES = 16_000
+# The description sits in every session's skill listing. The Agent Skills specification caps it at 1,024
+# characters; Claude Code's listing has a budget of 1% of the context and drops the descriptions of the least used
+# skills first, so ours stay well below the cap.
+DESCRIPTION_MAX_CHARS = 800
+
+
 @pytest.mark.parametrize("path", sorted(SKILLS.glob("*/SKILL.md")), ids=lambda p: p.parent.name)
-def test_skill_md_stays_under_200_lines(path):
-    assert len(path.read_text().splitlines()) < 200
+def test_skill_md_stays_within_its_byte_budget(path):
+    size = len(path.read_bytes())
+    assert size <= SKILL_MD_MAX_BYTES, f"{rel(path)}: {size} bytes, budget {SKILL_MD_MAX_BYTES}: move details to references/"
+
+
+@pytest.mark.parametrize("path", sorted(SKILLS.glob("*/SKILL.md")), ids=lambda p: p.parent.name)
+def test_skill_description_fits_the_listing(path):
+    front = path.read_text().split("---")[1]
+    m = re.search(r'^description: (".*")$', front, re.M)
+    assert m, f"{rel(path)}: no one-line quoted description in the front matter"
+    description = json.loads(m.group(1))
+    assert 0 < len(description) <= DESCRIPTION_MAX_CHARS <= 1024, f"{rel(path)}: {len(description)} characters"

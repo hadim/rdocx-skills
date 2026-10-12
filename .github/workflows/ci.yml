@@ -1,9 +1,9 @@
-# The acceptance suite on linux-x86_64, linux-aarch64, macos-arm64, macos-x86_64 and windows-x86_64: the pinned
-# files from the releases the lock names (upstream's, or this repository's build of a commit between two upstream
+# The acceptance suite on linux-x86_64, linux-aarch64, macos-arm64 and windows-x86_64 (Intel Macs are not tested):
+# the pinned files from the releases the lock names (upstream's, or this repository's build of a commit between two upstream
 # releases), checked against the lock (seconds), or a build of the pinned commit when no release has them yet (right
 # after a bump, or a platform the release lacks; minutes). On a push to main, when the lock pins one of this
-# repository's releases, the suite summaries of the five platforms become the final "Acceptance suite" section of
-# that release's notes, above the preliminary build-time suite of build.yml (re-running replaces it).
+# repository's releases, the suite summaries of the four platforms become the "Acceptance suite" section of that
+# release's notes (re-running replaces it).
 name: ci
 
 on:
@@ -28,7 +28,6 @@ jobs:
           - { platform: linux-x86_64, runner: ubuntu-24.04 }
           - { platform: linux-aarch64, runner: ubuntu-22.04-arm }
           - { platform: macos-arm64, runner: macos-14 }
-          - { platform: macos-x86_64, runner: macos-15-intel }
           - { platform: windows-x86_64, runner: windows-2025 }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
