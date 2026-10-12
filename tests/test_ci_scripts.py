@@ -67,7 +67,7 @@ def test_the_command_writes_the_notes_to_stdout(tmp_path):
     notes, summary = tmp_path / "notes.md", tmp_path / "suite-linux-x86_64.md"
     notes.write_text(LEGACY, encoding="utf-8")
     summary.write_text(SUMMARY_A, encoding="utf-8")
-    res = subprocess.run([sys.executable, SCRIPTS / "release_notes.py", "rewrite", notes, "--sha", MAIN_SHA,
+    res = subprocess.run([sys.executable, SCRIPTS / "release_notes.py", "rewrite", "--notes", notes, "--sha", MAIN_SHA,
                           "--run-url", RUN, summary], capture_output=True, text=True, encoding="utf-8")
     assert res.returncode == 0, res.stderr
     assert res.stdout == release_notes.rewrite(LEGACY, [SUMMARY_A], MAIN_SHA, RUN)
@@ -100,3 +100,17 @@ def test_the_summary_without_docs_failures_has_no_docs_group(tmp_path):
                          check=True).stdout
     assert "Docs not yet updated" not in out and "Gaps closed" not in out
     assert "Other failures" in out and "test_replace" in out
+
+
+def test_the_command_takes_the_summaries_after_the_options_as_ci_yml_passes_them(tmp_path):
+    notes = tmp_path / "notes.md"
+    notes.write_text(LEGACY, encoding="utf-8")
+    summaries = []
+    for name, text in (("suite-linux-x86_64.md", SUMMARY_A), ("suite-macos-arm64.md", SUMMARY_B)):
+        path = tmp_path / name
+        path.write_text(text, encoding="utf-8")
+        summaries.append(path)
+    res = subprocess.run([sys.executable, SCRIPTS / "release_notes.py", "rewrite", "--notes", notes, "--sha", MAIN_SHA,
+                          "--run-url", RUN, *summaries], capture_output=True, text=True, encoding="utf-8")
+    assert res.returncode == 0, res.stderr
+    assert res.stdout == release_notes.rewrite(LEGACY, [SUMMARY_A, SUMMARY_B], MAIN_SHA, RUN)
