@@ -2,8 +2,8 @@
 # the pinned files from the releases the lock names (upstream's, or this repository's build of a commit between two upstream
 # releases), checked against the lock (seconds), or a build of the pinned commit when no release has them yet (right
 # after a bump, or a platform the release lacks; minutes). On a push to main, when the lock pins one of this
-# repository's releases, the suite summaries of the four platforms become the final "Acceptance suite" section of
-# that release's notes, above the preliminary build-time suite of build.yml (re-running replaces it).
+# repository's releases, the suite summaries of the four platforms become the "Acceptance suite" section of that
+# release's notes (re-running replaces it).
 name: ci
 
 on:
