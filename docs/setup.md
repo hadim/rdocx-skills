@@ -38,7 +38,9 @@ environment has both modules. The wrapper is a shell script that sets `PYTHONDON
 `PYTHONUTF8` (UTF-8 for files and pipes whatever the locale) and runs the venv's interpreter. Nothing is
 installed system-wide. `install` from a dist folder uses no
 network, from the releases it downloads four files; `build` fetches the source and the pinned build tools,
-`test` the pinned test dependencies.
+`test` the pinned test dependencies. Once a pin is installed, `install` removes the installs of older pins
+beyond the most recent one, with their downloads and source exports (about 100 MB each; `RDOCX_KEEP_INSTALLS`
+sets how many installs stay, 0 keeps them all); build caches and the test environment stay.
 
 ## Trust model
 

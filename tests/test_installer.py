@@ -97,3 +97,27 @@ def test_status_catches_and_install_repairs(home, change):
     assert env_cmd(home, "status").returncode == 1
     assert env_cmd(home, "install").returncode == 0
     assert env_cmd(home, "status").returncode == 0
+
+
+def test_install_keeps_the_pin_and_the_previous_install_only(home):
+    """Each pin would otherwise leave about 100 MB behind: `install` keeps the pinned install and the most
+    recent other one, with their downloads, and removes the older ones; caches and environments stay."""
+    olds = ["a" * 12, "b" * 12, "c" * 12]
+    for age, name in enumerate(olds):
+        marker = home / name / "installed.json"
+        marker.parent.mkdir()
+        marker.write_text("{}")
+        os.utime(marker, (1_000_000 + age, 1_000_000 + age))  # c is the most recent of the three
+        (home / "dist" / (name + "0" * 28)).mkdir(parents=True)
+        (home / "build" / name).mkdir(parents=True)
+    for keep in ("target", "testenv"):
+        (home / keep).mkdir(exist_ok=True)
+    res = env_cmd(home, "install")
+    assert res.returncode == 0, res.stderr
+    assert dest(home).is_dir() and (home / ("c" * 12)).is_dir() and (home / "dist" / ("c" * 12 + "0" * 28)).is_dir()
+    for name in ("a" * 12, "b" * 12):
+        assert not (home / name).exists() and not (home / "dist" / (name + "0" * 28)).exists()
+        assert not (home / "build" / name).exists()
+    assert (home / "target").is_dir() and (home / "testenv").is_dir()
+    assert env_cmd(home, "status").returncode == 0
+

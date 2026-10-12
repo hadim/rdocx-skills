@@ -57,7 +57,8 @@ check as any dist folder.
 Environment: RDOCX_HOME (default ~/.local/share/rdocx-skills), RDOCX_SRC (a local clone of rdocx; default:
 a sibling `rdocx` folder of this repository), RDOCX_DIST (a folder holding <commit>/<platform>/),
 RDOCX_RELEASE_URL (a mirror standing for `https://github.com/<owner>/<repo>/releases/download`: one folder per
-release tag), CARGO_BUILD_JOBS (fewer parallel jobs on small machines).
+release tag), CARGO_BUILD_JOBS (fewer parallel jobs on small machines), RDOCX_KEEP_INSTALLS (how many installs
+`install` keeps, the pinned one included: default 2, 0 keeps them all).
 """
 import argparse
 import gzip
@@ -685,6 +686,34 @@ def point_current(dest):
     link_folder(HOME / "current", dest)
 
 
+KEEP_INSTALLS = 2  # the pinned build and the most recent other one (another copy of the plugin may pin it)
+
+
+def prune_installs(dest):
+    """Remove the installs of other commits (HOME/<commit12>) beyond the RDOCX_KEEP_INSTALLS most recent ones,
+    with their downloads (HOME/dist/<commit>/) and source exports (HOME/build/<commit12>): each pin otherwise
+    leaves about 100 MB behind. `dest` and whatever `current` points at always stay; nothing else under HOME
+    (build caches, test and build environments) is touched."""
+    try:
+        keep = int(os.environ.get("RDOCX_KEEP_INSTALLS", KEEP_INSTALLS))
+    except ValueError:
+        keep = KEEP_INSTALLS
+    if keep <= 0:
+        return
+    current = HOME / "current"
+    stay = {dest.resolve(), current.resolve()} if current.exists() else {dest.resolve()}
+    others = [d for d in HOME.iterdir()
+              if re.fullmatch(r"[0-9a-f]{12}", d.name) and (d / "installed.json").is_file() and d.resolve() not in stay]
+    others.sort(key=lambda d: (d / "installed.json").stat().st_mtime, reverse=True)
+    for old in others[max(keep - 1, 0):]:
+        shutil.rmtree(old, ignore_errors=True)  # a CLI still running on Windows keeps its file: retried next time
+        for download in (HOME / "dist").glob(f"{old.name}*"):
+            if re.fullmatch(r"[0-9a-f]{40}", download.name):
+                shutil.rmtree(download, ignore_errors=True)
+        shutil.rmtree(HOME / "build" / old.name, ignore_errors=True)
+        say(f"removed the install of {old.name}, an older pin (RDOCX_KEEP_INSTALLS={keep})")
+
+
 def install_from(lock, plat, folder, local_sums=None):
     """Install from `folder`. Without `local_sums`, every file must match the lock; with them (files just
     built from the pinned commit), they must match those sums and the install is marked as a local build."""
@@ -915,6 +944,7 @@ def main():
             if status(lock, plat, allow_local=allow_local, quiet=True):
                 say("already installed and unchanged")
                 status(lock, plat, allow_local=allow_local)
+                prune_installs(dest)
                 return
         if args.src:
             install_from(lock, plat, args.src)
@@ -945,6 +975,7 @@ def main():
                     allow_local = True
         if not status(lock, plat, allow_local=allow_local):
             sys.exit(1)
+        prune_installs(dest)
 
 
 if __name__ == "__main__":
