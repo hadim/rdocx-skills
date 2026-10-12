@@ -56,7 +56,18 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## State on 12/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: the integration branch `integration/open-prs-2026-10-12-2` of hadim/rdocx (commit `1ffda276`) through
+- Pinned: the integration branch `integration/open-prs-2026-10-12-3` of hadim/rdocx (commit `12b1d6fc`) through
+  this repository's release `rdocx-20261012-12b1d6fc85e3`: the previous pin `integration/open-prs-2026-10-12-2`
+  (below) plus the fixes of its two gaps on the carried PRs: the HTML and Markdown importers collapse spaces on
+  both sides of a span edge into one, kept where the run of spaces starts (`a <s>b </s> c` gives `a `, `b ` struck,
+  `c`), also in links and `insert_html`, and no longer collapse `&nbsp;` (#359); a caller font file named after a
+  typeface wins over the embedded face of that typeface even when its own family differs, and font directories load
+  in file name order (#361). One integration fix adds a test only: in rpptx, a caller font named after a typeface
+  wins over its embedded face.
+- Open gaps: none. Closed by this pin: `html-space-doubled-at-span-edge`, `font-dir-alias-below-embedded-face`.
+  `<p>&nbsp;</p>` is kept as a paragraph holding one non-breaking space on this build (tested).
+- Suite against `12b1d6fc`: 814 passed, 9 skipped (Poppler absent), 0 xfailed on macos-arm64 from the release files.
+- Before it, pinned: the integration branch `integration/open-prs-2026-10-12-2` of hadim/rdocx (commit `1ffda276`) through
   this repository's release `rdocx-20261012-1ffda27631c6`: the previous pin `integration/open-prs-2026-10-12`
   (below) plus the fixes of its three gaps on the carried PRs: the HTML importers of rdocx and rpptx keep a space
   before or after an emphasised span outside it and a space written inside it in it (#359); rpptx's own renders
@@ -80,13 +91,11 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   recipes and tests embed Aileron (CC0-1.0), the subset Pillow bundles (`conftest.free_font`). A skills `main` pinned
   on the fork steps back from upstream releases: go back to tensorbee/rdocx with `bump v<version>` once a release
   carries these PRs.
-- Open gaps, both found on this pin: docx `html-space-doubled-at-span-edge` (the HTML and Markdown importers keep
-  two spaces where a browser draws one, a space ending a span and one after it, `a <s>b </s> c`, a regression of the
-  #359 fix; workaround: drop the leading space of a run whose previous run ends with one) and pptx
-  `font-dir-alias-below-embedded-face` (a `font_dir` file only named after the typeface loses to the embedded face;
-  a font whose own family is the typeface wins; workaround: give that font, or remove the embedded face on a copy).
-  Closed by this pin: `html-space-inside-emphasis`, `render-embedded-font`, `import-stale-source-formatting`, the
-  three gaps of `ffb8d3d6`.
+- Gaps found on `1ffda276`, closed by `12b1d6fc`: docx `html-space-doubled-at-span-edge` (two spaces kept where a
+  browser draws one at a span edge, a regression of the #359 fix) and pptx `font-dir-alias-below-embedded-face` (a
+  `font_dir` file only named after the typeface lost to the embedded face). Closed by `1ffda276`:
+  `html-space-inside-emphasis`, `render-embedded-font`, `import-stale-source-formatting`, the three gaps of
+  `ffb8d3d6`.
 - Suite against `1ffda276`: 810 passed, 9 skipped (Poppler absent), 2 xfailed (the two open gaps) on macos-arm64
   from the release files.
 - Suite against `ffb8d3d6`: 799 passed, 9 skipped (Poppler absent), 3 xfailed on macos-arm64 from the release files;
@@ -114,5 +123,3 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 1. When rdocx tags a release: `bump v<version>`, `lock --write --release`, `install`, `test`, as
    docs/setup.md (Moving the pin) describes. The weekly `build.yml` run on upstream `main` says beforehand
    which gaps the next release closes.
-2. Report the two gaps of this pin upstream (`html-space-doubled-at-span-edge`,
-   `font-dir-alias-below-embedded-face`), then name each issue on its entry in `tests/gaps.py`.
