@@ -138,6 +138,40 @@ def parts(path):
         return {n: z.read(n) for n in z.namelist()}
 
 
+FREE_FONT_LICENSE = "CC0-1.0: Aileron"
+
+
+@pytest.fixture(scope="session")
+def free_font(fixture_dir):
+    """Aileron Regular, a CC0-1.0 font (dotcolon.net/fonts/aileron, "No Rights Reserved"), as the subset Pillow
+    bundles for `ImageFont.load_default`: the same TrueType file on every machine, whose licence allows embedding,
+    and installed nowhere, so that a document using it shows the embedded face or a substitute."""
+    from PIL import ImageFont
+
+    out = fixture_dir / "Aileron-Regular.ttf"
+    if not out.exists():
+        out.write_bytes(ImageFont.load_default(12).font_bytes)
+    return out
+
+
+def pdf_uses_font(pdf, family):
+    """Whether a PDF uses a font of `family` (bytes): its base font names, subset prefix (ABCDEF+) and style dropped."""
+    import re
+    names = re.findall(rb"/BaseFont\s*/([A-Za-z0-9+_-]+)", pdf)
+    return any(name.split(b"+")[-1].split(b"-")[0] == family for name in names)
+
+
+def libreoffice_pdf(src, tmp_path):
+    """The PDF LibreOffice (headless, its own profile under tmp_path) makes of `src`; skips when it is not installed."""
+    exe = shutil.which("soffice") or shutil.which("libreoffice")
+    if not exe:
+        pytest.skip("LibreOffice is not installed")
+    out = tmp_path / "libreoffice"
+    run([exe, "--headless", f"-env:UserInstallation={(tmp_path / 'lo-profile').as_uri()}", "--convert-to", "pdf",
+         "--outdir", out, src], check=True, timeout=300)
+    return (out / (Path(src).stem + ".pdf")).read_bytes()
+
+
 MONOSPACE_FONTS = ("/System/Library/Fonts/Supplemental/Courier New.ttf", "C:/Windows/Fonts/cour.ttf",
                    "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", "/usr/share/fonts/dejavu/DejaVuSansMono.ttf")
 VARIABLE_FONTS = ("/System/Library/Fonts/SFNS.ttf", "C:/Windows/Fonts/bahnschrift.ttf")

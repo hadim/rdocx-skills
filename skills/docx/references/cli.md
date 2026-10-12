@@ -8,8 +8,8 @@ command line; 101 an internal panic (report it).
 
 | Commands | An existing output |
 |---|---|
-| `replace`, `comment add/reply/resolve/move/remove`, `revision accept/reject`, `compare`, `toc rebuild` (`-o` required) | refused, exit 1, "output already exists": they never overwrite anything, the input included |
-| `render` (into `-o DIR`, default the current folder), `convert` (`-o` optional for pdf/md/html: default, the input name with the new extension) | refused the same way; `--force` replaces an existing output, never the input. Render into a new, empty folder each time |
+| `replace`, `comment add/reply/resolve/move/remove`, `revision accept/reject`, `compare`, `toc rebuild`, `font embed/remove/settings` (`-o` required) | refused, exit 1, "output already exists": they never overwrite anything, the input included |
+| `render` (into `-o DIR`, default the current folder), `convert` (`-o` optional for pdf/md/html and for Markdown or HTML input: default, the input name with the new extension) | refused the same way; `--force` replaces an existing output, never the input. Render into a new, empty folder each time |
 
 **JSON.** `--json` output carries `"schema": 1`. The editing commands that take `--json` (all but `replace`)
 print an operation record: `output`, `scope` and the result (`comment_id`, `main_story_revisions`,
@@ -107,12 +107,32 @@ rdocx toc rebuild F -o OUT [--json]
 Rebuilds existing TOC fields from the headings and rdocx's pagination (prints `Entries: N`). The entry of a numbered heading gets a left stop after its
 number, so its title stays on the left when the TOC style has only the page-number stop.
 
+## Fonts
+
+```bash
+rdocx font list [--json] F
+rdocx font embed F FONT.ttf --name 'Example Sans' [--face regular|bold|italic|bold_italic] --license-authorized \
+      --license-identity 'OFL-1.1: Example Sans' [--font-key '{GUID}'] [--subsetted] -o OUT [--json]
+rdocx font remove F --name 'Example Sans' [--face bold] -o OUT [--json]   # without --face: the whole record
+rdocx font settings F [--embed-true-type-fonts true|false] [--embed-system-fonts true|false] [--save-subset-fonts true|false] -o OUT [--json]
+```
+`font list` prints each font-table record (`--json`: `fonts`, each with `name`, `alternate_name`, `family`,
+`pitch`, `embedded`: `face`, `font_key`, `subsetted`, `license_authorized`, `license_identity`, `byte_count`;
+and `settings`: `embed_true_type_fonts`, `embed_system_fonts`, `save_subset_fonts`, null when unset).
+`font embed` adds a TrueType or OpenType file (not a `.ttc` collection) as one face of the record `--name`, creating
+the record, and turns `embedTrueTypeFonts` on, which makes Word keep the font when it saves the document
+again; Word uses the embedded face either way (observed upstream, tensorbee/rdocx#361). Without
+`--license-authorized`, or with an empty `--license-identity`, it exits 1 and writes nothing: pass them only
+for a font whose licence allows embedding (SKILL.md, rule 9). `font remove` without `--face` removes the
+record and all its faces.
+
 ## Rendering and conversion
 
 ```bash
 rdocx convert F --to pdf -o NEW.pdf [--font-dir DIR] [--revision-view accepted|tracked] [--force]
 rdocx convert F --to png|jpeg|tiff -o OUT.png [--dpi 150] [--pages 1,3-5] [--quality 90] [--transparent] [--revision-view tracked] [--font-dir DIR]
 rdocx convert F --to md|html -o NEW.md
+rdocx convert notes.md|page.html [--to docx] [--template brand.dotx] -o NEW.docx
 rdocx render F -o NEW_DIR [--dpi 150] [--pages 1,3-5 | --page 0] [--format png|jpeg|tiff] [--quality 90] [--transparent] [--revision-view tracked] [--font-dir DIR] [--force]
 rdocx layout --json F [--font-dir DIR]
 ```
@@ -122,6 +142,12 @@ multi-page file). `render` writes `NEW_DIR/<name>_page<N>.png` with N one-based;
 metric-compatible families (Liberation for Arial, Times New Roman, Courier New; Carlito for Calibri; Caladea
 for Cambria) and the system fonts. Markdown and HTML hold the body, then text boxes, headers, footers,
 footnotes and endnotes, one section per part, and leave comments out.
+An input named `.md` / `.markdown` is read as Markdown (CommonMark with GitHub tables), one named `.html` /
+`.htm` as HTML, and written as DOCX unless `--to` names another format (a DOCX input needs `--to`). Headings
+get Heading N, lists numbering, tables a header row, links and images (HTML: data URIs; Markdown: files next
+to the input) are kept, block quotes get Quote and code HTML Preformatted. `--template` (Markdown input) gives
+the styles, numbering, headers and footers of a DOCX or DOTX. What the import drops or approximates is a
+`Warning: <location>: <message>` line on stderr (`line N` for Markdown), exit 0: read them.
 `--quality` sets the JPEG quality (1 to 100), `--transparent` leaves unpainted PNG pixels transparent, and
 `--force` replaces an existing output, never the input.
 Tracked changes: every output shows the accepted view by default (insertions in, deletions out, no marks).

@@ -1,6 +1,6 @@
 """Every python and bash block of the skills' recipes.md runs on the pinned build, in order, in one folder
-per file that starts with the fixtures as `report.docx` and `deck.pptx`. A recipe that stops working after
-a pin change fails here, before an agent follows it."""
+per file that starts with the fixtures as `report.docx` and `deck.pptx`, and a free font as `Aileron-Regular.ttf`.
+A recipe that stops working after a pin change fails here, before an agent follows it."""
 import os
 import re
 import shutil
@@ -20,12 +20,13 @@ for recipes in sorted(ROOT.glob("skills/*/references/recipes.md")):
 
 
 @pytest.fixture(scope="module")
-def workdirs(tmp_path_factory, report_docx, deck_pptx):
+def workdirs(tmp_path_factory, report_docx, deck_pptx, free_font):
     dirs = {}
     for recipes in ROOT.glob("skills/*/references/recipes.md"):
         d = tmp_path_factory.mktemp(recipes.parent.parent.name)
         shutil.copy(report_docx, d / "report.docx")
         shutil.copy(deck_pptx, d / "deck.pptx")
+        shutil.copy(free_font, d / free_font.name)        # a font whose licence allows embedding (CC0-1.0)
         dirs[recipes] = d
     return dirs
 
@@ -100,7 +101,29 @@ def test_recipe_outputs(workdirs):
     assert all(p.text.split("\t")[1].isdigit() for p in toc.paragraphs if p.style == "TOC1")
     with zipfile.ZipFile(d / "with-toc.docx") as z:
         assert b'TOC \\o "1-2" \\h' in z.read("word/document.xml")
+    visit = rdocx.Document.open(d / "visit.docx")
+    assert [p.style for p in visit.paragraphs][:1] == ["Heading1"] and visit.tables[0].cell(1, 0).text == "Pier 2"
+    findings = [p.text for p in rdocx.Document.open(d / "findings.docx").paragraphs]
+    assert findings[:2] == ["Findings", "Inserted after the heading."]
+    charts = rdocx.Document.open(d / "chart.docx").charts
+    assert [(c.categories, c.series[0].values) for c in charts] == [(("2024", "2025", "2026"), (12.0, 15.0, 9.0))]
+    for name in ("embedded.docx", "embedded-py.docx"):
+        font = next(f for f in rdocx.Document.open(d / name).fonts if f.name == "Aileron")
+        assert [(e.kind, e.license.identity) for e in font.embedded_fonts] == [("regular", "CC0-1.0: Aileron")]
     p = {r.parent.parent.name: w for r, w in workdirs.items()}["pptx"]
+    base = len(pptx.Presentation(p / "deck.pptx").slides)
+    assert [len(pptx.Presentation(p / n).slides) for n in ("merged.pptx", "appended.pptx", "merged-py.pptx")] == [
+        base + 2, 2 * base, base + 2]
+    merged = rpptx.Presentation(p / "merged-py.pptx")
+    assert [s.shapes.title.text for s in list(merged.slides)[base:]] == ["Appendix A", "Appendix B"]
+    chart = next(sh for sh in pptx.Presentation(p / "chart.pptx").slides[base].shapes if sh.has_chart).chart
+    assert list(chart.plots[0].categories) == ["Option A", "Option B", "Option C"]
+    assert list(chart.plots[0].series[0].values) == [236.0, 230.0, 251.0]
+    assert (p / "deck.md").read_text().startswith("# ") and "<section" in (p / "deck.html").read_text()
+    for name in ("embedded.pptx", "embedded-py.pptx"):
+        fonts = rpptx.Presentation(p / name).embedded_fonts
+        assert [(t.typeface, [f.format for f in t.faces]) for t in fonts] == [("Aileron", ["eot"])]
+        assert rpptx.Presentation(p / name).embed_true_type_fonts
     texts = "\n".join(sh.text_frame.text for s in pptx.Presentation(p / "edited.pptx").slides for sh in s.shapes if sh.has_text_frame)
     assert "EUR 236,000" in texts and "eight weeks" in texts
     shapes = pptx.Presentation(p / "shapes.pptx").slides[3].shapes

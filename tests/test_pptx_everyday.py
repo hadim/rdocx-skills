@@ -1,12 +1,14 @@
 """pptx: the everyday API of the 2026-10-10 pin that the references document (text and fonts, bullets, fills,
 arrangement, alt text, connectors, placeholders, autofit, slide numbers and footers, themes, masters and layouts,
 transitions, tables, metadata, sections, media, notes, exports, raw XML, the errors that replace silent results)
-and the CLI extras (footer, fit, meta, notes, slide, replace --map, --font-dir)."""
+and the CLI extras (footer, fit, meta, notes, slide, replace --map, --font-dir); and from the 2026-10-12 pin, charts,
+slide import, Markdown and HTML export, embedded fonts and the nesting limit."""
 import datetime
 import io
 import json
 import re
 import zipfile
+from pathlib import Path
 
 import pptx
 import pytest
@@ -19,7 +21,8 @@ from rpptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE, MSO_SHAPE_TYPE, PP_PLACE
 from rpptx.enum.text import MSO_AUTO_SIZE
 from rpptx.util import Inches, Pt
 
-from conftest import MONOSPACE_FONTS, digest, font_dir, parts, run
+from conftest import (FREE_FONT_LICENSE, MONOSPACE_FONTS, digest, font_dir, libreoffice_pdf, part, parts, pdf_uses_font,
+                      run)
 
 LONG = "This sentence is long enough to need several lines in a small box. " * 4
 
@@ -852,3 +855,412 @@ def test_removing_the_last_footer_placeholder_retires_its_handle():
     prs.slides[0].header_footer.slide_number = False
     with pytest.raises(rpptx.StaleElementError):
         number.left
+
+
+# ---------------------------------------------------------------- the 2026-10-12 pin: charts, import, export, fonts
+def chart_data(categories, *series):
+    from rpptx.chart.data import CategoryChartData
+    data = CategoryChartData()
+    data.categories = categories
+    for name, values in series:
+        data.add_series(name, values)
+    return data
+
+
+def test_charts_are_added_read_back_and_their_data_replaced(rpptx_cli, tmp_path):
+    from rpptx.enum.chart import XL_CHART_TYPE
+    prs = deck(5)
+    frame = prs.slides[0].shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(1), Inches(1.5), Inches(8), Inches(5),
+                                           chart_data(["A", "B"], ("Cost", (236, 230)), ("Risk", (3, 2))))
+    assert frame.has_chart and not prs.slides[0].shapes.title.has_chart
+    prs.save(tmp_path / "c.pptx")
+    p = pptx.Presentation(tmp_path / "c.pptx")                            # python-pptx reads an editable chart
+    chart = next(sh for sh in p.slides[0].shapes if sh.has_chart).chart
+    assert chart.chart_type == XL_CHART_TYPE.COLUMN_CLUSTERED and list(chart.plots[0].categories) == ["A", "B"]
+    chart.plots[0].series[0].format.fill.solid()                          # formatting the replacement must keep
+    chart.plots[0].series[0].format.fill.fore_color.rgb = pptx.dml.color.RGBColor(0x7B, 0x1E, 0x3A)
+    p.save(tmp_path / "styled.pptx")
+    prs = rpptx.Presentation(tmp_path / "styled.pptx")
+    chart = next(sh for sh in prs.slides[0].shapes if sh.has_chart).chart
+    assert (chart.chart_type, chart.categories, [(s.name, s.values) for s in chart.series]) == (
+        XL_CHART_TYPE.COLUMN_CLUSTERED, ("A", "B"), [("Cost", (236.0, 230.0)), ("Risk", (3.0, 2.0))])
+    chart.replace_data(chart_data(["A", "B", "C"], ("Cost", (236, 230, 251))))
+    assert (chart.categories, [(s.name, s.values) for s in chart.series]) == (("A", "B", "C"), [("Cost", (236.0, 230.0, 251.0))])
+    prs.save(tmp_path / "r.pptx")
+    after = next(sh for sh in pptx.Presentation(tmp_path / "r.pptx").slides[0].shapes if sh.has_chart).chart
+    assert [list(s.values) for s in after.plots[0].series] == [[236.0, 230.0, 251.0]]
+    assert str(after.plots[0].series[0].format.fill.fore_color.rgb) == "7B1E3A"
+    with zipfile.ZipFile(tmp_path / "r.pptx") as z:
+        assert any(n.startswith("ppt/embeddings/") and n.endswith(".xlsx") for n in z.namelist())
+    assert run([rpptx_cli, "validate", tmp_path / "r.pptx"]).returncode == 0
+
+
+def test_a_chart_rpptx_does_not_author_is_read_with_its_missing_points(tmp_path):
+    """A stacked bar chart from python-pptx: rpptx authors neither horizontal nor stacked bars."""
+    from pptx.chart.data import CategoryChartData
+    from pptx.enum.chart import XL_CHART_TYPE as PPTX_CHART
+    from rpptx.enum.chart import XL_CHART_TYPE
+    assert sorted(m.name for m in XL_CHART_TYPE) == sorted(
+        ["AREA", "COLUMN_CLUSTERED", "DOUGHNUT", "LINE_MARKERS", "PIE", "RADAR_MARKERS", "XY_SCATTER_LINES"])
+    p = pptx.Presentation()
+    data = CategoryChartData()
+    data.categories = ["A", "B"]
+    data.add_series("Cost", (1, None))
+    p.slides.add_slide(p.slide_layouts[6]).shapes.add_chart(PPTX_CHART.BAR_STACKED, 0, 0, Inches(4), Inches(3), data)
+    p.save(tmp_path / "bar.pptx")
+    chart = next(sh for sh in rpptx.Presentation(tmp_path / "bar.pptx").slides[0].shapes if sh.has_chart).chart
+    assert (chart.chart_type, chart.categories, [(s.name, s.values) for s in chart.series]) == (
+        None, ("A", "B"), [("Cost", (1.0, None))])
+
+
+def jump_deck():
+    """Three titled slides from python-pptx's default template; slide 1 jumps to slide 3, slide 2 has a chart."""
+    from rpptx.enum.chart import XL_CHART_TYPE
+    src = deck(1, 1, 1)
+    for k, s in enumerate(src.slides):
+        s.shapes.title.text = f"Source {k + 1}"
+    src.slides[0].shapes.title.click_action.target_slide = src.slides[2]
+    src.slides[1].shapes.add_chart(XL_CHART_TYPE.PIE, Inches(1), Inches(2), Inches(4), Inches(3),
+                                   chart_data(["x", "y"], ("Share", (1, 3))))
+    src.add_comment_author(id="{5B5B5B5B-0000-4000-8000-000000000001}", name="Claude", user_id="Claude", provider_id="None")
+    src.slides[1].notes_text = "Notes travel too"
+    src.slides[1].add_comment(id="{5B5B5B5B-0000-4000-8000-000000000002}", author_id="{5B5B5B5B-0000-4000-8000-000000000001}",
+                              created="2026-10-12T10:00:00Z", text="Check the split")
+    return src
+
+
+def test_import_slides_with_charts_comments_jumps_and_source_formatting(rpptx_cli, tmp_path):
+    src = jump_deck()
+    prs = deck(1)
+    prs.slides[0].shapes.title.text = "Own"
+    copies = prs.slides.import_slides(src, index=1)                       # every slide: the jump between copies holds
+    assert [s.shapes.title.text for s in prs.slides] == ["Own", "Source 1", "Source 2", "Source 3"]
+    assert copies[0].shapes.title.click_action.target_slide == prs.slides[3]
+    assert prs.slides[2].comments[0].text == "Check the split" and prs.slides[2].notes_text == "Notes travel too"
+    assert [sh.chart.categories for sh in prs.slides[2].shapes if sh.has_chart] == [("x", "y")]
+    with pytest.warns(UserWarning):                                       # its target is left behind: dropped
+        prs.slides.import_slide(src.slides[0])
+    assert prs.slides[len(prs.slides) - 1].shapes.title.click_action.target_slide is None
+    prs.save(tmp_path / "m.pptx")
+    assert run([rpptx_cli, "validate", tmp_path / "m.pptx"]).returncode == 0
+    other = rpptx.Presentation()
+    other.slide_layouts[1].name = "Agenda"                                # no layout of that name in the destination
+    other.slide_master.theme.colors["accent1"] = "7B1E3A"
+    other.slides.add_slide(other.slide_layouts[1]).shapes.title.text = "Kept"
+    dest = deck(1)
+    dest.slides.import_slides(jump_deck(), keep_source_formatting=True)
+    assert len(dest.slide_masters) == 1                                   # an equal master and layouts are reused
+    with pytest.raises(rpptx.RpptxError):
+        dest.slides.import_slide(other.slides[0])
+    kept = dest.slides.import_slide(other.slides[0], keep_source_formatting=True)
+    assert kept.slide_layout.name == "Agenda" and kept.shapes.title.text == "Kept"
+    assert [str(m.theme.colors["accent1"]) for m in dest.slide_masters] == ["4F81BD", "7B1E3A"]
+    with pytest.raises(rpptx.RpptxError, match="exclude each other"):
+        dest.slides.import_slide(other.slides[0], layout=dest.slide_layouts[1], keep_source_formatting=True)
+    sectioned = deck(1, 1)
+    sectioned.set_sections([("Intro", [0]), ("Body", [1])])
+    dest = deck(1)
+    dest.slides.import_slides(sectioned, keep_sections=True)
+    assert [(s.name, s.slide_indices) for s in dest.sections][1:] == [("Intro", [1]), ("Body", [2])]
+
+
+def test_import_keeps_the_source_formatting_edited_in_memory():
+    """keep_source_formatting reads the source and the destination as they are in memory, unsaved edits included."""
+    other = rpptx.Presentation()
+    other.slide_layouts[1].name = "Agenda"
+    other.slide_master.theme.colors["accent1"] = "7B1E3A"
+    other.slides.add_slide(other.slide_layouts[1]).shapes.title.text = "Kept"
+    dest = deck(1)
+    dest.slides.import_slides(other, keep_source_formatting=True)
+    assert dest.slides[1].slide_layout.name == "Agenda"
+    assert [str(m.theme.colors["accent1"]) for m in dest.slide_masters] == ["4F81BD", "7B1E3A"]
+    dest = deck(1)
+    dest.slide_layouts[1].name = "Renamed"                                # no longer equal to the source layout
+    layouts = len(dest.slide_layouts)
+    copy = dest.slides.import_slides(deck(1), keep_source_formatting=True)[0]
+    assert copy.slide_layout.name == "Title and Content" and len(dest.slide_layouts) == layouts + 1
+    assert len(dest.slide_masters) == 1 and dest.slide_layouts[1].name == "Renamed"
+
+
+def test_cli_slide_import(rpptx_cli, tmp_path):
+    jump_deck().save(tmp_path / "src.pptx")
+    deck(1).save(tmp_path / "dst.pptx")
+    res = run([rpptx_cli, "slide", "import", tmp_path / "dst.pptx", tmp_path / "src.pptx", "--slides", "1-2", "--at", "1",
+               "--json", "-o", tmp_path / "out.pptx"])
+    assert res.returncode == 0, res.stderr
+    record = json.loads(res.stdout)
+    assert (record["source_slides"], record["slides"]) == ([1, 2], [1, 2])
+    assert record["warnings"] and "Warning:" in res.stderr                # slide 1's jump to slide 3 is dropped
+    assert titles(tmp_path / "out.pptx")[:2] == ["Source 1", "Source 2"]
+    res = run([rpptx_cli, "slide", "import", tmp_path / "dst.pptx", tmp_path / "src.pptx", "--keep-source-formatting",
+               "--keep-sections", "-o", tmp_path / "all.pptx"])
+    assert res.returncode == 0 and len(pptx.Presentation(tmp_path / "all.pptx").slides) == 4
+    res = run([rpptx_cli, "slide", "import", tmp_path / "dst.pptx", tmp_path / "src.pptx", "-o", tmp_path / "out.pptx"])
+    assert res.returncode == 1 and "already exists" in res.stderr
+
+
+def test_markdown_and_html_export(rpptx_cli, tmp_path):
+    prs = deck(1, 1, 1)
+    prs.slides[0].shapes.title.text = "Options"
+    body = prs.slides[0].placeholders[1].text_frame
+    body.text = "Option A"
+    body.paragraphs[0].runs[0].font.bold = True
+    sub = body.add_paragraph()
+    sub.text, sub.level = "cheaper", 1
+    body.add_paragraph().add_run().text = "Survey"
+    body.paragraphs[2].runs[0].hyperlink.address = "https://example.com/s"
+    prs.slides[0].notes_text = "Say the cost."
+    prs.slides[1].shapes.title.text = "Hidden one"
+    prs.slides[1].hidden = True
+    table = prs.slides[2].shapes.add_table(2, 2, Inches(1), Inches(2), Inches(4), Inches(1)).table
+    for (r, c), t in {(0, 0): "Item", (0, 1): "Cost", (1, 0): "A", (1, 1): "236"}.items():
+        table.cell(r, c).text = t
+    prs.slides[2].shapes.add_picture(io.BytesIO(png_bytes()), Inches(6), Inches(2)).alt_text = "Deck photo"
+    md = prs.to_markdown(notes=True, skip_hidden=True)
+    assert md.startswith("# Options") and "Hidden one" not in md
+    assert "- **Option A**\n  - cheaper" in md and "[Survey](https://example.com/s)" in md
+    assert "> Say the cost." in md and "| Item | Cost |" in md and "![Deck photo]" in md
+    assert "Hidden one" in prs.to_markdown() and "Say the cost." not in prs.to_markdown()
+    html = prs.to_html(notes=True)
+    assert '<section id="slide-1">' in html and "<h1>Options</h1>" in html and "<aside" in html
+    assert "<strong>Option A</strong>" in html and 'alt="Deck photo"' in html and "data:image/png;base64," in html
+    prs.save(tmp_path / "d.pptx")
+    run([rpptx_cli, "convert", tmp_path / "d.pptx", "--to", "md", "--notes", "--skip-hidden", "-o", tmp_path / "d.md"], check=True)
+    assert (tmp_path / "d.md").read_text() == md
+    run([rpptx_cli, "convert", tmp_path / "d.pptx", "--to", "html", "-o", tmp_path / "d.html"], check=True)
+    assert (tmp_path / "d.html").read_text() == prs.to_html()
+    for fmt, flag in (("pdf", "--notes"), ("png", "--skip-hidden")):
+        res = run([rpptx_cli, "convert", tmp_path / "d.pptx", "--to", fmt, flag, "-o", tmp_path / f"d.{fmt}"])
+        assert res.returncode != 0 and not (tmp_path / f"d.{fmt}").exists()
+
+
+def test_embed_list_and_remove_fonts(rpptx_cli, tmp_path, free_font):
+    prs = deck()
+    licence = rpptx.FontEmbeddingLicense(authorized=True, identity=FREE_FONT_LICENSE)
+    assert prs.embed_true_type_fonts is False and prs.embedded_fonts == ()
+    prs.embed_font("Aileron", free_font, "regular", license=licence)
+    prs.embed_font("Aileron", free_font.read_bytes(), "bold", license=licence)
+    assert prs.embed_true_type_fonts is True                  # PowerPoint uses embedded fonts only with this flag
+    prs.save(tmp_path / "f.pptx")
+    assert re.search(r'<p:presentation [^>]*embedTrueTypeFonts="1"', part(tmp_path / "f.pptx", "ppt/presentation.xml").decode())
+    fonts = rpptx.Presentation(tmp_path / "f.pptx").embedded_fonts
+    assert [(t.typeface, [(f.kind, f.format, f.data == free_font.read_bytes()) for f in t.faces]) for t in fonts] == [
+        ("Aileron", [("regular", "eot", True), ("bold", "eot", True)])]
+    assert all(f.part_name.endswith(".fntdata") and f.stored_len > len(f.data) for f in fonts[0].faces)
+    with zipfile.ZipFile(tmp_path / "f.pptx") as z:
+        eot = z.read(fonts[0].faces[0].part_name.lstrip("/"))
+    os2 = free_font.read_bytes().index(b"OS/2")                            # the table record: tag, checksum, offset
+    offset = int.from_bytes(free_font.read_bytes()[os2 + 8:os2 + 12], "big")
+    fs_type = free_font.read_bytes()[offset + 8:offset + 10]
+    assert eot[32:34] == fs_type[::-1] and int.from_bytes(eot[12:16], "little") == 0   # its fsType; not compressed
+    prs = rpptx.Presentation(tmp_path / "f.pptx")
+    assert prs.remove_embedded_font("Aileron", "bold").kind == "bold"
+    assert prs.remove_embedded_font("Aileron", "italic") is None
+    assert prs.remove_font("Aileron").typeface == "Aileron" and prs.embedded_fonts == ()
+    prs.save_subset_fonts = False
+    prs.embed_true_type_fonts = False
+    assert (prs.save_subset_fonts, prs.embed_true_type_fonts) == (False, False)
+    prs.save(tmp_path / "none.pptx")
+    assert run([rpptx_cli, "validate", tmp_path / "f.pptx"]).returncode == 0
+    with zipfile.ZipFile(tmp_path / "none.pptx") as z:
+        assert not [n for n in z.namelist() if n.endswith(".fntdata")]      # the parts go with the last face
+
+
+def test_a_deck_font_is_embedded_only_with_an_explicit_licence(tmp_path, free_font):
+    prs = deck()
+    before = prs.to_bytes()
+    for licence in (rpptx.FontEmbeddingLicense(authorized=False, identity="CC0-1.0: Aileron"),
+                    rpptx.FontEmbeddingLicense(authorized=True, identity=" ")):
+        with pytest.raises(rpptx.RpptxError):
+            prs.embed_font("Aileron", free_font, license=licence)
+    with pytest.raises(TypeError):
+        prs.embed_font("Aileron", free_font)
+    assert digest(prs.to_bytes()) == digest(before)
+
+
+def test_cli_font_commands(rpptx_cli, tmp_path, free_font):
+    deck().save(tmp_path / "d.pptx")
+    res = run([rpptx_cli, "font", "embed", tmp_path / "d.pptx", free_font, "--name", "Aileron",
+               "--license-identity", FREE_FONT_LICENSE, "-o", tmp_path / "no.pptx"])
+    assert res.returncode == 1 and "authorization" in res.stderr and not (tmp_path / "no.pptx").exists()
+    res = run([rpptx_cli, "font", "embed", tmp_path / "d.pptx", free_font, "--name", "Aileron", "--license-authorized",
+               "--license-identity", FREE_FONT_LICENSE, "-o", tmp_path / "e.pptx", "--json"])
+    assert res.returncode == 0, res.stderr
+    record = json.loads(res.stdout)
+    assert (record["name"], record["face"], record["byte_count"]) == ("Aileron", "regular", len(free_font.read_bytes()))
+    listed = json.loads(run([rpptx_cli, "font", "list", "--json", tmp_path / "e.pptx"], check=True).stdout)
+    face = listed["fonts"][0]["embedded"][0]
+    assert (listed["fonts"][0]["name"], face["face"], face["format"], face["byte_count"]) == (
+        "Aileron", "regular", "eot", len(free_font.read_bytes()))
+    assert listed["settings"] == {"embed_true_type_fonts": True, "save_subset_fonts": True}   # the default deck's
+    res = run([rpptx_cli, "font", "settings", tmp_path / "e.pptx", "--save-subset-fonts", "false", "-o", tmp_path / "s.pptx",
+               "--json"])
+    assert json.loads(res.stdout)["settings"] == {"embed_true_type_fonts": True, "save_subset_fonts": False}
+    run([rpptx_cli, "font", "remove", tmp_path / "s.pptx", "--name", "Aileron", "--face", "regular", "-o", tmp_path / "r.pptx"],
+        check=True)
+    assert rpptx.Presentation(tmp_path / "r.pptx").embedded_fonts == ()
+    res = run([rpptx_cli, "font", "remove", tmp_path / "r.pptx", "--name", "Aileron", "-o", tmp_path / "g.pptx"])
+    assert res.returncode == 1 and "not embedded" in res.stderr
+    res = run([rpptx_cli, "font", "remove", tmp_path / "s.pptx", "--name", "Aileron", "-o", tmp_path / "r.pptx"])
+    assert res.returncode == 1 and "already exists" in res.stderr
+
+
+def nested_groups(depth):
+    """The spTree XML of `depth` groups nested in one another."""
+    group = '<p:grpSp><p:nvGrpSpPr><p:cNvPr id="{id}" name="G{id}"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>'
+    return "".join(group.format(id=k + 10) for k in range(depth)) + "</p:grpSp>" * depth
+
+
+def test_slides_nested_past_16_levels_are_refused(tmp_path):
+    for depth, opens in ((16, True), (17, False)):
+        src = io.BytesIO(deck().to_bytes())
+        with zipfile.ZipFile(src) as z, zipfile.ZipFile(tmp_path / f"{depth}.pptx", "w") as out:
+            for info in z.infolist():
+                data = z.read(info.filename)
+                if info.filename == "ppt/slides/slide1.xml":
+                    data = data.replace(b"</p:spTree>", nested_groups(depth).encode() + b"</p:spTree>")
+                out.writestr(info, data)
+        if opens:
+            assert rpptx.Presentation(tmp_path / f"{depth}.pptx").slides[0].shapes is not None
+        else:
+            with pytest.raises(rpptx.XmlError, match="nesting exceeds 16 levels"):
+                rpptx.Presentation(tmp_path / f"{depth}.pptx")
+    prs = deck()
+    shapes = prs.slides[0].shapes
+    for _ in range(16):
+        group = shapes.add_group_shape()
+        shapes = group.shapes
+    with pytest.raises(rpptx.RpptxError, match="nesting exceeds 16 levels"):
+        shapes.add_group_shape()
+
+
+def test_what_the_new_edits_retire(free_font):
+    """Charts and appended imports retire nothing; a font embedded or removed, or an import at an index, retires the
+    slides and everything below; keeping the source formatting retires the layouts."""
+    from rpptx.enum.chart import XL_CHART_TYPE
+    licence = rpptx.FontEmbeddingLicense(authorized=True, identity=FREE_FONT_LICENSE)
+
+    def source(keep=False):
+        other = rpptx.Presentation()
+        if keep:
+            other.slide_layouts[1].name = "Agenda"
+        other.slides.add_slide(other.slide_layouts[1])
+        return other
+
+    def replace(prs):
+        frame = next(sh for sh in prs.slides[0].shapes if sh.has_chart)
+        frame.chart.replace_data(chart_data(["a", "b"], ("s", (1, 2))))
+
+    edits = {
+        "add_chart": lambda p: p.slides[0].shapes.add_chart(XL_CHART_TYPE.PIE, 0, 0, Inches(1), Inches(1),
+                                                            chart_data(["a"], ("s", (1,)))),
+        "replace_data": replace,
+        "import at the end": lambda p: p.slides.import_slides(source()),
+        "font flags": lambda p: setattr(p, "save_subset_fonts", False),
+        "embed_font": lambda p: p.embed_font("Aileron", free_font, license=licence),
+        "remove_font": lambda p: (p.embed_font("Aileron", free_font, license=licence),
+                                  p.slides[0].shapes.title.text_frame.paragraphs[0].runs[0].text,  # re-fetched: valid
+                                  p.remove_font("Aileron")),
+        "import at an index": lambda p: p.slides.import_slides(source(), index=0),
+        "keep_source_formatting": lambda p: p.slides.import_slides(source(keep=True), keep_source_formatting=True),
+    }
+    retired = {}
+    for name, edit in edits.items():
+        prs = deck(1)
+        prs.slides[0].shapes.add_chart(XL_CHART_TYPE.PIE, 0, 0, Inches(1), Inches(1), chart_data(["a"], ("s", (1,))))
+        prs.slides[0].shapes.title.text = "t"
+        slide = prs.slides[0]
+        held = {"slide": slide, "shape": slide.shapes.title, "run": slide.shapes.title.text_frame.paragraphs[0].runs[0],
+                "layout": prs.slide_layouts[1]}
+        edit(prs)
+        retired[name] = []
+        for kind, handle in held.items():
+            try:
+                handle.name if kind in ("shape", "layout") else handle.slide_id if kind == "slide" else handle.text
+            except rpptx.StaleElementError:
+                retired[name].append(kind)
+    everything = ["slide", "shape", "run"]
+    assert retired == {"add_chart": [], "replace_data": [], "import at the end": [], "font flags": [],
+                       "embed_font": everything, "remove_font": everything, "import at an index": everything,
+                       "keep_source_formatting": ["layout"]}
+
+
+def embedded_font_deck(path, free_font):
+    prs = deck()
+    box = prs.slides[0].shapes.add_textbox(Inches(1), Inches(1), Inches(6), Inches(1))
+    box.text_frame.text = "Embedded face text"
+    box.text_frame.paragraphs[0].runs[0].font.name = "Aileron"
+    prs.embed_font("Aileron", free_font, license=rpptx.FontEmbeddingLicense(authorized=True, identity=FREE_FONT_LICENSE))
+    prs.save(path)
+    return path
+
+
+def test_rpptx_draws_an_embedded_font(rpptx_cli, tmp_path, free_font):
+    """The font is installed nowhere: rpptx's renders, the CLI and LibreOffice draw the face the deck embeds."""
+    src = embedded_font_deck(tmp_path / "f.pptx", free_font)
+    plain = rpptx.Presentation(src)
+    plain.remove_font("Aileron")
+    assert pdf_uses_font(rpptx.Presentation(src).to_pdf(), b"Aileron") and not pdf_uses_font(plain.to_pdf(), b"Aileron")
+    assert digest(rpptx.Presentation(src).render_slide_to_png(0, 50.0)) != digest(plain.render_slide_to_png(0, 50.0))
+    run([rpptx_cli, "convert", src, "--to", "pdf", "-o", tmp_path / "cli.pdf"], check=True)
+    assert pdf_uses_font((tmp_path / "cli.pdf").read_bytes(), b"Aileron")
+    plain.save(tmp_path / "plain.pptx")
+    for name in ("f", "plain"):
+        run([rpptx_cli, "render", tmp_path / f"{name}.pptx", "--slide", "1", "--dpi", "50", "-o", tmp_path / name],
+            check=True)
+    assert [digest(p.read_bytes()) for p in (tmp_path / "f").iterdir()] != [
+        digest(p.read_bytes()) for p in (tmp_path / "plain").iterdir()]
+    assert pdf_uses_font(libreoffice_pdf(src, tmp_path), b"Aileron")
+
+
+def test_a_caller_font_wins_over_an_embedded_face(rpptx_cli, tmp_path, free_font):
+    """A font_dir / --font-dir font of the typeface the deck embeds draws instead of the embedded face. The deck
+    embeds a monospace face under the typeface Aileron; the folder holds Aileron itself."""
+    embedded = next((Path(c) for c in MONOSPACE_FONTS if Path(c).is_file()), None)
+    if embedded is None:
+        pytest.skip("no suitable font on this machine")
+    prs = deck()
+    box = prs.slides[0].shapes.add_textbox(Inches(1), Inches(1), Inches(6), Inches(1))
+    box.text_frame.text = "Caller or embedded"
+    box.text_frame.paragraphs[0].runs[0].font.name = "Aileron"
+    prs.embed_font("Aileron", embedded, license=rpptx.FontEmbeddingLicense(authorized=True, identity="test"))
+    prs.save(tmp_path / "f.pptx")
+    (tmp_path / "fonts").mkdir()
+    (tmp_path / "fonts" / "Aileron.ttf").write_bytes(free_font.read_bytes())
+    prs = rpptx.Presentation(tmp_path / "f.pptx")
+    assert not pdf_uses_font(prs.to_pdf(), b"Aileron")                    # the embedded monospace face
+    assert pdf_uses_font(prs.to_pdf(font_dir=tmp_path / "fonts"), b"Aileron")
+    run([rpptx_cli, "convert", tmp_path / "f.pptx", "--to", "pdf", "--font-dir", tmp_path / "fonts", "-o",
+         tmp_path / "cli.pdf"], check=True)
+    assert pdf_uses_font((tmp_path / "cli.pdf").read_bytes(), b"Aileron")
+
+
+@pytest.mark.gap("font-dir-alias-below-embedded-face")
+def test_a_font_dir_file_named_after_the_typeface_wins_over_an_embedded_face(tmp_path, free_font):
+    """A font_dir file counts as the family its file name gives; it should win over an embedded face as well."""
+    src = embedded_font_deck(tmp_path / "f.pptx", free_font)
+    plain = rpptx.Presentation(src)
+    plain.remove_font("Aileron")
+    fonts = font_dir(tmp_path, MONOSPACE_FONTS, "Aileron")
+    assert digest(plain.render_slide_to_png(0, 50.0, font_dir=fonts)) != digest(plain.render_slide_to_png(0, 50.0))
+    assert digest(rpptx.Presentation(src).render_slide_to_png(0, 50.0, font_dir=fonts)) == digest(
+        plain.render_slide_to_png(0, 50.0, font_dir=fonts))
+
+
+def test_a_compressed_embedded_face_is_drawn_with_a_substitute(tmp_path, free_font):
+    """A MicroType Express face (EOT flag 0x4) is not decoded: renders fall back, and font_dir= gives the face."""
+    src = embedded_font_deck(tmp_path / "f.pptx", free_font)
+    with zipfile.ZipFile(src) as z:
+        entries = [(info, z.read(info)) for info in z.infolist()]
+    with zipfile.ZipFile(tmp_path / "mtx.pptx", "w", zipfile.ZIP_DEFLATED) as z:
+        for info, data in entries:
+            if info.filename.startswith("ppt/fonts/"):
+                flags = int.from_bytes(data[12:16], "little") | 0x4
+                data = data[:12] + flags.to_bytes(4, "little") + data[16:]
+            z.writestr(info, data)
+    prs = rpptx.Presentation(tmp_path / "mtx.pptx")
+    assert [(f.format, f.data) for f in prs.embedded_fonts[0].faces] == [("compressed_eot", None)]
+    assert not pdf_uses_font(prs.to_pdf(), b"Aileron")
+    (tmp_path / "fonts").mkdir()
+    (tmp_path / "fonts" / "Aileron.ttf").write_bytes(free_font.read_bytes())
+    assert pdf_uses_font(prs.to_pdf(font_dir=tmp_path / "fonts"), b"Aileron")

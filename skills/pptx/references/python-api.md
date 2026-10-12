@@ -21,11 +21,12 @@ layout handles go stale only on the layout edits of the last row. The handle a c
 
 | Edit | Retires |
 |---|---|
-| geometry, font, paragraph and frame setters, fills, lines, shadows, click actions, `run.text`, `notes_text`, `slide.hidden`, alt text, flips, `align`, `distribute`, `add_field`, `fit_text`, `refresh_autofit`, header and footer setters that add placeholders, transitions, theme, master text styles, core properties, sections; appends: `add_slide`, `add_textbox` and the other `add_*`, `add_paragraph`, `add_run` | nothing |
+| geometry, font, paragraph and frame setters, fills, lines, shadows, click actions, `run.text`, `notes_text`, `slide.hidden`, alt text, flips, `align`, `distribute`, `add_field`, `fit_text`, `refresh_autofit`, header and footer setters that add placeholders, transitions, theme, master text styles, core properties, sections, `embed_true_type_fonts`, `save_subset_fonts`, `chart.replace_data`; appends: `add_slide`, `add_textbox`, `add_chart` and the other `add_*`, `add_paragraph`, `add_run`, `import_slide` / `import_slides` without `index` | nothing |
 | `text_frame.text = ...`, `shape.text = ...` | paragraphs and runs |
 | `try_replace_text` (deck, slide or frame) | runs |
 | `shapes.remove`, `shapes.move`, `group`, `ungroup`, `insert_picture`, `Shape.replace_xml`, `TextFrame.replace_xml`, `gradient_stops.append` and `del gradient_stops[k]`, a header and footer call that removes a placeholder | shapes, paragraphs and runs |
-| `slides.move`, `slides.remove`, `Slide.replace_xml` | slides and everything below |
+| `slides.move`, `slides.remove`, `Slide.replace_xml`, `import_slide` / `import_slides` with `index=`, `embed_font`, `remove_embedded_font`, `remove_font` | slides and everything below |
+| `import_slide` / `import_slides` with `keep_source_formatting=True` | layouts (and, with `index=`, slides and everything below) |
 | `slide_layouts.duplicate`, `slide_layouts.remove`, `layout.replace_xml`, `apply_theme` | layouts, shapes, paragraphs and runs |
 
 ## Presentation
@@ -35,7 +36,8 @@ layout handles go stale only on the layout edits of the last row. The handle a c
 | `Presentation(path=None)` (a path or a binary stream), `Presentation.from_bytes(b)`, `save(path)` (a path or a stream), `to_bytes()` | `save` does not refuse the input (use `pptx_ops.save_atomic`); a new presentation is 16:9 with the eleven default layouts, and `save` writes the package class its extension names: a .potx saved as .pptx becomes a presentation; `save("x.pdf")` raises `ValueError` (write the bytes of `to_pdf()`) |
 | `slides`, `slide_layouts`, `slide_width`, `slide_height` (1 to 56 inches, else `ValueError`), `comment_authors` (each a `CommentAuthor`: `id`, `name`, `initials`, `user_id`, `provider_id`) | |
 | `slides.add_slide(layout)`, `slides.duplicate(slide)` → the copy, `slides.move(from_, to)`, `slides.remove(slide)`, `slide_layouts.index(layout)` | |
-| `slides.import_slide(slide, layout=None, index=None)` → the copy | copies a slide of another presentation (at the end, or at `index`); without `layout` it takes the destination layout of the same name and raises `RpptxError` ("no layout named ...") when there is none: pass `layout=prs.slide_layouts[k]` |
+| `slides.import_slide(slide, layout=None, index=None, *, keep_source_formatting=False)` → the copy | copies a slide of another presentation (at the end, or at `index`) with its charts, embedded objects, comments (authors merged) and notes; without `layout` it takes the destination layout of the same name and raises `RpptxError` ("no layout named ...") when there is none: pass `layout=prs.slide_layouts[k]`, or `keep_source_formatting=True` to bring the source layout, master and theme (an equal one already here is reused; with `layout=` too it raises). Both presentations are read as they are in memory: a layout renamed or a theme colour changed before the import, in either, counts without saving first. A slide jump to a slide that is not copied is dropped with a `UserWarning` |
+| `slides.import_slides(source, slides=None, *, layout=None, index=None, keep_source_formatting=False, keep_sections=False)` → list of the copies | several slides of `source` (zero-based indices, all by default) in one call, in source order: a jump between two copied slides is kept. `keep_sections=True` brings their sections (the slides already here go into a "Default Section"). Merging two decks: `prs.slides.import_slides(other)` |
 | `try_replace_text(old, new, *, expect=None)` → int | slides and notes, across runs, keeping the first run's formatting; a count other than `expect` raises `ReplacementCountError` and changes nothing. `replace_text` is the same call |
 | `add_comment_author(*, id, name, user_id, provider_id, initials=None)` | id is a GUID in braces |
 | `core_properties` (`CoreProperties`): `title`, `author`, `subject`, `keywords`, `comments`, `category`, `last_modified_by`, `content_status`, `identifier`, `language`, `version` (str), `revision` (int), `created`, `modified`, `last_printed` (datetime, a naive one is read as UTC) | read and write; `None` clears a text field (it reads `""`). A new presentation carries none; nothing is stamped at save |
@@ -46,9 +48,13 @@ layout handles go stale only on the layout edits of the last row. The handle a c
 | `text_layout(*, width_factor=1.0, font_dir=None)` → list of `TextFrameLayout` (`slide_index`, `shape_id`, `name`, `overflow`, `autofit`, `font_scale`, `frame`, `usable`, `height`, `lines`: `TextLineLayout` with `text`, `font_size`, `baseline`, `bounds` (`BoundingBox`: `x`, `y`, `width`, `height`), `paragraph_index`) | rpptx's own line breaks; `width_factor=0.95` asks whether text fits a narrower frame; percentage line spacing is laid out as LibreOffice does (100 % is 1.2 em) |
 | `refresh_autofit()` → tuple of `AutofitResult` | writes the stored autofit of every frame that has one (Text fit and autofit below); `save`, `to_bytes`, the renders and `text_layout` already do it for the frames whose `auto_size` was set |
 | `validate()` → tuple of `ValidationIssue` (`kind`, `message`) | empty when the deck is valid |
-| `to_pdf(font_dir=None)`, `to_notes_pdf()`, `render_slide_to_png(i, dpi=150)`, `render_all_slides(dpi)`, `render_all_notes(dpi)` | zero-based slide index; `font_dir=` (also on the renders and `text_layout`) adds fonts that are not installed |
+| `to_pdf(font_dir=None)`, `to_notes_pdf()`, `render_slide_to_png(i, dpi=150)`, `render_all_slides(dpi)`, `render_all_notes(dpi)` | zero-based slide index; the faces the deck embeds are drawn (not a compressed one, and the precedence of `font_dir=`: `embed_font`); `font_dir=` (also on the renders and `text_layout`) adds fonts that are not installed |
 | `render_slides(dpi=150, format="png", quality=None, transparent=False, slides=None)` | a list of PNG or JPEG images (`slides` zero-based), one multi-page TIFF as bytes for `format="tiff"`; `quality` with PNG or `transparent` with JPEG or TIFF raises `ValueError` |
 | `to_pdfa("pdfa-2b")` (or `"pdfa-3b"`), `to_handout_pdf(slides_per_page=6)` (1, 2, 3, 4, 6 or 9), `render_all_handouts(slides_per_page, dpi)` | handouts need the deck's handout master, else `RpptxError` saying how to get one (use `to_pdf()` instead); neither takes `font_dir` |
+| `to_markdown(*, notes=False, skip_hidden=False)`, `to_html(*, notes=False, skip_hidden=False)` → str | what `rpptx convert --to md` / `--to html` write: one section per slide headed by its title, in outline order, lists nested by level, tables, links, pictures with their alt text (embedded as data URIs in HTML); `notes=True` adds the speaker notes |
+| `embedded_fonts` → tuple of `EmbeddedTypeface` (`typeface`, `panose`, `pitch_family`, `charset`, `faces`: `EmbeddedFontFace` with `kind`, `relationship_id`, `part_name`, `format` `"eot"`, `"compressed_eot"`, `"sfnt"` or `"unknown"`, `stored_len`, `data`: the font bytes, None when rpptx cannot decode the face) | the fonts the deck embeds (`p:embeddedFontLst`) |
+| `embed_font(typeface, font, kind="regular", *, license)`, `remove_embedded_font(typeface, kind)` → `EmbeddedFontFace` or None, `remove_font(typeface)` → `EmbeddedTypeface` or None | `font`: a path, bytes or a binary file of one TrueType or OpenType face; `kind` `"regular"`, `"bold"`, `"italic"`, `"bold_italic"`; `license=rpptx.FontEmbeddingLicense(authorized=True, identity="OFL-1.1: Example Sans")` is required, `authorized=False` or an empty identity raises `RpptxError` and changes nothing. The face is written as uncompressed EOT (what PowerPoint reads, the font's own `fsType` kept), and `embed_true_type_fonts` is turned on: PowerPoint uses no embedded font without it. LibreOffice and rpptx's own renders draw the embedded face; a `font_dir=` font of the same family wins over it (a file only named after the typeface does not: gap font-dir-alias-below-embedded-face). A MicroType Express face (`format` `"compressed_eot"`, `data` None), which PowerPoint writes (observed upstream, tensorbee/rdocx#361), is not decoded: rpptx draws a substitute, so pass the font file with `font_dir=`. Embed only a font whose licence allows it (SKILL.md, rule 7) |
+| `embed_true_type_fonts`, `save_subset_fonts` (get and set, bool) | `p:presentation` flags. PowerPoint for Mac drops the embedded fonts and the flag when it saves the deck again (observed upstream, tensorbee/rdocx#361; no test here can exercise it): embed as the last step, on the file you deliver |
 | `to_odp()` → (bytes, diagnostics), `save_odp(path)` → diagnostics, `Presentation.from_odp(path or bytes)` → (presentation, diagnostics) | OpenDocument; diagnostics list what was dropped as (path, reason): read them, a placeholder that inherits its geometry is dropped |
 
 ## Slide
@@ -120,6 +126,15 @@ dict keys).
   `table`, `image` (`blob`, `content_type`, `ext`), `replace_image(file)` (keeps position, size and crop),
   `crop_left`, `crop_top`, `crop_right`, `crop_bottom` (a picture's crop, fractions of its size, settable), `shapes` (a group's
   children), `xml` and `replace_xml(xml)` (Raw XML below).
+- Charts: `shapes.add_chart(chart_type, left, top, width, height, chart_data)` → the graphic frame, an editable
+  chart with its embedded workbook, from python-pptx's data objects: `rpptx.chart.data.CategoryChartData`
+  (`categories = [...]`, `add_series(name, values, number_format=None)` → `CategorySeriesData`: `name`, `values`,
+  `number_format`) or `XyChartData` (`add_series(name)` → `XySeriesData`: `add_data_point(x, y)`, `x_values`,
+  `y_values`); `chart_type` a `rpptx.enum.chart.XL_CHART_TYPE` (`COLUMN_CLUSTERED`, `LINE_MARKERS`, `PIE`,
+  `DOUGHNUT`, `AREA`, `RADAR_MARKERS`, `XY_SCATTER_LINES`). `shape.has_chart`, `shape.chart` (`Chart`:
+  `chart_type`, None for a kind rpptx does not write, such as stacked or horizontal bars; `categories`; `series`: `ChartSeries` with
+  `name` and `values`, None for a missing point) reads any chart, `chart.replace_data(chart_data)` rewrites
+  its numbers, categories and series names and its workbook, keeping each kept series' formatting.
 - Accessibility: `alt_text` (`descr`, the text a screen reader and Google Slides read), `alt_title`, `decorative`
   (PowerPoint's "Mark as decorative"), on every kind of shape.
 - Placeholders: `is_placeholder`, `placeholder_format` (`PlaceholderFormat`: `idx`, `type`: `PP_PLACEHOLDER`), `slide.placeholders[idx]`;
@@ -192,6 +207,10 @@ and `p:transition` stay unchecked; `mc:AlternateContent` and `mc:Ignorable` cont
 `rpptx validate` and render. A replacement retires handles (Handles above).
 
 ## Errors instead of silent results
+
+A slide whose groups nest deeper than 16 levels is refused at open with `XmlError` ("... nesting exceeds 16
+levels") instead of crashing (upstream applies the same limit to `mc:AlternateContent` and animation time nodes,
+tensorbee/rdocx#355), and `add_group_shape` refuses a 17th level with `RpptxError`.
 
 A bare int is EMU: `font.size = 12` raises `ValueError` (from 1 to 4000 points), and so does `space_before = 6`
 or `space_after = 6` (under the 0.01 pt PowerPoint stores): write `Pt(12)`, or a float for a multiple of the

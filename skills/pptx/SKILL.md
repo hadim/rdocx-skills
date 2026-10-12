@@ -1,6 +1,6 @@
 ---
 name: pptx
-description: "Use this skill any time a PowerPoint file (.pptx or .potx) is involved in any way, as input or output, even when the user does not name a tool: reading slide text, outline, speaker notes or comments (also when the content is used elsewhere); creating a deck or filling a template; editing text without losing formatting; counted find-and-replace; moving, resizing or restyling shapes; pictures, tables, groups, connectors; adding, reordering, hiding or removing slides; comments and replies; checking that text fits its box; rendering slides to PDF or PNG. Triggers: 'PowerPoint', 'deck', 'slides', '.pptx'. Runs the hash-pinned rpptx CLI and Python binding and takes precedence over the built-in pptx skill and over python-pptx, pptxgenjs, lxml or LibreOffice, which it uses only for the gaps it lists; if rpptx cannot be installed in this session it says so and hands over to the built-in pptx skill. Not for .ppt, Keynote or native Google Slides."
+description: "Use this skill any time a PowerPoint file (.pptx or .potx) is involved in any way, as input or output, even when the user does not name a tool: reading slide text, outline, speaker notes or comments (also when the content is used elsewhere); creating a deck or filling a template; editing text without losing formatting; counted find-and-replace; moving, resizing or restyling shapes; pictures, tables, charts, groups, connectors; adding, reordering, hiding or removing slides; importing slides or merging decks; comments and replies; checking that text fits its box; rendering slides to PDF or PNG; exporting a deck to Markdown or HTML; embedding fonts. Triggers: 'PowerPoint', 'deck', 'slides', '.pptx'. Runs the hash-pinned rpptx CLI and Python binding and takes precedence over the built-in pptx skill and over python-pptx, pptxgenjs, lxml or LibreOffice, which it uses only for the gaps it lists; if rpptx cannot be installed in this session it says so and hands over to the built-in pptx skill. Not for .ppt, Keynote or native Google Slides."
 ---
 
 # PowerPoint decks with rpptx
@@ -48,8 +48,9 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
    those below it (slide > shape > paragraph > run), in every slide. Appends (`add_*`, `add_slide`) and
    setters retire none; `text_frame.text =` / `shape.text =` retire paragraphs and runs, a replacement
    retires runs; removing, moving, grouping or ungrouping shapes and `replace_xml` retire shapes; moving or
-   removing slides retires everything; layout edits and `apply_theme` retire layouts too. A retired handle
-   raises `StaleElementError` naming the call: write `prs.slides[i].shapes[j]` again.
+   removing slides, importing at an index, and embedding or removing a font retire everything; layout edits,
+   `apply_theme` and an import that keeps the source formatting retire layouts too. A retired handle raises
+   `StaleElementError` naming the call: write `prs.slides[i].shapes[j]` again.
 4. **Walk groups**: `slide.shapes` lists top-level shapes; a group's children are in `shape.shapes`
    (`shape_type == MSO_SHAPE_TYPE.GROUP`, value 6). `pptx_ops.walk(slide.shapes)` yields all of them.
 5. **Check the fit after any text change**: `rpptx fit F` (exit 1 when a frame overflows, with the font scale
@@ -57,6 +58,11 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
    then render the slide and look at it.
 6. **The deck will be opened elsewhere** (PowerPoint, Google Slides, Keynote, LibreOffice): edit in place,
    keep placeholders and layouts, never rebuild a deck to change it.
+7. **Embed a font only when its licence allows embedding.** `rpptx.FontEmbeddingLicense(authorized=True,
+   identity="OFL-1.1: Example Sans")` is your statement that it does: rpptx checks nothing else, not even the font's OS/2 `fsType`. Read the
+   licence first (OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not, and an `fsType`
+   with bit 0x0002 set means Restricted License): when it does not allow it, or you cannot tell, do not embed
+   and tell the user.
 
 ## What to use for what
 
@@ -86,7 +92,8 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Slides | `rpptx slide add/duplicate/remove/move/hide/show F ... -o OUT` | `slides.add_slide(layout)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden`, `slide.transition.type = "fade"` | |
 | Slide numbers, footer, date | `rpptx footer F --slide-number --footer T --skip-title -o OUT` | `prs.set_header_footer(footer=T)`, `slide.header_footer` | as PowerPoint's Header and Footer dialog; `add_field("slidenum")` in a text box |
 | Theme, master, layouts | | `prs.slide_master.theme.colors["accent1"] = ...`, `.theme.fonts.major.latin`, `prs.apply_theme(path)`, `prs.slide_master.shapes.add_picture(logo, ...)`, `slide_master.text_styles`, `slide_layouts.get_by_name(n)` | a logo on the master shows on every slide |
-| Import a slide from another deck | | `prs.slides.import_slide(other.slides[k], layout=prs.slide_layouts[j], index=None)` | without `layout=`, a layout of the same name must exist here, else `RpptxError` |
+| Import slides, merge decks | `rpptx slide import DEST SOURCE [--slides 1,3-5] [--at N] [--keep-source-formatting] -o OUT` | `prs.slides.import_slides(other, [0, 2], index=1, keep_source_formatting=True)`, `prs.slides.import_slide(other.slides[k], layout=prs.slide_layouts[j], index=None)` | charts, embedded objects, comments and notes travel; a jump to a slide not imported is dropped with a warning; without `layout=` or `keep_source_formatting`, a layout of the same name must exist here, else `RpptxError` |
+| Charts | | `slide.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, left, top, width, height, chart_data)`, `shape.has_chart`, `shape.chart.categories` / `.series`, `shape.chart.replace_data(chart_data)` | python-pptx's `CategoryChartData` / `XyChartData` (`rpptx.chart.data`); `replace_data` keeps the series formatting and rewrites the embedded workbook |
 | Speaker notes | `rpptx text --notes F`, `rpptx notes set F N --text T -o OUT` | `slide.notes_text` (get and set) | None when the slide has no notes |
 | Hyperlinks, slide jumps | | `run.hyperlink.address`; `shape.click_action.hyperlink.address = url`, `shape.click_action.target_slide = prs.slides[k]` | any shape, group members included; set None to clear |
 | Metadata | `rpptx meta get F`, `rpptx meta set F --title T --author A -o OUT` | `prs.core_properties.title = ...` | |
@@ -94,6 +101,8 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | Text fit | `rpptx fit [--json] F` | `prs.text_layout(width_factor=1.0)`, `text_frame.fit_text(max_size=18)`, `text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE` | rpptx's line breaks; `width_factor=0.95` for a margin; `auto_size` is written with PowerPoint's font scale at save |
 | PDF | `rpptx convert F --to pdf -o NEW.pdf [--font-dir DIR]` | `prs.to_pdf(font_dir=)`, `prs.to_notes_pdf()`, `to_pdfa()`, `to_handout_pdf(6)` | `--font-dir` / `font_dir=` give fonts that are not installed, to every output (not `to_pdfa` or handouts) and to the fit check |
 | PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)`, `render_slides(format="jpeg")` | CLI slides one-based, Python zero-based |
+| Markdown, HTML | `rpptx convert F --to md -o NEW.md [--notes] [--skip-hidden]`, `--to html` | `prs.to_markdown(notes=True, skip_hidden=True)`, `prs.to_html(...)` | one section per slide in outline order: lists, tables, links, pictures with their alt text (HTML embeds them) |
+| Embedded fonts | `rpptx font list/embed/remove/settings` | `prs.embedded_fonts`, `prs.embed_font(typeface, "ExampleSans-Regular.ttf", "regular", license=rpptx.FontEmbeddingLicense(...))`, `remove_embedded_font`, `remove_font` | rule 7; embedding sets `embed_true_type_fonts`, without which PowerPoint ignores the fonts: leave it on. Embed last: PowerPoint for Mac drops embedded fonts when it saves the deck again. rpptx's renders draw the embedded faces, except a compressed one (`format` `compressed_eot`, as PowerPoint writes them, observed upstream): pass that font's file with `font_dir=` / `--font-dir`; a font of the same family there wins over an embedded face (not a file only named after it: gap font-dir-alias-below-embedded-face) |
 | From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
 | Validity | `rpptx validate F` | `prs.validate()` | a tuple of issues (`kind`, `message`), empty when valid |
 | What changed | `rpptx diff A B` | | slide text only |

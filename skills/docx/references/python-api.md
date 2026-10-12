@@ -41,11 +41,11 @@ the call that did (`Document.remove_content invalidated it`). What each edit ret
 
 | Edit | Retires |
 |---|---|
-| formatting setters (font, paragraph format, style, alignment, numbering, widths, borders, shading), `Run.text` | nothing |
+| formatting setters (font, paragraph format, style, alignment, numbering, widths, borders, shading), `Run.text`, the font table and its settings (`embed_font`, `set_font`, `remove_font`, `remove_embedded_font`, `save_subset_fonts`...) | nothing |
 | appends and inserts: `add_paragraph`, `add_heading`, `add_table`, `add_page_break`, `insert_paragraph`, `paragraph.insert_paragraph_before`, `paragraph.add_run`, `table.add_row`, `table.add_column` | story items only: a held paragraph follows its paragraph, not its index |
 | `paragraph.text = ...`, `cell.text = ...`, `replace_xml` on a paragraph, run, table or cell | the handles inside that element (the element's own handle stays valid), and story items |
 | row and grid edits: `clone_row`, `remove_row`, `insert_column`, `remove_column`, `set_cell_grid_span`, `cell.split()` | that table's rows and cells (the `Table` stays valid), and story items |
-| everything else: `remove_content`, `pop_content`, `move_content`, `clone_content`, `split_run`, `set_story_text`, `add_picture`, `add_comment`, `try_replace_text`, `replace_all_regex`, `paragraph.replace_text`, `cell.replace_text`, `replace_text_at` | every handle |
+| everything else: `remove_content`, `pop_content`, `move_content`, `clone_content`, `split_run`, `set_story_text`, `add_picture`, `add_chart`, `insert_html`, `add_comment`, `try_replace_text`, `replace_all_regex`, `paragraph.replace_text`, `cell.replace_text`, `replace_text_at` | every handle |
 
 Re-navigate from `doc` after an edit of the last row (`doc.paragraphs[i].runs[j]`, `doc.story_items`); when
 in doubt, re-fetch: a retired handle always raises, it never points at the wrong element.
@@ -55,6 +55,8 @@ in doubt, re-fetch: a retired handle always raises, it never points at the wrong
 | Member | Notes |
 |---|---|
 | `Document()`, `Document(path or stream)`, `Document.open(path)`, `Document.from_bytes(b)`, `doc.to_bytes()`, `doc.save(path or stream)` | `save("x.pdf")` (an extension of another format) raises `ValueError` naming `to_pdf`, and so does a table without rows. A new document has Word's usual styles (Normal, Title, Subtitle, Heading 1 to 9, No Spacing, Quote, List Paragraph, Caption, Table Grid). `save` writes a temporary file and renames it (`docx_ops.save_atomic` also refuses the input), and writes the package class its extension names: a .dotx saved as .docx becomes a document |
+| `Document.from_markdown(text, *, base_dir=None, template=None)`, `Document.open_markdown(path, *, template=None)` → `(Document, diagnostics)` | CommonMark with GitHub tables and strikethrough: headings get Heading N, lists numbering, tables a header row, links hyperlinks, images (files under `base_dir`, the file's folder for `open_markdown`) inline pictures scaled to the text column, block quotes Quote, code HTML Preformatted. `template` is a `Document` whose styles, numbering, headers and footers the new one takes. Each `MarkdownDiagnostic` (`location` such as `"line 4"`, `message`) names what was dropped or approximated |
+| `Document.from_html(html)`, `Document.open_html(path)` → `(Document, diagnostics)`, `doc.insert_html(html, *, after=None)` → diagnostics | HTML the same way: safe links and data-URI images kept (a `javascript:` link loses its target), `insert_html` at the end of the body or after a body `StoryItem`. Each `HtmlDiagnostic` has `location`, `message` and the CSS `property` it is about, or None. Both importers keep a space before or after an underlined, struck, bold or italic span outside it, so Word does not underline or strike it, and a space written inside the span (`<u>this </u>and`) in it. A space on each side of a span edge (`<s>b </s> c`) is kept twice instead of collapsing into one (gap html-space-doubled-at-span-edge) |
 | `paragraphs`, `tables`, `sections`, `styles`, `stories`, `story_items`, `header_footer_variants`, `hyperlinks`, `comments`, `revisions` | read-only collections (sections and styles are snapshots, `styles["Normal"]` looks one up by name or id; `revisions` covers every story, `r.story.kind`) |
 | `core_properties` → `CoreProperties` | `title`, `author`, `subject`, `keywords`, `category`, `comments`, `last_modified_by`, `content_status`, `language`, `identifier`, `version` (strings), `created`, `modified`, `last_printed` (`datetime` or None), `revision` (int): read and set |
 | `add_style(name, style_type="paragraph", *, style_id=None, based_on=None, next_style=None, font_name=, font_size=, bold=, italic=, color=, space_before=, space_after=, left_indent=, right_indent=, first_line_indent=, underline=, alignment=, line_spacing=, keep_with_next=, keep_together=, page_break_before=, shading=, borders=, tab_stops=)` → `Style` | as python-docx's `styles.add_style`: unless given, the id keeps the letters, digits and hyphens of the name (`"Note box"` → `Notebox`). `based_on` and `next_style` take an id or a name. Lengths and `font_size` in EMU (`rdocx.Pt(11)`); `line_spacing` a float multiple or an exact length; `borders` maps an edge to `(style, eighths of a point, colour)`, `tab_stops` lists `(position, WD_TAB_ALIGNMENT[, WD_TAB_LEADER])`. `KeyError` for an unknown base, `ValueError` for a duplicate or for paragraph keywords on a character style |
@@ -99,6 +101,28 @@ in doubt, re-fetch: a retired handle always raises, it never points at the wrong
 | `update_page_fields()` → int, `update_layout_backed_fields()` → `LayoutBackedFieldUpdateReport` (`page_fields`, `num_pages_fields`, `page_reference_fields`, `section_fields`, `section_pages_fields`, `updated_count`, `diagnostics`, `diagnostic_count`), `update_fields(*, now=datetime, file_name=, file_path=, merge_fields=, ...)` → count, `update_fields_on_open` (get/set) | caches field results from rdocx's pagination; PAGE and NUMPAGES in headers and footers keep their cached results, as Word does on save (a diagnostic says so), and render with the right number anyway |
 | `layout()` → tuple of `LayoutFragment` (`body_index`, `physical_page`, `displayed_page`, `bounds`: a `BoundingBox`, `x`, `y`, `width`, `height` in points), `layout_page(i)` → `LayoutPage` (`page_number`, `displayed_page_number`, `width`, `height`) | rdocx's pagination, on Word's line heights |
 | `to_pdf(*, revision_view="accepted")` → bytes, `render_pages(*, dpi=150, format="png", quality=90, transparent=False, pages=None, revision_view="accepted")` → list of bytes, `render_page_to_png(i, dpi, *, revision_view="accepted")`, `render_all_pages(dpi, *, revision_view="accepted")`, `render_page_to_svg(i)` → `SvgRenderResult` (`svg` text, `diagnostics`: `SvgDiagnostic` `path`, `message`) or None past the last page, `to_pdfa_deterministic(profile="pdfa-2b")` → bytes (PDF/A-2b, or `"pdfa-3b"`) | `pages` zero-based. `revision_view="tracked"` shows tracked changes (deletions struck through, insertions underlined, a change bar); any other value raises `ValueError` |
+
+## Charts
+
+`doc.add_chart(chart_type, width, height, chart_data, *, after=None)` → `StoryItem` adds an editable chart with
+its embedded workbook, at the end of the body or after a body `StoryItem`, from python-pptx's data objects:
+`rdocx.chart.data.CategoryChartData(number_format="General")` (`categories = [...]`, `add_series(name, values,
+number_format=None)` → a `CategorySeriesData` with `name`, `values`, `number_format`) or `XyChartData`
+(`add_series(name)` → an `XySeriesData`; `add_data_point(x, y)`, `x_values`, `y_values`; every series with the
+same x values). `chart_type` is a `rdocx.enum.chart.XL_CHART_TYPE`: `COLUMN_CLUSTERED`, `LINE_MARKERS`, `PIE`,
+`DOUGHNUT`, `AREA`, `RADAR_MARKERS`, `XY_SCATTER_LINES` (python-pptx's values). Invalid data raises and changes
+nothing. `doc.charts` → tuple of `Chart` (`chart_type`, None for a kind rdocx does not write; `categories`;
+`series`: `ChartSeries` with `name`, `values`, None for a missing point), in document order. A Word chart's data
+cannot be replaced (rpptx's `Chart.replace_data` is for decks).
+
+## Fonts
+
+| Member | Notes |
+|---|---|
+| `fonts` → tuple of `FontDefinition` (`name`, `alternate_name`, `family`, `pitch`, `embedded_fonts`: `EmbeddedFont` with `kind` `"regular"` / `"bold"` / `"italic"` / `"bold_italic"`, `data` (the font bytes, deobfuscated), `font_key`, `subsetted`, `license`) | the font table (`word/fontTable.xml`), a snapshot |
+| `embed_font(font_name, font, kind="regular", *, license, font_key=None, subsetted=False)` | `font`: a path, bytes, a bytearray, a memoryview or a binary file of one TrueType or OpenType face (a `.ttc` collection, or a face without `OS/2`, `head` or `name`, raises). `license=rdocx.FontEmbeddingLicense(authorized=True, identity="OFL-1.1: Example Sans")`: both keywords required; `authorized=False` or an empty identity raises `RdocxError` and changes nothing. Creates the record when missing, obfuscates the face as Word does, and turns `embed_true_type_fonts` on. rdocx's own renders (`to_pdf`, PNG, `rdocx convert`) draw the embedded face. Embed only a font whose licence allows it (SKILL.md, rule 9) |
+| `remove_embedded_font(font_name, kind)` → `EmbeddedFont` or None, `remove_font(name)` → `FontDefinition` or None, `set_font(name, *, alternate_name=, family=, pitch=)` | remove one face (the record stays), a record and its faces, or add or replace a record (its faces kept). `family`: `roman`, `swiss`, `modern`, `script`, `decorative`, `auto`; `pitch`: `default`, `fixed`, `variable` |
+| `embed_true_type_fonts`, `embed_system_fonts`, `save_subset_fonts` (get and set: True, False or None for unset) | the settings Word follows when it saves the document again: keep embedding the fonts, also embed common system fonts, embed only the characters in use (`w:embedTrueTypeFonts`, `w:embedSystemFonts`, `w:saveSubsetFonts`) |
 
 ## Paragraph, Run, Font, ParagraphFormat
 

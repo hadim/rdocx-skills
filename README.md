@@ -20,7 +20,7 @@ platform, the SHA-256 of each CLI, each wheel and every file the wheels install.
 upstream releases of rdocx and rpptx (one tag per family, CLI archives and wheels built by rdocx's own workflow),
 recorded in the lock after their checksums and their build provenance (`gh attestation verify`: built from the
 pinned commit by a GitHub-hosted runner of tensorbee/rdocx) were checked. A commit between two upstream releases
-can still be pinned: this repository's build workflow then compiles it on four platforms, runs the acceptance
+can still be pinned: this repository's build workflow then compiles it on five platforms, runs the acceptance
 suite on each and publishes it as the release `rdocx-<YYYYMMDD>-<commit12>`. `scripts/rdocx_env.py` downloads
 the files and installs only those that match the lock, re-checks them on `status`, or builds the pinned commit
 itself (every git object of the commit verified, `cargo --locked`, build tools pinned by hash). If no verified

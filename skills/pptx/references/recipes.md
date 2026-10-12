@@ -2,7 +2,8 @@
 
 Conventions, as set up in SKILL.md: `R=${RDOCX_HOME:-~/.local/share/rdocx-skills}/current/bin`, `SKILL` is
 this skill's folder, and Python blocks run with `PYTHONPATH="$SKILL/scripts" $R/python`, so that
-`import pptx_ops` works. `deck.pptx` is the input; outputs go to new files. Blocks run in order in one
+`import pptx_ops` works. `deck.pptx` is the input (`Aileron-Regular.ttf`, a CC0-1.0 font, stands for a font
+file the user supplies); outputs go to new files. Blocks run in order in one
 folder.
 
 ## Read the deck
@@ -148,6 +149,27 @@ prs.slides.import_slide(other.slides[0], layout=prs.slide_layouts[5], index=1)  
 pptx_ops.save_atomic(prs, "imported.pptx", "deck.pptx")
 ```
 
+## Merge decks, or import slides with their own formatting
+
+```bash
+$R/rpptx slide import deck.pptx deck.pptx --slides 2-3 --at 2 --json -o merged.pptx   # SOURCE may be any deck
+$R/rpptx slide import deck.pptx deck.pptx --keep-source-formatting -o appended.pptx    # every slide, at the end
+```
+
+```python
+import pptx_ops, rpptx
+other = rpptx.Presentation()                     # stands for rpptx.Presentation("other.pptx")
+other.slides.add_slide(other.slide_layouts[1]).shapes.title.text = "Appendix A"
+other.slides.add_slide(other.slide_layouts[1]).shapes.title.text = "Appendix B"
+prs = rpptx.Presentation("deck.pptx")
+copies = prs.slides.import_slides(other, [0, 1], keep_source_formatting=True)   # the source layout and theme
+print([s.shapes.title.text for s in copies], copies[0].slide_layout.name)
+pptx_ops.save_atomic(prs, "merged-py.pptx", "deck.pptx")
+```
+
+Charts, embedded objects, comments and notes travel with the slides. A slide jump to a slide left behind is
+dropped, with a `UserWarning` (Python) or a `Warning:` line (CLI): read them.
+
 ## Replace a picture, keeping its frame
 
 ```python
@@ -288,3 +310,57 @@ pptx_ops.save_atomic(prs, "from-template.pptx")            # saved as .pptx: a p
 with zipfile.ZipFile("from-template.pptx") as z:
     assert b"presentationml.presentation.main+xml" in z.read("[Content_Types].xml")
 ```
+
+## A chart, then new numbers
+
+```python
+import pptx_ops, rpptx
+from rpptx.chart.data import CategoryChartData
+from rpptx.enum.chart import XL_CHART_TYPE
+from rpptx.util import Inches
+prs = rpptx.Presentation("deck.pptx")
+data = CategoryChartData()
+data.categories = ["Option A", "Option B"]
+data.add_series("Cost (EUR k)", (236, 230))
+slide = prs.slides.add_slide(prs.slide_layouts[5])
+slide.shapes.title.text = "Costs"
+frame = slide.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(1), Inches(1.5), Inches(8), Inches(5), data)
+new = CategoryChartData()                         # later: the same chart, revised figures
+new.categories = ["Option A", "Option B", "Option C"]
+new.add_series("Cost (EUR k)", (236, 230, 251))
+chart = next(sh for sh in prs.slides[len(prs.slides) - 1].shapes if sh.has_chart).chart
+chart.replace_data(new)                            # series formatting kept, workbook rewritten
+print(chart.categories, [(s.name, s.values) for s in chart.series])
+pptx_ops.save_atomic(prs, "chart.pptx", "deck.pptx")
+```
+
+## Markdown or HTML of a deck
+
+```bash
+$R/rpptx convert deck.pptx --to md --notes --skip-hidden -o deck.md    # one section per slide, notes as quotes
+$R/rpptx convert deck.pptx --to html -o deck.html                      # pictures embedded, a section per slide
+```
+
+`prs.to_markdown(notes=True, skip_hidden=True)` and `prs.to_html()` return the same text from Python.
+
+## Embed a font
+
+First check that the font's licence allows embedding (SKILL.md, rule 7); here Aileron, CC0-1.0. Embed as the
+last step: PowerPoint for Mac drops embedded fonts when it saves the deck again.
+
+```bash
+$R/rpptx font embed deck.pptx Aileron-Regular.ttf --name Aileron --license-authorized \
+    --license-identity "CC0-1.0: Aileron" -o embedded.pptx --json
+$R/rpptx font list --json embedded.pptx                    # format "eot", embed_true_type_fonts true
+```
+
+```python
+import pptx_ops, rpptx
+prs = rpptx.Presentation("deck.pptx")
+prs.embed_font("Aileron", "Aileron-Regular.ttf", "regular",
+               license=rpptx.FontEmbeddingLicense(authorized=True, identity="CC0-1.0: Aileron"))
+assert prs.embed_true_type_fonts                   # PowerPoint uses embedded fonts only with this flag
+pptx_ops.save_atomic(prs, "embedded-py.pptx", "deck.pptx")
+print([(t.typeface, [(f.kind, f.format) for f in t.faces]) for t in rpptx.Presentation("embedded-py.pptx").embedded_fonts])
+```
+

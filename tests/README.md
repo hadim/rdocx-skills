@@ -18,6 +18,7 @@ python3 scripts/rdocx_env.py test --runxfail      # show how each known gap fail
 | `test_skill_scripts.py` | the helpers shipped in `skills/*/scripts` |
 | `test_installer.py` | `scripts/rdocx_env.py`: a fresh install, then each change `status` must catch and `install` repair |
 | `test_release.py` | `scripts/rdocx_env.py` and the releases (upstream's and this repository's builds): download and check, a changed file refused, `lock --write --release` with its provenance check, finding the release tags of a commit, `bump` |
+| `test_ci_scripts.py` | `.github/scripts`: the suite summary's groups (gaps closed, docs not yet updated, other failures), the final suite written into the notes of this repository's release only, idempotent, the build-time suite kept |
 | `test_docs_snippets.py` | every block of `skills/*/references/recipes.md`, run in order, then checks on their outputs |
 | `test_skill_docs.py` | the skills against the build: every cited Python name, keyword argument, CLI command and flag exists, the gap pages match `gaps.py`, each SKILL.md stays under 200 lines |
 
