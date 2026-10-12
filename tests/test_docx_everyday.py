@@ -892,3 +892,37 @@ def test_an_embedded_font_is_drawn_by_rdocx_and_libreoffice(rdocx_cli, tmp_path,
     run([rdocx_cli, "convert", tmp_path / "True.docx", "--to", "pdf", "-o", tmp_path / "cli.pdf"], check=True)
     assert pdf_uses_font((tmp_path / "cli.pdf").read_bytes(), b"Aileron")
     assert pdf_uses_font(libreoffice_pdf(tmp_path / "True.docx", tmp_path), b"Aileron")
+
+
+@pytest.mark.gap("html-space-inside-emphasis")
+def test_the_space_before_emphasis_stays_outside_it():
+    html = rdocx.Document.from_html("<p>see <u>this</u> and <s>that</s></p>")[0]
+    md = rdocx.Document.from_markdown("a ~~struck~~ and *it*\n")[0]
+    assert [(r.text, bool(r.underline), bool(r.font.strike)) for r in html.paragraphs[0].runs] == [
+        ("see ", False, False), ("this", True, False), (" and ", False, False), ("that", False, True)]
+    assert [(r.text, bool(r.font.strike), bool(r.italic)) for r in md.paragraphs[0].runs] == [
+        ("a ", False, False), ("struck", True, False), (" and ", False, False), ("it", False, True)]
+
+
+def test_a_restricted_fstype_is_not_checked(free_font):
+    """The licence object is the only check: a face whose OS/2 fsType says Restricted License (0x0002) embeds."""
+    data = bytearray(free_font.read_bytes())
+    record = data.index(b"OS/2")
+    offset = int.from_bytes(data[record + 8:record + 12], "big")
+    data[offset + 8:offset + 10] = (2).to_bytes(2, "big")
+    doc = rdocx.Document()
+    doc.embed_font("Restricted", bytes(data), license=rdocx.FontEmbeddingLicense(authorized=True, identity="test"))
+    prs = __import__("rpptx").Presentation()
+    prs.embed_font("Restricted", bytes(data), license=__import__("rpptx").FontEmbeddingLicense(authorized=True, identity="test"))
+    assert [f.name for f in doc.fonts if f.embedded_fonts] == ["Restricted"] and prs.embedded_fonts[0].typeface == "Restricted"
+
+
+def test_the_space_before_emphasis_can_be_moved_out_after_the_import():
+    """The workaround of gap html-space-inside-emphasis."""
+    doc = rdocx.Document.from_html("<p>see <u>this</u> now</p>")[0]
+    runs = doc.paragraphs[0].runs
+    for k in range(1, len(runs)):
+        if runs[k].text.startswith(" ") and (runs[k].underline or runs[k].font.strike):
+            runs[k].text = runs[k].text[1:]
+            runs[k - 1].text += " "
+    assert [(r.text, bool(r.underline)) for r in doc.paragraphs[0].runs] == [("see ", False), ("this", True), (" now", False)]
