@@ -136,13 +136,8 @@ The Linux CLIs need glibc 2.35 or later (the wheels 2.28). The Windows files are
   linux-x86_64, linux-aarch64 (ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64, macos-x86_64 and
   windows-x86_64 (the release download, or a build when the release lacks the platform's files, as right after a
   bump; its summary then says so), then the acceptance suite, summarised per platform by
-  `.github/scripts/suite-summary.sh`. On Windows it runs from Git Bash, as an agent does. The whole suite runs on
-  the five platforms for a push to `main`, a run by hand and a pull request that changes `rdocx.lock.json` (a new
-  build to accept); any other pull request runs it on linux-x86_64 and the platform smoke subset on the four others
-  (`-m smoke`: the installer and the release download, each CLI and the runtime Python on that OS, file
-  replacement and modes, Poppler, Git Bash; the list is `SMOKE` in `tests/conftest.py`, and a renamed test it names
-  stops the run). On a push to `main`, a last job (the only one with `contents: write`) writes the five summaries
-  into the notes of the release the lock pins, when it is one of this repository's builds
+  `.github/scripts/suite-summary.sh`. On Windows it runs from Git Bash, as an agent does. On a push to `main`, a
+  last job (the only one with `contents: write`) writes the five summaries into the notes of the release the lock pins, when it is one of this repository's builds
   (`rdocx-<YYYYMMDDHHMM>-<commit12>`, or `rdocx-<YYYYMMDD>-<commit12>` for the releases built before the time was
   added, of this repository and of the pinned commit; upstream releases are never touched), as the section
   `Acceptance suite (skills main <sha12>, <run URL>)` right after the notes' preamble: the results of the skills and
@@ -181,10 +176,12 @@ whose releases exist and whose hashes are recorded, together with the tests and 
    closed: remove its marker and its entry in `tests/gaps.py`, and update both skills' `references/gaps.md`
    and tables. Every new failure is a regression: keep the previous pin, or narrow what the skills claim.
 2. Read the skills again against the new build before merging: `tests/test_skill_docs.py` already fails on a
-   cited Python name, keyword, CLI command or flag that the build lacks, on a public name, command or flag of
-   the build that the skills neither cite nor exclude (document it, with a test, or add it to `NOT_DOCUMENTED`
-   with a reason), on a gap page out of step with `tests/gaps.py`, and on a SKILL.md over 16 KB or a description over 800 characters; what it cannot judge is whether each sentence still
-   holds. Go through both SKILL.md files, their references (`cli.md`, `python-api.md`, `gaps.md`,
+   cited Python name, keyword, CLI command or flag that the build lacks, on a public class or CLI command of the
+   build that the skills neither cite nor exclude (give it a pointer, or add it to `NOT_DOCUMENTED` with a reason;
+   new methods and flags need nothing, agents find them in the stubs and `--help`), on a gap page out of step with
+   `tests/gaps.py`, and on a SKILL.md over 16 KB or a description over 800 characters; what it cannot judge is
+   whether each sentence still holds. When the new pin is an upstream release, run the behaviour tests
+   (`test_docx_*.py`, `test_pptx*.py`) against it and delete those that pass: upstream has that behaviour now. Go through both SKILL.md files, their references (`cli.md`, `python-api.md`, `gaps.md`,
    `interop.md`) and `skills/*/scripts` with the new build installed, looking for a workaround a closed gap made
    useless, advice about a behaviour that changed, and a limitation stated without its gap key. An agent can do
    this pass in a few minutes (report only); fix what it finds on the same branch.

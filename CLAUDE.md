@@ -7,9 +7,10 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 
 ## Map
 
-- `skills/<name>/SKILL.md`: what an agent reads first; keep it under 16 KB and its description under 800 characters, details go to `references/`
-  (`tests/test_skill_docs.py` checks the size, every Python name, keyword, CLI command and flag the skills cite, and
-  the other way round that every public API of the build is cited or listed in its `NOT_DOCUMENTED` with a reason).
+- `skills/<name>/SKILL.md`: what an agent reads first; keep it under 16 KB and its description under 800 characters,
+  details go to `references/` (`tests/test_skill_docs.py` checks the sizes, every Python name, keyword, CLI command and
+  flag the skills cite, and the other way round that every public class and CLI command of the build is cited or
+  listed in its `NOT_DOCUMENTED` with a reason; methods and flags an agent finds in the stubs and `--help`).
 - `skills/<name>/references/`: `cli.md`, `python-api.md`, `recipes.md` (every block is executed by
   `tests/test_docs_snippets.py`), `gaps.md`, and `interop.md` for docx.
 - `skills/<name>/scripts/`: helpers importable and runnable as commands; tested in `tests/test_skill_scripts.py`.
@@ -17,16 +18,15 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   standard library only, Python >= 3.9, Linux, macOS and Windows (Git Bash: `.exe` CLIs, `current` a junction).
 - `rdocx.lock.json`: the pin (upstream commit and ref, release URLs, SHA-256 per platform). `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
-- `.github/workflows/`: `ci.yml` (the whole suite on the five platforms for a push to `main`, a run by hand and a PR
-  that changes the lock; any other PR runs it on linux-x86_64 and the platform smoke subset, `-m smoke` from `SMOKE`
-  in `tests/conftest.py`, on the four others; on a push to `main` whose lock pins one of this repository's releases,
-  its summaries become the "Acceptance suite" section of that release's notes, through
-  `.github/scripts/release_notes.py`), `build.yml` (only for a commit between two upstream releases, by hand: builds
-  it on five runners, checks that it installs and runs, and publishes the release `rdocx-<YYYYMMDDHHMM>-<commit12>`,
-  UTC build date and time first since GitHub lists releases by tag name (older releases: `rdocx-<YYYYMMDD>-<commit12>`,
-  still valid); no suite there; inputs `lto` (`fat` upstream's profile, `thin` a faster build) and `dry_run` (build
-  from scratch, publish nothing, to time a profile)). `.github/scripts/suite-summary.sh` groups a suite log (gaps
-  closed, docs not yet updated, other failures); both scripts are tested in `tests/test_ci_scripts.py`.
+- `.github/workflows/`: `ci.yml` (the suite on the five platforms, every push and PR; on a push to `main` whose lock
+  pins one of this repository's releases, its summaries become the "Acceptance suite" section of that release's
+  notes, through `.github/scripts/release_notes.py`), `build.yml` (only for a commit between two upstream releases, by
+  hand: builds it on five runners, checks that it installs and runs, and publishes the release
+  `rdocx-<YYYYMMDDHHMM>-<commit12>`, UTC build date and time first since GitHub lists releases by tag name (older
+  releases: `rdocx-<YYYYMMDD>-<commit12>`, still valid); no suite there; inputs `lto` (`fat` upstream's profile,
+  `thin` a faster build) and `dry_run` (build from scratch, publish nothing, to time a profile)).
+  `.github/scripts/suite-summary.sh` groups a suite log (gaps closed, docs not yet updated, other failures); both
+  scripts are tested in `tests/test_ci_scripts.py`.
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin.
@@ -35,13 +35,15 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 
 - English everywhere, ASCII in code. Findings as `findings/README.md` describes them: what fails, a neutral
   reproduction that builds its own input, the real output, an acceptance criterion.
-- Gaps live here as strict xfails (`tests/gaps.py`) and narrow what the skills claim; the suite run on each
-  new build says which ones closed. When a gap is reported upstream, a comment on its entry in `tests/gaps.py`
-  names the issue (`# upstream: owner/repo#N`); the suite, not the issue's state, says when it closed.
-- Never weaken a test to make it pass. A behaviour change of rdocx is either a fix (remove the gap marker) or
-  a regression (keep the test red and the previous pin, or narrow the skills).
-- Every claim in the skills is backed by a test or a recipe block that runs. Changing a claim means changing
-  or adding the test in the same commit.
+- Tests cover the skills' own contract: every recipe block runs (`test_docs_snippets.py`), the cited names exist and
+  every class and command has a pointer (`test_skill_docs.py`), the helper scripts, the installer, the CI scripts.
+  rdocx's behaviour is upstream's to test: the behaviour files (`test_docx_*.py`, `test_pptx*.py`) only hold what the
+  pinned build has and upstream `main` does not yet (a fix or a feature carried on an integration branch, or a gap
+  as a strict xfail in `tests/gaps.py`, with `# upstream: owner/repo#N` when reported). When the pin moves to an
+  upstream release, run them against it and delete those that pass. A regression that hits the skills gets a test
+  then, and an upstream issue.
+- A behaviour change of rdocx is either a fix (remove the gap marker) or a regression (keep the test red and the
+  previous pin, or narrow the skills); never weaken a test to make it pass.
 - The lock records the files of the upstream releases (`lock --write --release`, which checks their
   `SHA256SUMS` and their build provenance with `gh attestation verify`), after review; a commit between two
   upstream releases is pinned through a release published by `build.yml` instead.

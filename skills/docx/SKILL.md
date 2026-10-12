@@ -115,13 +115,16 @@ background).
 Commands and full signatures: `references/cli.md`, `references/python-api.md` (and the `.pyi` stubs it
 points to). Worked, tested examples for each row: `references/recipes.md`. Ready-made commands:
 `scripts/docx_ops.py` (`text`, `count`, `replace`, `comment`, `toc`, `pages`). In a reference, look a name up
-(`grep -n NAME references/python-api.md`) rather than reading the whole file.
+(`grep -n NAME references/python-api.md`) rather than reading the whole file. The skill does not list every method
+or flag: before concluding that rdocx cannot do something, search the build itself, `grep -n -i WORD` in its type
+stubs (`_rdocx.pyi`, in the folder `$R/python -c "import rdocx, os; print(os.path.dirname(rdocx.__file__))"`
+prints) and `$R/rdocx --help`, `$R/rdocx COMMAND --help`.
 
 ## When rdocx cannot do a step
 
 `references/gaps.md` lists each known gap with its workaround and its fallback. When a step is blocked:
 
-1. Say so in one line to the user (what is blocked, which gap).
+1. Search the stubs and `--help` (above), then say so in one line to the user (what is blocked, which gap).
 2. Use the workaround if the gap has one; otherwise do **that step only** with the built-in `docx` skill
    (python-docx, lxml or LibreOffice), on the file rdocx saved, and keep rdocx for everything else,
    including the verification.

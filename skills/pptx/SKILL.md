@@ -105,12 +105,15 @@ background).
 Commands and signatures: `references/cli.md`, `references/python-api.md` (and the `.pyi` stubs it points
 to). Tested examples: `references/recipes.md`. Ready-made commands: `scripts/pptx_ops.py` (`replace`,
 `overflow`, `shapes`). In a reference, look a name up (`grep -n NAME references/python-api.md`) rather than
-reading the whole file.
+reading the whole file. The skill does not list every method or flag: before concluding that rpptx cannot do
+something, search the build itself, `grep -n -i WORD` in its type stubs (`_rpptx.pyi`, in the folder
+`$R/python -c "import rpptx, os; print(os.path.dirname(rpptx.__file__))"` prints) and `$R/rpptx --help`,
+`$R/rpptx COMMAND --help`.
 
 ## When rpptx cannot do a step
 
-`references/gaps.md` lists each known gap with its workaround and fallback. When a step is blocked: say so in
-one line to the user, use the workaround if there is one, otherwise do **that step only** with the default
+`references/gaps.md` lists each known gap with its workaround and fallback. When a step is blocked: search the
+stubs and `--help` (above), say so in one line to the user, use the workaround if there is one, otherwise do **that step only** with the default
 `pptx` skill (python-pptx), on the file rpptx saved, keep rpptx for everything else and for the verification, and report the gap
 unless it is listed.
 

@@ -22,73 +22,17 @@ EXE = ".exe" if os.name == "nt" else ""
 BASH = shutil.which("bash") or "bash"
 
 
-# The platform smoke subset (`-m smoke`), which ci.yml runs on the four platforms other than linux-x86_64 for a pull
-# request that leaves the lock alone: what differs between platforms (the installer and the release download,
-# the CLIs and the runtime Python on that OS, file replacement and modes, Poppler, Git Bash), not rdocx's behaviour,
-# which the full suite checks on linux-x86_64. An entry is a test file, a test function (every parameter of it) or
-# one parametrized test.
-SMOKE = (
-    "test_installer.py",
-    "test_release.py",
-    "test_ci_scripts.py",
-    "test_docs_snippets.py::test_recipe_block[docx-00-bash]",
-    "test_docs_snippets.py::test_recipe_block[pptx-00-bash]",
-    "test_docx_create.py::test_create_and_read_back_with_python_docx",
-    "test_docx_read.py::test_cli_text_plain",
-    "test_docx_read.py::test_cli_text_json_schema",
-    "test_docx_read.py::test_python_structure",
-    "test_docx_edit.py::test_cli_replace_expect_refuses_and_writes_nothing",
-    "test_docx_edit.py::test_python_replace_with_expected_count_is_all_or_nothing",
-    "test_docx_edit.py::test_save_replaces_the_file_atomically",
-    "test_docx_edit.py::test_noop_save_is_byte_identical",
-    "test_docx_render.py::test_pdf_and_png",
-    "test_docx_render.py::test_cli_convert_and_render",
-    "test_docx_render.py::test_font_dir_reaches_the_pdf",
-    "test_docx_render.py::test_cli_survives_a_closed_pipe",
-    "test_pptx.py::test_cli_text_json_and_outline",
-    "test_pptx.py::test_cli_replace_expect",
-    "test_pptx.py::test_render_png_and_pdf",
-    "test_pptx.py::test_noop_save_round_trip",
-    "test_skill_scripts.py::test_count_and_all_text",
-    "test_skill_scripts.py::test_save_refuses_to_overwrite_the_input",
-    "test_skill_scripts.py::test_save_keeps_the_input_file_mode",
-    "test_skill_scripts.py::test_pptx_replace_batch",
-)
-
-
 def pytest_configure(config):
     config.addinivalue_line("markers", "gap(key): known gap of the pinned build, see tests/gaps.py (strict xfail)")
-    config.addinivalue_line("markers", "smoke: the platform smoke subset, see SMOKE in tests/conftest.py")
 
 
-def smoke_entry(item):
-    """The SMOKE entry that selects `item`, or None."""
-    path, _, name = item.nodeid.rpartition("/")[2].partition("::")
-    for entry in SMOKE:
-        file, _, test = entry.partition("::")
-        if file == path and (not test or test == name or test == name.split("[")[0]):
-            return entry
-    return None
-
-
-@pytest.hookimpl(tryfirst=True)  # before `-m` deselects by marker
 def pytest_collection_modifyitems(config, items):
-    used = set()
     for item in items:
         for mark in item.iter_markers("gap"):
             key = mark.args[0]
             if key not in GAPS:
                 raise pytest.UsageError(f"{item.nodeid}: unknown gap key {key!r}")
             item.add_marker(pytest.mark.xfail(strict=True, reason=f"gap {key}: {GAPS[key]}"))
-        entry = smoke_entry(item)
-        if entry:
-            item.add_marker(pytest.mark.smoke)
-            used.add(entry)
-    # a renamed test must not drop out of the smoke subset unnoticed (checked for the files collected)
-    files = {item.nodeid.rpartition("/")[2].partition("::")[0] for item in items}
-    stale = [e for e in SMOKE if e.partition("::")[0] in files and e not in used]
-    if stale:
-        raise pytest.UsageError(f"SMOKE entries that select no test: {', '.join(stale)}")
 
 
 def tool(name):
