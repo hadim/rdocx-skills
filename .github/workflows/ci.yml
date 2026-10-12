@@ -138,7 +138,7 @@ jobs:
             exit 0
           fi
           gh release view "$tag" -R "$GITHUB_REPOSITORY" --json body --jq .body > "$RUNNER_TEMP/notes.md"
-          python3 .github/scripts/release_notes.py rewrite "$RUNNER_TEMP/notes.md" --sha "$GITHUB_SHA" \
+          python3 .github/scripts/release_notes.py rewrite --notes "$RUNNER_TEMP/notes.md" --sha "$GITHUB_SHA" \
             --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             "$RUNNER_TEMP"/suites/suite-*/suite-*.md > "$RUNNER_TEMP/final-notes.md"
           gh release edit "$tag" -R "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/final-notes.md"

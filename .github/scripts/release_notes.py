@@ -11,7 +11,7 @@ stay below it, under `## Build-time suite (preliminary, skills <sha12>)` (an old
     release_notes.py tag [--repo OWNER/REPO] [LOCK]
         the tag of the lock's release when it is one of this repository's own builds
         (`rdocx-<YYYYMMDD>-<commit12>`), else nothing (an upstream release is never touched)
-    release_notes.py rewrite NOTES --sha SHA --run-url URL SUMMARY...
+    release_notes.py rewrite --notes NOTES --sha SHA --run-url URL SUMMARY...
         NOTES with the final section made of the SUMMARY files (suite-summary.sh output), on stdout
 
 Standard library only, Python >= 3.9.
@@ -81,7 +81,7 @@ def main(argv=None):
     p.add_argument("--repo", default="hadim/rdocx-skills")
     p.add_argument("lock", nargs="?", default="rdocx.lock.json")
     p = sub.add_parser("rewrite")
-    p.add_argument("notes")
+    p.add_argument("--notes", required=True)
     p.add_argument("--sha", required=True)
     p.add_argument("--run-url", required=True)
     p.add_argument("summaries", nargs="*")
