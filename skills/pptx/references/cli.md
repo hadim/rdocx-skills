@@ -89,8 +89,7 @@ rpptx font settings F [--embed-true-type-fonts true|false] [--save-subset-fonts 
 font whose licence allows embedding (SKILL.md, rule 7). `rpptx convert` and `render` draw the faces a deck embeds,
 except a MicroType Express one (`format` `compressed_eot`, which PowerPoint writes: observed upstream,
 tensorbee/rdocx#361), which gets a substitute: add `--font-dir DIR` with the font file in `DIR`. A `--font-dir`
-font of the same family wins over an embedded face (a file only named after it does not: gap
-font-dir-alias-below-embedded-face).
+font of the typeface wins over an embedded face, by its own family or by its file name (`Aileron.ttf`).
 
 ## Rendering
 

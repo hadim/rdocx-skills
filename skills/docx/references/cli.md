@@ -138,7 +138,7 @@ rdocx layout --json F [--font-dir DIR]
 ```
 Images from `convert`: one page goes to `OUT.png`, several to `OUT_001.png`, `OUT_002.png`... (tiff: one
 multi-page file). `render` writes `NEW_DIR/<name>_page<N>.png` with N one-based; `--pages` is one-based,
-`--page` zero-based. `--font-dir DIR` (`convert` to PDF or images, `render`, `layout`) puts the fonts of a folder (`.ttf`, `.otf`, `.ttc`) before every other font, a variable font drawn at the weight a run asks for (a bold run without a bold face gets a synthetic bold); a missing folder is an error, and Markdown and HTML refuse the flag. Without it, rdocx uses its bundled
+`--page` zero-based. `--font-dir DIR` (`convert` to PDF or images, `render`, `layout`) puts the fonts of a folder (`.ttf`, `.otf`, `.ttc`) before every other font, an embedded face included (a file also counts as the family its file name gives, `Aileron.ttf`), a variable font drawn at the weight a run asks for (a bold run without a bold face gets a synthetic bold); a missing folder is an error, and Markdown and HTML refuse the flag. Without it, rdocx uses its bundled
 metric-compatible families (Liberation for Arial, Times New Roman, Courier New; Carlito for Calibri; Caladea
 for Cambria) and the system fonts. Markdown and HTML hold the body, then text boxes, headers, footers,
 footnotes and endnotes, one section per part, and leave comments out.
