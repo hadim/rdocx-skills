@@ -56,8 +56,16 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## State on 12/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion).
-- Pinned: the integration branch `integration/open-prs-2026-10-12` of hadim/rdocx (commit `ffb8d3d6`) through
-  this repository's release `rdocx-20261012-ffb8d3d67f42`: tensorbee/rdocx `v0.16.0` (`733ce6f7`) plus every open PR of
+- Pinned: the integration branch `integration/open-prs-2026-10-12-2` of hadim/rdocx (commit `1ffda276`) through
+  this repository's release `rdocx-20261012-1ffda27631c6`: the previous pin `integration/open-prs-2026-10-12`
+  (below) plus the fixes of its three gaps on the carried PRs: the HTML importers of rdocx and rpptx keep a space
+  before or after an emphasised span outside it and a space written inside it in it (#359); rpptx's own renders
+  draw the faces a deck embeds, except MicroType Express ones, and a caller font wins over an embedded face of the
+  same family in both bindings (#361); `import_slide(keep_source_formatting=True)` and `import_slides` read the
+  source and the destination as they are in memory (#357). Two integration fixes add tests only: a caller font wins
+  over an embedded face in rpptx renders; slide import keeps source formatting edited in memory.
+- Before it, pinned: the integration branch `integration/open-prs-2026-10-12` of hadim/rdocx (commit `ffb8d3d6`)
+  through this repository's release `rdocx-20261012-ffb8d3d67f42`: tensorbee/rdocx `v0.16.0` (`733ce6f7`) plus every open PR of
   the user, those of the previous pin (tensorbee/rdocx#315, #317 to #320, #322, #324 to #330, #333, #335, #336, #338,
   #341 to #343) and the newly carried #354 to #359 and #361, with two integration fixes (a group pushing nesting past
   the limit, #326 with #355; slide handles retired after font embedding edits). What changed since
@@ -72,12 +80,15 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   recipes and tests embed Aileron (CC0-1.0), the subset Pillow bundles (`conftest.free_font`). A skills `main` pinned
   on the fork steps back from upstream releases: go back to tensorbee/rdocx with `bump v<version>` once a release
   carries these PRs.
-- Open gaps, all found on this pin, none closed (the previous pin had none open): docx `html-space-inside-emphasis`
-  (the HTML and Markdown importers put the space before an underlined, struck, bold or italic span inside its run;
-  workaround: move it to the run before); pptx `render-embedded-font` (rpptx's own renders draw an embedded font with
-  a substitute; workaround `font_dir=` / `--font-dir`) and `import-stale-source-formatting` (`keep_source_formatting`
-  takes the source's layout, master and theme as opened, not as edited in memory; workaround: reopen the source from
-  its bytes).
+- Open gaps, both found on this pin: docx `html-space-doubled-at-span-edge` (the HTML and Markdown importers keep
+  two spaces where a browser draws one, a space ending a span and one after it, `a <s>b </s> c`, a regression of the
+  #359 fix; workaround: drop the leading space of a run whose previous run ends with one) and pptx
+  `font-dir-alias-below-embedded-face` (a `font_dir` file only named after the typeface loses to the embedded face;
+  a font whose own family is the typeface wins; workaround: give that font, or remove the embedded face on a copy).
+  Closed by this pin: `html-space-inside-emphasis`, `render-embedded-font`, `import-stale-source-formatting`, the
+  three gaps of `ffb8d3d6`.
+- Suite against `1ffda276`: 810 passed, 9 skipped (Poppler absent), 2 xfailed (the two open gaps) on macos-arm64
+  from the release files.
 - Suite against `ffb8d3d6`: 799 passed, 9 skipped (Poppler absent), 3 xfailed on macos-arm64 from the release files;
   the build notes give 750 to 751 passed on the five platforms (18 to 19 skipped), with 5 failures there, all in
   `test_skill_docs.py` (the new APIs not yet documented), fixed on this branch.
@@ -103,5 +114,5 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 1. When rdocx tags a release: `bump v<version>`, `lock --write --release`, `install`, `test`, as
    docs/setup.md (Moving the pin) describes. The weekly `build.yml` run on upstream `main` says beforehand
    which gaps the next release closes.
-2. Report the three gaps of this pin upstream (`html-space-inside-emphasis`, `render-embedded-font`,
-   `import-stale-source-formatting`), then name each issue on its entry in `tests/gaps.py`.
+2. Report the two gaps of this pin upstream (`html-space-doubled-at-span-edge`,
+   `font-dir-alias-below-embedded-face`), then name each issue on its entry in `tests/gaps.py`.
