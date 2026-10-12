@@ -946,9 +946,8 @@ def test_import_slides_with_charts_comments_jumps_and_source_formatting(rpptx_cl
     other.slide_layouts[1].name = "Agenda"                                # no layout of that name in the destination
     other.slide_master.theme.colors["accent1"] = "7B1E3A"
     other.slides.add_slide(other.slide_layouts[1]).shapes.title.text = "Kept"
-    other = rpptx.Presentation.from_bytes(other.to_bytes())              # gap import-stale-source-formatting
     dest = deck(1)
-    dest.slides.import_slides(rpptx.Presentation.from_bytes(jump_deck().to_bytes()), keep_source_formatting=True)
+    dest.slides.import_slides(jump_deck(), keep_source_formatting=True)
     assert len(dest.slide_masters) == 1                                   # an equal master and layouts are reused
     with pytest.raises(rpptx.RpptxError):
         dest.slides.import_slide(other.slides[0])
@@ -964,8 +963,8 @@ def test_import_slides_with_charts_comments_jumps_and_source_formatting(rpptx_cl
     assert [(s.name, s.slide_indices) for s in dest.sections][1:] == [("Intro", [1]), ("Body", [2])]
 
 
-@pytest.mark.gap("import-stale-source-formatting")
 def test_import_keeps_the_source_formatting_edited_in_memory():
+    """keep_source_formatting reads the source and the destination as they are in memory, unsaved edits included."""
     other = rpptx.Presentation()
     other.slide_layouts[1].name = "Agenda"
     other.slide_master.theme.colors["accent1"] = "7B1E3A"
@@ -974,6 +973,12 @@ def test_import_keeps_the_source_formatting_edited_in_memory():
     dest.slides.import_slides(other, keep_source_formatting=True)
     assert dest.slides[1].slide_layout.name == "Agenda"
     assert [str(m.theme.colors["accent1"]) for m in dest.slide_masters] == ["4F81BD", "7B1E3A"]
+    dest = deck(1)
+    dest.slide_layouts[1].name = "Renamed"                                # no longer equal to the source layout
+    layouts = len(dest.slide_layouts)
+    copy = dest.slides.import_slides(deck(1), keep_source_formatting=True)[0]
+    assert copy.slide_layout.name == "Title and Content" and len(dest.slide_layouts) == layouts + 1
+    assert len(dest.slide_masters) == 1 and dest.slide_layouts[1].name == "Renamed"
 
 
 def test_cli_slide_import(rpptx_cli, tmp_path):
@@ -1138,7 +1143,6 @@ def test_what_the_new_edits_retire(free_font):
         other = rpptx.Presentation()
         if keep:
             other.slide_layouts[1].name = "Agenda"
-            other = rpptx.Presentation.from_bytes(other.to_bytes())
         other.slides.add_slide(other.slide_layouts[1])
         return other
 
