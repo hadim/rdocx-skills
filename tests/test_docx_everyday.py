@@ -926,11 +926,15 @@ DOUBLED_SPACES = {"<p>a <s>b </s> c</p>": "a b c", "<p>and <s> that</s></p>": "a
                   '<p>a <a href="https://example.com">b </a> c</p>': "a b c"}
 
 
-@pytest.mark.gap("html-space-doubled-at-span-edge")
 def test_spaces_on_both_sides_of_a_span_edge_collapse_into_one(rdocx_cli, tmp_path):
-    """As a browser draws it: two collapsible spaces with a span edge between them are one space."""
+    """As a browser draws it: two collapsible spaces with a span edge between them are one space, kept where the
+    run of spaces starts."""
     for html, text in DOUBLED_SPACES.items():
         assert rdocx.Document.from_html(html)[0].paragraphs[0].text == text, html
+    runs = rdocx.Document.from_html("<p>a <s>b </s> c</p>")[0].paragraphs[0].runs
+    assert [(r.text, bool(r.font.strike)) for r in runs] == [("a ", False), ("b ", True), ("c", False)]
+    runs = rdocx.Document.from_html("<p>and <s> that</s></p>")[0].paragraphs[0].runs
+    assert [(r.text, bool(r.font.strike)) for r in runs] == [("and ", False), ("that", True)]
     (tmp_path / "page.html").write_text("<p>a <s>b </s> c</p>")
     run([rdocx_cli, "convert", tmp_path / "page.html", "-o", tmp_path / "page.docx"], check=True)
     assert rdocx.Document.open(tmp_path / "page.docx").paragraphs[0].text == "a b c"
@@ -940,12 +944,14 @@ def test_spaces_on_both_sides_of_a_span_edge_collapse_into_one(rdocx_cli, tmp_pa
     assert doc.paragraphs[-1].text == "a b c"
 
 
-def test_a_doubled_space_can_be_dropped_after_the_import():
-    """The workaround of gap html-space-doubled-at-span-edge."""
-    for html, text in DOUBLED_SPACES.items():
-        doc = rdocx.Document.from_html(html)[0]
-        runs = doc.paragraphs[0].runs
-        for k in range(1, len(runs)):
-            if runs[k].text.startswith(" ") and runs[k - 1].text.endswith(" "):
-                runs[k].text = runs[k].text[1:]
-        assert doc.paragraphs[0].text == text, html
+def test_a_non_breaking_space_does_not_collapse(rdocx_cli, tmp_path):
+    """&nbsp; is not collapsible whitespace: two of them in a row stay two U+00A0, next to a span edge too, and a
+    paragraph holding only one is kept."""
+    assert rdocx.Document.from_html("<p>a&nbsp;&nbsp;b</p>")[0].paragraphs[0].text == "a\u00a0\u00a0b"
+    assert rdocx.Document.from_markdown("a&nbsp;&nbsp;b\n")[0].paragraphs[0].text == "a\u00a0\u00a0b"
+    runs = rdocx.Document.from_html("<p>a&nbsp; <s>&nbsp;b</s></p>")[0].paragraphs[0].runs
+    assert [(r.text, bool(r.font.strike)) for r in runs] == [("a\u00a0 ", False), ("\u00a0b", True)]
+    assert [p.text for p in rdocx.Document.from_html("<p>a</p><p>&nbsp;</p><p>b</p>")[0].paragraphs] == ["a", "\u00a0", "b"]
+    (tmp_path / "page.html").write_text("<p>a</p><p>&nbsp;</p><p>b</p>")
+    run([rdocx_cli, "convert", tmp_path / "page.html", "-o", tmp_path / "page.docx"], check=True)
+    assert [p.text for p in rdocx.Document.open(tmp_path / "page.docx").paragraphs] == ["a", "\u00a0", "b"]
