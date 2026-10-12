@@ -17,10 +17,13 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   standard library only, Python >= 3.9, Linux, macOS and Windows (Git Bash: `.exe` CLIs, `current` a junction).
 - `rdocx.lock.json`: the pin (upstream commit and ref, release URLs, SHA-256 per platform). `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
-- `.github/workflows/`: `ci.yml` (suite on linux-x86_64, macos-arm64, macos-x86_64 and windows-x86_64, every
-  push and PR), `build.yml` (only for a commit between two upstream releases: builds it on five runners and
-  publishes the release `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first; by hand, and weekly on upstream
-  `main` HEAD as a candidate).
+- `.github/workflows/`: `ci.yml` (suite on the five platforms, every push and PR; on a push to `main` whose lock pins
+  one of this repository's releases, its summaries become the final "Acceptance suite" section of that release's
+  notes, through `.github/scripts/release_notes.py`), `build.yml` (only for a commit between two upstream releases:
+  builds it on five runners and publishes the release `rdocx-<YYYYMMDD>-<commit12>`, UTC build date first, with a
+  preliminary "Build-time suite" run with the skills tests of the commit it runs from; by hand, and weekly on
+  upstream `main` HEAD as a candidate). `.github/scripts/suite-summary.sh` groups a suite log (gaps closed, docs
+  not yet updated, other failures); both scripts are tested in `tests/test_ci_scripts.py`.
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin.

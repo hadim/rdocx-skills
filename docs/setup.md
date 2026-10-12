@@ -132,15 +132,26 @@ them.
 ## Continuous integration
 
 - `.github/workflows/ci.yml`, on every push to `main` and every pull request: `install --build` on
-  linux-x86_64, macos-arm64, macos-x86_64 and windows-x86_64 (the release download, or a build when the release
-  lacks the platform's files, as right after a bump), then the acceptance suite. On Windows it runs from Git
-  Bash, as an agent does.
+  linux-x86_64, linux-aarch64 (ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64, macos-x86_64 and
+  windows-x86_64 (the release download, or a build when the release lacks the platform's files, as right after a
+  bump; its summary then says so), then the acceptance suite, summarised per platform by
+  `.github/scripts/suite-summary.sh`. On Windows it runs from Git Bash, as an agent does. On a push to `main`, a
+  last job (the only one with `contents: write`) writes these five summaries into the notes of the release the
+  lock pins, when it is one of this repository's builds (`rdocx-<YYYYMMDD>-<commit12>` of this repository and of
+  the pinned commit; upstream releases are never touched), as the section `Acceptance suite (skills main
+  <sha12>, <run URL>)` right after the notes' preamble: the results of the skills and tests that ship with the
+  release. It runs after a failing leg too, and running it again replaces that section
+  (`.github/scripts/release_notes.py`).
 - `.github/workflows/build.yml`, only for a commit between two upstream releases: builds it on five native
   runners (ubuntu-22.04,
   ubuntu-22.04-arm, macos-14, macos-15-intel, windows-2025), runs the suite on each, and publishes the release
   `rdocx-<YYYYMMDD>-<first 12 characters of the commit>` (the UTC build date first, so the releases sort by
   date; title `rdocx <YYYY-MM-DD> <commit12> (<ref>)`) with `SHA256SUMS`, provenance attestations, and the
-  suite summaries in its notes (gaps closed, other failures). It runs by hand on any upstream tag, branch or
+  suite summaries in its notes under `Build-time suite (preliminary, skills <sha12>)` (gaps closed, docs not yet
+  updated for the new build, other failures). Preliminary because they come from the skills tests of the commit
+  the workflow runs from, which predate the docs pass for the new build: `tests/test_skill_docs.py` fails there
+  until the skills document the new APIs. `ci.yml` writes the final results above them once `main` pins the
+  release (above). It runs by hand on any upstream tag, branch or
   commit (Actions, build, Run workflow, `ref`), and weekly on upstream `main` HEAD, a candidate whose notes say
   early which gaps the next upstream release closes; it builds nothing when the lock pins the upstream
   releases of that commit. A commit has at most one release: when a release tag already ends with `-<commit12>`, its
@@ -172,10 +183,13 @@ whose releases exist and whose hashes are recorded, together with the tests and 
    useless, advice about a behaviour that changed, and a limitation stated without its gap key. An agent can do
    this pass in a few minutes (report only); fix what it finds on the same branch.
 3. Commit the lock, the tests and the skill changes together, and merge into `main`. CI runs the suite on the
-   pinned files on four platforms.
+   pinned files on five platforms; when the pin is one of this repository's releases, the push to `main` writes
+   those results into the release notes as the final `Acceptance suite (skills main <sha12>, <run URL>)`, above
+   the preliminary build-time suite. Every later push to `main` that keeps the pin replaces it with its own run.
 
 A commit between two upstream releases (a fix the skills need before the next release) goes through this
 repository's build first: Actions, build, Run workflow, with `ref` set to the upstream branch or full commit
-hash. It publishes the release `rdocx-<YYYYMMDD>-<commit12>`, with the suite's results on five platforms in its
-notes. Then `bump REF` and the steps above: `lock --write --release` finds no upstream release of that commit
-and records this one instead.
+hash. It publishes the release `rdocx-<YYYYMMDD>-<commit12>`, with the build-time suite's results on five platforms
+in its notes: failures of `tests/test_skill_docs.py` there are the docs pass still to do, not regressions. Then
+`bump REF` and the steps above: `lock --write --release` finds no upstream release of that commit and records
+this one instead, and the merge into `main` writes the final suite into its notes.
