@@ -119,11 +119,12 @@ rdocx font settings F [--embed-true-type-fonts true|false] [--embed-system-fonts
 `font list` prints each font-table record (`--json`: `fonts`, each with `name`, `alternate_name`, `family`,
 `pitch`, `embedded`: `face`, `font_key`, `subsetted`, `license_authorized`, `license_identity`, `byte_count`;
 and `settings`: `embed_true_type_fonts`, `embed_system_fonts`, `save_subset_fonts`, null when unset).
-`font embed` adds a TrueType or OpenType file (not a `.ttc` collection) as one face of the record `--name`,
-creating the record, and turns `embedTrueTypeFonts` on, which makes Word keep the font when it saves the
-document again; Word uses the embedded face either way. Without `--license-authorized`, or with an empty
-`--license-identity`, it exits 1 and writes nothing: pass them only for a font whose licence allows
-embedding (SKILL.md, rule 9). `font remove` without `--face` removes the record and all its faces.
+`font embed` adds a TrueType or OpenType file (not a `.ttc` collection) as one face of the record `--name`, creating
+the record, and turns `embedTrueTypeFonts` on, which makes Word keep the font when it saves the document
+again; Word uses the embedded face either way (observed upstream, tensorbee/rdocx#361). Without
+`--license-authorized`, or with an empty `--license-identity`, it exits 1 and writes nothing: pass them only
+for a font whose licence allows embedding (SKILL.md, rule 9). `font remove` without `--face` removes the
+record and all its faces.
 
 ## Rendering and conversion
 

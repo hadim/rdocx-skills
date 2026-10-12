@@ -77,9 +77,10 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
    edit in place rather than rebuild, and read `references/interop.md` before touching fields, content
    controls, numbering or tracked changes.
 9. **Embed a font only when its licence allows embedding.** `rdocx.FontEmbeddingLicense(authorized=True,
-   identity="OFL-1.1: Example Sans")` is your statement that it does, and rdocx checks nothing else. Read the
-   font's licence first (OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not, and an OS/2
-   `fsType` of 2 means restricted): when it does not allow it, or you cannot tell, do not embed and tell the user.
+   identity="OFL-1.1: Example Sans")` is your statement that it does: rdocx checks nothing else, not even the font's OS/2 `fsType`. Read the
+   licence first (OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not, and an `fsType`
+   with bit 0x0002 set means Restricted License): when it does not allow it, or you cannot tell, do not embed
+   and tell the user.
 
 ## What to use for what
 
@@ -116,7 +117,7 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 | PDF | `rdocx convert F --to pdf [--revision-view tracked] -o NEW.pdf` | `doc.to_pdf(revision_view="tracked")` | the accepted view of tracked changes by default; `tracked` shows deletions struck through, insertions underlined and a change bar |
 | PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100 [--font-dir DIR]` | `doc.render_pages(dpi=, pages=[0, 1], font_dir=)` | CLI pages one-based, Python zero-based; `--font-dir` / `font_dir=` give fonts that are not installed, to every output |
 | Markdown, HTML, ODT, RTF, EPUB | `rdocx convert F --to md -o NEW.md` / `--to html` | `doc.text()`, `doc.to_markdown()`, `to_html()`, `to_odt()`, `to_rtf()`, `to_epub()` | body, then text boxes, headers, footers, notes, no comments; what a format drops is named in a `ConversionWarning` |
-| New document from Markdown or HTML | `rdocx convert notes.md -o NEW.docx [--template brand.dotx]`, `rdocx convert page.html -o NEW.docx` | `rdocx.Document.from_markdown(text, base_dir=, template=)`, `Document.open_markdown(path, template=)`, `Document.from_html(html)`, `Document.open_html(path)`, `doc.insert_html(html, after=item)` | each returns the document (or `insert_html` its diagnostics) and what was dropped or approximated, with its location: read it; headings get Heading N, lists numbering, a template its styles, headers and footers |
+| New document from Markdown or HTML | `rdocx convert notes.md -o NEW.docx [--template brand.dotx]`, `rdocx convert page.html -o NEW.docx` | `rdocx.Document.from_markdown(text, base_dir=, template=)`, `Document.open_markdown(path, template=)`, `Document.from_html(html)`, `Document.open_html(path)`, `doc.insert_html(html, after=item)` | each returns the document (or `insert_html` its diagnostics) and what was dropped or approximated, with its location: read it; headings get Heading N, lists numbering, a template its styles, headers and footers; the space before an underlined or struck span is underlined or struck too (gap html-space-inside-emphasis) |
 | Charts | | `doc.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, width, height, chart_data, after=)`, `doc.charts` | python-pptx's `CategoryChartData` / `XyChartData` (`rdocx.chart.data`), an editable chart with its workbook; seven chart types; no data replacement in Word documents |
 | Embedded fonts | `rdocx font list/embed/remove/settings` | `doc.fonts`, `doc.embed_font(name, "ExampleSans-Regular.ttf", "regular", license=rdocx.FontEmbeddingLicense(...))`, `remove_embedded_font(name, kind)` | rule 9; Word then shows the face on a machine that lacks the font, and keeps it when it saves again; rdocx's PDF and PNG renders and LibreOffice draw it too |
 | Validity | `rdocx validate F` | `doc.validate()`, `rdocx.Document.validate_file(F)` | every related part and every style id; `ok`, `errors`, `warnings` |

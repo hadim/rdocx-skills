@@ -208,9 +208,9 @@ and `p:transition` stay unchecked; `mc:AlternateContent` and `mc:Ignorable` cont
 
 ## Errors instead of silent results
 
-A slide, layout or master nested deeper than 16 levels (groups in groups, `mc:AlternateContent`, animation
-time nodes) is refused at open with `XmlError` ("... nesting exceeds 16 levels") instead of crashing, and
-`add_group_shape` refuses a 17th level of groups.
+A slide whose groups nest deeper than 16 levels is refused at open with `XmlError` ("... nesting exceeds 16
+levels") instead of crashing (upstream applies the same limit to `mc:AlternateContent` and animation time nodes,
+tensorbee/rdocx#355), and `add_group_shape` refuses a 17th level with `RpptxError`.
 
 A bare int is EMU: `font.size = 12` raises `ValueError` (from 1 to 4000 points), and so does `space_before = 6`
 or `space_after = 6` (under the 0.01 pt PowerPoint stores): write `Pt(12)`, or a float for a multiple of the

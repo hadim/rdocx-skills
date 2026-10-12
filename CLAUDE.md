@@ -69,11 +69,13 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   recipes and tests embed Aileron (CC0-1.0), the subset Pillow bundles (`conftest.free_font`). A skills `main` pinned
   on the fork steps back from upstream releases: go back to tensorbee/rdocx with `bump v<version>` once a release
   carries these PRs.
-- Open gaps (pptx): `render-embedded-font` (rpptx's own renders draw an embedded font with a substitute; workaround
-  `font_dir=` / `--font-dir`) and `import-stale-source-formatting` (`keep_source_formatting` takes the source's layout,
-  master and theme as opened, not as edited in memory; workaround: reopen the source from its bytes). None closed:
-  the previous pin had none open.
-- Suite against `ffb8d3d6`: 797 passed, 9 skipped (Poppler absent), 2 xfailed on macos-arm64 from the release files;
+- Open gaps, all found on this pin, none closed (the previous pin had none open): docx `html-space-inside-emphasis`
+  (the HTML and Markdown importers put the space before an underlined, struck, bold or italic span inside its run;
+  workaround: move it to the run before); pptx `render-embedded-font` (rpptx's own renders draw an embedded font with
+  a substitute; workaround `font_dir=` / `--font-dir`) and `import-stale-source-formatting` (`keep_source_formatting`
+  takes the source's layout, master and theme as opened, not as edited in memory; workaround: reopen the source from
+  its bytes).
+- Suite against `ffb8d3d6`: 799 passed, 9 skipped (Poppler absent), 3 xfailed on macos-arm64 from the release files;
   the build notes give 750 to 751 passed on the five platforms (18 to 19 skipped), with 5 failures there, all in
   `test_skill_docs.py` (the new APIs not yet documented), fixed on this branch.
 - Before it, pinned: the integration branch `integration/open-prs-2026-10-11` (commit `37c02616`, release
@@ -98,5 +100,5 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 1. When rdocx tags a release: `bump v<version>`, `lock --write --release`, `install`, `test`, as
    docs/setup.md (Moving the pin) describes. The weekly `build.yml` run on upstream `main` says beforehand
    which gaps the next release closes.
-2. Report the two pptx gaps of this pin upstream (`render-embedded-font`, `import-stale-source-formatting`), then
-   name each issue on its entry in `tests/gaps.py`.
+2. Report the three gaps of this pin upstream (`html-space-inside-emphasis`, `render-embedded-font`,
+   `import-stale-source-formatting`), then name each issue on its entry in `tests/gaps.py`.

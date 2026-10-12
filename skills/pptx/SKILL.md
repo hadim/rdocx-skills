@@ -59,9 +59,10 @@ next time (`install --build`, 10 to 30 minutes with a Rust toolchain: run it in 
 6. **The deck will be opened elsewhere** (PowerPoint, Google Slides, Keynote, LibreOffice): edit in place,
    keep placeholders and layouts, never rebuild a deck to change it.
 7. **Embed a font only when its licence allows embedding.** `rpptx.FontEmbeddingLicense(authorized=True,
-   identity="OFL-1.1: Example Sans")` is your statement that it does, and rpptx checks nothing else. Read the
-   font's licence first (OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not, and an OS/2
-   `fsType` of 2 means restricted): when it does not allow it, or you cannot tell, do not embed and tell the user.
+   identity="OFL-1.1: Example Sans")` is your statement that it does: rpptx checks nothing else, not even the font's OS/2 `fsType`. Read the
+   licence first (OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not, and an `fsType`
+   with bit 0x0002 set means Restricted License): when it does not allow it, or you cannot tell, do not embed
+   and tell the user.
 
 ## What to use for what
 
