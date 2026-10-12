@@ -112,8 +112,8 @@ jobs:
           overwrite: true  # a re-run job uploads it again in the same run
 
   # The final suite in the notes of the release the lock pins, when it is one of this repository's builds
-  # (rdocx-<YYYYMMDD>-<commit12>); upstream releases are never touched. Also after a failing leg: its failures are
-  # what the notes must show.
+  # (rdocx-<YYYYMMDDHHMM>-<commit12>, or rdocx-<YYYYMMDD>-<commit12> for the older ones); upstream releases are
+  # never touched. Also after a failing leg: its failures are what the notes must show.
   release-notes:
     needs: test
     if: ${{ !cancelled() && github.event_name == 'push' }}

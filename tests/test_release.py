@@ -27,7 +27,9 @@ LOCK = rdocx_env.load_lock()
 PLAT = rdocx_env.platform_key()
 WANT = rdocx_env.expected(LOCK, PLAT)
 RDOCX, RPPTX = rdocx_env.cli_file(PLAT, "rdocx"), rdocx_env.cli_file(PLAT, "rpptx")
-OWN_TAG = f"rdocx-20261004-{LOCK['commit'][:12]}"
+# this repository's release tags: UTC build date and time (to the minute), and date only (the older releases)
+OWN_TAG = f"rdocx-202610041405-{LOCK['commit'][:12]}"
+OWN_TAG_DAY = f"rdocx-20261004-{LOCK['commit'][:12]}"
 
 
 def repo_copy(root, lock=LOCK):
@@ -96,14 +98,13 @@ def upstream(dist, tmp_path_factory):
     return mirror, lock
 
 
-@pytest.fixture(scope="module")
-def own(dist, tmp_path_factory):
-    """(mirror, lock): this repository's release of the pinned commit, as the build workflow publishes it."""
-    mirror, lock = tmp_path_factory.mktemp("own"), json.loads(json.dumps(LOCK))
-    lock["release"] = f"https://github.com/hadim/rdocx-skills/releases/download/{OWN_TAG}"
+def own_release(dist, mirror, tag):
+    """(mirror, lock): this repository's release `tag` of the pinned commit, as the build workflow publishes it."""
+    lock = json.loads(json.dumps(LOCK))
+    lock["release"] = f"https://github.com/hadim/rdocx-skills/releases/download/{tag}"
     lock.pop("downloads", None)
     lock["artifacts"], lock["installed_files"] = {PLAT: WANT}, {PLAT: rdocx_env.expected_files(LOCK, PLAT)}
-    folder = mirror / OWN_TAG
+    folder = mirror / tag
     folder.mkdir()
     for name in WANT:
         rdocx_env.copy_artifact(dist, name, folder / f"{PLAT}.{name}")
@@ -111,7 +112,17 @@ def own(dist, tmp_path_factory):
     return mirror, lock
 
 
-@pytest.fixture(params=["upstream", "own"])
+@pytest.fixture(scope="module")
+def own(dist, tmp_path_factory):
+    return own_release(dist, tmp_path_factory.mktemp("own"), OWN_TAG)
+
+
+@pytest.fixture(scope="module")
+def own_day(dist, tmp_path_factory):
+    return own_release(dist, tmp_path_factory.mktemp("own_day"), OWN_TAG_DAY)
+
+
+@pytest.fixture(params=["upstream", "own", "own_day"])
 def release(request):
     return request.param, *request.getfixturevalue(request.param)
 
@@ -121,7 +132,8 @@ def test_install_downloads_the_release_and_verifies_it(release, tmp_path):
     repo, home = repo_copy(tmp_path / "repo", lock), tmp_path / "home"
     res = cmd(repo, home, mirror, "install")
     assert res.returncode == 0, res.stderr
-    first = f"v0.0.1/rdocx-{rdocx_env.UPSTREAM_PLATFORMS[PLAT][0]}" if kind == "upstream" else f"{OWN_TAG}/{PLAT}.{RDOCX}"
+    first = (f"v0.0.1/rdocx-{rdocx_env.UPSTREAM_PLATFORMS[PLAT][0]}" if kind == "upstream"
+             else f"{lock['release'].rsplit('/', 1)[-1]}/{PLAT}.{RDOCX}")
     assert f"download {mirror.as_uri()}/{first}" in res.stderr
     res = cmd(repo, home, mirror, "status")
     assert res.returncode == 0 and "verified against the lock" in res.stderr
@@ -185,7 +197,7 @@ def test_bump_to_a_commit_empties_the_hashes(tmp_path):
     assert res.returncode == 0, res.stderr
     lock = json.loads((repo / "rdocx.lock.json").read_text())
     assert lock["commit"] == other and lock["ref"] == other
-    assert lock["release"] == "" and "rdocx-<date>-0123456789ab" in res.stderr
+    assert lock["release"] == "" and "rdocx-<YYYYMMDDHHMM>-0123456789ab" in res.stderr
     assert lock["artifacts"] == lock["installed_files"] == lock["versions"] == {} and "downloads" not in lock
     res = cmd(repo, tmp_path / "home", tmp_path, "bump", other)
     assert res.returncode == 0 and "already pinned" in res.stderr
@@ -222,16 +234,19 @@ def test_upstream_assets_pick_the_archive_and_the_wheel_of_a_platform(capsys):
     assert "expected one of each" in capsys.readouterr().err
 
 
-def test_release_url_is_the_release_whose_tag_ends_with_the_commit():
+@pytest.mark.parametrize("tag", ["rdocx-202609301405-0123456789ab", "rdocx-20260930-0123456789ab"])
+def test_release_url_is_the_release_whose_tag_ends_with_the_commit(tag):
     commit = "0123456789abcdef0123456789abcdef01234567"
-    releases = [{"tag_name": "rdocx-20260929-f2fa36d1d18a"}, {"tag_name": "rdocx-20260930-0123456789ab"}]
+    releases = [{"tag_name": "rdocx-20260929-f2fa36d1d18a"}, {"tag_name": "rdocx-202610011200-f2fa36d1d18b"},
+                {"tag_name": tag}]
     assert (rdocx_env.release_url("owner/repo", releases, commit)
-            == "https://github.com/owner/repo/releases/download/rdocx-20260930-0123456789ab")
+            == f"https://github.com/owner/repo/releases/download/{tag}")
 
 
 @pytest.mark.parametrize("tags, message", [
     ([], "no release of commit 0123456789ab"),
     (["rdocx-20260929-0123456789ab", "rdocx-20260930-0123456789ab"], "several releases of commit 0123456789ab"),
+    (["rdocx-20260930-0123456789ab", "rdocx-202610011200-0123456789ab"], "several releases of commit 0123456789ab"),
 ])
 def test_release_url_refuses_no_or_several_releases(tags, message, capsys):
     with pytest.raises(SystemExit):

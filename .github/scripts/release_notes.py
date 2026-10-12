@@ -10,7 +10,8 @@ stay below it, under `## Build-time suite (preliminary, skills <sha12>)` (an old
 
     release_notes.py tag [--repo OWNER/REPO] [LOCK]
         the tag of the lock's release when it is one of this repository's own builds
-        (`rdocx-<YYYYMMDD>-<commit12>`), else nothing (an upstream release is never touched)
+        (`rdocx-<YYYYMMDDHHMM>-<commit12>`, or `rdocx-<YYYYMMDD>-<commit12>` for the releases built before
+        the time was added), else nothing (an upstream release is never touched)
     release_notes.py rewrite --notes NOTES --sha SHA --run-url URL SUMMARY...
         NOTES with the final section made of the SUMMARY files (suite-summary.sh output), on stdout
 
@@ -32,8 +33,9 @@ def own_release_tag(release, repo, commit):
     pinned `commit`, else None: upstream releases (a dict of family URLs), another repository's, another tag."""
     if not isinstance(release, str):
         return None
-    m = re.fullmatch(rf"https://github\.com/{re.escape(repo)}/releases/download/(rdocx-\d{{8}}-([0-9a-f]{{12}}))/?",
-                     release)
+    # the UTC build date and time (YYYYMMDDHHMM), or the date alone (YYYYMMDD) for the older releases
+    m = re.fullmatch(rf"https://github\.com/{re.escape(repo)}/releases/download/"
+                     rf"(rdocx-\d{{8}}(?:\d{{4}})?-([0-9a-f]{{12}}))/?", release)
     if m is None or m.group(2) != commit[:12]:
         return None
     return m.group(1)
