@@ -1,6 +1,6 @@
 """The skills against the pinned build: every Python name and keyword argument and every CLI command and flag they
 cite exists, every public Python name, CLI command and flag of the build is cited or excluded with a reason, their gap
-pages match tests/gaps.py, and each SKILL.md stays under 200 lines. A pin that renames, drops or adds an API fails
+pages match tests/gaps.py, and each SKILL.md and its description stay within their budgets. A pin that renames, drops or adds an API fails
 here even when no recipe block runs it (the recipes themselves run in test_docs_snippets.py).
 
 Positional parameters are written as short placeholders in the skills (`bi`, `rid`, `r, c`) and are not checked:
@@ -9,6 +9,7 @@ import ast
 import builtins
 import functools
 import importlib
+import json
 import pkgutil
 import re
 import subprocess
@@ -370,6 +371,25 @@ def test_no_gap_is_claimed_outside_the_registry():
 
 
 # ---------------------------------------------------------------- size
+# SKILL.md is read in full each time the skill loads: a byte budget (about 4,000 tokens), since its table rows are
+# single long lines that a line count does not see grow. Details belong in the references, looked up with grep.
+SKILL_MD_MAX_BYTES = 16_000
+# The description sits in every session's skill listing. The Agent Skills specification caps it at 1,024
+# characters; Claude Code's listing has a budget of 1% of the context and drops the descriptions of the least used
+# skills first, so ours stay well below the cap.
+DESCRIPTION_MAX_CHARS = 800
+
+
 @pytest.mark.parametrize("path", sorted(SKILLS.glob("*/SKILL.md")), ids=lambda p: p.parent.name)
-def test_skill_md_stays_under_200_lines(path):
-    assert len(path.read_text().splitlines()) < 200
+def test_skill_md_stays_within_its_byte_budget(path):
+    size = len(path.read_bytes())
+    assert size <= SKILL_MD_MAX_BYTES, f"{rel(path)}: {size} bytes, budget {SKILL_MD_MAX_BYTES}: move details to references/"
+
+
+@pytest.mark.parametrize("path", sorted(SKILLS.glob("*/SKILL.md")), ids=lambda p: p.parent.name)
+def test_skill_description_fits_the_listing(path):
+    front = path.read_text().split("---")[1]
+    m = re.search(r'^description: (".*")$', front, re.M)
+    assert m, f"{rel(path)}: no one-line quoted description in the front matter"
+    description = json.loads(m.group(1))
+    assert 0 < len(description) <= DESCRIPTION_MAX_CHARS <= 1024, f"{rel(path)}: {len(description)} characters"

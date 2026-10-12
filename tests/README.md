@@ -21,7 +21,7 @@ python3 scripts/rdocx_env.py test --runxfail      # show how each known gap fail
 | `test_release.py` | `scripts/rdocx_env.py` and the releases (upstream's and this repository's builds): download and check, a changed file refused, `lock --write --release` with its provenance check, finding the release tags of a commit, `bump` |
 | `test_ci_scripts.py` | `.github/scripts`: the suite summary's groups (gaps closed, docs not yet updated, other failures), the final suite written into the notes of this repository's release only, idempotent, the build-time suite of older releases kept |
 | `test_docs_snippets.py` | every block of `skills/*/references/recipes.md`, run in order, then checks on their outputs |
-| `test_skill_docs.py` | the skills against the build: every cited Python name, keyword argument, CLI command and flag exists, the gap pages match `gaps.py`, each SKILL.md stays under 200 lines |
+| `test_skill_docs.py` | the skills against the build: every cited Python name, keyword argument, CLI command and flag exists, the gap pages match `gaps.py`, each SKILL.md stays under 16 KB and its description under 800 characters |
 
 Fixtures are generated at run time by `fixtures/make_fixture_docx.py` and `fixtures/make_fixture_pptx.py`
 (deterministic; invented text and drawn pictures), by `builders.py` (a document with a token in every story:
