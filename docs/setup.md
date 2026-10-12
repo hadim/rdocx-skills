@@ -126,8 +126,7 @@ your package manager; the script never installs a toolchain). It takes 10 to 30 
   (Visual Studio Build Tools, C++ workload) besides rustup.
 
 The Linux CLIs need glibc 2.35 or later (the wheels 2.28). The Windows files are built with MSVC. The
-`macos-x86_64` files come from the upstream releases only: this repository's build workflow does not build
-them.
+`macos-x86_64` files of this repository's releases are built on `macos-15-intel`.
 
 ## Continuous integration
 
