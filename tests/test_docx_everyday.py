@@ -894,14 +894,19 @@ def test_an_embedded_font_is_drawn_by_rdocx_and_libreoffice(rdocx_cli, tmp_path,
     assert pdf_uses_font(libreoffice_pdf(tmp_path / "True.docx", tmp_path), b"Aileron")
 
 
-@pytest.mark.gap("html-space-inside-emphasis")
 def test_the_space_before_emphasis_stays_outside_it():
-    html = rdocx.Document.from_html("<p>see <u>this</u> and <s>that</s></p>")[0]
+    """A space before or after an underlined, struck, bold or italic span stays outside it, so Word does not
+    underline or strike it; a space written inside the span stays in it."""
+    html = rdocx.Document.from_html("<p>see <u>this</u> and <s>that</s> or <b>bold</b></p>")[0]
     md = rdocx.Document.from_markdown("a ~~struck~~ and *it*\n")[0]
-    assert [(r.text, bool(r.underline), bool(r.font.strike)) for r in html.paragraphs[0].runs] == [
-        ("see ", False, False), ("this", True, False), (" and ", False, False), ("that", False, True)]
-    assert [(r.text, bool(r.font.strike), bool(r.italic)) for r in md.paragraphs[0].runs] == [
+    inside = rdocx.Document.from_html("<p>see <u>this </u>and</p>")[0]
+    assert [(r.text, bool(r.font.underline), bool(r.font.strike), bool(r.font.bold)) for r in html.paragraphs[0].runs] == [
+        ("see ", False, False, False), ("this", True, False, False), (" and ", False, False, False),
+        ("that", False, True, False), (" or ", False, False, False), ("bold", False, False, True)]
+    assert [(r.text, bool(r.font.strike), bool(r.font.italic)) for r in md.paragraphs[0].runs] == [
         ("a ", False, False), ("struck", True, False), (" and ", False, False), ("it", False, True)]
+    assert [(r.text, bool(r.font.underline)) for r in inside.paragraphs[0].runs] == [
+        ("see ", False), ("this ", True), ("and", False)]
 
 
 def test_a_restricted_fstype_is_not_checked(free_font):
@@ -915,17 +920,6 @@ def test_a_restricted_fstype_is_not_checked(free_font):
     prs = __import__("rpptx").Presentation()
     prs.embed_font("Restricted", bytes(data), license=__import__("rpptx").FontEmbeddingLicense(authorized=True, identity="test"))
     assert [f.name for f in doc.fonts if f.embedded_fonts] == ["Restricted"] and prs.embedded_fonts[0].typeface == "Restricted"
-
-
-def test_the_space_before_emphasis_can_be_moved_out_after_the_import():
-    """The workaround of gap html-space-inside-emphasis."""
-    doc = rdocx.Document.from_html("<p>see <u>this</u> now</p>")[0]
-    runs = doc.paragraphs[0].runs
-    for k in range(1, len(runs)):
-        if runs[k].text.startswith(" ") and (runs[k].underline or runs[k].font.strike):
-            runs[k].text = runs[k].text[1:]
-            runs[k - 1].text += " "
-    assert [(r.text, bool(r.underline)) for r in doc.paragraphs[0].runs] == [("see ", False), ("this", True), (" now", False)]
 
 
 DOUBLED_SPACES = {"<p>a <s>b </s> c</p>": "a b c", "<p>and <s> that</s></p>": "and that",
