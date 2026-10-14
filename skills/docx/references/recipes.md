@@ -291,7 +291,7 @@ $R/rdocx replace v1.docx -p "three points lower" -v "two points lower" --expect 
 $R/rdocx compare v1.docx v2.docx --author "Reviewer" --timestamp 2026-09-27T12:00:00Z --granularity word -o redline.docx --json
 $R/rdocx revision list --json redline.docx
 $R/rdocx revision accept redline.docx --author "Reviewer" -o accepted.docx --json
-$R/rdocx convert redline.docx --to pdf --revision-view tracked -o redline-tracked.pdf
+$R/rdocx convert redline.docx --to pdf --revision-view tracked --revision-style legal -o redline-tracked.pdf
 ```
 
 The redline holds only the edit, in every story (`revision list` shows each revision's story), and
@@ -299,8 +299,9 @@ The redline holds only the edit, in every story (`revision list` shows each revi
 run). In Python: `v1.compare(v2, "Reviewer", timestamp, granularity="word")`. Compare before rebuilding the
 TOC: a TOC rebuilt on the edited side adds its entries to the redline as revisions.
 To show the redline outside Word, render it with `--revision-view tracked` (Python
-`to_pdf(revision_view="tracked")`): deletions struck through, insertions underlined, a change bar. The default
-PDF is the accepted view.
+`to_pdf(revision_view="tracked")`): deletions struck through, insertions underlined, a change bar; add
+`--revision-style legal` (`revision_style="legal"`) for the colours reviewers expect (insertions blue, deletions
+red, moves green). The default PDF is the accepted view.
 
 ## Table of contents and page fields
 

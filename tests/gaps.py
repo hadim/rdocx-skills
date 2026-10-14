@@ -22,27 +22,7 @@ gaps closed.
 # with integration/open-prs-2026-10-12-2.
 # html-space-doubled-at-span-edge (#359) and font-dir-alias-below-embedded-face (#361) closed with
 # integration/open-prs-2026-10-12-3.
-GAPS = {
-    # upstream: tensorbee/rdocx#371
-    "compare-break-only-paragraphs": "Document.compare (and rdocx compare) fails its own acceptance check when two "
-    "paragraphs holding only a line break, followed by a text paragraph, become one break-only paragraph",
-    # upstream: tensorbee/rdocx#370
-    "compare-empty-paragraph-properties": "Document.compare (and rdocx compare) fails its own acceptance check when "
-    "an empty paragraph gains paragraph properties (spacing, alignment), in the body or a header; ignore_formatting "
-    "avoids it",
-    # upstream: tensorbee/rdocx#368
-    "compare-hyperlink-paragraph": "Document.compare (and rdocx compare) refuses a pair in which a whole paragraph "
-    "holding a hyperlink is inserted or deleted, at every granularity and with the ignore options",
-    # upstream: tensorbee/rdocx#369
-    "compare-paragraph-next-to-table": "Document.compare (and rdocx compare) refuses some pairs in which the "
-    "paragraph right before a table is inserted or deleted (\"needs an adjacent paragraph for a final paragraph "
-    "change\"), for example the first paragraph of the body, or a deletion next to an edited cell",
-    # upstream: tensorbee/rdocx#372 (feature request)
-    "compare-word-grouping": "Document.compare at word granularity alternates one-word deletions and insertions "
-    "across a rewritten stretch instead of one deletion then one insertion, which makes a rewritten paragraph "
-    "unreadable",
-    # upstream: tensorbee/rdocx#373 (feature request)
-    "tracked-view-colours": "the tracked revision view (to_pdf, render_pages, convert and render with "
-    "--revision-view tracked) draws in black only, with no colour option; raw XML refuses header and footer "
-    "paragraphs, and replace_xml refuses a picture paragraph whose asvg namespace is declared on the w:p",
-}
+# compare-hyperlink-paragraph (#368), compare-paragraph-next-to-table (#369), compare-empty-paragraph-properties
+# (#370), compare-break-only-paragraphs (#371), compare-word-grouping (#372, through #374) and tracked-view-colours
+# (#373, through #375) closed with integration/open-prs-2026-10-14.
+GAPS = {}

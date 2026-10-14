@@ -94,7 +94,8 @@ rdocx compare ORIGINAL EDITED --author NAME --timestamp 2026-09-27T12:00:00Z -o 
 Writes ORIGINAL with EDITED's differences as tracked changes by NAME at the timestamp, in every supported
 story. JSON record: `main_story_revisions`, `diagnostics`, `scope`, `output`. The default granularity is
 `run`: one changed word shows as its whole run deleted and re-inserted. Pass `--granularity word` for a
-redline a person reads. A comment added or removed on the edited side replaces the paragraph it anchors on
+redline a person reads: each changed stretch shows as one deletion then one insertion, short unchanged
+words inside it folded in. A comment added or removed on the edited side replaces the paragraph it anchors on
 (deleted and reinserted), a reply or a resolved state adds one insertion: accepting gives EDITED's comments,
 rejecting ORIGINAL's. `--ignore-comments` keeps the original's comments, drops the edited file's, and
 compares the text only. A pair whose edited side had
@@ -129,11 +130,11 @@ record and all its faces.
 ## Rendering and conversion
 
 ```bash
-rdocx convert F --to pdf -o NEW.pdf [--font-dir DIR] [--revision-view accepted|tracked] [--force]
-rdocx convert F --to png|jpeg|tiff -o OUT.png [--dpi 150] [--pages 1,3-5] [--quality 90] [--transparent] [--revision-view tracked] [--font-dir DIR]
+rdocx convert F --to pdf -o NEW.pdf [--font-dir DIR] [--revision-view accepted|tracked] [--revision-style plain|legal] [--force]
+rdocx convert F --to png|jpeg|tiff -o OUT.png [--dpi 150] [--pages 1,3-5] [--quality 90] [--transparent] [--revision-view tracked] [--revision-style legal] [--font-dir DIR]
 rdocx convert F --to md|html -o NEW.md
 rdocx convert notes.md|page.html [--to docx] [--template brand.dotx] -o NEW.docx
-rdocx render F -o NEW_DIR [--dpi 150] [--pages 1,3-5 | --page 0] [--format png|jpeg|tiff] [--quality 90] [--transparent] [--revision-view tracked] [--font-dir DIR] [--force]
+rdocx render F -o NEW_DIR [--dpi 150] [--pages 1,3-5 | --page 0] [--format png|jpeg|tiff] [--quality 90] [--transparent] [--revision-view tracked] [--revision-style legal] [--font-dir DIR] [--force]
 rdocx layout --json F [--font-dir DIR]
 ```
 Images from `convert`: one page goes to `OUT.png`, several to `OUT_001.png`, `OUT_002.png`... (tiff: one
@@ -152,4 +153,6 @@ the styles, numbering, headers and footers of a DOCX or DOTX. What the import dr
 `--force` replaces an existing output, never the input.
 Tracked changes: every output shows the accepted view by default (insertions in, deletions out, no marks).
 `--revision-view tracked` renders a PDF or images with deletions struck through, insertions underlined and a
-change bar, which is how to show a redline; Markdown and HTML refuse it.
+change bar, which is how to show a redline; Markdown and HTML refuse it. `--revision-style legal` (only with
+`--revision-view tracked`) colours it as legal comparison tools do: insertions blue with a double underline,
+deletions red and struck through, moved text green, the change bar in the colour of the change.

@@ -107,7 +107,7 @@ def test_a_font_without_a_bold_face_gets_a_synthetic_bold(tmp_path):
     assert weights[1] > 1.15 * weights[0], weights
 
 
-# ---------------------------------------------------------------- tracked view in colour (gap reported 2026-10-14)
+# ---------------------------------------------------------------- tracked view in colour, raw XML in headers (#373, through #375)
 def blue_and_red(png):
     """How many pixels of the image are clearly blue, and how many clearly red."""
     pixels = list(Image.open(io.BytesIO(png)).convert("RGB").getdata())
@@ -115,7 +115,6 @@ def blue_and_red(png):
             sum(1 for r, g, b in pixels if r > 150 and g < 90 and b < 90))
 
 
-@pytest.mark.gap("tracked-view-colours")
 def test_a_tracked_render_can_be_asked_in_colour(rdocx_cli, tmp_path):
     """As legal comparison tools show a redline: insertions blue, deletions red."""
     doc = redline(tmp_path / "r.docx")
@@ -128,7 +127,6 @@ def test_a_tracked_render_can_be_asked_in_colour(rdocx_cli, tmp_path):
     assert blue > 0 and red > 0
 
 
-@pytest.mark.gap("tracked-view-colours")
 def test_raw_xml_reaches_header_paragraphs():
     """Needed to colour the revisions of a header or footer by hand."""
     doc = rdocx.Document()
@@ -139,7 +137,6 @@ def test_raw_xml_reaches_header_paragraphs():
     assert doc.sections[0].header.paragraphs[0].text == "New header."
 
 
-@pytest.mark.gap("tracked-view-colours")
 def test_replace_xml_takes_the_svg_namespace_declared_on_the_paragraph(tmp_path):
     """A picture paragraph with an SVG twin, its asvg namespace declared on w:p rather than on svgBlip: the same
     XML infoset, which xml.etree writes that way."""
@@ -158,19 +155,3 @@ def test_replace_xml_takes_the_svg_namespace_declared_on_the_paragraph(tmp_path)
            if "</a:blip>" not in first else first.replace("</a:blip>", ext + "</a:blip>", 1))
     doc.paragraphs[0].replace_xml(re.sub(r"^<w:p\b", "<w:p " + ns, xml, count=1))
     assert b"svgBlip" in doc.paragraphs[0].xml
-
-
-def test_revisions_coloured_through_raw_xml_render_in_colour(tmp_path):
-    """The workaround of gap tracked-view-colours: colour the runs inside w:ins and w:del of a throwaway copy, then
-    render it in the tracked view. Body and table-cell paragraphs only."""
-    doc = redline(tmp_path / "r.docx")
-
-    def colour(match):
-        value = "0000FF" if match.group(1) == "ins" else "FF0000"
-        return re.sub(r"<w:r>(?=<w:(?:t|delText)\b)", '<w:r><w:rPr><w:color w:val="%s"/></w:rPr>' % value,
-                      match.group(0))
-
-    for p in doc.paragraphs:
-        p.replace_xml(re.sub(r"<w:(ins|del)\b[^>]*>.*?</w:\1>", colour, p.xml.decode(), flags=re.S))
-    blue, red = blue_and_red(doc.render_pages(dpi=100, pages=[0], revision_view="tracked")[0])
-    assert blue > 0 and red > 0
