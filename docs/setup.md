@@ -141,8 +141,9 @@ them, and on a pin of this repository's build `install` exits 2 there and the sk
   (`rdocx-<YYYYMMDDHHMM>-<commit12>`, or `rdocx-<YYYYMMDD>-<commit12>` for the releases built before the time was
   added, of this repository and of the pinned commit; upstream releases are never touched), as the section
   `Acceptance suite (skills main <sha12>, <run URL>)` right after the notes' preamble: the results of the skills and
-  tests that ship with the release. It runs after a failing leg too, and running it again replaces that section
-  (`.github/scripts/release_notes.py`).
+  tests that ship with the release. It also marks that release as the repository's latest (`build.yml` publishes
+  with `--latest=false`, so a build becomes latest only once `main` pins it). It runs after a failing leg too, and
+  running it again replaces that section (`.github/scripts/release_notes.py`).
 - `.github/workflows/build.yml`, only for a commit between two upstream releases, by hand (Actions, build, Run
   workflow, `ref`: any upstream tag, branch or commit): builds it on four native runners (ubuntu-22.04,
   ubuntu-22.04-arm, macos-14, windows-2025), checks that each build installs, verifies and runs,
