@@ -20,7 +20,7 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
 - `.github/workflows/`: `ci.yml` (the suite on four platforms, every push and PR, Intel Macs left out; on a push to `main` whose lock
   pins one of this repository's releases, its summaries become the "Acceptance suite" section of that release's
-  notes, through `.github/scripts/release_notes.py`), `build.yml` (only for a commit between two upstream releases, by
+  notes, through `.github/scripts/release_notes.py`, and that release is marked latest), `build.yml` (only for a commit between two upstream releases, by
   hand: builds it on four runners (no macos-x86_64), checks that it installs and runs, and publishes the release
   `rdocx-<YYYYMMDDHHMM>-<commit12>`, UTC build date and time first since GitHub lists releases by tag name (older
   releases: `rdocx-<YYYYMMDD>-<commit12>`, still valid); no suite there; inputs `lto` (`thin` by default, about half

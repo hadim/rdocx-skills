@@ -112,7 +112,8 @@ jobs:
 
   # The final suite in the notes of the release the lock pins, when it is one of this repository's builds
   # (rdocx-<YYYYMMDDHHMM>-<commit12>, or rdocx-<YYYYMMDD>-<commit12> for the older ones); upstream releases are
-  # never touched. Also after a failing leg: its failures are what the notes must show.
+  # never touched. Also after a failing leg: its failures are what the notes must show. That release becomes the
+  # repository's latest, since main pins it (build.yml publishes with --latest=false until a pin adopts it).
   release-notes:
     needs: test
     if: ${{ !cancelled() && github.event_name == 'push' }}
@@ -140,5 +141,5 @@ jobs:
           python3 .github/scripts/release_notes.py rewrite --notes "$RUNNER_TEMP/notes.md" --sha "$GITHUB_SHA" \
             --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             "$RUNNER_TEMP"/suites/suite-*/suite-*.md > "$RUNNER_TEMP/final-notes.md"
-          gh release edit "$tag" -R "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/final-notes.md"
+          gh release edit "$tag" -R "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/final-notes.md" --latest
           echo "Final suite written into the notes of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
