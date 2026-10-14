@@ -22,4 +22,7 @@ gaps closed.
 # with integration/open-prs-2026-10-12-2.
 # html-space-doubled-at-span-edge (#359) and font-dir-alias-below-embedded-face (#361) closed with
 # integration/open-prs-2026-10-12-3.
+# compare-hyperlink-paragraph (#368), compare-paragraph-next-to-table (#369), compare-empty-paragraph-properties
+# (#370), compare-break-only-paragraphs (#371), compare-word-grouping (#372, through #374) and tracked-view-colours
+# (#373, through #375) closed with integration/open-prs-2026-10-14.
 GAPS = {}

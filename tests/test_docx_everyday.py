@@ -275,8 +275,6 @@ def test_headers_footers_page_numbers_the_python_docx_way(rdocx_cli, tmp_path):
     assert [p.text for p in header_table.cell(0, 0).paragraphs] == ["", "second line"]
     assert (doc.sections[0].header.kind, doc.sections[0].header.variant, doc.sections[0].header.is_linked_to_previous) == (
         "header", "default", False)
-    with pytest.raises(NotImplementedError):
-        doc.sections[0].header.paragraphs[0].xml                           # raw XML: body and cells only
     doc.save(tmp_path / "h.docx")
     parts_ = {n: part(tmp_path / "h.docx", n).decode() for n in zipfile.ZipFile(tmp_path / "h.docx").namelist()
               if re.match(r"word/(header|footer)\d+\.xml$", n)}

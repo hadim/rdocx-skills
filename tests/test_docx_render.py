@@ -1,5 +1,6 @@
 """docx, fields, table of contents, layout, rendering and CLI robustness."""
 import io
+import re
 import subprocess
 
 import docx
@@ -104,3 +105,53 @@ def test_a_font_without_a_bold_face_gets_a_synthetic_bold(tmp_path):
     weights = [ink(rdocx.Document.open(font_docx(tmp_path / f"{bold}.docx", "Monofamily", bold)).render_page_to_png(
         0, 100.0, font_dir=fonts)) for bold in (False, True)]
     assert weights[1] > 1.15 * weights[0], weights
+
+
+# ---------------------------------------------------------------- tracked view in colour, raw XML in headers (#373, through #375)
+def blue_and_red(png):
+    """How many pixels of the image are clearly blue, and how many clearly red."""
+    pixels = list(Image.open(io.BytesIO(png)).convert("RGB").getdata())
+    return (sum(1 for r, g, b in pixels if b > 150 and r < 90 and g < 90),
+            sum(1 for r, g, b in pixels if r > 150 and g < 90 and b < 90))
+
+
+def test_a_tracked_render_can_be_asked_in_colour(rdocx_cli, tmp_path):
+    """As legal comparison tools show a redline: insertions blue, deletions red."""
+    doc = redline(tmp_path / "r.docx")
+    assert blue_and_red(doc.render_pages(dpi=100, pages=[0], revision_view="tracked")[0]) == (0, 0)
+    blue, red = blue_and_red(doc.render_pages(dpi=100, pages=[0], revision_view="tracked", revision_style="legal")[0])
+    assert blue > 0 and red > 0
+    run([rdocx_cli, "convert", tmp_path / "r.docx", "--to", "png", "--dpi", "100", "--revision-view", "tracked",
+         "--revision-style", "legal", "-o", tmp_path / "r.png"], check=True)
+    blue, red = blue_and_red((tmp_path / "r.png").read_bytes())
+    assert blue > 0 and red > 0
+
+
+def test_raw_xml_reaches_header_paragraphs():
+    """Needed to colour the revisions of a header or footer by hand."""
+    doc = rdocx.Document()
+    doc.add_paragraph("Body.")
+    header = doc.sections[0].header.paragraphs[0]
+    header.text = "Header text."
+    header.replace_xml(header.xml.replace(b"Header text.", b"New header."))
+    assert doc.sections[0].header.paragraphs[0].text == "New header."
+
+
+def test_replace_xml_takes_the_svg_namespace_declared_on_the_paragraph(tmp_path):
+    """A picture paragraph with an SVG twin, its asvg namespace declared on w:p rather than on svgBlip: the same
+    XML infoset, which xml.etree writes that way."""
+    image = io.BytesIO()
+    Image.new("RGB", (4, 4), (255, 0, 0)).save(image, "PNG")
+    (tmp_path / "dot.png").write_bytes(image.getvalue())
+    doc = rdocx.Document()
+    doc.add_picture(str(tmp_path / "dot.png"), width=rdocx.Inches(0.5))
+    doc.add_picture(str(tmp_path / "dot.png"), width=rdocx.Inches(0.5))  # its image part stands in for the SVG one
+    first, second = (p.xml.decode() for p in doc.paragraphs[:2])
+    rid = re.search(r'r:embed="([^"]+)"', second).group(1)
+    ns = 'xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main"'
+    ext = ('<a:extLst><a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}"><asvg:svgBlip r:embed="%s"/></a:ext>'
+           '</a:extLst>' % rid)
+    xml = (re.sub(r"(<a:blip\b[^>]*?)/>", lambda m: m.group(1) + ">" + ext + "</a:blip>", first, count=1)
+           if "</a:blip>" not in first else first.replace("</a:blip>", ext + "</a:blip>", 1))
+    doc.paragraphs[0].replace_xml(re.sub(r"^<w:p\b", "<w:p " + ns, xml, count=1))
+    assert b"svgBlip" in doc.paragraphs[0].xml
