@@ -496,9 +496,10 @@ docx_ops.save_atomic(doc, "chart.docx", "report.docx")
 First check that the font's licence allows embedding (SKILL.md, rule 9); here Aileron, CC0-1.0.
 
 ```bash
-$R/rdocx font embed report.docx Aileron-Regular.ttf --name Aileron --license-authorized \
+$R/rdocx font embed report.docx --font Aileron-Regular.ttf --name Aileron --license-authorized \
     --license-identity "CC0-1.0: Aileron" -o embedded.docx --json
-$R/rdocx font list --json embedded.docx                    # the face, its licence, embed_true_type_fonts true
+$R/rdocx font list --json embedded.docx                    # actual ODTTF part, stored length and decoded length
+$R/rdocx font settings embedded.docx --json
 ```
 
 ```python
@@ -509,6 +510,17 @@ doc.embed_font("Aileron", "Aileron-Regular.ttf", "regular",
 doc.paragraphs[0].runs[0].font.name = "Aileron"            # the runs that should show it
 docx_ops.save_atomic(doc, "embedded-py.docx", "report.docx")
 font = next(f for f in rdocx.Document.open("embedded-py.docx").fonts if f.name == "Aileron")
-print([(e.kind, e.license.identity) for e in font.embedded_fonts])
+print([(e.kind, len(e.data)) for e in font.embedded_fonts])
 ```
 
+Use Python kind `bold_italic` and CLI `--kind bold-italic` for the fourth face.
+Embed each physical face separately with the same explicit licence assertion.
+The assertion records caller permission, it does not derive permission from the font file.
+Check the exact source licence before reusing the Aileron example identity.
+Snapshots are detached and immutable. Rendering with explicit caller fonts of
+the same document-facing name takes precedence over embedded faces.
+
+Word can display only one embedded face per font name. Native Word may synthesize
+bold and discard the saved bold part. rdocx stores all four face kinds and its own
+renderer selects the supplied faces. Check the delivered file in Word when
+multiple faces of one family matter.

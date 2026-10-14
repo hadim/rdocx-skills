@@ -346,12 +346,15 @@ $R/rpptx convert deck.pptx --to html -o deck.html                      # picture
 ## Embed a font
 
 First check that the font's licence allows embedding (SKILL.md, rule 7); here Aileron, CC0-1.0. Embed as the
-last step: PowerPoint for Mac drops embedded fonts when it saves the deck again.
+last step if the receiving application discards embeddings. Native PowerPoint
+checks retain uncompressed EOT and use genuine regular and bold faces. Verify
+the delivered file after resaving it in the receiving application.
 
 ```bash
-$R/rpptx font embed deck.pptx Aileron-Regular.ttf --name Aileron --license-authorized \
+$R/rpptx font embed deck.pptx --font Aileron-Regular.ttf --name Aileron --license-authorized \
     --license-identity "CC0-1.0: Aileron" -o embedded.pptx --json
-$R/rpptx font list --json embedded.pptx                    # format "eot", embed_true_type_fonts true
+$R/rpptx font list --json embedded.pptx                    # actual EOT part, stored length and decoded length
+$R/rpptx font settings embedded.pptx --json
 ```
 
 ```python
@@ -359,8 +362,14 @@ import pptx_ops, rpptx
 prs = rpptx.Presentation("deck.pptx")
 prs.embed_font("Aileron", "Aileron-Regular.ttf", "regular",
                license=rpptx.FontEmbeddingLicense(authorized=True, identity="CC0-1.0: Aileron"))
-assert prs.embed_true_type_fonts                   # PowerPoint uses embedded fonts only with this flag
+assert prs.embed_true_type_fonts                   # embedding enables this flag
 pptx_ops.save_atomic(prs, "embedded-py.pptx", "deck.pptx")
 print([(t.typeface, [(f.kind, f.format) for f in t.faces]) for t in rpptx.Presentation("embedded-py.pptx").embedded_fonts])
 ```
 
+Use Python kind `bold_italic` and CLI `--kind bold-italic` for the fourth face.
+Embed each physical face separately with the same explicit licence assertion.
+The assertion records caller permission, it does not derive permission from the font file.
+Check the exact source licence before reusing the Aileron example identity.
+Snapshots are detached and immutable. Rendering with explicit caller fonts of
+the same document-facing name takes precedence over embedded faces.

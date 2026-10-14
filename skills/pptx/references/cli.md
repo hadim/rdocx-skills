@@ -75,21 +75,34 @@ With `--json`, each prints an operation record: `action`, `comment_id` (and `par
 ## Fonts
 
 ```bash
-rpptx font list [--json] F
-rpptx font embed F FONT.ttf --name 'Example Sans' [--face regular|bold|italic|bold_italic] --license-authorized \
+rpptx font list F [--json]
+rpptx font embed F --font FONT.ttf --name 'Example Sans' [--kind regular|bold|italic|bold-italic] --license-authorized \
       --license-identity 'OFL-1.1: Example Sans' -o OUT [--json]
-rpptx font remove F --name 'Example Sans' [--face bold] -o OUT [--json]   # without --face: the whole font
-rpptx font settings F [--embed-true-type-fonts true|false] [--save-subset-fonts true|false] -o OUT [--json]
+rpptx font remove F --name 'Example Sans' [--kind bold] -o OUT [--json]
+rpptx font settings F [--json]
+rpptx font settings F --embed-true-type-fonts true|false|none [--save-subset-fonts true|false|none] -o OUT [--json]
 ```
-`font list --json` gives `fonts` (`name`, `panose`, `pitch_family`, `charset`, `embedded`: `face`,
-`relationship_id`, `part`, `format`, `byte_count`, `stored_byte_count`) and `settings` (`embed_true_type_fonts`,
-`save_subset_fonts`). `font embed` writes the face as the uncompressed Embedded OpenType PowerPoint reads (`format`
-`eot`) and turns `embedTrueTypeFonts` on: PowerPoint ignores embedded fonts without it, so leave it on. Without
-`--license-authorized`, or with an empty `--license-identity`, it exits 1 and writes nothing: pass them only for a
-font whose licence allows embedding (SKILL.md, rule 7). `rpptx convert` and `render` draw the faces a deck embeds,
-except a MicroType Express one (`format` `compressed_eot`, which PowerPoint writes: observed upstream,
-tensorbee/rdocx#361), which gets a substitute: add `--font-dir DIR` with the font file in `DIR`. A `--font-dir`
-font of the typeface wins over an embedded face, by its own family or by its file name (`Aileron.ttf`).
+
+`--font` is required for embedding. Python uses `bold_italic`, the CLI uses
+`bold-italic`. Removing without `--kind` removes the whole record and its faces.
+Settings reads require no output. Mutations require an output and at least one
+explicit setting. `none` removes the setting, preserving its distinction from
+`false`. Embedding requires explicit caller authorization and a nonempty exact
+licence identity, check permission from the actual font source first. Invalid
+inputs and existing outputs refuse without changing the input or publishing a
+partial output.
+
+`font list --json` returns `schema: 1` and `fonts`, it does not include settings.
+Each record has `name`, `panose`, `pitch_family`, `charset` and `faces`.
+Each face has `kind`, `relationship_id`, `part_name`, `format`, `stored_len`
+and `decoded_len` (null when undecoded). CLI format `compressed-eot` differs
+from Python `compressed_eot`. Unsupported embedded payloads are preserved,
+not decoded for rendering. Read the two flags with `font settings --json`.
+
+Own deterministic rendering uses supported enabled embedded faces before bundled
+fallback. Explicit caller `--font-dir` faces take precedence. Native PowerPoint
+checks retain uncompressed EOT and use genuine regular and bold faces. Verify
+font retention after resaving in the receiving application.
 
 ## Rendering
 
