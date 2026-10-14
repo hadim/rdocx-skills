@@ -8,7 +8,7 @@ import rdocx
 from PIL import Image
 
 from builders import word_textbox_docx
-from conftest import part, run
+from conftest import STAMP, part, run
 
 
 def simple(path, *texts, table_after=None):
@@ -240,3 +240,179 @@ def test_table_indent_negative_included(tmp_path):
     assert re.search(rb'<w:tblInd w:w="-144" w:type="dxa"/>', part(tmp_path / "t.docx", "word/document.xml"))
     doc.tables[0].indent = None
     assert doc.tables[0].indent is None
+
+
+# ---------------------------------------------------------------- redlining real pairs (gaps reported 2026-10-14)
+def blocks(*items):
+    """A document of top-level blocks: a string is a paragraph, ("table", text) a 1x1 table, "LINK" a paragraph
+    holding a hyperlink, "BREAK" a paragraph holding only a line break (the answer box of a form)."""
+    doc = rdocx.Document()
+    for b in items:
+        if isinstance(b, tuple):
+            doc.add_table(1, 1).cell(0, 0).text = b[1]
+        elif b == "LINK":
+            p = doc.add_paragraph("Write to ")
+            p.add_hyperlink("the team", "https://example.com")
+            p.add_run(" for help.")
+        elif b == "BREAK":
+            doc.add_paragraph().add_run("").add_break()
+        else:
+            doc.add_paragraph(b)
+    return doc
+
+
+def redline_round_trip(folder, original, edited, **options):
+    """The word-level redline of the pair, saved: compare succeeds, accepting it gives the edited text and
+    rejecting it the original. Returns the path of the redline."""
+    folder.mkdir()
+    original.save(folder / "a.docx")
+    edited.save(folder / "b.docx")
+    doc = rdocx.Document.open(folder / "a.docx")
+    doc.compare(rdocx.Document.open(folder / "b.docx"), "Reviewer", STAMP, granularity="word", **options)
+    doc.save(folder / "redline.docx")
+    accepted, rejected = rdocx.Document.open(folder / "redline.docx"), rdocx.Document.open(folder / "redline.docx")
+    accepted.accept_all()
+    rejected.reject_all()
+    assert accepted.text() == rdocx.Document.open(folder / "b.docx").text()
+    assert rejected.text() == rdocx.Document.open(folder / "a.docx").text()
+    return folder / "redline.docx"
+
+
+IGNORE = {"ignore_fields": True, "ignore_formatting": True}
+
+HYPERLINK_PARAGRAPH = {
+    "inserted": (("One.", "Two."), ("One.", "LINK", "Two."), {}),
+    "deleted": (("One.", "LINK", "Two."), ("One.", "Two."), {}),
+    "deleted, ignore options": (("One.", "LINK", "Two."), ("One.", "Two."), IGNORE),
+}
+
+
+@pytest.mark.gap("compare-hyperlink-paragraph")
+@pytest.mark.parametrize("case", HYPERLINK_PARAGRAPH)
+def test_compare_tracks_a_whole_paragraph_holding_a_hyperlink(tmp_path, case):
+    original, edited, options = HYPERLINK_PARAGRAPH[case]
+    redline_round_trip(tmp_path / "pair", blocks(*original), blocks(*edited), **options)
+
+
+def test_unlinked_copies_let_compare_track_a_paragraph_that_held_a_hyperlink(tmp_path):
+    """The workaround of gap compare-hyperlink-paragraph: remove the hyperlinks of throwaway copies of both inputs
+    (their text stays), then compare; the redline has no links."""
+    original, edited = blocks("One.", "LINK", "Two."), blocks("One.", "Two.")
+    for doc in (original, edited):
+        while doc.hyperlinks:
+            doc.remove_hyperlink(doc.hyperlinks[0])
+    redline_round_trip(tmp_path / "pair", original, edited)
+
+
+NEXT_TO_TABLE = {
+    "first paragraph deleted": (("Old.", ("table", "Same cell."), "End."), (("table", "Same cell."), "End."), {}),
+    "first paragraph inserted": ((("table", "Same cell."), "End."), ("New.", ("table", "Same cell."), "End."), {}),
+    "deleted, cell edited": (("Intro.", "Old.", ("table", "Old cell."), "End."),
+                             ("Intro.", ("table", "New cell."), "End."), {}),
+    "deleted, cell edited, ignore options": (("Intro.", "Old.", ("table", "Old cell."), "End."),
+                                             ("Intro.", ("table", "New cell."), "End."), IGNORE),
+}
+
+
+@pytest.mark.gap("compare-paragraph-next-to-table")
+@pytest.mark.parametrize("case", NEXT_TO_TABLE)
+def test_compare_tracks_the_paragraph_right_before_a_table(tmp_path, case):
+    original, edited, options = NEXT_TO_TABLE[case]
+    redline_round_trip(tmp_path / "pair", blocks(*original), blocks(*edited), **options)
+
+
+def test_an_empty_paragraph_before_each_table_lets_compare_track_the_paragraph_before_it(tmp_path):
+    """The workaround of gap compare-paragraph-next-to-table, at the cost of a blank line before each table."""
+    redline_round_trip(tmp_path / "pair", blocks("Intro.", "Old.", "", ("table", "Old cell."), "End."),
+                       blocks("Intro.", "", ("table", "New cell."), "End."))
+
+
+def empty_then_text(space_after=None, centre=False):
+    doc = rdocx.Document()
+    p = doc.add_paragraph("")
+    doc.add_paragraph("Body.")
+    if space_after is not None:
+        p.paragraph_format.space_after = rdocx.Pt(space_after)
+    if centre:
+        p.paragraph_format.alignment = 1
+    return doc
+
+
+def header_paragraph(space_after=None):
+    doc = rdocx.Document()
+    doc.add_paragraph("Body.")
+    p = doc.sections[0].header.paragraphs[0]
+    if space_after is not None:
+        p.paragraph_format.space_after = rdocx.Pt(space_after)
+    return doc
+
+
+EMPTY_PARAGRAPH_PROPERTIES = {
+    "body, space after": (empty_then_text, {"space_after": 0}, "word/document.xml"),
+    "body, centred": (empty_then_text, {"centre": True}, "word/document.xml"),
+    "header, space after": (header_paragraph, {"space_after": 0}, "word/header1.xml"),
+}
+
+
+@pytest.mark.gap("compare-empty-paragraph-properties")
+@pytest.mark.parametrize("case", EMPTY_PARAGRAPH_PROPERTIES)
+def test_compare_tracks_new_properties_of_an_empty_paragraph(tmp_path, case):
+    build, change, part_name = EMPTY_PARAGRAPH_PROPERTIES[case]
+    redline = redline_round_trip(tmp_path / "pair", build(), build(**change))
+    assert b"<w:pPrChange" in part(redline, part_name)
+
+
+def test_ignore_formatting_lets_compare_skip_new_properties_of_an_empty_paragraph(tmp_path):
+    """The workaround of gap compare-empty-paragraph-properties, which leaves every formatting change untracked."""
+    redline_round_trip(tmp_path / "pair", empty_then_text(), empty_then_text(space_after=0), ignore_formatting=True)
+
+
+BREAK_ONLY = {"default": {}, "ignore options": IGNORE}
+
+
+@pytest.mark.gap("compare-break-only-paragraphs")
+@pytest.mark.parametrize("case", BREAK_ONLY)
+def test_compare_tracks_break_only_paragraphs_merging_into_one(tmp_path, case):
+    redline_round_trip(tmp_path / "pair", blocks("BREAK", "BREAK", "Heading."), blocks("BREAK"), **BREAK_ONLY[case])
+
+
+def test_a_final_empty_paragraph_lets_compare_track_break_only_paragraphs(tmp_path):
+    """The workaround of gap compare-break-only-paragraphs: an empty paragraph added at the end of both inputs."""
+    redline_round_trip(tmp_path / "pair", blocks("BREAK", "BREAK", "Heading.", ""), blocks("BREAK", ""))
+
+
+def tracked_markup(paragraph):
+    """A tracked paragraph as text: [-deleted-] {+inserted+}."""
+    xml = paragraph.xml.decode()
+    out = []
+    for m in re.finditer(r"<w:(ins|del)\b[^>]*>(.*?)</w:\1>|<w:r\b[^>]*>(.*?)</w:r>", xml, re.S):
+        kind, inner = (m.group(1), m.group(2)) if m.group(1) else (None, m.group(3))
+        text = "".join(re.findall(r"<w:(?:t|delText)\b[^>]*>([^<]*)</w:(?:t|delText)>", inner))
+        if text:
+            out.append({"ins": "{+%s+}", "del": "[-%s-]", None: "%s"}[kind] % text)
+    return "".join(out)
+
+
+REWRITE = ("On receipt, the Sponsor inspects the material and notifies the site of any specimen that does not pass "
+           "inspection, with the reason.",
+           "After receipt, the Sponsor confirms the delivery and reports to the laboratory any specimen that fails "
+           "inspection.")
+
+
+@pytest.mark.gap("compare-word-grouping")
+def test_word_compare_groups_consecutive_changed_words():
+    """As Word and legal comparison tools show a rewrite: one deletion then one insertion per changed stretch, short
+    unchanged words inside it folded in, instead of alternating one-word pairs."""
+    original, edited = (blocks(text) for text in REWRITE)
+    original.compare(edited, "Reviewer", STAMP, granularity="word")
+    assert tracked_markup(original.paragraphs[0]).endswith(
+        " and [-notifies the site of-]{+reports to the laboratory+} any specimen that [-does not pass-]{+fails+} "
+        "inspection[-, with the reason-].")
+
+
+def test_run_compare_replaces_a_rewritten_paragraph_whole():
+    """The fallback of gap compare-word-grouping for a paragraph largely rewritten: two revisions, readable, but a
+    light edit elsewhere also replaces its whole run."""
+    original, edited = (blocks(text) for text in REWRITE)
+    original.compare(edited, "Reviewer", STAMP, granularity="run")
+    assert tracked_markup(original.paragraphs[0]) == "[-%s-]{+%s+}" % REWRITE

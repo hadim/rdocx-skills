@@ -73,7 +73,11 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   `12b1d6fc`) and tensorbee/rdocx#363, which lists range paragraphs reading each story source once. v0.16.0 had made
   `rebuild_toc`, the page field updates and the comment listing quadratic or worse (tensorbee/rdocx#362): on the
   13-page fixture 17 s, 7 s and 4.2 s, now 1.2 s, 0.2 s and 0.2 s (26 pages: TOC 134 s, now 2.6 s).
-- Open gaps: none.
+- Open gaps: six docx gaps met redlining real document pairs on 14/10/2026, all reported upstream
+  (tensorbee/rdocx#368 to #373): four pairs that `compare` refuses or fails to round-trip (a whole paragraph holding a
+  hyperlink, a paragraph next to a table, an empty paragraph gaining properties, break-only paragraphs), and two
+  feature requests (word changes grouped into one deletion and one insertion, a tracked view in colour with raw XML
+  in headers and footers). Each has a workaround in `skills/docx/references/gaps.md`.
 - Suite against `52e7f0b8`: 356 passed, 1 skipped (Poppler absent) on macos-arm64 from the release files, in 1.5
   minutes. The behaviour files hold the tests that fail on upstream v0.16.0, that is the PRs carried on the
   integration branch: when the pin moves to an upstream release that carries them, run them against it and delete
