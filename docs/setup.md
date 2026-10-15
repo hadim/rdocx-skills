@@ -4,12 +4,10 @@ The skills never use whatever rdocx happens to be installed. They use the build 
 
 - `upstream` and `commit`: the rdocx source, by full 40-character git hash; `ref`: the tag or branch it was
   pinned from (for the reader);
-- `release`: where the files of that commit are published (empty after a bump, until `lock --write --release`
-  finds the releases and records them). Normally the upstream releases of the two families, `{"rdocx": <URL
-  of the release v<version>>, "rpptx": <URL of the release rpptx-v<version>>}`; for a commit between two
-  upstream releases, the URL of this repository's build of it;
-- `downloads.<platform>` (upstream releases only): the SHA-256 of the files downloaded for a platform, the CLI
-  archive and the wheel of each family;
+- `release`: the URL of this repository's build of that commit, where its files are published (empty after a
+  bump, until `lock --write --release` finds the build and records it). Every pin is such a build, an upstream
+  release tag as much as an integration branch;
+- `versions`: the rdocx and rpptx versions the wheels carry, which name the builds and the plugin's releases;
 - `artifacts.<platform>`: the SHA-256 of the two CLIs and the two wheels built from that commit, per
   platform (`linux-x86_64`, `linux-aarch64`, `macos-arm64`, `macos-x86_64`, `windows-x86_64`);
 - `installed_files.<platform>`: the SHA-256 of every file the two wheels install (modules, stubs, native
@@ -26,7 +24,7 @@ python3 scripts/rdocx_env.py install --build         # compile the pinned commit
 python3 scripts/rdocx_env.py install --from DIR      # from a folder of prebuilt files, checked against the lock
 python3 scripts/rdocx_env.py build [--target linux-aarch64]
 python3 scripts/rdocx_env.py lock [--write] [--platform P]  # compare (or record) a local dist folder
-python3 scripts/rdocx_env.py lock --write --release  # record every platform of the releases named in the lock (found first if none)
+python3 scripts/rdocx_env.py lock --write --release  # record every platform of the release named in the lock (found first if none)
 python3 scripts/rdocx_env.py bump REF                # pin an upstream tag, branch or full commit hash (release and hashes emptied)
 python3 scripts/rdocx_env.py test [pytest args]      # the acceptance suite on the installed build
 python3 scripts/rdocx_env.py paths
@@ -55,16 +53,11 @@ sets how many installs stay, 0 keeps them all); build caches and the test enviro
   install, and checks that `current` points at the pinned install; any mismatch exits 1, and `install`
   repairs it. Someone who can rewrite both the install and its `installed.json` can still defeat these
   checks: they detect corruption and stray changes, not an attacker who owns the home folder.
-- **Releases**: the files are downloaded into a private temporary folder; from an upstream release, the two
-  CLI archives and the two wheels are checked against `downloads` first, and only then are the CLIs taken out
-  of their archives. Then they land in `$RDOCX_HOME/dist/<commit>/<platform>/` and go through the same staging
-  and hash check as any dist folder; a file that does not match the lock stops the install (no fallback to a
-  build). `lock --write --release` hashes the downloaded files on the reviewer's machine, checks them against
-  the releases' `SHA256SUMS` and, for upstream releases, their build provenance: `gh attestation verify FILE -R
-  tensorbee/rdocx --source-digest <commit> --source-ref refs/tags/<tag> --deny-self-hosted-runners`, so each
-  file was built from the pinned commit at that tag by a GitHub-hosted runner of the upstream repository. It
-  needs the GitHub CLI; `--skip-attestation` records without that check. Then it records them. The builds of
-  this repository carry an attestation as well (`-R hadim/rdocx-skills`).
+- **Releases**: the files are downloaded into `$RDOCX_HOME/dist/<commit>/<platform>/` and go through the same
+  staging and hash check as any dist folder; a file that does not match the lock stops the install (no
+  fallback to a build). `lock --write --release` hashes the downloaded files on the reviewer's machine, checks
+  them against the release's `SHA256SUMS`, then records them. Each build carries a provenance attestation:
+  `gh attestation verify FILE -R hadim/rdocx-skills` shows the workflow run that built it.
 - **Test environment**: `test` installs the hash-pinned test dependencies into `$RDOCX_HOME/testenv`, which
   sees the installed packages through a `.pth` file, and runs the recipe blocks with the runtime
   `bin/python`: running the suite adds nothing to what the skills use.
@@ -86,9 +79,8 @@ sets how many installs stay, 0 keeps them all); build caches and the test enviro
 
 `$RDOCX_DIST/<commit>/<platform>/`, then `dist/<commit>/<platform>/` in this repository, then
 `$RDOCX_HOME/dist/<commit>/<platform>/` (where `build` writes when the repository is read-only, and where
-downloads land), then the releases named by `release` in the lock. An upstream release holds, per family, CLI
-archives named `<family>-<Rust target>.tar.gz` (`.zip` on Windows) and wheels, listed with their SHA-256 in
-`SHA256SUMS`; this repository's build of a commit holds assets named `<platform>.<file>`, listed the same way.
+downloads land), then the release named by `release` in the lock: this repository's build of the commit, whose
+assets are named `<platform>.<file>` and listed with their SHA-256 in `SHA256SUMS`.
 `$RDOCX_RELEASE_URL` names a mirror: it stands for `https://github.com/<owner>/<repo>/releases/download` and
 holds one folder per release tag. A CLI in a dist folder may be
 stored gzipped (`rdocx.gz`, for transfers that limit file sizes): its hash is checked after decompression.
@@ -108,7 +100,7 @@ your package manager; the script never installs a toolchain). It takes 10 to 30 
 ## Environments
 
 - **Any machine with network access** (Claude Code, agent VMs): `install` downloads the pinned files from the
-  releases and verifies them; it takes seconds.
+  release and verifies them; it takes seconds.
 - **No network**: bring a dist folder in (a synced folder, or `install --from DIR` on staged files).
 - **Small or short-lived sandboxes** (little memory, short command timeouts, a home folder reset between
   sessions): never build there; `install` once per session. Where the home folder is wiped between sessions
@@ -128,52 +120,55 @@ your package manager; the script never installs a toolchain). It takes 10 to 30 
   (Visual Studio Build Tools, C++ workload) besides rustup.
 
 The Linux CLIs need glibc 2.35 or later (the wheels 2.28). The Windows files are built with MSVC.
-Intel Macs (`macos-x86_64`) are neither built nor tested here: the lock records their files when upstream releases
-them, and on a pin of this repository's build `install` exits 2 there and the skills hand over to the built-in ones.
+Intel Macs (`macos-x86_64`) are neither built nor tested here: `install` exits 2 there and the skills hand over to
+the built-in ones, or `install --build` compiles the pinned commit on the machine.
 
 ## Continuous integration
 
 - `.github/workflows/ci.yml`, on every push to `main` and every pull request: `install --build` on
-  linux-x86_64, linux-aarch64 (ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64 and windows-x86_64 (the release download, or a build when the release lacks the platform's files, as right after a
-  bump; its summary then says so), then the acceptance suite, summarised per platform by
-  `.github/scripts/suite-summary.sh`. On Windows it runs from Git Bash, as an agent does. On a push to `main`, a
-  last job (the only one with `contents: write`) writes the four summaries into the notes of the release the lock pins, when it is one of this repository's builds
+  linux-x86_64, linux-aarch64 (ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64 and windows-x86_64 (the
+  release download, or a build when the release lacks the platform's files, as right after a bump; its summary then
+  says so), then the acceptance suite, summarised per platform by `.github/scripts/suite-summary.sh`. On Windows it
+  runs from Git Bash, as an agent does, on a checkout made with `core.autocrlf false` (the repository has no
+  `.gitattributes`: the plugin directory refuses one that rewrites files at checkout). On a push to `main`, a last
+  job (the only one with `contents: write`) writes the four summaries into the notes of the build the lock pins
   (`rdocx-<YYYYMMDDHHMM>-<commit12>`, or `rdocx-<YYYYMMDD>-<commit12>` for the releases built before the time was
-  added, of this repository and of the pinned commit; upstream releases are never touched), as the section
-  `Acceptance suite (skills main <sha12>, <run URL>)` right after the notes' preamble: the results of the skills and
-  tests that ship with the release. It also marks that release as the repository's latest (`build.yml` publishes
-  with `--latest=false`, so a build becomes latest only once `main` pins it). It runs after a failing leg too, and
-  running it again replaces that section (`.github/scripts/release_notes.py`).
-- `.github/workflows/build.yml`, only for a commit between two upstream releases, by hand (Actions, build, Run
-  workflow, `ref`: any upstream tag, branch or commit): builds it on four native runners (ubuntu-22.04,
-  ubuntu-22.04-arm, macos-14, windows-2025), checks that each build installs, verifies and runs,
-  and publishes the release `rdocx-<YYYYMMDDHHMM>-<first 12 characters of the commit>` (the UTC build date and time
-  to the minute first: GitHub lists releases by tag name, so the time keeps two builds of the same day in build
-  order; title `rdocx <YYYY-MM-DD HH:MM> UTC <commit12> (<ref>)`) with `SHA256SUMS` and provenance attestations. It
+  added, of this repository and of the pinned commit), as the section `Acceptance suite (skills main <sha12>, <run
+  URL>)` right after the notes' preamble: the results of the skills and tests that ship with the build. It runs
+  after a failing leg too, and running it again replaces that section (`.github/scripts/release_notes.py`). The
+  build stays a pre-release: the plugin's releases are the repository's latest (below).
+- `.github/workflows/build.yml`, for every pin, by hand (Actions, build, Run workflow, `ref`: any upstream tag,
+  branch or commit): builds it on four native runners (ubuntu-22.04, ubuntu-22.04-arm, macos-14, windows-2025),
+  checks that each build installs, verifies and runs, and publishes the pre-release `rdocx-<YYYYMMDDHHMM>-<first
+  12 characters of the commit>` (the UTC build date and time to the minute first: GitHub lists releases by tag
+  name, so the time keeps two builds of the same day in build order) with `SHA256SUMS` and provenance
+  attestations. Its title names the versions the wheels carry and what was built: `rdocx 0.16.1 · rpptx 0.14.1
+  (build <date>, <commit12>)` for an upstream release tag, `rdocx 0.16.0 · rpptx 0.14.0 +
+  integration/open-prs-2026-10-14 (build ...)` for anything else (`.github/scripts/plugin_release.py label`). It
   runs no suite: `ci.yml` runs it on the pull request that pins the release, and writes it into the notes once
   `main` pins it (above); releases built before carry a `Build-time suite (preliminary, ...)` section too. Inputs:
   `lto` (`thin`, the default: ThinLTO and 16 codegen units, about half the build time of `fat`, upstream's release
   profile, for slightly larger and slower binaries with the same behaviour; each has its own build cache) and `dry_run` (every platform
-  built from scratch, nothing published: to time a profile). It builds nothing when the lock pins the upstream
-  releases of that commit. A commit has at most one release: when a release tag already ends with `-<commit12>`
+  built from scratch, nothing published: to time a profile). A commit has at most one release: when a release tag already ends with `-<commit12>`
   (in either format), its files are never rebuilt or overwritten, but a platform added to the workflow later is
   built and added to it (its files, its lines of `SHA256SUMS`; then `lock --write --release` records it). The
   releases built before the time was added keep their tag `rdocx-<YYYYMMDD>-<commit12>`, still valid wherever a
   tag is read (`-` sorts before a digit, so such a tag still lists below the later builds of its day).
-- `lock --write --release` finds the releases of the pinned commit: the upstream tags that point at it
-  (`git ls-remote --tags`, one `v<version>` and one `rpptx-v<version>`), else this repository's release whose
-  tag ends with `-<commit12>` (through `git ls-remote --tags` of this repository, with no API call and no token;
-  the tag cannot be derived from the commit, since the date and time are the build's). It records their URLs:
-  the lock's `release` is the only source of truth.
+- `lock --write --release` finds the build of the pinned commit: this repository's release whose tag ends with
+  `-<commit12>` (through `git ls-remote --tags` of this repository, with no API call and no token; the tag cannot
+  be derived from the commit, since the date and time are the build's). It records its URL: the lock's `release`
+  is the only source of truth.
+- `.github/workflows/release.yml`, by hand: publishes a release of the plugin (next section).
 
 ## Moving the pin
 
-Each commit of `main` is a version of the plugin (it has no version number), so `main` always holds a lock
-whose releases exist and whose hashes are recorded, together with the tests and skills that match it:
+`main` always holds a lock whose build exists and whose hashes are recorded, together with the tests and skills
+that match it, so that any commit of `main` can be released:
 
-1. On a branch: `bump TAG` with the upstream rdocx tag (`v<version>`; the rpptx tag of the same commit is
-   found with it), then `lock --write --release` (it finds both releases, checks their files and provenance,
-   and records their URLs and hashes), `install` and `test`. Every strict xfail that now passes means a gap is
+1. Build the commit first: Actions, build, Run workflow, with `ref` set to the upstream tag (`v<version>`), branch
+   or full commit hash. It publishes the pre-release `rdocx-<YYYYMMDDHHMM>-<commit12>` without running the suite.
+   Then, on a branch: `bump REF`, `lock --write --release` (it finds that build, checks its files and records its
+   URL and hashes), `install` and `test`. Every strict xfail that now passes means a gap is
    closed: remove its marker and its entry in `tests/gaps.py`, and update both skills' `references/gaps.md`
    and tables. Every new failure is a regression: keep the previous pin, or narrow what the skills claim.
 2. Bring the skills along on the same branch, without waiting to be asked. `tests/test_skill_docs.py` already fails
@@ -195,9 +190,24 @@ whose releases exist and whose hashes are recorded, together with the tests and 
    <sha12>, <run URL>)` (above the preliminary build-time suite of the releases built while `build.yml` still ran
    one). Every later push to `main` that keeps the pin replaces it with its own run.
 
-A commit between two upstream releases (a fix the skills need before the next release) goes through this
-repository's build first: Actions, build, Run workflow, with `ref` set to the upstream branch or full commit
-hash. It publishes the release `rdocx-<YYYYMMDDHHMM>-<commit12>` without running the suite. Then `bump REF` and the
-steps above: `lock --write --release` finds no upstream release of that commit and records this one instead, the
-pull request runs the suite on four platforms (failures of `tests/test_skill_docs.py` there are the docs pass still
-to do, not regressions), and the merge into `main` writes it into the release notes.
+On the pull request, failures of `tests/test_skill_docs.py` are the docs pass still to do, not regressions.
+Merging into `main` publishes nothing: users get the new pin with the next release of the plugin.
+
+## Releasing the plugin
+
+Pushes to `main` reach nobody. Claude Code users who added the marketplace at `release`
+(`/plugin marketplace add hadim/rdocx-skills@release`) and the Claude plugin directory, which follows the `release`
+branch, get a new version only from `.github/workflows/release.yml`: Actions, release, Run workflow. It:
+
+1. refuses a `main` whose `ci.yml` run did not succeed, or that is released already;
+2. picks the CalVer version of the day, `YYYY.M.D` (`YYYY.M.D.2` and on for another release the same day);
+3. moves the `release` branch to `main`'s tree with that `version` written into `.claude-plugin/plugin.json`, as a
+   merge of `main` so that `release` only moves forward, and tags it `v<version>`;
+4. publishes the GitHub release `v<version>`, titled with the rdocx and rpptx versions of the pinned build
+   (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <integration branch>`), marked latest, whose notes name the pinned
+   build and list the pull requests merged since the previous release.
+
+`main` carries no `version`: Claude Code users who follow `main` (the marketplace added without `@release`) get
+every push, as before. The version, the title and the notes come from `.github/scripts/plugin_release.py`, tested
+in `tests/test_ci_scripts.py`. The workflow pushes to `release` with the workflow token: a protection rule on that
+branch must let it through.

@@ -1,9 +1,8 @@
 # The acceptance suite on linux-x86_64, linux-aarch64, macos-arm64 and windows-x86_64 (Intel Macs are not tested):
-# the pinned files from the releases the lock names (upstream's, or this repository's build of a commit between two upstream
-# releases), checked against the lock (seconds), or a build of the pinned commit when no release has them yet (right
-# after a bump, or a platform the release lacks; minutes). On a push to main, when the lock pins one of this
-# repository's releases, the suite summaries of the four platforms become the "Acceptance suite" section of that
-# release's notes (re-running replaces it).
+# the pinned files from the release the lock names (this repository's build of the pinned commit), checked against
+# the lock (seconds), or a build of the pinned commit when no release has them yet (right after a bump, or a platform
+# the release lacks; minutes). On a push to main, the suite summaries of the four platforms become the "Acceptance
+# suite" section of that release's notes (re-running replaces it).
 name: ci
 
 on:
@@ -117,9 +116,9 @@ jobs:
           overwrite: true  # a re-run job uploads it again in the same run
 
   # The final suite in the notes of the release the lock pins, when it is one of this repository's builds
-  # (rdocx-<YYYYMMDDHHMM>-<commit12>, or rdocx-<YYYYMMDD>-<commit12> for the older ones); upstream releases are
-  # never touched. Also after a failing leg: its failures are what the notes must show. That release becomes the
-  # repository's latest, since main pins it (build.yml publishes with --latest=false until a pin adopts it).
+  # (rdocx-<YYYYMMDDHHMM>-<commit12>, or rdocx-<YYYYMMDD>-<commit12> for the older ones). Also after a failing leg:
+  # its failures are what the notes must show. The build stays a pre-release: the plugin's releases (release.yml)
+  # are the repository's latest.
   release-notes:
     needs: test
     if: ${{ !cancelled() && github.event_name == 'push' }}
@@ -147,5 +146,5 @@ jobs:
           python3 .github/scripts/release_notes.py rewrite --notes "$RUNNER_TEMP/notes.md" --sha "$GITHUB_SHA" \
             --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             "$RUNNER_TEMP"/suites/suite-*/suite-*.md > "$RUNNER_TEMP/final-notes.md"
-          gh release edit "$tag" -R "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/final-notes.md" --latest
+          gh release edit "$tag" -R "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/final-notes.md"
           echo "Final suite written into the notes of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
