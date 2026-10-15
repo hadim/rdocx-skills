@@ -75,7 +75,7 @@ def runtime_python():
 def verified_dist():
     """A dist folder of this machine whose files match the lock (the repository's dist/, RDOCX_DIST, or the
     release files downloaded into RDOCX_HOME/dist), or None."""
-    sys.path.insert(0, str(TESTS.parent / "scripts"))
+    sys.path.insert(0, str(TESTS.parent / "plugin" / "scripts"))
     import rdocx_env
 
     lock, plat = rdocx_env.load_lock(), rdocx_env.platform_key()

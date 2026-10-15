@@ -4,7 +4,7 @@
 #
 # The release takes main as it is, once ci.yml passed on it: the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for
 # another release the same day), the `release` branch moved to main's tree with that version written into
-# .claude-plugin/plugin.json (a merge of main, so that `release` only moves forward), a tag on it, and a GitHub release
+# plugin/.claude-plugin/plugin.json (a merge of main, so that `release` only moves forward), a tag on it, and a GitHub release
 # titled with the rdocx and rpptx versions of the pinned build, marked latest, whose notes list the merged pull
 # requests since the previous release. The version, the title and the head of the notes come from
 # .github/scripts/plugin_release.py (tested in tests/test_ci_scripts.py).
@@ -53,10 +53,10 @@ jobs:
         run: |
           mapfile -t tags < <(git tag -l 'v*')
           version=$(python3 .github/scripts/plugin_release.py version --date "$(date -u +%F)" "${tags[@]}")
-          title=$(python3 .github/scripts/plugin_release.py title rdocx.lock.json)
+          title=$(python3 .github/scripts/plugin_release.py title plugin/rdocx.lock.json)
           previous=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
           python3 .github/scripts/plugin_release.py notes --repo "$GITHUB_REPOSITORY" --version "$version" \
-            rdocx.lock.json > "$RUNNER_TEMP/notes.md"
+            plugin/rdocx.lock.json > "$RUNNER_TEMP/notes.md"
           { echo "version=$version"; echo "title=$title"; echo "previous=$previous"; } >> "$GITHUB_OUTPUT"
 
       - name: Move the release branch and tag it
@@ -74,11 +74,11 @@ jobs:
             git checkout -q -B release "$main"
           fi
           git read-tree -u --reset "$main"
-          python3 .github/scripts/plugin_release.py set-version .claude-plugin/plugin.json "$VERSION"
-          git add .claude-plugin/plugin.json
+          python3 .github/scripts/plugin_release.py set-version plugin/.claude-plugin/plugin.json "$VERSION"
+          git add plugin/.claude-plugin/plugin.json
           git commit -q -m "release: v$VERSION"
           git tag -a "v$VERSION" -m "Plugin release $VERSION"
-          git push origin release "refs/tags/v$VERSION"
+          git push --atomic origin release "refs/tags/v$VERSION"
           echo "release branch at $(git rev-parse --short=12 HEAD): main ${main:0:12} with version $VERSION" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish

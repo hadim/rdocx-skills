@@ -24,7 +24,7 @@ from conftest import BIN, EXE
 from gaps import GAPS
 
 ROOT = Path(__file__).resolve().parent.parent
-SKILLS = ROOT / "skills"
+SKILLS = ROOT / "plugin" / "skills"
 DOCS = sorted(p for p in SKILLS.glob("*/SKILL.md")) + sorted(
     p for p in SKILLS.glob("*/references/*.md") if p.name != "recipes.md")
 # Names the skills cite from other libraries (python-docx, python-pptx, lxml, zipfile), never from rdocx or rpptx.
