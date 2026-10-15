@@ -4,7 +4,9 @@
 # took about 3 minutes on the runners). Its bin folder goes at the end of PATH, not first as GITHUB_PATH would put it,
 # so that nothing in it can shadow the runner's tools.
 set -eu
-command -v pdftotext > /dev/null && command -v pdftoppm > /dev/null && exit 0
+# Already there (Git for Windows ships pdftotext and pdftoppm; older ones were Xpdf's, which the suite cannot use)
+is_poppler() { command -v "$1" > /dev/null && "$1" -v 2>&1 | grep -q Poppler; }
+if is_poppler pdftotext && is_poppler pdftoppm; then echo "Poppler already on PATH: $(command -v pdftotext)"; exit 0; fi
 case "$RUNNER_OS" in
   Linux)
     sudo apt-get update -q > /dev/null
