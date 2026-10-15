@@ -363,9 +363,9 @@ def tracked_markup(paragraph):
     return "".join(out)
 
 
-REWRITE = ("On receipt, the Sponsor inspects the material and notifies the site of any specimen that does not pass "
+REWRITE = ("On receipt, the buyer inspects the goods and notifies the seller of any parcel that does not pass "
            "inspection, with the reason.",
-           "After receipt, the Sponsor confirms the delivery and reports to the laboratory any specimen that fails "
+           "After receipt, the buyer confirms the delivery and reports to the carrier any parcel that fails "
            "inspection.")
 
 
@@ -375,5 +375,5 @@ def test_word_compare_groups_consecutive_changed_words():
     original, edited = (blocks(text) for text in REWRITE)
     original.compare(edited, "Reviewer", STAMP, granularity="word")
     assert tracked_markup(original.paragraphs[0]).endswith(
-        " and [-notifies the site of-]{+reports to the laboratory+} any specimen that [-does not pass-]{+fails+} "
+        " and [-notifies the seller of-]{+reports to the carrier+} any parcel that [-does not pass-]{+fails+} "
         "inspection[-, with the reason-].")
