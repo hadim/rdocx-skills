@@ -71,10 +71,23 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
-LOCK_PATH = REPO / "rdocx.lock.json"
+PLUGIN = Path(__file__).resolve().parent.parent  # the plugin folder: scripts/, skills/, the lock
+CHECKOUT = PLUGIN.parent  # in a clone of the repository, the checkout around it: tests/, docs/
+LOCK_PATH = PLUGIN / "rdocx.lock.json"
 HOME = Path(os.environ.get("RDOCX_HOME", Path.home() / ".local" / "share" / "rdocx-skills"))
-GIT_ENV = dict(os.environ, GIT_NO_REPLACE_OBJECTS="1")
+# Child processes get the environment without anything named like a credential: none of them needs one (git, cargo
+# and pip reach public hosts), so no token can leave with them.
+CREDENTIAL = re.compile(r"TOKEN|SECRET|PASSWORD|PASSWD|API_?KEY|ACCESS_?KEY|PRIVATE_?KEY|CREDENTIAL", re.I)
+
+
+def child_env(**extra):
+    """The environment for a child process: this one without credential-named variables, plus `extra`."""
+    env = {k: v for k, v in os.environ.items() if not CREDENTIAL.search(k)}
+    env.update(extra)
+    return env
+
+
+GIT_ENV = child_env(GIT_NO_REPLACE_OBJECTS="1")
 RELEASES_REPO = "hadim/rdocx-skills"  # the builds of the pinned upstream commits
 WINDOWS = os.name == "nt"
 TRIPLES = {"linux-x86_64": "x86_64-unknown-linux-gnu", "linux-aarch64": "aarch64-unknown-linux-gnu"}
@@ -184,13 +197,13 @@ def check(sums, want):
 
 def dist_candidates(lock, plat):
     rel = Path(lock["commit"]) / plat
-    for root in (os.environ.get("RDOCX_DIST"), REPO / "dist", HOME / "dist"):
+    for root in (os.environ.get("RDOCX_DIST"), PLUGIN / "dist", HOME / "dist"):
         if root and (Path(root) / rel).is_dir():
             yield Path(root) / rel
 
 
 def source_candidates():
-    for root in (os.environ.get("RDOCX_SRC"), REPO.parent / "rdocx"):
+    for root in (os.environ.get("RDOCX_SRC"), CHECKOUT.parent / "rdocx"):
         if root and (Path(root) / ".git").exists():
             yield Path(root)
 
@@ -450,12 +463,12 @@ def build(lock, plat, target=None):
     if work.exists():
         shutil.rmtree(work)
     src = export_source(lock, work / "src")
-    env = dict(os.environ, CARGO_TARGET_DIR=str(HOME / "target" / plat))
-    benv = pip_env(HOME / "buildenv", REPO / "scripts" / "build-requirements.txt")
+    env = child_env(CARGO_TARGET_DIR=str(HOME / "target" / plat))
+    benv = pip_env(HOME / "buildenv", PLUGIN / "scripts" / "build-requirements.txt")
     wheels = work / "wheels"
     if cross:
         triple = TRIPLES[plat]
-        zenv = pip_env(HOME / "crossenv", REPO / "scripts" / "cross-requirements.txt")
+        zenv = pip_env(HOME / "crossenv", PLUGIN / "scripts" / "cross-requirements.txt")
         env["PATH"] = f"{zenv / 'bin'}:{benv / 'bin'}:{env['PATH']}"
         run(["rustup", "target", "add", triple], cwd=src, env=env)
         run(["cargo", "zigbuild", "--release", "--locked", "--target", f"{triple}.2.17", "-p", "rdocx-cli", "-p",
@@ -469,7 +482,7 @@ def build(lock, plat, target=None):
     for crate in ("rdocx-py", "rpptx-py"):
         run([venv_python(benv).with_name("maturin"), "build", "--release", "--locked", "-m",
              f"crates/{crate}/Cargo.toml", "-o", wheels, *extra], cwd=src, env=env)
-    out_root = REPO / "dist" if os.access(REPO, os.W_OK) else HOME / "dist"
+    out_root = PLUGIN / "dist" if os.access(PLUGIN, os.W_OK) else HOME / "dist"
     out = out_root / commit / plat
     if out.exists():
         shutil.rmtree(out)
@@ -666,7 +679,7 @@ def status(lock, plat, allow_local=False, quiet=False):
 def test_env(lock):
     """A separate venv with the hash-pinned test dependencies, which sees the installed packages through a
     .pth file: running the suite never adds anything to the runtime environment."""
-    venv = pip_env(HOME / "testenv", REPO / "tests" / "requirements.txt")
+    venv = pip_env(HOME / "testenv", CHECKOUT / "tests" / "requirements.txt")
     (site_packages(venv) / "rdocx_runtime.pth").write_text(str(site_packages(install_dir(lock) / "venv")) + "\n")
     return venv_python(venv)
 
@@ -712,9 +725,11 @@ def main():
         if not status(lock, plat, allow_local=args.allow_local or not expected(lock, plat)):
             die("the pinned build is not installed and verified: run `install` first")
         py = test_env(lock)
-        env = dict(os.environ, RDOCX_BIN_DIR=str(install_dir(lock) / "bin"), PYTHONDONTWRITEBYTECODE="1",
+        if not (CHECKOUT / "tests").is_dir():
+            die(f"the acceptance suite lives in a clone of the repository: no tests/ next to {PLUGIN}")
+        env = child_env(RDOCX_BIN_DIR=str(install_dir(lock) / "bin"), PYTHONDONTWRITEBYTECODE="1",
                    PYTHONUTF8="1")
-        sys.exit(subprocess.run([str(py), "-m", "pytest", "-p", "no:cacheprovider", str(REPO / "tests"), *extra],
+        sys.exit(subprocess.run([str(py), "-m", "pytest", "-p", "no:cacheprovider", str(CHECKOUT / "tests"), *extra],
                                 env=env).returncode)
     if args.cmd == "bump":
         commit = resolve_ref(lock["upstream"], args.ref)

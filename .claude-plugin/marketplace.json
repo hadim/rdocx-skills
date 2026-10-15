@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "rdocx",
-      "source": "./",
+      "source": "./plugin",
       "description": "Word and PowerPoint files with rdocx and rpptx: read, write, edit, comments, tracked changes, redlines, rendering."
     }
   ]

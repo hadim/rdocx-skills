@@ -347,7 +347,7 @@ def test_cli_fit_reports_overflow_with_exit_1(rpptx_cli, deck_pptx, tmp_path):
     assert report["fits"] is False and [(f["slide"], f["shape_id"]) for f in report["overflowing"]] == [(5, 19)]
     assert report["overflowing"][0]["needed_font_scale"] == 0.825
     import sys
-    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent / "skills" / "pptx" / "scripts"))
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent / "plugin" / "skills" / "pptx" / "scripts"))
     import pptx_ops
     assert [(s + 1, sid) for s, sid, _ in pptx_ops.overflowing(deck_pptx)] == [(5, 19)]   # the same frames
     prs = deck()

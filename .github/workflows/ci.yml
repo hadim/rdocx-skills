@@ -49,12 +49,12 @@ jobs:
       - name: Install the pinned build from the release
         id: release
         continue-on-error: true
-        run: python scripts/rdocx_env.py install
+        run: python plugin/scripts/rdocx_env.py install
 
       - name: Pinned commit
         if: steps.release.outcome == 'failure'
         id: pin
-        run: echo "commit=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["commit"])')" >> "$GITHUB_OUTPUT"
+        run: echo "commit=$(python -c 'import json; print(json.load(open("plugin/rdocx.lock.json"))["commit"])')" >> "$GITHUB_OUTPUT"
 
       - name: Rust toolchain named by rdocx's rust-toolchain.toml
         if: steps.release.outcome == 'failure'
@@ -77,7 +77,7 @@ jobs:
 
       - name: Build and install the pinned commit
         if: steps.release.outcome == 'failure'
-        run: python scripts/rdocx_env.py install --build
+        run: python plugin/scripts/rdocx_env.py install --build
 
       # also after a failed build: the next attempt starts from what compiled
       - name: Save the cargo registry and the build folder
@@ -95,7 +95,7 @@ jobs:
         run: .github/scripts/poppler.sh
 
       - name: Acceptance suite
-        run: python scripts/rdocx_env.py test --allow-local 2>&1 | tee "$RUNNER_TEMP/pytest.log"
+        run: python plugin/scripts/rdocx_env.py test --allow-local 2>&1 | tee "$RUNNER_TEMP/pytest.log"
 
       - name: Suite summary
         if: always()
@@ -137,7 +137,7 @@ jobs:
 
       - name: Final suite in the release notes
         run: |
-          tag=$(python3 .github/scripts/release_notes.py tag --repo "$GITHUB_REPOSITORY" rdocx.lock.json)
+          tag=$(python3 .github/scripts/release_notes.py tag --repo "$GITHUB_REPOSITORY" plugin/rdocx.lock.json)
           if [ -z "$tag" ]; then
             echo "The lock does not pin a release of this repository: no release notes to update." >> "$GITHUB_STEP_SUMMARY"
             exit 0

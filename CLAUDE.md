@@ -7,16 +7,21 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 
 ## Map
 
-- `skills/<name>/SKILL.md`: what an agent reads first; keep it under 16 KB and its description under 800 characters,
+The plugin is the `plugin/` folder (what users install and the plugin directory scans: manifest, skills, scripts, the
+lock, the icon and README pictures); the marketplace entry (`.claude-plugin/marketplace.json`), the tests, the
+workflows, the docs and this file sit beside it. Keep anything the plugin does not ship out of `plugin/`, and keep
+`README.md` and `plugin/README.md` in step (`tests/test_readme.py`).
+
+- `plugin/skills/<name>/SKILL.md`: what an agent reads first; keep it under 16 KB and its description under 800 characters,
   details go to `references/` (`tests/test_skill_docs.py` checks the sizes, every Python name, keyword, CLI command and
   flag the skills cite, and the other way round that every public class and CLI command of the build is cited or
   listed in its `NOT_DOCUMENTED` with a reason; methods and flags an agent finds in the stubs and `--help`).
-- `skills/<name>/references/`: `cli.md`, `python-api.md`, `recipes.md` (every block is executed by
+- `plugin/skills/<name>/references/`: `cli.md`, `python-api.md`, `recipes.md` (every block is executed by
   `tests/test_docs_snippets.py`), `gaps.md`, and `interop.md` for docx.
-- `skills/<name>/scripts/`: helpers importable and runnable as commands; tested in `tests/test_skill_scripts.py`.
-- `scripts/rdocx_env.py`: install (from a dist folder, else the releases), build, verify, bump, lock, test;
+- `plugin/skills/<name>/scripts/`: helpers importable and runnable as commands; tested in `tests/test_skill_scripts.py`.
+- `plugin/scripts/rdocx_env.py`: install (from a dist folder, else the releases), build, verify, bump, lock, test;
   standard library only, Python >= 3.9, Linux, macOS and Windows (Git Bash: `.exe` CLIs, `current` a junction).
-- `rdocx.lock.json`: the pin (upstream commit and ref, release URLs, SHA-256 per platform). `dist/`
+- `plugin/rdocx.lock.json`: the pin (upstream commit and ref, release URLs, SHA-256 per platform). `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
 - `.github/workflows/`: `ci.yml` (the suite on four platforms, every push and PR, Intel Macs left out; on a push to `main` whose lock
   pins one of this repository's releases, its summaries become the "Acceptance suite" section of that release's
@@ -32,8 +37,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin, how to release the plugin.
-- `assets/`: the plugin icon (an SVG source and the PNG that plugin.json names for the directory listing) and the
-  README's two renders.
+- `plugin/assets/`: the plugin icon (an SVG source and the PNG that plugin.json names for the directory listing) and
+  the README's two renders.
 
 ## Rules
 
@@ -95,7 +100,7 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).
 - A skills `main` pinned on the fork steps back from upstream releases: go back to tensorbee/rdocx with `bump
-  v<version>` once a release carries these PRs. Older pins: `git log -p rdocx.lock.json`.
+  v<version>` once a release carries these PRs. Older pins: `git log -p --follow plugin/rdocx.lock.json`.
 
 ## Next steps
 

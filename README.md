@@ -1,6 +1,6 @@
 <div align="center">
 
-![rdocx-skills icon](assets/icon.svg)
+![rdocx-skills icon](plugin/assets/icon.svg)
 
 # rdocx-skills
 
@@ -9,13 +9,13 @@ with native, hash-pinned tools.**
 
 [![CI](https://github.com/hadim/rdocx-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/hadim/rdocx-skills/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/hadim/rdocx-skills?label=release&color=4f46e5)](https://github.com/hadim/rdocx-skills/releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-22c55e)](LICENSE)
-[![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-0ea5a4)](docs/setup.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-22c55e)](https://github.com/hadim/rdocx-skills/blob/main/LICENSE)
+[![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-0ea5a4)](https://github.com/hadim/rdocx-skills/blob/main/docs/setup.md)
 [![Built on rdocx](https://img.shields.io/badge/built%20on-rdocx-f97316)](https://github.com/tensorbee/rdocx)
 
 </div>
 
-| ![A redline of two versions of a lab report, rendered by rdocx](assets/screenshot-docx.png) | ![A slide with a table, a process and three figures, rendered by rpptx](assets/screenshot-pptx.png) |
+| ![A redline of two versions of a lab report, rendered by rdocx](plugin/assets/screenshot-docx.png) | ![A slide with a table, a process and three figures, rendered by rpptx](plugin/assets/screenshot-pptx.png) |
 |:---:|:---:|
 | 📝 A redline of two versions of a lab report, rendered by rdocx in reviewer colours | 📊 A slide built and rendered by rpptx |
 
@@ -138,9 +138,9 @@ The skills never run them on their own:
 - 🧾 **Local builds**: every git object of the commit is verified, and `cargo --locked` builds it.
 
 ```bash
-python3 scripts/rdocx_env.py install      # download the pinned files and verify them (or: install --build)
-python3 scripts/rdocx_env.py test         # the acceptance suite on the installed build
-python3 scripts/rdocx_env.py bump v0.16.1 # move the pin to an upstream tag or commit (docs/setup.md)
+python3 plugin/scripts/rdocx_env.py install      # download the pinned files and verify them (or: install --build)
+python3 plugin/scripts/rdocx_env.py test         # the acceptance suite on the installed build
+python3 plugin/scripts/rdocx_env.py bump v0.16.1 # move the pin to an upstream tag or commit (docs/setup.md)
 ```
 
 ### 💻 Platforms
@@ -149,7 +149,7 @@ python3 scripts/rdocx_env.py bump v0.16.1 # move the pin to an upstream tag or c
 - 🍎 macOS on Apple silicon (Intel Macs: `install --build`)
 - 🪟 Windows x86_64, from Git Bash
 
-See [docs/setup.md](docs/setup.md) for the details.
+See [docs/setup.md](https://github.com/hadim/rdocx-skills/blob/main/docs/setup.md) for the details.
 
 ## 🧪 Acceptance suite
 
@@ -181,14 +181,16 @@ See [docs/setup.md](docs/setup.md) for the details.
 
 | Path | Content |
 |---|---|
-| `.claude-plugin/` | plugin manifest and marketplace entry |
-| `skills/docx/`, `skills/pptx/` | `SKILL.md`, `references/` (CLI, Python API, recipes, gaps, interoperability), `scripts/` (helpers usable as commands) |
-| `scripts/` | `rdocx_env.py` (install, build, verify, test, bump) and the hash-pinned build requirements |
+| `.claude-plugin/` | the marketplace entry, pointing at `plugin/` |
+| `plugin/` | the plugin, and only what it ships: |
+| `plugin/.claude-plugin/` | the plugin manifest |
+| `plugin/skills/docx/`, `plugin/skills/pptx/` | `SKILL.md`, `references/` (CLI, Python API, recipes, gaps, interoperability), `scripts/` (helpers usable as commands) |
+| `plugin/scripts/` | `rdocx_env.py` (install, build, verify, test, bump) and the hash-pinned build requirements |
+| `plugin/rdocx.lock.json` | the pinned build |
+| `plugin/assets/` | the plugin icon and the pictures of this page |
 | `.github/` | CI on every push, the build workflow of a pinned commit, the release workflow of the plugin |
-| `rdocx.lock.json` | the pinned build |
 | `tests/` | acceptance suite, fixture generators, gap registry |
 | `findings/` | gaps met in real use, as neutral reproductions, before they become tests and gap entries |
-| `assets/` | the plugin icon and the pictures of this page |
 | `docs/` | setup, releases and maintenance |
 
 </details>
