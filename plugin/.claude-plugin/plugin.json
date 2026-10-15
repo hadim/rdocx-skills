@@ -8,5 +8,6 @@
   "icon": "./assets/icon.png",
   "documentationUrl": "https://github.com/hadim/rdocx-skills/blob/main/docs/setup.md",
   "supportUrl": "https://github.com/hadim/rdocx-skills/issues",
+  "privacyPolicyUrl": "https://github.com/hadim/rdocx-skills/blob/main/PRIVACY.md",
   "keywords": ["docx", "pptx", "word", "powerpoint", "office", "rdocx", "redline", "pdf"]
 }
