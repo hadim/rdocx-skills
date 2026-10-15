@@ -1,5 +1,6 @@
 {
   "name": "rdocx",
+  "displayName": "rdocx",
   "description": "Read, write, edit, review and render Word and PowerPoint files with the rdocx and rpptx CLIs and Python bindings, pinned by hash, with an acceptance suite.",
   "author": {"name": "Hadrien Mary"},
   "homepage": "https://github.com/hadim/rdocx-skills",
