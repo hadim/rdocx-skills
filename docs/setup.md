@@ -162,8 +162,8 @@ them, and on a pin of this repository's build `install` exits 2 there and the sk
   tag is read (`-` sorts before a digit, so such a tag still lists below the later builds of its day).
 - `lock --write --release` finds the releases of the pinned commit: the upstream tags that point at it
   (`git ls-remote --tags`, one `v<version>` and one `rpptx-v<version>`), else this repository's release whose
-  tag ends with `-<commit12>` (through the GitHub API, unauthenticated, or with `GH_TOKEN` / `GITHUB_TOKEN`
-  when set; the tag cannot be derived from the commit, since the date and time are the build's). It records their URLs:
+  tag ends with `-<commit12>` (through `git ls-remote --tags` of this repository, with no API call and no token;
+  the tag cannot be derived from the commit, since the date and time are the build's). It records their URLs:
   the lock's `release` is the only source of truth.
 
 ## Moving the pin

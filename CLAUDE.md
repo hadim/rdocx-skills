@@ -62,6 +62,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
   session commits on a branch; the maintainer pushes and files any upstream issue.
 - Compare file contents in asserts through `conftest.digest`: pytest diffs byte strings in full under
   `CI=true`, which took 20 minutes per failing comparison on the runners.
+- No `.gitattributes`: the plugin directory refuses one that rewrites files at checkout (`text`, `eol`, `filter`).
+  Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
 ## State on 14/10/2026

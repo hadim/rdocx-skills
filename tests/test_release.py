@@ -237,9 +237,8 @@ def test_upstream_assets_pick_the_archive_and_the_wheel_of_a_platform(capsys):
 @pytest.mark.parametrize("tag", ["rdocx-202609301405-0123456789ab", "rdocx-20260930-0123456789ab"])
 def test_release_url_is_the_release_whose_tag_ends_with_the_commit(tag):
     commit = "0123456789abcdef0123456789abcdef01234567"
-    releases = [{"tag_name": "rdocx-20260929-f2fa36d1d18a"}, {"tag_name": "rdocx-202610011200-f2fa36d1d18b"},
-                {"tag_name": tag}]
-    assert (rdocx_env.release_url("owner/repo", releases, commit)
+    tags = ["rdocx-20260929-f2fa36d1d18a", "rdocx-202610011200-f2fa36d1d18b", tag]
+    assert (rdocx_env.release_url("owner/repo", tags, commit)
             == f"https://github.com/owner/repo/releases/download/{tag}")
 
 
@@ -250,20 +249,22 @@ def test_release_url_is_the_release_whose_tag_ends_with_the_commit(tag):
 ])
 def test_release_url_refuses_no_or_several_releases(tags, message, capsys):
     with pytest.raises(SystemExit):
-        rdocx_env.release_url("owner/repo", [{"tag_name": t} for t in tags], "0123456789ab" + "0" * 28)
+        rdocx_env.release_url("owner/repo", tags, "0123456789ab" + "0" * 28)
     assert message in capsys.readouterr().err
 
 
-def test_github_releases_reads_every_page_and_sends_the_token(monkeypatch):
-    pages, seen = {1: [{"tag_name": f"t{i}"} for i in range(100)], 2: [{"tag_name": "last"}]}, []
+def test_release_tags_come_from_git_without_a_token(monkeypatch):
+    out = ("1111111111111111111111111111111111111111\trefs/tags/rdocx-20260929-f2fa36d1d18a\n"
+           "2222222222222222222222222222222222222222\trefs/tags/rdocx-202610011200-0123456789ab\n"
+           "3333333333333333333333333333333333333333\trefs/tags/rdocx-202610011200-0123456789ab^{}\n")
+    seen = []
 
-    def urlopen(req, timeout):
-        seen.append((req.full_url, req.get_header("Authorization")))
-        return io.BytesIO(json.dumps(pages[int(req.full_url.rsplit("=", 1)[1])]).encode())
+    def run(cmd, **kwargs):
+        seen.append((cmd, kwargs["env"]))
+        return subprocess.CompletedProcess(cmd, 0, out, "")
 
-    monkeypatch.setattr(rdocx_env.urllib.request, "urlopen", urlopen)
-    monkeypatch.delenv("GH_TOKEN", raising=False)
+    monkeypatch.setattr(rdocx_env.subprocess, "run", run)
     monkeypatch.setenv("GITHUB_TOKEN", "secret")
-    assert len(rdocx_env.github_releases("owner/repo")) == 101
-    assert seen == [(f"https://api.github.com/repos/owner/repo/releases?per_page=100&page={n}", "Bearer secret")
-                    for n in (1, 2)]
+    assert rdocx_env.release_tags("owner/repo") == ["rdocx-20260929-f2fa36d1d18a", "rdocx-202610011200-0123456789ab"]
+    assert [cmd for cmd, _ in seen] == [["git", "ls-remote", "--tags", "https://github.com/owner/repo"]]
+    assert "secret" not in " ".join(seen[0][0])

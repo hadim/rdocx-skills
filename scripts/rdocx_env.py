@@ -49,8 +49,8 @@ archives once those match. For a commit between two upstream releases, the build
 publishes a release `rdocx-<UTC build date and time YYYYMMDDHHMM>-<first 12 characters of the commit>` (GitHub
 lists releases by tag name: the time keeps two builds of the same day in build order; the older releases are
 `rdocx-<YYYYMMDD>-<commit12>`, still valid) whose assets are `<platform>.<file>` plus a SHA256SUMS listing them,
-and `release` is its URL (found through the GitHub API listing of the releases, the one whose tag ends with
-`-<commit12>` whatever its format, with GH_TOKEN or GITHUB_TOKEN when set). A downloaded file is trusted only
+and `release` is its URL (found through `git ls-remote --tags` of this repository, the release whose tag ends
+with `-<commit12>` whatever its format; no API call, no token). A downloaded file is trusted only
 through the lock: it lands in RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the same staging and hash
 check as any dist folder.
 
@@ -237,27 +237,20 @@ def wheel_files(wheel):
 
 
 # ---------------------------------------------------------------- releases
-def github_releases(repo):
-    """Every release of `repo` from the GitHub REST API, page by page (a token from GH_TOKEN or GITHUB_TOKEN,
-    if set, raises the rate limit)."""
-    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    releases, page = [], 1
-    while True:
-        req = urllib.request.Request(f"https://api.github.com/repos/{repo}/releases?per_page=100&page={page}",
-                                     headers={"Accept": "application/vnd.github+json"})
-        if token:
-            req.add_header("Authorization", f"Bearer {token}")
-        with urllib.request.urlopen(req, timeout=60) as res:
-            batch = json.load(res)
-        releases += batch
-        if len(batch) < 100:
-            return releases
-        page += 1
+def release_tags(repo):
+    """Tag names of `repo` on GitHub, from `git ls-remote --tags`: each release the build workflow publishes is
+    tagged, and a public repository's tags need no API call and no token."""
+    out = subprocess.run(["git", "ls-remote", "--tags", f"https://github.com/{repo}"], capture_output=True,
+                         text=True, env=GIT_ENV)
+    if out.returncode:
+        die(f"git ls-remote https://github.com/{repo} failed: {out.stderr.strip()}")
+    return sorted({name[len("refs/tags/"):].removesuffix("^{}") for _, name in
+                   (line.split("\t") for line in out.stdout.splitlines())})
 
 
-def release_url(repo, releases, commit):
+def release_url(repo, tags, commit):
     """Download URL of the one release of `commit`: its tag ends with `-<first 12 characters of the commit>`."""
-    tags = sorted(r["tag_name"] for r in releases if r.get("tag_name", "").endswith(f"-{commit[:12]}"))
+    tags = sorted(t for t in tags if t.endswith(f"-{commit[:12]}"))
     if not tags:
         die(f"{repo} has no release of commit {commit[:12]} yet: run the build workflow on it first")
     if len(tags) > 1:
@@ -886,7 +879,7 @@ def main():
             die("--release records hashes: use it with --write")
         if not lock.get("release"):
             lock["release"] = (upstream_releases(lock)
-                               or release_url(RELEASES_REPO, github_releases(RELEASES_REPO), lock["commit"]))
+                               or release_url(RELEASES_REPO, release_tags(RELEASES_REPO), lock["commit"]))
             say(f"release: {lock['release']}")
         if upstream_release(lock):
             platforms = [args.platform] if args.platform else sorted(UPSTREAM_PLATFORMS)
