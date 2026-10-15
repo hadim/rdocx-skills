@@ -78,8 +78,8 @@ The plugin itself holds no binaries. Here is everything it fetches and runs:
 
 Two maintainer commands go further, and the skills never run them on their own: `install --build` compiles the
 pinned commit from source (the commit from GitHub, crates from crates.io with `cargo --locked`, build tools
-from PyPI pinned by hash), and `lock --write --release` lists this repository's releases through the GitHub
-API, with `GH_TOKEN` or `GITHUB_TOKEN` when one is set.
+from PyPI pinned by hash), and `lock --write --release` reads the release tags with `git ls-remote` and checks
+the build provenance of upstream releases with `gh attestation verify`.
 
 ### Supply chain
 
