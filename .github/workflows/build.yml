@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Upstream tag, branch or full commit hash (empty: the commit pinned in rdocx.lock.json)"
+        description: "Upstream tag, branch or full commit hash (empty: the commit pinned in plugin/rdocx.lock.json)"
         required: false
         default: ""
       lto:
@@ -70,10 +70,10 @@ jobs:
             {"platform": "macos-arm64", "runner": "macos-14"},
             {"platform": "windows-x86_64", "runner": "windows-2025"}]
         run: |
-          if [ -n "$REF" ]; then python scripts/rdocx_env.py bump "$REF"; fi
-          commit=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["commit"])')
-          ref=$(python -c 'import json; print(json.load(open("rdocx.lock.json")).get("ref", ""))')
-          repo=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["upstream"].removeprefix("https://github.com/"))')
+          if [ -n "$REF" ]; then python plugin/scripts/rdocx_env.py bump "$REF"; fi
+          commit=$(python -c 'import json; print(json.load(open("plugin/rdocx.lock.json"))["commit"])')
+          ref=$(python -c 'import json; print(json.load(open("plugin/rdocx.lock.json")).get("ref", ""))')
+          repo=$(python -c 'import json; print(json.load(open("plugin/rdocx.lock.json"))["upstream"].removeprefix("https://github.com/"))')
           c12=${commit:0:12}
           # One reading of the clock (UTC, to the minute) for the tag and the title: GitHub lists releases by tag
           # name, so the time keeps two builds of the same day in build order.
@@ -82,7 +82,7 @@ jobs:
           # The release the lock names (a bump empties it), else any release whose tag ends with -<commit12>
           # (rdocx-<YYYYMMDDHHMM>-<commit12>, or rdocx-<YYYYMMDD>-<commit12> before the time was added), else a new
           # tag stamped now: a commit is never built twice.
-          locked=$(python -c 'import json; print(json.load(open("rdocx.lock.json")).get("release", "").rstrip("/").rsplit("/", 1)[-1])')
+          locked=$(python -c 'import json; print(json.load(open("plugin/rdocx.lock.json")).get("release", "").rstrip("/").rsplit("/", 1)[-1])')
           tag=
           case "$locked" in
             *-"$c12") if gh release view "$locked" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then tag=$locked; fi ;;
@@ -131,8 +131,8 @@ jobs:
 
       - name: Lock on the commit to build
         run: |
-          python scripts/rdocx_env.py bump "$COMMIT"
-          test "$(python -c 'import sys; sys.path.insert(0, "scripts"); import rdocx_env; print(rdocx_env.platform_key())')" = "$PLATFORM"
+          python plugin/scripts/rdocx_env.py bump "$COMMIT"
+          test "$(python -c 'import sys; sys.path.insert(0, "plugin/scripts"); import rdocx_env; print(rdocx_env.platform_key())')" = "$PLATFORM"
 
       - name: Rust toolchain named by rdocx's rust-toolchain.toml
         run: .github/scripts/rust-toolchain.sh "$COMMIT"
@@ -159,14 +159,14 @@ jobs:
       # No release exists for this commit, so this builds it (the download attempt fails first).
       - name: Build and install
         if: ${{ !inputs.dry_run }}
-        run: python scripts/rdocx_env.py install --build
+        run: python plugin/scripts/rdocx_env.py install --build
 
       # A dry run builds even a commit whose release exists (install would download it).
       - name: Build only (dry run)
         if: ${{ inputs.dry_run }}
         run: |
-          python scripts/rdocx_env.py build
-          for cli in rdocx rpptx; do "dist/$COMMIT/$PLATFORM/$cli" --version; done
+          python plugin/scripts/rdocx_env.py build
+          for cli in rdocx rpptx; do "plugin/dist/$COMMIT/$PLATFORM/$cli" --version; done
 
       # also after a failed build: the next attempt starts from what compiled
       - name: Save the cargo registry and the build folder
@@ -192,7 +192,7 @@ jobs:
         if: ${{ !inputs.dry_run }}
         with:
           name: dist-${{ matrix.platform }}
-          path: dist/${{ needs.plan.outputs.commit }}/${{ matrix.platform }}/
+          path: plugin/dist/${{ needs.plan.outputs.commit }}/${{ matrix.platform }}/
           if-no-files-found: error
 
   # A new release, or the files of the platforms an existing one lacked, added to it.

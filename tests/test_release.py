@@ -16,7 +16,7 @@ import pytest
 from conftest import verified_dist
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "plugin" / "scripts"))
 import rdocx_env  # noqa: E402
 
 LOCK = rdocx_env.load_lock()
@@ -30,7 +30,7 @@ OWN_TAG_DAY = f"rdocx-20261004-{LOCK['commit'][:12]}"
 
 def repo_copy(root, lock=LOCK):
     (root / "scripts").mkdir(parents=True)
-    shutil.copy(ROOT / "scripts" / "rdocx_env.py", root / "scripts")
+    shutil.copy(ROOT / "plugin" / "scripts" / "rdocx_env.py", root / "scripts")
     (root / "rdocx.lock.json").write_text(json.dumps(lock, indent=2) + "\n")
     return root
 

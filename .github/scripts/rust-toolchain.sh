@@ -10,7 +10,7 @@ if ! command -v rustup > /dev/null; then  # not every runner image ships rustup
 fi
 commit="$1"
 file="${RUNNER_TEMP:-/tmp}/rust-toolchain.toml"
-repo=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["upstream"].removeprefix("https://github.com/").removesuffix(".git"))')
+repo=$(python -c 'import json; print(json.load(open("plugin/rdocx.lock.json"))["upstream"].removeprefix("https://github.com/").removesuffix(".git"))')
 curl -fsSL "https://raw.githubusercontent.com/${repo}/${commit}/rust-toolchain.toml" -o "$file"
 args=$(python - "$file" <<'PY'
 import sys, tomllib

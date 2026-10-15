@@ -13,8 +13,8 @@ from builders import (cell_text_docx, commented_thread, every_story_docx, google
                       word_textbox_docx, wrapped_run_docx, wrapped_text_docx)
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
-sys.path.insert(0, str(ROOT / "skills" / "pptx" / "scripts"))
+sys.path.insert(0, str(ROOT / "plugin" / "skills" / "docx" / "scripts"))
+sys.path.insert(0, str(ROOT / "plugin" / "skills" / "pptx" / "scripts"))
 import docx_ops  # noqa: E402
 import pptx_ops  # noqa: E402
 from conftest import digest, runtime_python  # noqa: E402
@@ -177,7 +177,7 @@ def test_comment_on_text_in_tables_counts_nested_cells_and_refuses_past_the_last
 
 def test_command_line_entry_points(report_docx, tmp_path):
     py = runtime_python()  # the runtime Python an agent gets
-    script = ROOT / "skills" / "docx" / "scripts" / "docx_ops.py"
+    script = ROOT / "plugin" / "skills" / "docx" / "scripts" / "docx_ops.py"
     res = subprocess.run([*py, script, "replace", report_docx, tmp_path / "o.docx", "--edit", "footbridge", "bridge", "1"],
                          capture_output=True, text=True)
     assert res.returncode == 1 and "refused" in res.stderr and not (tmp_path / "o.docx").exists()

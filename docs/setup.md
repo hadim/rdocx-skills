@@ -1,6 +1,6 @@
 # Installing the pinned rdocx build
 
-The skills never use whatever rdocx happens to be installed. They use the build named in `rdocx.lock.json`:
+The skills never use whatever rdocx happens to be installed. They use the build named in `plugin/rdocx.lock.json`:
 
 - `upstream` and `commit`: the rdocx source, by full 40-character git hash; `ref`: the tag or branch it was
   pinned from (for the reader);
@@ -13,21 +13,25 @@ The skills never use whatever rdocx happens to be installed. They use the build 
 - `installed_files.<platform>`: the SHA-256 of every file the two wheels install (modules, stubs, native
   libraries), checked again by `status` on the installed copy.
 
-`scripts/rdocx_env.py` (standard library only, Python 3.9 or later, Linux, macOS and Windows) enforces it.
+The plugin is the `plugin/` folder: what it ships (manifest, skills, `scripts/`, the lock, the icon). The tests,
+the workflows and these docs sit beside it in the repository, outside what users install and what the plugin
+directory scans. Commands below run from the repository's root.
+
+`plugin/scripts/rdocx_env.py` (standard library only, Python 3.9 or later, Linux, macOS and Windows) enforces it.
 
 ## Commands
 
 ```bash
-python3 scripts/rdocx_env.py status [--allow-local]  # exit 0 when the install matches the lock (or is an accepted local build)
-python3 scripts/rdocx_env.py install                 # from a dist folder, else the release; exit 2 if neither has the files
-python3 scripts/rdocx_env.py install --build         # compile the pinned commit when neither has them
-python3 scripts/rdocx_env.py install --from DIR      # from a folder of prebuilt files, checked against the lock
-python3 scripts/rdocx_env.py build [--target linux-aarch64]
-python3 scripts/rdocx_env.py lock [--write] [--platform P]  # compare (or record) a local dist folder
-python3 scripts/rdocx_env.py lock --write --release  # record every platform of the release named in the lock (found first if none)
-python3 scripts/rdocx_env.py bump REF                # pin an upstream tag, branch or full commit hash (release and hashes emptied)
-python3 scripts/rdocx_env.py test [pytest args]      # the acceptance suite on the installed build
-python3 scripts/rdocx_env.py paths
+python3 plugin/scripts/rdocx_env.py status [--allow-local]  # exit 0 when the install matches the lock (or is an accepted local build)
+python3 plugin/scripts/rdocx_env.py install                 # from a dist folder, else the release; exit 2 if neither has the files
+python3 plugin/scripts/rdocx_env.py install --build         # compile the pinned commit when neither has them
+python3 plugin/scripts/rdocx_env.py install --from DIR      # from a folder of prebuilt files, checked against the lock
+python3 plugin/scripts/rdocx_env.py build [--target linux-aarch64]
+python3 plugin/scripts/rdocx_env.py lock [--write] [--platform P]  # compare (or record) a local dist folder
+python3 plugin/scripts/rdocx_env.py lock --write --release  # record every platform of the release named in the lock (found first if none)
+python3 plugin/scripts/rdocx_env.py bump REF                # pin an upstream tag, branch or full commit hash (release and hashes emptied)
+python3 plugin/scripts/rdocx_env.py test [pytest args]      # the acceptance suite on the installed build
+python3 plugin/scripts/rdocx_env.py paths
 ```
 
 The install goes to `~/.local/share/rdocx-skills/<first 12 characters of the commit>/` (override the root
@@ -67,8 +71,8 @@ sets how many installs stay, 0 keeps them all); build caches and the test enviro
   clone cannot change what is built. Paths that could escape the build folder are refused; submodules are
   skipped.
 - **Build tools**: `cargo --locked` (checksums from rdocx's `Cargo.lock`), maturin and ziglang installed by
-  pip with `--require-hashes --only-binary :all:` from `scripts/build-requirements.txt` and
-  `scripts/cross-requirements.txt`, in environments recreated when those files change; cargo-zigbuild at a
+  pip with `--require-hashes --only-binary :all:` from `plugin/scripts/build-requirements.txt` and
+  `plugin/scripts/cross-requirements.txt`, in environments recreated when those files change; cargo-zigbuild at a
   fixed version, checked before a cross-build.
 - **Local builds**: files built in the same run are installed as a local build (`installed.json` records
   their hashes and every installed file); `status`, `install` and `test` accept one only where the lock has
@@ -77,7 +81,7 @@ sets how many installs stay, 0 keeps them all); build caches and the test enviro
 
 ## Where prebuilt files are looked for
 
-`$RDOCX_DIST/<commit>/<platform>/`, then `dist/<commit>/<platform>/` in this repository, then
+`$RDOCX_DIST/<commit>/<platform>/`, then `plugin/dist/<commit>/<platform>/` in this repository, then
 `$RDOCX_HOME/dist/<commit>/<platform>/` (where `build` writes when the repository is read-only, and where
 downloads land), then the release named by `release` in the lock: this repository's build of the commit, whose
 assets are named `<platform>.<file>` and listed with their SHA-256 in `SHA256SUMS`.
@@ -105,7 +109,7 @@ your package manager; the script never installs a toolchain). It takes 10 to 30 
 - **Small or short-lived sandboxes** (little memory, short command timeouts, a home folder reset between
   sessions): never build there; `install` once per session. Where the home folder is wiped between sessions
   or its disk is full, install under `/tmp` (seconds, hash-checked):
-  `git clone --depth 1 https://github.com/hadim/rdocx-skills /tmp/rdocx-skills-src && RDOCX_HOME=/tmp/rdocx python3 /tmp/rdocx-skills-src/scripts/rdocx_env.py install`,
+  `git clone --depth 1 https://github.com/hadim/rdocx-skills /tmp/rdocx-skills-src && RDOCX_HOME=/tmp/rdocx python3 /tmp/rdocx-skills-src/plugin/scripts/rdocx_env.py install`,
   and keep `RDOCX_HOME=/tmp/rdocx` set in each command, so that the skills' `R=${RDOCX_HOME:-...}/current/bin`
   finds it.
 - **No verified build available**: the skills tell the user and fall back to the built-in skills for the
@@ -181,7 +185,7 @@ that match it, so that any commit of `main` can be released:
    - what the new build adds: a new method or flag fails nothing, so document what an agent would use (a SKILL.md
      table row or a references entry, a recipe when it helps), or agents only find it by searching the stubs;
    - whether each sentence still holds: go through both SKILL.md files, their references (`cli.md`,
-     `python-api.md`, `gaps.md`, `interop.md`) and `skills/*/scripts` with the new build installed, looking for a
+     `python-api.md`, `gaps.md`, `interop.md`) and `plugin/skills/*/scripts` with the new build installed, looking for a
      workaround a closed gap made useless, advice about a behaviour that changed, and a limitation stated without
      its gap key.
    When the new pin is an upstream release, also run the behaviour tests (`test_docx_*.py`, `test_pptx*.py`)
@@ -203,7 +207,7 @@ follow it, and get a new version only from `.github/workflows/release.yml`: Acti
 
 1. refuses a `main` whose `ci.yml` run did not succeed, or that is released already;
 2. picks the CalVer version of the day, `YYYY.M.D` (`YYYY.M.D.2` and on for another release the same day);
-3. moves the `release` branch to `main`'s tree with that `version` written into `.claude-plugin/plugin.json`, as a
+3. moves the `release` branch to `main`'s tree with that `version` written into `plugin/.claude-plugin/plugin.json`, as a
    merge of `main` so that `release` only moves forward, and tags it `v<version>`;
 4. publishes the GitHub release `v<version>`, titled with the rdocx and rpptx versions of the pinned build
    (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <integration branch> from hadim/rdocx`), marked latest, whose notes name the pinned

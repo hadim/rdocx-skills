@@ -13,7 +13,7 @@ import pytest
 from conftest import verified_dist
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "plugin" / "scripts"))
 import rdocx_env  # noqa: E402
 
 LOCK = rdocx_env.load_lock()
@@ -26,7 +26,7 @@ def env_cmd(home, *args):
     env.pop("RDOCX_DIST", None)
     if DIST is not None:  # <root>/<commit>/<platform>
         env["RDOCX_DIST"] = str(DIST.parents[1])
-    return subprocess.run([sys.executable, ROOT / "scripts" / "rdocx_env.py", *args], env=env, capture_output=True, text=True)
+    return subprocess.run([sys.executable, ROOT / "plugin" / "scripts" / "rdocx_env.py", *args], env=env, capture_output=True, text=True)
 
 
 @pytest.fixture(scope="module")

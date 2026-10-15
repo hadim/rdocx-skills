@@ -14,7 +14,7 @@ from conftest import BASH, BIN
 
 ROOT = Path(__file__).resolve().parent.parent
 BLOCKS = []
-for recipes in sorted(ROOT.glob("skills/*/references/recipes.md")):
+for recipes in sorted(ROOT.glob("plugin/skills/*/references/recipes.md")):
     for k, (lang, code) in enumerate(re.findall(r"```(python|bash)\n(.*?)```", recipes.read_text(), re.S)):
         BLOCKS.append(pytest.param(recipes, lang, code, id=f"{recipes.parent.parent.name}-{k:02d}-{lang}"))
 
@@ -22,7 +22,7 @@ for recipes in sorted(ROOT.glob("skills/*/references/recipes.md")):
 @pytest.fixture(scope="module")
 def workdirs(tmp_path_factory, report_docx, deck_pptx, free_font):
     dirs = {}
-    for recipes in ROOT.glob("skills/*/references/recipes.md"):
+    for recipes in ROOT.glob("plugin/skills/*/references/recipes.md"):
         d = tmp_path_factory.mktemp(recipes.parent.parent.name)
         shutil.copy(report_docx, d / "report.docx")
         shutil.copy(deck_pptx, d / "deck.pptx")
@@ -53,7 +53,7 @@ def test_recipe_outputs(workdirs):
     import pptx
     import rdocx
     import rpptx
-    sys.path.insert(0, str(ROOT / "skills" / "docx" / "scripts"))
+    sys.path.insert(0, str(ROOT / "plugin" / "skills" / "docx" / "scripts"))
     import docx_ops
     d = {r.parent.parent.name: w for r, w in workdirs.items()}["docx"]
     texts = [p.text for p in rdocx.Document.open(d / "edited.docx").paragraphs]

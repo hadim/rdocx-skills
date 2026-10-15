@@ -80,7 +80,7 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("tag")
     p.add_argument("--repo", default="hadim/rdocx-skills")
-    p.add_argument("lock", nargs="?", default="rdocx.lock.json")
+    p.add_argument("lock", nargs="?", default="plugin/rdocx.lock.json")
     p = sub.add_parser("rewrite")
     p.add_argument("--notes", required=True)
     p.add_argument("--sha", required=True)
