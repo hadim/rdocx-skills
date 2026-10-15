@@ -1,6 +1,6 @@
-# Publishes a release of the plugin, by hand (Actions, release, Run workflow). Pushes to main reach nobody: Claude Code
-# users who added the marketplace at `release` (`/plugin marketplace add hadim/rdocx-skills@release`) and the Claude
-# plugin directory, which follows that branch, get a new version only from here.
+# Publishes a release of the plugin, by hand (Actions, release, Run workflow). Pushes to main reach nobody: `release`
+# is the repository's default branch, so Claude Code and Claude Desktop users (`/plugin marketplace add
+# hadim/rdocx-skills`) and the Claude plugin directory follow it, and get a new version only from here.
 #
 # The release takes main as it is, once ci.yml passed on it: the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for
 # another release the same day), the `release` branch moved to main's tree with that version written into

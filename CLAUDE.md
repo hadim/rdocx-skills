@@ -51,9 +51,10 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - Every pin is a build of this repository: `build.yml` builds the commit, an upstream release tag as much as an
   integration branch, and `lock --write --release` records that release (its `SHA256SUMS`), after review.
 - `main` always pairs a lock whose build exists and is recorded with the tests and skills that match it
-  (docs/setup.md, Moving the pin), but a push to `main` reaches nobody: users and the Claude plugin directory follow
-  the `release` branch, which only `release.yml` moves (CalVer `vYYYY.M.D`, `version` in plugin.json there only;
-  docs/setup.md, Releasing the plugin). Releasing is the maintainer's call: never run it unasked.
+  (docs/setup.md, Moving the pin), but a push to `main` reaches nobody: `release` is the default branch, which users
+  (Claude Code, Claude Desktop) and the Claude plugin directory follow, and only `release.yml` moves it (CalVer
+  `vYYYY.M.D`, `version` in plugin.json there only; docs/setup.md, Releasing the plugin). Pull requests target `main`
+  (`gh pr create --base main`). Releasing is the maintainer's call: never run it unasked.
 - Moving the pin, a new integration snapshot included, always brings the skills along in the same PR, without being
   asked: fix every cited name that moved, keep the recipes running, make the behaviour tests pass, and document what
   the new build adds that an agent would use (a SKILL.md table row or a references entry, a recipe when it helps). The
@@ -74,9 +75,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 ## State on 15/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
-  submitted to the Claude plugin directory, following the `release` branch; the rdocx maintainer agreed to the
-  plugin name `rdocx` (hadim/rdocx-skills#40). No release of the plugin yet: the first `release.yml` run creates
-  the `release` branch and `v<date>`.
+  submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
+  the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`).
 - Pinned: the integration branch `integration/open-prs-2026-10-14` of hadim/rdocx (commit `d17e1da9`) through this
   repository's release `rdocx-202610141943-d17e1da9e773` (ThinLTO, four platforms, no macos-x86_64): the previous pin
   `integration/open-prs-2026-10-12-4` (`52e7f0b8`: tensorbee/rdocx `v0.16.0` plus every open PR of the user and #363)

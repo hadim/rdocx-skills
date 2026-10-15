@@ -43,7 +43,7 @@ LibreOffice round trips, python-docx, python-pptx or hand-written XML.
 In Claude Code:
 
 ```
-/plugin marketplace add hadim/rdocx-skills@release
+/plugin marketplace add hadim/rdocx-skills
 /plugin install rdocx@rdocx-skills
 ```
 
@@ -168,12 +168,11 @@ See [docs/setup.md](docs/setup.md) for the details.
 
 - 🏷️ **Versions**: each release of the plugin is a CalVer version (`2026.10.15`) and a GitHub release titled with
   the rdocx and rpptx versions it pins. The skills, the tests and the pinned build move together.
-- 🌿 **The `release` branch** carries the released version: the marketplace above and the Claude plugin directory
-  follow it, while `main` moves ahead between releases.
+- 🌿 **The `release` branch** is the repository's default branch and carries the released version: Claude Code,
+  Claude Desktop and the Claude plugin directory follow it. Development happens on `main`, which moves ahead between
+  releases; to try it, add the marketplace as `hadim/rdocx-skills#main`.
 - 🔔 **Updates**: third-party marketplaces do not update by themselves. Turn on auto-update for `rdocx-skills` in
   `/plugin` (Marketplaces), or run `/plugin marketplace update rdocx-skills`.
-- ↪️ **Added the marketplace without `@release`?** You follow `main`. Run `/plugin marketplace remove
-  rdocx-skills`, then add it again at `@release`.
 
 ## 🗂️ Repository layout
 

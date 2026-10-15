@@ -75,7 +75,7 @@ def notes(lock, repo, version):
         + (f" (`{ref}`)" if ref and ref != commit else "") + ".",
         f"- **Pinned build**: the release [{build}]({release_page(lock['release'])}), with its files, their SHA-256, "
         "their provenance and the acceptance suite on four platforms.",
-        f"- **Install**: `/plugin marketplace add {repo}@release`, then `/plugin install rdocx@rdocx-skills`.",
+        f"- **Install**: `/plugin marketplace add {repo}`, then `/plugin install rdocx@rdocx-skills`.",
         "",
     ])
 
