@@ -4,7 +4,8 @@
 # characters of the commit> of this repository (GitHub lists releases by tag name: the time keeps two builds of the
 # same day in build order; releases before it are rdocx-<YYYYMMDD>-<commit12>, still valid), titled with the versions
 # it holds and what it was built from: `rdocx 0.16.1 · rpptx 0.14.1` for an upstream release, `rdocx 0.16.0 · rpptx
-# 0.14.0 + integration/open-prs-2026-10-14` for anything else. Every pin goes through it: `rdocx_env.py lock
+# 0.14.0 + integration/open-prs-2026-10-14 from hadim/rdocx` for anything else (the repository named when it is not
+# tensorbee/rdocx). Every pin goes through it: `rdocx_env.py lock
 # --write --release` records that release in the lock, and `rdocx_env.py install` downloads and checks against it.
 # Runs by hand on any upstream tag, branch or commit. A commit has at most one release: one whose tag ends with
 # -<commit12> is never rebuilt nor overwritten, but a platform added to this workflow later is built and added to it
@@ -281,6 +282,7 @@ jobs:
           # the versions the wheels carry (<platform>.<package>-<version>-...whl), the same on every platform
           version() { ls assets | sed -n "s/^[^.]*\.$1-\([^-]*\)-.*\.whl\$/\1/p" | sort -u; }
           [ "$(version rdocx | wc -l)" -eq 1 ] && [ "$(version rpptx | wc -l)" -eq 1 ] || { echo "one version per package expected"; exit 1; }
-          label=$(python3 skills-src/.github/scripts/plugin_release.py label --ref "$REF" --rdocx "$(version rdocx)" --rpptx "$(version rpptx)")
+          label=$(python3 skills-src/.github/scripts/plugin_release.py label --ref "$REF" --upstream "$REPO" \
+            --rdocx "$(version rdocx)" --rpptx "$(version rpptx)")
           gh release create "$TAG" assets/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "$label (build $DATE, ${COMMIT:0:12})" --notes-file notes.md --prerelease --latest=false

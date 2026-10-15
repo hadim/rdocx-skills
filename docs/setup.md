@@ -144,7 +144,9 @@ the built-in ones, or `install --build` compiles the pinned commit on the machin
   name, so the time keeps two builds of the same day in build order) with `SHA256SUMS` and provenance
   attestations. Its title names the versions the wheels carry and what was built: `rdocx 0.16.1 · rpptx 0.14.1
   (build <date>, <commit12>)` for an upstream release tag, `rdocx 0.16.0 · rpptx 0.14.0 +
-  integration/open-prs-2026-10-14 (build ...)` for anything else (`.github/scripts/plugin_release.py label`). It
+  integration/open-prs-2026-10-14 from hadim/rdocx (build ...)` for anything else, the repository named when it is
+  not tensorbee/rdocx (`.github/scripts/plugin_release.py label`). Integration branches live on the maintainer's
+  fork, hadim/rdocx: an upstream release plus the maintainer's pull requests still open upstream. It
   runs no suite: `ci.yml` runs it on the pull request that pins the release, and writes it into the notes once
   `main` pins it (above); releases built before carry a `Build-time suite (preliminary, ...)` section too. Inputs:
   `lto` (`thin`, the default: ThinLTO and 16 codegen units, about half the build time of `fat`, upstream's release
@@ -204,7 +206,7 @@ branch, get a new version only from `.github/workflows/release.yml`: Actions, re
 3. moves the `release` branch to `main`'s tree with that `version` written into `.claude-plugin/plugin.json`, as a
    merge of `main` so that `release` only moves forward, and tags it `v<version>`;
 4. publishes the GitHub release `v<version>`, titled with the rdocx and rpptx versions of the pinned build
-   (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <integration branch>`), marked latest, whose notes name the pinned
+   (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <integration branch> from hadim/rdocx`), marked latest, whose notes name the pinned
    build and list the pull requests merged since the previous release.
 
 `main` carries no `version`: Claude Code users who follow `main` (the marketplace added without `@release`) get

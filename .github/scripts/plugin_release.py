@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """The plugin's releases (release.yml) and the titles of the builds (build.yml). Standard library only.
 
-  plugin_release.py label --ref REF --rdocx V --rpptx V
+  plugin_release.py label --ref REF --rdocx V --rpptx V [--upstream OWNER/REPO]
       `rdocx V` and `rpptx V` joined by a middle dot, followed by ` + REF` unless REF is an upstream
-      release tag
+      release tag, and by ` from OWNER/REPO` when that is not tensorbee/rdocx (a fork's integration branch)
   plugin_release.py version --date YYYY-MM-DD [TAG...]
       the CalVer version of a release made that day: `YYYY.M.D`, or `YYYY.M.D.N` (N from 2) when the tags
       (`v<version>`) already hold that day
@@ -23,18 +23,26 @@ from pathlib import Path
 
 FAMILIES = ("rdocx", "rpptx")
 UPSTREAM_TAG = re.compile(r"(?:rpptx-)?v\d+\.\d+\.\d+")  # upstream's release tags: v<version>, rpptx-v<version>
+UPSTREAM = "tensorbee/rdocx"
 
 
-def label(versions, ref):
+def label(versions, ref, repo=UPSTREAM):
     """`rdocx 0.16.1` and `rpptx 0.14.1` joined by a middle dot for a build of an upstream release tag, followed
-    by ` + <ref>` for anything else, such as an integration branch (a full commit hash shortened to 12 characters)."""
+    by ` + <ref>` for anything else, such as an integration branch (a full commit hash shortened to 12 characters),
+    and by ` from <repo>` when it comes from another repository than upstream's, such as the maintainer's fork."""
     missing = [f for f in FAMILIES if not versions.get(f)]
     if missing:
         sys.exit(f"no {' nor '.join(missing)} version")
     base = " \u00b7 ".join(f"{f} {versions[f]}" for f in FAMILIES)
     if not ref or UPSTREAM_TAG.fullmatch(ref):
         return base
-    return f"{base} + {ref[:12] if re.fullmatch(r'[0-9a-f]{40}', ref) else ref}"
+    ref = ref[:12] if re.fullmatch(r"[0-9a-f]{40}", ref) else ref
+    return f"{base} + {ref}" + (f" from {repo}" if repo and repo != UPSTREAM else "")
+
+
+def repo_of(lock):
+    """`owner/repo` of the lock's upstream URL."""
+    return lock["upstream"].removeprefix("https://github.com/").rstrip("/")
 
 
 def next_version(day, tags):
@@ -56,7 +64,7 @@ def release_page(download_url):
 
 def notes(lock, repo, version):
     """The head of a release's notes; GitHub's list of merged pull requests follows it."""
-    upstream = lock["upstream"].removeprefix("https://github.com/").rstrip("/")
+    upstream = repo_of(lock)
     commit, ref = lock["commit"], lock.get("ref", "")
     build = lock["release"].rstrip("/").rsplit("/", 1)[-1]
     return "\n".join([
@@ -89,6 +97,7 @@ def main(argv=None):
     p.add_argument("--ref", default="")
     p.add_argument("--rdocx", required=True)
     p.add_argument("--rpptx", required=True)
+    p.add_argument("--upstream", default=UPSTREAM)
     p = sub.add_parser("version")
     p.add_argument("--date", required=True, type=datetime.date.fromisoformat)
     p.add_argument("tags", nargs="*")
@@ -103,12 +112,12 @@ def main(argv=None):
     p.add_argument("version")
     args = ap.parse_args(argv)
     if args.cmd == "label":
-        print(label({"rdocx": args.rdocx, "rpptx": args.rpptx}, args.ref))
+        print(label({"rdocx": args.rdocx, "rpptx": args.rpptx}, args.ref, args.upstream))
     elif args.cmd == "version":
         print(next_version(args.date, args.tags))
     elif args.cmd == "title":
         lock = json.loads(args.lock.read_text())
-        print(label(lock.get("versions", {}), lock.get("ref", "")))
+        print(label(lock.get("versions", {}), lock.get("ref", ""), repo_of(lock)))
     elif args.cmd == "notes":
         sys.stdout.write(notes(json.loads(args.lock.read_text()), args.repo, args.version))
     else:
