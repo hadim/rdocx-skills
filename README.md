@@ -130,8 +130,11 @@ The skills never run them on their own:
   wheel and every file the wheels install.
 - 🏗️ **The builds**: every pinned commit, an upstream release as much as an integration branch, is built by this
   repository's build workflow on four platforms and published as a pre-release with build provenance
-  attestations. Its title says what it holds: `rdocx 0.16.1 · rpptx 0.14.1`, or `rdocx 0.16.0 · rpptx 0.14.0 +
-  integration/open-prs-2026-10-14` when open pull requests are carried on top of a release.
+  attestations. Its title says what it holds: `rdocx 0.16.1 · rpptx 0.14.1` for an upstream release, or `rdocx
+  0.16.0 · rpptx 0.14.0 + integration/open-prs-2026-10-14 from hadim/rdocx` for an integration branch.
+- 🍴 **Integration branches** live on the maintainer's fork, [hadim/rdocx](https://github.com/hadim/rdocx): an
+  upstream release plus the maintainer's pull requests still open on tensorbee/rdocx, pinned when the skills need
+  a fix before upstream releases it. The lock's `upstream` and `ref` name the fork and the branch.
 - 🧾 **Local builds**: every git object of the commit is verified, and `cargo --locked` builds it.
 
 ```bash

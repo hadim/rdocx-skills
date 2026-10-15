@@ -141,15 +141,18 @@ def test_the_command_takes_the_summaries_after_the_options_as_ci_yml_passes_them
     assert res.stdout == release_notes.rewrite(LEGACY, [SUMMARY_A, SUMMARY_B], MAIN_SHA, RUN)
 
 
-@pytest.mark.parametrize("ref, label", [
-    ("v0.16.1", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),  # an upstream release: the versions say it all
-    ("rpptx-v0.14.1", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),
-    ("integration/open-prs-2026-10-14", "rdocx 0.16.1 \u00b7 rpptx 0.14.1 + integration/open-prs-2026-10-14"),
-    (COMMIT, f"rdocx 0.16.1 \u00b7 rpptx 0.14.1 + {COMMIT[:12]}"),
-    ("", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),
+@pytest.mark.parametrize("ref, repo, label", [
+    ("v0.16.1", "tensorbee/rdocx", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),  # an upstream release: the versions say it all
+    ("rpptx-v0.14.1", "tensorbee/rdocx", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),
+    ("v0.16.1", "hadim/rdocx", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),  # the same tag, mirrored on a fork
+    ("main", "tensorbee/rdocx", "rdocx 0.16.1 \u00b7 rpptx 0.14.1 + main"),
+    ("integration/open-prs-2026-10-14", "hadim/rdocx",
+     "rdocx 0.16.1 \u00b7 rpptx 0.14.1 + integration/open-prs-2026-10-14 from hadim/rdocx"),
+    (COMMIT, "hadim/rdocx", f"rdocx 0.16.1 \u00b7 rpptx 0.14.1 + {COMMIT[:12]} from hadim/rdocx"),
+    ("", "tensorbee/rdocx", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),
 ])
-def test_a_build_is_named_after_its_versions_and_what_it_was_built_from(ref, label):
-    assert plugin_release.label({"rdocx": "0.16.1", "rpptx": "0.14.1"}, ref) == label
+def test_a_build_is_named_after_its_versions_and_what_it_was_built_from(ref, repo, label):
+    assert plugin_release.label({"rdocx": "0.16.1", "rpptx": "0.14.1"}, ref, repo) == label
 
 
 def test_a_label_needs_both_versions():
