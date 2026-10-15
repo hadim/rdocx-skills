@@ -75,7 +75,7 @@ call for each task.
 - 🧩 Templates filled from data: `{{ fields }}`, loops and content controls
 - 🔁 Counted find and replace, regular expressions included, across runs and without losing the formatting
 - 🎨 Paragraphs, headings, lists, styles and numbering; tables with merges, borders and shading; page setup
-- 🖼️ Pictures, hyperlinks, charts, equations from LaTeX, headers, footers and page numbers
+- 🖼️ Pictures, hyperlinks, charts, equations from a subset of LaTeX, headers, footers and page numbers
 - 🔷 Shapes, connectors, fills, lines, shadows, groups and z-order; themes, masters and layouts
 - 🗃️ Slides added, reordered, hidden, imported or removed; decks merged; documents combined
 

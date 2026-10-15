@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      actions: read  # gh run list: the ci.yml run of main
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -50,7 +51,8 @@ jobs:
       - name: Version, title and notes
         id: plan
         run: |
-          version=$(python3 .github/scripts/plugin_release.py version --date "$(date -u +%F)" $(git tag -l 'v*'))
+          mapfile -t tags < <(git tag -l 'v*')
+          version=$(python3 .github/scripts/plugin_release.py version --date "$(date -u +%F)" "${tags[@]}")
           title=$(python3 .github/scripts/plugin_release.py title rdocx.lock.json)
           previous=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
           python3 .github/scripts/plugin_release.py notes --repo "$GITHUB_REPOSITORY" --version "$version" \

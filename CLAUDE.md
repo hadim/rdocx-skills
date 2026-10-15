@@ -32,7 +32,8 @@ new rdocx build can be pinned. Public repository: nothing specific to a company 
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
 - `docs/setup.md`: install, trust model, CI, how to move the pin, how to release the plugin.
-- `assets/`: the plugin icon (`icon.svg`, `icon.png` for the directory listing) and the README's two renders.
+- `assets/`: the plugin icon (an SVG source and the PNG that plugin.json names for the directory listing) and the
+  README's two renders.
 
 ## Rules
 
