@@ -191,4 +191,4 @@ def test_the_release_notes_name_the_pinned_build_and_how_to_install(tmp_path):
     assert res.stdout == plugin_release.notes(lock, REPO, "2026.10.5")
     assert "rdocx 0.16.0 and rpptx 0.14.0" in res.stdout and "(`integration/x`)" in res.stdout
     assert f"/releases/tag/rdocx-202610141943-{COMMIT[:12]})" in res.stdout
-    assert f"`/plugin marketplace add {REPO}@release`" in res.stdout
+    assert f"`/plugin marketplace add {REPO}`, then" in res.stdout

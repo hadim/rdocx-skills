@@ -197,9 +197,9 @@ Merging into `main` publishes nothing: users get the new pin with the next relea
 
 ## Releasing the plugin
 
-Pushes to `main` reach nobody. Claude Code users who added the marketplace at `release`
-(`/plugin marketplace add hadim/rdocx-skills@release`) and the Claude plugin directory, which follows the `release`
-branch, get a new version only from `.github/workflows/release.yml`: Actions, release, Run workflow. It:
+Pushes to `main` reach nobody. `release` is the repository's default branch, so whoever adds the marketplace without
+a ref (`/plugin marketplace add hadim/rdocx-skills`, the only form Claude Desktop takes) and the Claude plugin directory
+follow it, and get a new version only from `.github/workflows/release.yml`: Actions, release, Run workflow. It:
 
 1. refuses a `main` whose `ci.yml` run did not succeed, or that is released already;
 2. picks the CalVer version of the day, `YYYY.M.D` (`YYYY.M.D.2` and on for another release the same day);
@@ -209,7 +209,8 @@ branch, get a new version only from `.github/workflows/release.yml`: Actions, re
    (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <integration branch> from hadim/rdocx`), marked latest, whose notes name the pinned
    build and list the pull requests merged since the previous release.
 
-`main` carries no `version`: Claude Code users who follow `main` (the marketplace added without `@release`) get
-every push, as before. The version, the title and the notes come from `.github/scripts/plugin_release.py`, tested
-in `tests/test_ci_scripts.py`. The workflow pushes to `release` with the workflow token: a protection rule on that
-branch must let it through.
+`main` carries no `version`: whoever adds the marketplace as `hadim/rdocx-skills#main` gets every push, the
+development channel. Pull requests target `main`, not the default branch: pick it as the base on GitHub, and run
+`build.yml` from `main` (Use workflow from). The version, the title and the notes come from
+`.github/scripts/plugin_release.py`, tested in `tests/test_ci_scripts.py`. The workflow pushes to `release` with the
+workflow token: a protection rule on that branch must let it through.
