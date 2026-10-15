@@ -195,6 +195,12 @@ See [docs/setup.md](https://github.com/hadim/rdocx-skills/blob/main/docs/setup.m
 
 </details>
 
+## 🛡️ Privacy
+
+The plugin collects nothing and sends none of your data anywhere: the tools run locally, and its only network
+request is the one-time download of the pinned build from GitHub. See the
+[privacy policy](https://github.com/hadim/rdocx-skills/blob/main/PRIVACY.md).
+
 ## 📜 License
 
 MIT. rdocx itself is MIT or Apache-2.0. This plugin is an independent project built on rdocx.

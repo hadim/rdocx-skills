@@ -1,6 +1,7 @@
 {
   "name": "rdocx",
-  "version": "2026.10.15.3",
+  "version": "2026.10.15.4",
+  "displayName": "rdocx",
   "description": "Read, write, edit, review and render Word and PowerPoint files with the rdocx and rpptx CLIs and Python bindings, pinned by hash, with an acceptance suite.",
   "author": {"name": "Hadrien Mary"},
   "homepage": "https://github.com/hadim/rdocx-skills",
@@ -9,5 +10,6 @@
   "icon": "./assets/icon.png",
   "documentationUrl": "https://github.com/hadim/rdocx-skills/blob/main/docs/setup.md",
   "supportUrl": "https://github.com/hadim/rdocx-skills/issues",
+  "privacyPolicyUrl": "https://github.com/hadim/rdocx-skills/blob/main/PRIVACY.md",
   "keywords": ["docx", "pptx", "word", "powerpoint", "office", "rdocx", "redline", "pdf"]
 }
