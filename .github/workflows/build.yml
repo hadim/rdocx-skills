@@ -1,13 +1,16 @@
-# Builds the rdocx and rpptx CLIs and wheels of one upstream commit between two upstream releases on four native
-# runners (no macos-x86_64: Intel Macs are not built for nor tested here), checks that they install and run, and publishes them as the release rdocx-<UTC build date and time
-# YYYYMMDDHHMM>-<first 12 characters of the commit> of this repository (GitHub lists releases by tag name: the time
-# keeps two builds of the same day in build order; releases before it are rdocx-<YYYYMMDD>-<commit12>, still
-# valid), which `rdocx_env.py lock --write --release` records in the lock when upstream has no release of that
-# commit, and `rdocx_env.py install` downloads and checks against it. Runs by hand on any upstream tag, branch or
-# commit; a lock that pins upstream releases has nothing to build. A commit has at most one release: one whose tag
-# ends with -<commit12> is never rebuilt nor overwritten, but a platform added to this workflow later is built and
-# added to it (its files, its lines in SHA256SUMS). The acceptance suite is not run here: ci.yml runs it on the pull
-# request that pins the release, and on main writes its results into the release notes.
+# Builds the rdocx and rpptx CLIs and wheels of one upstream commit, an upstream release tag as much as an integration
+# branch, on four native runners (no macos-x86_64: Intel Macs are not built for nor tested here), checks that they
+# install and run, and publishes them as the pre-release rdocx-<UTC build date and time YYYYMMDDHHMM>-<first 12
+# characters of the commit> of this repository (GitHub lists releases by tag name: the time keeps two builds of the
+# same day in build order; releases before it are rdocx-<YYYYMMDD>-<commit12>, still valid), titled with the versions
+# it holds and what it was built from: `rdocx 0.16.1 · rpptx 0.14.1` for an upstream release, `rdocx 0.16.0 · rpptx
+# 0.14.0 + integration/open-prs-2026-10-14` for anything else. Every pin goes through it: `rdocx_env.py lock
+# --write --release` records that release in the lock, and `rdocx_env.py install` downloads and checks against it.
+# Runs by hand on any upstream tag, branch or commit. A commit has at most one release: one whose tag ends with
+# -<commit12> is never rebuilt nor overwritten, but a platform added to this workflow later is built and added to it
+# (its files, its lines in SHA256SUMS). The acceptance suite is not run here: ci.yml runs it on the pull request that
+# pins the release, and on main writes its results into the release notes. These builds stay pre-releases: the
+# plugin's own releases (release.yml) are the repository's latest.
 #
 # `lto`: `thin` (the default) builds with ThinLTO and 16 codegen units, `fat` with upstream's release profile (fat LTO,
 # one codegen unit): built from scratch on 2026-10-12, thin took 7.4 to 11.2 minutes per platform where fat took 13.4
@@ -67,11 +70,6 @@ jobs:
             {"platform": "windows-x86_64", "runner": "windows-2025"}]
         run: |
           if [ -n "$REF" ]; then python scripts/rdocx_env.py bump "$REF"; fi
-          if python -c 'import json, sys; sys.exit(not isinstance(json.load(open("rdocx.lock.json"))["release"], dict))'; then
-            echo "matrix=[]" >> "$GITHUB_OUTPUT"
-            echo "The lock pins the upstream releases of this commit: nothing to build." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
           commit=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["commit"])')
           ref=$(python -c 'import json; print(json.load(open("rdocx.lock.json")).get("ref", ""))')
           repo=$(python -c 'import json; print(json.load(open("rdocx.lock.json"))["upstream"].removeprefix("https://github.com/"))')
@@ -214,6 +212,11 @@ jobs:
       EXISTS: ${{ needs.plan.outputs.exists }}
       GH_TOKEN: ${{ github.token }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: skills-src
+          sparse-checkout: .github/scripts
+
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: dist-*
@@ -275,5 +278,9 @@ jobs:
             echo "The acceptance suite runs in ci.yml on the pull request that pins this release; once main pins it, its"
             echo "results on the four platforms are written below."
           } > notes.md
+          # the versions the wheels carry (<platform>.<package>-<version>-...whl), the same on every platform
+          version() { ls assets | sed -n "s/^[^.]*\.$1-\([^-]*\)-.*\.whl\$/\1/p" | sort -u; }
+          [ "$(version rdocx | wc -l)" -eq 1 ] && [ "$(version rpptx | wc -l)" -eq 1 ] || { echo "one version per package expected"; exit 1; }
+          label=$(python3 skills-src/.github/scripts/plugin_release.py label --ref "$REF" --rdocx "$(version rdocx)" --rpptx "$(version rpptx)")
           gh release create "$TAG" assets/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "rdocx $DATE ${COMMIT:0:12} ($REF)" --notes-file notes.md --latest=false
+            --title "$label (build $DATE, ${COMMIT:0:12})" --notes-file notes.md --prerelease --latest=false

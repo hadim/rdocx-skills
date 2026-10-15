@@ -1,0 +1,92 @@
+# Publishes a release of the plugin, by hand (Actions, release, Run workflow). Pushes to main reach nobody: Claude Code
+# users who added the marketplace at `release` (`/plugin marketplace add hadim/rdocx-skills@release`) and the Claude
+# plugin directory, which follows that branch, get a new version only from here.
+#
+# The release takes main as it is, once ci.yml passed on it: the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for
+# another release the same day), the `release` branch moved to main's tree with that version written into
+# .claude-plugin/plugin.json (a merge of main, so that `release` only moves forward), a tag on it, and a GitHub release
+# titled with the rdocx and rpptx versions of the pinned build, marked latest, whose notes list the merged pull
+# requests since the previous release. The version, the title and the head of the notes come from
+# .github/scripts/plugin_release.py (tested in tests/test_ci_scripts.py).
+name: release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check main
+        run: |
+          main=$(git rev-parse HEAD)
+          conclusion=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push \
+            --commit "$main" --json conclusion --jq '.[0].conclusion // ""')
+          if [ "$conclusion" != success ]; then
+            echo "ci.yml on main ${main:0:12}: ${conclusion:-no finished run}; release only a main that passed" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if git fetch -q origin release 2>/dev/null && git merge-base --is-ancestor "$main" FETCH_HEAD; then
+            echo "main ${main:0:12} is released already: nothing new to release" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Version, title and notes
+        id: plan
+        run: |
+          version=$(python3 .github/scripts/plugin_release.py version --date "$(date -u +%F)" $(git tag -l 'v*'))
+          title=$(python3 .github/scripts/plugin_release.py title rdocx.lock.json)
+          previous=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
+          python3 .github/scripts/plugin_release.py notes --repo "$GITHUB_REPOSITORY" --version "$version" \
+            rdocx.lock.json > "$RUNNER_TEMP/notes.md"
+          { echo "version=$version"; echo "title=$title"; echo "previous=$previous"; } >> "$GITHUB_OUTPUT"
+
+      - name: Move the release branch and tag it
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          main=$(git rev-parse HEAD)
+          if git ls-remote --exit-code --heads origin release > /dev/null; then
+            git fetch -q origin release
+            git checkout -q -B release FETCH_HEAD
+            git merge -q --no-ff --no-commit -s ours "$main"  # main as the second parent; its tree comes next
+          else
+            git checkout -q -B release "$main"
+          fi
+          git read-tree -u --reset "$main"
+          python3 .github/scripts/plugin_release.py set-version .claude-plugin/plugin.json "$VERSION"
+          git add .claude-plugin/plugin.json
+          git commit -q -m "release: v$VERSION"
+          git tag -a "v$VERSION" -m "Plugin release $VERSION"
+          git push origin release "refs/tags/v$VERSION"
+          echo "release branch at $(git rev-parse --short=12 HEAD): main ${main:0:12} with version $VERSION" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+          TITLE: ${{ steps.plan.outputs.title }}
+          PREVIOUS: ${{ steps.plan.outputs.previous }}
+        run: |
+          changes=()  # the merged pull requests since the previous release, after the notes' head
+          if [ -n "$PREVIOUS" ]; then changes=(--generate-notes --notes-start-tag "$PREVIOUS"); fi
+          gh release create "v$VERSION" -R "$GITHUB_REPOSITORY" --verify-tag --title "$TITLE" \
+            --notes-file "$RUNNER_TEMP/notes.md" "${changes[@]}" --latest
+          echo "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$VERSION" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""The plugin's releases (release.yml) and the titles of the builds (build.yml). Standard library only.
+
+  plugin_release.py label --ref REF --rdocx V --rpptx V
+      `rdocx V` and `rpptx V` joined by a middle dot, followed by ` + REF` unless REF is an upstream
+      release tag
+  plugin_release.py version --date YYYY-MM-DD [TAG...]
+      the CalVer version of a release made that day: `YYYY.M.D`, or `YYYY.M.D.N` (N from 2) when the tags
+      (`v<version>`) already hold that day
+  plugin_release.py title LOCK
+      the label of the build the lock pins
+  plugin_release.py notes --repo OWNER/REPO --version V LOCK
+      the head of the release notes: the pinned build, where it comes from, how to install
+  plugin_release.py set-version PLUGIN_JSON V
+      write `"version": "V"` into plugin.json, right after `name`
+"""
+import argparse
+import datetime
+import json
+import re
+import sys
+from pathlib import Path
+
+FAMILIES = ("rdocx", "rpptx")
+UPSTREAM_TAG = re.compile(r"(?:rpptx-)?v\d+\.\d+\.\d+")  # upstream's release tags: v<version>, rpptx-v<version>
+
+
+def label(versions, ref):
+    """`rdocx 0.16.1` and `rpptx 0.14.1` joined by a middle dot for a build of an upstream release tag, followed
+    by ` + <ref>` for anything else, such as an integration branch (a full commit hash shortened to 12 characters)."""
+    missing = [f for f in FAMILIES if not versions.get(f)]
+    if missing:
+        sys.exit(f"no {' nor '.join(missing)} version")
+    base = " \u00b7 ".join(f"{f} {versions[f]}" for f in FAMILIES)
+    if not ref or UPSTREAM_TAG.fullmatch(ref):
+        return base
+    return f"{base} + {ref[:12] if re.fullmatch(r'[0-9a-f]{40}', ref) else ref}"
+
+
+def next_version(day, tags):
+    """CalVer of a release made on `day`: `YYYY.M.D`, then `YYYY.M.D.2`, `.3`... for the next ones that day."""
+    base = f"{day.year}.{day.month}.{day.day}"
+    taken = {t[1:] for t in tags if t.startswith("v")}
+    if base not in taken:
+        return base
+    n = 2
+    while f"{base}.{n}" in taken:
+        n += 1
+    return f"{base}.{n}"
+
+
+def release_page(download_url):
+    """The page of the release whose download URL is `download_url` (.../releases/download/<tag>)."""
+    return download_url.rstrip("/").replace("/releases/download/", "/releases/tag/")
+
+
+def notes(lock, repo, version):
+    """The head of a release's notes; GitHub's list of merged pull requests follows it."""
+    upstream = lock["upstream"].removeprefix("https://github.com/").rstrip("/")
+    commit, ref = lock["commit"], lock.get("ref", "")
+    build = lock["release"].rstrip("/").rsplit("/", 1)[-1]
+    return "\n".join([
+        f"Plugin version `{version}`: the skills, the tests and the pinned build move together.",
+        "",
+        "- **rdocx and rpptx**: " + " and ".join(f"{f} {lock['versions'][f]}" for f in FAMILIES)
+        + f", built from [{upstream}@{commit[:12]}](https://github.com/{upstream}/tree/{commit})"
+        + (f" (`{ref}`)" if ref and ref != commit else "") + ".",
+        f"- **Pinned build**: the release [{build}]({release_page(lock['release'])}), with its files, their SHA-256, "
+        "their provenance and the acceptance suite on four platforms.",
+        f"- **Install**: `/plugin marketplace add {repo}@release`, then `/plugin install rdocx@rdocx-skills`.",
+        "",
+    ])
+
+
+def set_version(text, version):
+    """plugin.json's text with `"version": "<version>"` right after the `name` line (replacing any version)."""
+    text = re.sub(r'\n[ \t]*"version":[^\n]*', "", text)
+    out, n = re.subn(r'(\n([ \t]*)"name":[^\n]*,)', rf'\1\n\2"version": {json.dumps(version)},', text, count=1)
+    if n != 1:
+        sys.exit('no "name" line in plugin.json')
+    json.loads(out)
+    return out
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("label")
+    p.add_argument("--ref", default="")
+    p.add_argument("--rdocx", required=True)
+    p.add_argument("--rpptx", required=True)
+    p = sub.add_parser("version")
+    p.add_argument("--date", required=True, type=datetime.date.fromisoformat)
+    p.add_argument("tags", nargs="*")
+    p = sub.add_parser("title")
+    p.add_argument("lock", type=Path)
+    p = sub.add_parser("notes")
+    p.add_argument("--repo", required=True)
+    p.add_argument("--version", required=True)
+    p.add_argument("lock", type=Path)
+    p = sub.add_parser("set-version")
+    p.add_argument("manifest", type=Path)
+    p.add_argument("version")
+    args = ap.parse_args(argv)
+    if args.cmd == "label":
+        print(label({"rdocx": args.rdocx, "rpptx": args.rpptx}, args.ref))
+    elif args.cmd == "version":
+        print(next_version(args.date, args.tags))
+    elif args.cmd == "title":
+        lock = json.loads(args.lock.read_text())
+        print(label(lock.get("versions", {}), lock.get("ref", "")))
+    elif args.cmd == "notes":
+        sys.stdout.write(notes(json.loads(args.lock.read_text()), args.repo, args.version))
+    else:
+        args.manifest.write_bytes(set_version(args.manifest.read_text(), args.version).encode())
+
+
+if __name__ == "__main__":
+    main()

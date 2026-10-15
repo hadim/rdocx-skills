@@ -1,6 +1,9 @@
 """.github/scripts: suite-summary.sh groups a suite log for the release notes, release_notes.py writes the final
 suite of main into the notes of the release the lock pins (only one of this repository's own builds) and keeps the
-build-time results below it. Synthetic notes and logs only; no network, no release touched."""
+build-time results below it, plugin_release.py names the builds and the plugin's releases and writes their version.
+Synthetic notes, logs and locks only; no network, no release touched."""
+import datetime
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +15,7 @@ from conftest import BASH
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / ".github" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
+import plugin_release  # noqa: E402
 import release_notes  # noqa: E402
 
 REPO = "hadim/rdocx-skills"
@@ -135,3 +139,53 @@ def test_the_command_takes_the_summaries_after_the_options_as_ci_yml_passes_them
                           "--run-url", RUN, *summaries], capture_output=True, text=True, encoding="utf-8")
     assert res.returncode == 0, res.stderr
     assert res.stdout == release_notes.rewrite(LEGACY, [SUMMARY_A, SUMMARY_B], MAIN_SHA, RUN)
+
+
+@pytest.mark.parametrize("ref, label", [
+    ("v0.16.1", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),  # an upstream release: the versions say it all
+    ("rpptx-v0.14.1", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),
+    ("integration/open-prs-2026-10-14", "rdocx 0.16.1 \u00b7 rpptx 0.14.1 + integration/open-prs-2026-10-14"),
+    (COMMIT, f"rdocx 0.16.1 \u00b7 rpptx 0.14.1 + {COMMIT[:12]}"),
+    ("", "rdocx 0.16.1 \u00b7 rpptx 0.14.1"),
+])
+def test_a_build_is_named_after_its_versions_and_what_it_was_built_from(ref, label):
+    assert plugin_release.label({"rdocx": "0.16.1", "rpptx": "0.14.1"}, ref) == label
+
+
+def test_a_label_needs_both_versions():
+    with pytest.raises(SystemExit):
+        plugin_release.label({"rdocx": "0.16.1"}, "v0.16.1")
+
+
+def test_the_version_is_the_day_then_a_counter_for_the_same_day():
+    day = datetime.date(2026, 10, 5)
+    assert plugin_release.next_version(day, []) == "2026.10.5"
+    assert plugin_release.next_version(day, ["v2026.10.4", "rdocx-202610050000-0123456789ab"]) == "2026.10.5"
+    assert plugin_release.next_version(day, ["v2026.10.5"]) == "2026.10.5.2"
+    assert plugin_release.next_version(day, ["v2026.10.5", "v2026.10.5.2"]) == "2026.10.5.3"
+
+
+def test_the_version_goes_into_plugin_json_after_the_name(tmp_path):
+    manifest = tmp_path / "plugin.json"
+    manifest.write_text('{\n  "name": "rdocx",\n  "description": "d",\n  "author": {"name": "A"}\n}\n')
+    for version in ("2026.10.5", "2026.10.5.2"):  # a second release replaces the first version
+        res = subprocess.run([sys.executable, SCRIPTS / "plugin_release.py", "set-version", manifest, version],
+                             capture_output=True, text=True)
+        assert res.returncode == 0, res.stderr
+        assert manifest.read_text() == (f'{{\n  "name": "rdocx",\n  "version": "{version}",\n  "description": "d",\n'
+                                        '  "author": {"name": "A"}\n}\n')
+    assert json.loads(manifest.read_text())["version"] == "2026.10.5.2"
+
+
+def test_the_release_notes_name_the_pinned_build_and_how_to_install(tmp_path):
+    lock = {"upstream": "https://github.com/hadim/rdocx", "commit": COMMIT, "ref": "integration/x",
+            "release": f"https://github.com/{REPO}/releases/download/rdocx-202610141943-{COMMIT[:12]}",
+            "versions": {"rdocx": "0.16.0", "rpptx": "0.14.0"}}
+    (tmp_path / "lock.json").write_text(json.dumps(lock))
+    res = subprocess.run([sys.executable, SCRIPTS / "plugin_release.py", "notes", "--repo", REPO, "--version",
+                          "2026.10.5", tmp_path / "lock.json"], capture_output=True, text=True, encoding="utf-8")
+    assert res.returncode == 0, res.stderr
+    assert res.stdout == plugin_release.notes(lock, REPO, "2026.10.5")
+    assert "rdocx 0.16.0 and rpptx 0.14.0" in res.stdout and "(`integration/x`)" in res.stdout
+    assert f"/releases/tag/rdocx-202610141943-{COMMIT[:12]})" in res.stdout
+    assert f"`/plugin marketplace add {REPO}@release`" in res.stdout
