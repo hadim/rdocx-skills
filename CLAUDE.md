@@ -27,8 +27,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 - `.github/workflows/`: `ci.yml` (every push and PR: builds the pinned commit on four runners, Intel Macs left out,
   with ThinLTO and a build cache per platform and commit, records the build into the run's copy of the lock, and
   runs the suite on it), `release.yml` (by hand: a release of the plugin, below, which builds the pinned commit again
-  on the four platforms, runs the suite on those files, attaches them to the release and deletes every other release
-  and tag; input `dry_run`). The plugin's releases are the only published builds.
+  on the four platforms, runs the suite on those files and attaches them to the release; older releases stay;
+  input `dry_run`). The plugin's releases are the only published builds.
   `.github/scripts/suite-summary.sh` groups a suite log (gaps closed, docs not yet updated, other failures);
   `plugin_release.py` names the plugin's releases, writes their version and the head of their notes; the scripts are tested in
   `tests/test_ci_scripts.py`.
@@ -53,8 +53,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   previous pin, or narrow the skills); never weaken a test to make it pass.
 - Only the plugin's releases publish builds: `main`'s lock names an upstream commit (`bump REF`), `ci.yml` builds it
   on every push and PR, and `release.yml` builds it again (even when it is unchanged), tests those files, attaches
-  them to the `v<version>` release and points the lock of `release` at it. Then it deletes every other release and
-  tag: only the latest release exists.
+  them to the `v<version>` release and points the lock of `release` at it. Older releases stay, each with its own
+  files; delete them only when the maintainer asks.
 - `main` always pairs a lock with the tests and skills that match it (docs/setup.md, Moving the pin), but a push
   to `main` reaches nobody: `release` is the default branch, which users
   (Claude Code, Claude Desktop) and the Claude plugin directory follow, and only `release.yml` moves it (CalVer
@@ -82,11 +82,12 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`).
-- Pinned: tensorbee/rdocx `main` at `d44a69af` (rdocx 0.16.1 and rpptx 0.14.1 plus sprints S92 to S94, no
-  upstream release yet). S94 brought most python-docx and python-pptx names (tensorbee/rdocx#379), package signing
-  and verification in Python and both CLIs, and Word form filling (`rdocx fill --values`, legacy form fields;
-  tensorbee/rdocx#380). The previous pin, `3a3b0de8`, is plugin `v2026.10.16`. No integration branch is pinned:
-  none is needed while no pull request of the maintainer is open upstream.
+- Pinned: tensorbee/rdocx `main` at `d44a69af` (rdocx 0.16.1 and rpptx 0.14.1 plus sprints S92 to S94, no upstream
+  release yet). S94 brought most python-docx and python-pptx names (tensorbee/rdocx#379), package signing and
+  verification in Python and both CLIs, and Word form filling (`rdocx fill --values`, legacy form fields;
+  tensorbee/rdocx#380). Released as plugin `v2026.10.16.2`; the release of the previous pin, `v2026.10.16`
+  (`3a3b0de8`), was deleted by the clean-up this repository no longer runs. No integration branch is pinned: none is
+  needed while no pull request of the maintainer is open upstream.
 - Open gaps: 16 (`tests/gaps.py`, both `references/gaps.md`). Three are what #379 left (python-docx-names,
   python-pptx-names, docx-bare-int-length-saved-as-zero: `font.size = 12` raises now, `space_after = 6` still saves
   0), reported as tensorbee/rdocx#386. The others are reported: #384 (validate refuses w14:paraId inside a content control)

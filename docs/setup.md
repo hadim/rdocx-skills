@@ -190,13 +190,10 @@ follow it, and get a new version only from `.github/workflows/release.yml`: Acti
    each platform), their `SHA256SUMS` and build provenance attestations, titled with the rdocx and rpptx versions
    (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <ref>`), marked latest, whose notes describe the files, give the
    suite of the four platforms and list the pull requests merged since the previous release;
-6. deletes every other release and its tag, and any other `v*` or `rdocx-*` tag: only the new release remains.
-
-So a plugin release never depends on another release, and only the latest one is valid: an install of an older
-plugin version can no longer download its files (users following `release` get the new version). Input `dry_run`: everything but the release, on the branch the workflow
+So a plugin release never depends on another release, and older releases stay: an install of an older plugin
+version still downloads its own files (users following `release` get the newest). Clean-ups are done by hand. Input `dry_run`: everything but the release, on the branch the workflow
 runs from (to try a change of the workflow on a pull request branch): the files, the lock and the notes are kept
-as the workflow artifact `release-files`, the clean-up lists what it would delete, and nothing is attested,
-pushed, tagged, published or deleted.
+as the workflow artifact `release-files`, and nothing is attested, pushed, tagged or published.
 
 `main` carries no `version`: whoever adds the marketplace as `hadim/rdocx-skills#main` gets every push, the
 development channel (its lock names no build: `install` there needs `--build`). Pull requests target `main`, not

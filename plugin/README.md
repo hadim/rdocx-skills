@@ -132,7 +132,7 @@ The skills never run them on their own:
   upstream release as much as an integration branch, on four platforms, runs the acceptance suite on those files,
   attaches them with their `SHA256SUMS` and build provenance attestations, and its lock points at them. Its
   title says what it holds: `rdocx 0.16.1 · rpptx 0.14.1` for an upstream release, or `... + <ref>` for anything
-  else. Only the latest release is kept.
+  else. Older releases stay, each with its own files.
 - 🍴 **Integration branches** live on the maintainer's fork, [hadim/rdocx](https://github.com/hadim/rdocx): an
   upstream release plus the maintainer's pull requests still open on tensorbee/rdocx, pinned when the skills need
   a fix before upstream releases it. The lock's `upstream` and `ref` name the fork and the branch.
