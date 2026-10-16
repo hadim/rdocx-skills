@@ -89,7 +89,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   none is needed while no pull request of the maintainer is open upstream.
 - Open gaps: 16 (`tests/gaps.py`, both `references/gaps.md`). Three are what #379 left (python-docx-names,
   python-pptx-names, docx-bare-int-length-saved-as-zero: `font.size = 12` raises now, `space_after = 6` still saves
-  0), not reported again yet. The others are reported: #384 (validate refuses w14:paraId inside a content control)
+  0), reported as tensorbee/rdocx#386. The others are reported: #384 (validate refuses w14:paraId inside a content control)
   and #385 (twelve others), both planned upstream for S95 and S95.1.
 - Suite against `d44a69af`: 151 passed, 41 xfailed, 18 skipped (the install and release tests, without recorded
   hashes) on macos-arm64 from a local build, in 2.5 minutes. Walking `table.rows` / `row.cells` is still quadratic

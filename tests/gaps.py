@@ -31,10 +31,10 @@ gaps closed.
 # Main d44a69af (S94, tensorbee/rdocx#379) closed pptx-bare-int-spacing-saved-as-zero and the python-pptx notes names,
 # and most python-docx names: add_heading, add_page_break, insert_paragraph_before, style=, Run.bold / italic /
 # underline, WD_BREAK, WD_COLOR_INDEX, WD_SECTION, streams; Section.header, add_section, Table.add_column / columns,
-# styles[name] and prs.slides._sldIdLst now raise an error that names the rdocx or rpptx way, which is the contract
+# styles[name], add_picture with one dimension and prs.slides._sldIdLst now raise an error that names the rdocx or rpptx way, which is the contract
 # #379 asked for, so they left the gaps.
 GAPS = {
-    # upstream: tensorbee/rdocx#379 took font.size only; the others are not reported yet
+    # upstream: tensorbee/rdocx#386 (#379 took font.size only)
     "docx-bare-int-length-saved-as-zero": "a bare int is EMU, and space_after = 6, character_spacing = 2, a margin of "
     "1440 and line_spacing = 2 (python-docx's double spacing) are accepted and saved as about 0 instead of raising "
     "and naming Pt or Twips, as font.size = 12 does",
@@ -84,13 +84,12 @@ GAPS = {
     # upstream: tensorbee/rdocx#385
     "pptx-replace-map-zero-match": "rpptx replace --map writes its output when a pair without \"expect\" finds "
     "nothing, where rpptx replace -p refuses it (\"no replacements found\")",
-    # upstream: what tensorbee/rdocx#379 left (the paragraph._p hint was not in it); not reported again yet
+    # upstream: tensorbee/rdocx#386 (what #379 left)
     "python-docx-names": "python-docx names rdocx still lacks: a new document has no List Bullet or List Number "
     "style (style= raises KeyError), a margin set on doc.sections[i] (left_margin...) raises a "
     "bare AttributeError instead of naming doc.section(i), font.color.type does not read MSO_COLOR_TYPE "
-    "(rdocx.enum.dml), a TabStop is not settable, custom_properties is not dict-like, add_picture takes no single "
-    "dimension; paragraph._p raises a bare AttributeError instead of naming xml / replace_xml",
-    # upstream: none of these was in tensorbee/rdocx#379; not reported yet
+    "(rdocx.enum.dml), a TabStop is not settable, custom_properties is not dict-like; paragraph._p raises a bare AttributeError instead of naming xml / replace_xml",
+    # upstream: tensorbee/rdocx#386
     "python-pptx-names": "python-pptx names rpptx still lacks: Slide.slide_id, ColorFormat.type and theme_color read "
     "strings such as \"rgb\" and \"accent2\" instead of MSO_COLOR_TYPE and MSO_THEME_COLOR_INDEX (both in "
     "rpptx.enum.dml), rpptx.enum.lang.MSO_LANGUAGE_ID and Font.language_id; shape._element and text_frame._txBody "
