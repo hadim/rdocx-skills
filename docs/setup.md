@@ -223,7 +223,8 @@ follow it, and get a new version only from `.github/workflows/release.yml`: Acti
    suite of the four platforms and list the pull requests merged since the previous release.
 
 6. deletes every other release and its tag, and any other `v*` or `rdocx-*` tag: only the new release remains,
-   with the build pre-release that `main`'s lock pins (which `ci.yml` installs on `main`).
+   with the build pre-releases that the locks of `main` and of the open pull requests pin (which `ci.yml`
+   installs).
 
 So a plugin release never depends on another release, and only the latest one is valid: an install of an older
 plugin version can no longer download its files (users following `release` get the new version). Input `dry_run`: everything but the release, on the branch the workflow

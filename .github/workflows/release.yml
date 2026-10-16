@@ -204,6 +204,7 @@ jobs:
       contents: write
       id-token: write
       attestations: write
+      pull-requests: read  # gh pr list: the builds the open pull requests pin
     env:
       GH_TOKEN: ${{ github.token }}
       SHA: ${{ needs.plan.outputs.sha }}
@@ -262,8 +263,14 @@ jobs:
             python3 plugin/scripts/rdocx_env.py lock --write --release
           mv plugin/rdocx.lock.json "$RUNNER_TEMP/release-lock.json"
           git checkout -- plugin/rdocx.lock.json
-          # the build main's lock pins, which ci.yml on main installs: kept by the clean-up below
-          python3 .github/scripts/release_notes.py tag --repo "$GITHUB_REPOSITORY" plugin/rdocx.lock.json > "$RUNNER_TEMP/main-build"
+          # the builds kept by the clean-up below: the one main's lock pins (ci.yml on main installs it) and those
+          # the locks of open pull requests pin (their CI installs them, and main gets them on merge)
+          python3 .github/scripts/release_notes.py tag --repo "$GITHUB_REPOSITORY" plugin/rdocx.lock.json > "$RUNNER_TEMP/keep-builds"
+          for sha in $(gh pr list -R "$GITHUB_REPOSITORY" --state open --limit 100 --json headRefOid --jq '.[].headRefOid'); do
+            gh api "repos/$GITHUB_REPOSITORY/contents/plugin/rdocx.lock.json?ref=$sha" --jq .content | base64 -d \
+              > "$RUNNER_TEMP/pr-lock.json" || continue
+            python3 .github/scripts/release_notes.py tag --repo "$GITHUB_REPOSITORY" "$RUNNER_TEMP/pr-lock.json" >> "$RUNNER_TEMP/keep-builds"
+          done
 
       - name: Notes
         run: |
@@ -323,13 +330,13 @@ jobs:
             --notes-file "$RUNNER_TEMP/notes.md" "${changes[@]}" --latest
           echo "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$VERSION" >> "$GITHUB_STEP_SUMMARY"
 
-      # Only the new release remains, with the build main pins (if main pins one of this repository's builds):
+      # Only the new release remains, with the builds that main and the open pull requests pin:
       # every other release and its tag, and any other v* or rdocx-* tag, is deleted. A dry run lists them.
       - name: Delete the older releases and tags
         env:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          keep=" v$VERSION $(cat "$RUNNER_TEMP/main-build") "
+          keep=" v$VERSION $(echo $(cat "$RUNNER_TEMP/keep-builds")) "
           echo "Kept:$keep" >> "$GITHUB_STEP_SUMMARY"
           drop() {
             case "$keep" in *" $1 "*) return ;; esac
