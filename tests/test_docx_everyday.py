@@ -21,6 +21,16 @@ def saved(doc, path):
 
 # ---------------------------------------------------------------- python-docx's names (what tensorbee/rdocx#379 left)
 @pytest.mark.gap("python-docx-names")
+def test_list_styles_of_python_docx_template(tmp_path):
+    """python-docx's default template has List Bullet and List Number; a new rdocx document lacks them (KeyError)."""
+    doc = rdocx.Document()
+    doc.add_paragraph("First point", style="List Bullet")
+    doc.add_paragraph("Step one", style="List Number")
+    doc.save(tmp_path / "l.docx")
+    assert [p.style.name for p in docx.Document(tmp_path / "l.docx").paragraphs] == ["List Bullet", "List Number"]
+
+
+@pytest.mark.gap("python-docx-names")
 def test_page_margins_the_python_docx_way(tmp_path):
     """doc.sections[i] is a snapshot: its header refuses and names doc.section(i), but setting a margin on it raises
     a bare AttributeError. Either set it as python-docx does or name the way."""

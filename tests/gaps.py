@@ -85,7 +85,8 @@ GAPS = {
     "pptx-replace-map-zero-match": "rpptx replace --map writes its output when a pair without \"expect\" finds "
     "nothing, where rpptx replace -p refuses it (\"no replacements found\")",
     # upstream: what tensorbee/rdocx#379 left (the paragraph._p hint was not in it); not reported again yet
-    "python-docx-names": "python-docx names rdocx still lacks: a margin set on doc.sections[i] (left_margin...) raises a "
+    "python-docx-names": "python-docx names rdocx still lacks: a new document has no List Bullet or List Number "
+    "style (style= raises KeyError), a margin set on doc.sections[i] (left_margin...) raises a "
     "bare AttributeError instead of naming doc.section(i), font.color.type does not read MSO_COLOR_TYPE "
     "(rdocx.enum.dml), a TabStop is not settable, custom_properties is not dict-like, add_picture takes no single "
     "dimension; paragraph._p raises a bare AttributeError instead of naming xml / replace_xml",

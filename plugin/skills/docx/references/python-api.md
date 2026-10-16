@@ -21,7 +21,7 @@ met); lookups by text raise `ValueError`, refused options `ValueError` or `Rdocx
 ## python-docx names
 
 These python-docx calls work as they do there: `doc.add_heading(text, level)` (level 0 is Title), `add_paragraph(text="",
-style=None)`, `add_table(rows, cols, style=None)`, `doc.add_page_break()`, `p.insert_paragraph_before(text, style=None)`
+style=None)` (a style the document has: a new one lacks List Bullet and List Number, below), `add_table(rows, cols, style=None)`, `doc.add_page_break()`, `p.insert_paragraph_before(text, style=None)`
 (an insert: it retires every handle), `run.bold` / `italic` / `underline`, `run.add_break(WD_BREAK.PAGE)`,
 `font.highlight_color = WD_COLOR_INDEX.YELLOW` (`rdocx.enum.text`), `WD_SECTION` and `WD_ORIENT` (alias
 `WD_ORIENTATION`, `rdocx.enum.section`), and a binary stream for `Document(f)`, `save(f)` and `add_picture(f)`. These
@@ -30,6 +30,7 @@ need a rewrite; the ones marked "raises" fail with an error naming the rdocx way
 
 | python-docx | rdocx |
 |---|---|
+| `add_paragraph(text, style="List Bullet")`, `style="List Number"` (`KeyError` on a new document) | `doc.add_bullet_list_item(text)`, `doc.add_numbered_list_item(text)`, or a template that has those styles |
 | `table.add_column(w)`, `table.columns` (raise) | `t.insert_column(i, before=False)` then `t.set_column_width(i + 1, w)`; `len(t.rows[0].cells)` |
 | `font.color.type == MSO_COLOR_TYPE.RGB` | `font.color.type == "rgb"` (`"theme"`...) |
 | `doc.sections[i].header` (raises), `section.left_margin = x`, `doc.add_section(WD_SECTION.NEW_PAGE)` (raises) | `doc.section(i).header`, `doc.section(i).left_margin = x` (or `update_section`), `doc.insert_section(i)` |
