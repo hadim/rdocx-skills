@@ -57,9 +57,9 @@ background).
    identity="OFL-1.1: Example Sans")` is your statement that it does: rpptx checks nothing, not even `fsType`.
    OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not (`fsType` bit 0x0002: Restricted
    License). When it does not, or you cannot tell, do not embed and tell the user.
-8. **Lengths and spacings take `Pt(...)` or `Inches(...)`.** A bare int is EMU: `space_before = 6`,
-   `space_after = 6`, `font.spacing = 2` and `line_spacing = 0` are saved as 0 without an error (gap
-   pptx-bare-int-spacing-saved-as-zero); write `Pt(6)`, or a float such as 1.5 for a multiple of the line. And
+8. **Lengths and spacings take `Pt(...)` or `Inches(...)`.** A bare int is EMU: `font.size = 12`,
+   `space_before = 6` and `font.spacing = 2` raise `ValueError`; write `Pt(6)`, or a float such as 1.5 for a
+   multiple of the line. And
    `prs.save("x.pdf")` writes a PPTX under that name (gap pptx-invalid-values-accepted): a PDF is `prs.to_pdf()`.
 
 ## What to use for what
@@ -92,7 +92,7 @@ background).
 | Theme, master, layouts | | `prs.slide_master.theme.colors["accent1"] = ...`, `prs.apply_theme(path)`, `prs.slide_master.shapes.add_picture(logo, ...)`, `next(lay for lay in prs.slide_layouts if lay.name == n)` | a logo on the master shows on every slide |
 | Import slides, merge decks | `rpptx slide import DEST SOURCE [--slides 1,3-5] [--at N] [--keep-source-formatting] -o OUT` | `copies, diagnostics = prs.slides.import_slides(other, [0, 2], index=1, keep_source_formatting=True)`, `prs.slides.import_slide(other.slides[k], layout=prs.slide_layouts[j], index=None)` | charts, objects, comments and notes travel; without `layout=` or `keep_source_formatting`, a layout of the same name must exist here; a dropped slide jump is in the diagnostics |
 | Charts | | `slide.shapes.add_chart(rpptx.XL_CHART_TYPE.COLUMN_CLUSTERED, left, top, width, height, chart_data)`, `shape.has_chart`, `shape.chart.categories` / `.series`, `shape.chart.replace_data(chart_data)`, `chart.has_legend`, `chart.legend_position = "b"`, `chart.legend_overlay` | chart data as in python-pptx (`rpptx.CategoryChartData`); `replace_data` keeps the series formatting |
-| Speaker notes | `rpptx text --notes F`, `rpptx notes set F N --text T -o OUT` | `slide.notes_text` (get and set) | None when the slide has no notes |
+| Speaker notes | `rpptx text --notes F`, `rpptx notes set F N --text T -o OUT` | `slide.notes_text` (get and set), `slide.notes_slide.notes_text_frame.text` as in python-pptx | None when the slide has no notes |
 | Hyperlinks, slide jumps | | `run.hyperlink.address`; `shape.click_action.hyperlink.address = url`, `shape.click_action.target_slide = prs.slides[k]` | any shape, group members included; set None to clear |
 | Metadata | `rpptx meta get F`, `rpptx meta set F --title T --author A -o OUT` | `prs.core_properties.title = ...`, `prs.app_properties.company`, `prs.custom_properties.set(name, value)` | dates are RFC 3339 strings; a new deck is stamped 2000-01-01 |
 | Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `resolve_comment`, `remove_comment`, `move_comment` | `shape_id=` anchors on a shape; add the author first |
@@ -103,6 +103,7 @@ background).
 | Embedded fonts | `rpptx font list/embed/remove/settings` | `prs.embedded_fonts`, `prs.embed_font(typeface, "ExampleSans-Regular.ttf", "regular", license=rpptx.FontEmbeddingLicense(...))`, `remove_embedded_font`, `remove_font` | rule 7; leave `embed_true_type_fonts` on; embed last (PowerPoint for Mac drops embedded fonts when it saves); a compressed embedded face is not rendered: pass its file with `font_dir` |
 | From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
 | Validity | `rpptx validate F` | `prs.validate()` | a tuple of issues (`kind`, `message`), empty when valid |
+| Sign, check signatures | `rpptx sign F --key K.pem --cert C.pem -o OUT`, `rpptx verify-signatures --json F` | `prs.sign(key, cert)`, `prs.verify_signatures()` | sign last: an edit breaks it; no chain trust |
 | What changed | `rpptx diff A B` | | slide text only |
 | An element with no API | | `shape.element.xml` / `shape.element.replace_xml(xml)` (str), also on text frames, paragraphs, runs, tables, cells, slides, layouts, masters | instead of lxml; malformed XML raises and changes nothing, an unknown element does not (gap pptx-raw-xml-unchecked) |
 

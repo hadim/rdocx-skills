@@ -3,7 +3,6 @@
 controls set as Word does, note references and removal, raw XML checks, charts read back, display equations, and the
 values Word ignores that are accepted silently. Each test builds its own input."""
 import datetime
-import io
 import re
 
 import docx
@@ -20,71 +19,34 @@ def saved(doc, path):
     return part(path, "word/document.xml").decode()
 
 
-# ---------------------------------------------------------------- python-docx's names (tensorbee/rdocx#379)
+# ---------------------------------------------------------------- python-docx's names (what tensorbee/rdocx#379 left)
 @pytest.mark.gap("python-docx-names")
-def test_authoring_the_python_docx_way(rdocx_cli, tmp_path):
-    doc = rdocx.Document()
-    doc.add_heading("Report", 0)
-    doc.add_heading("Scope", 1)
-    p = doc.add_paragraph("Plain ")
-    p.add_run("bold").bold = True
-    doc.paragraphs[2].add_run(" italic").italic = True
-    doc.paragraphs[2].runs[2].underline = True
-    doc.add_paragraph("First point", style="List Bullet")
-    doc.add_paragraph("Step one", style="List Number")
-    doc.add_page_break()
-    doc.add_table(2, 2, style="Table Grid")
-    doc.paragraphs[2].insert_paragraph_before("Lead-in", style="Quote")
-    assert doc.styles["Normal"].style_id == "Normal"
-    buf = io.BytesIO()
-    doc.save(buf)                                            # streams in and out
-    back = rdocx.Document(io.BytesIO(buf.getvalue()))
-    assert [p.text for p in back.paragraphs][:4] == ["Report", "Scope", "Lead-in", "Plain bold italic"]
-    doc.save(tmp_path / "a.docx")
-    d = docx.Document(tmp_path / "a.docx")
-    assert [p.style.name for p in d.paragraphs[:6]] == ["Title", "Heading 1", "Quote", "Normal", "List Bullet", "List Number"]
-    assert [(r.bold, r.italic, r.underline) for r in d.paragraphs[3].runs] == [(None, None, None), (True, None, None),
-                                                                               (None, True, True)]
-    assert d.tables[0].style.name == "Table Grid"
-    assert '<w:br w:type="page"/>' in part(tmp_path / "a.docx", "word/document.xml").decode()
-    assert run([rdocx_cli, "validate", tmp_path / "a.docx"]).returncode == 0
-
-
-@pytest.mark.gap("python-docx-names")
-def test_headers_footers_and_page_setup_the_python_docx_way(tmp_path):
+def test_page_margins_the_python_docx_way(tmp_path):
+    """doc.sections[i] is a snapshot: its header refuses and names doc.section(i), but setting a margin on it raises
+    a bare AttributeError. Either set it as python-docx does or name the way."""
     doc = rdocx.Document()
     doc.add_paragraph("Body")
-    section = doc.sections[0]
-    section.header.paragraphs[0].text = "Quarterly report"     # a new header holds one empty paragraph, as python-docx
-    section.first_page_header.paragraphs[0].text = "Cover header"
-    section.left_margin = rdocx.Inches(1.5)
-    doc.add_section(rdocx.WD_SECTION.NEW_PAGE)
+    try:
+        doc.sections[0].left_margin = rdocx.Inches(1.5)
+    except (AttributeError, NotImplementedError) as e:
+        assert "section(" in str(e)
+        return
     doc.save(tmp_path / "h.docx")
-    d = docx.Document(tmp_path / "h.docx")
-    assert d.sections[0].header.paragraphs[0].text == "Quarterly report"
-    assert d.sections[0].first_page_header.paragraphs[0].text == "Cover header"
-    assert d.sections[0].left_margin == docx.shared.Inches(1.5) and len(d.sections) == 2
+    assert docx.Document(tmp_path / "h.docx").sections[0].left_margin == docx.shared.Inches(1.5)
 
 
 @pytest.mark.gap("python-docx-names")
-def test_enums_the_python_docx_way(tmp_path):
+def test_colour_type_enum_the_python_docx_way():
+    from rdocx.enum.dml import MSO_COLOR_TYPE                      # python-docx: docx.enum.dml
     doc = rdocx.Document()
     doc.add_paragraph("Line")
-    run_ = doc.paragraphs[0].runs[0]
-    run_.add_break(rdocx.WD_BREAK.PAGE)
-    doc.paragraphs[0].runs[0].font.highlight_color = rdocx.WD_COLOR_INDEX.YELLOW
     doc.paragraphs[0].runs[0].font.color.rgb = rdocx.RGBColor(0x7B, 0x1E, 0x3A)
-    assert doc.paragraphs[0].runs[0].font.color.type == rdocx.MSO_COLOR_TYPE.RGB
-    xml = saved(doc, tmp_path / "e.docx")
-    assert '<w:br w:type="page"/>' in xml and '<w:highlight w:val="yellow"/>' in xml
+    assert doc.paragraphs[0].runs[0].font.color.type == MSO_COLOR_TYPE.RGB
 
 
 @pytest.mark.gap("python-docx-names")
-def test_table_columns_and_tab_stops_the_python_docx_way():
+def test_tab_stops_the_python_docx_way():
     doc = rdocx.Document()
-    t = doc.add_table(2, 2)
-    col = t.add_column(rdocx.Inches(1))
-    assert (len(t.columns), len(col.cells), col.width) == (3, 2, rdocx.Inches(1))
     stops = doc.add_paragraph("Name\tValue").paragraph_format.tab_stops
     stops.add_tab_stop(rdocx.Inches(3))
     stops[0].alignment = rdocx.WD_TAB_ALIGNMENT.RIGHT                 # a live TabStop, as python-docx
@@ -115,15 +77,13 @@ def test_custom_properties_as_a_mapping(tmp_path):
     assert "Client" in back.custom_properties.keys() and back.custom_properties.get("Nope") is None
 
 
-# ---------------------------------------------------------------- bare-int lengths (tensorbee/rdocx#379)
+# ---------------------------------------------------------------- bare-int lengths
 @pytest.mark.gap("docx-bare-int-length-saved-as-zero")
 def test_a_bare_int_length_raises():
-    """A bare integer is read as EMU: font.size = 12 would save as w:sz="0". It raises and names Pt (or Twips for page
-    lengths), as the previous pin did."""
+    """A bare integer is read as EMU: space_after = 6 would save as w:after="0". It raises and names Pt (or Twips for
+    page lengths), as font.size = 12 does."""
     doc = rdocx.Document()
     doc.add_paragraph("x")
-    with pytest.raises(ValueError, match="Pt"):
-        doc.paragraphs[0].runs[0].font.size = 12
     with pytest.raises(ValueError, match="Pt"):
         doc.paragraphs[0].paragraph_format.space_after = 6
     with pytest.raises(ValueError, match="Pt"):

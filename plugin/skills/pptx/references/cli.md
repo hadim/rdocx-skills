@@ -8,7 +8,7 @@ numbers on the command line are one-based.
 
 | Commands | An existing output |
 |---|---|
-| `replace`, `comment add/reply/resolve/remove`, `slide add/duplicate/remove/move/hide/show/import`, `notes set`, `meta set`, `font embed/remove/settings` (`-o` required) | refused, exit 1, "output already exists", the input included |
+| `replace`, `comment add/reply/resolve/remove`, `slide add/duplicate/remove/move/hide/show/import`, `notes set`, `meta set`, `font embed/remove/settings`, `sign` (`-o` required) | refused, exit 1, "output already exists", the input included |
 | `render` (into `-o DIR`), `convert`, `thumbnail`, `footer` | refused the same way; `--force` replaces an existing output, never the input. Render into a new, empty folder each time |
 
 ## Reading
@@ -108,6 +108,23 @@ Own deterministic rendering uses supported enabled embedded faces before bundled
 fallback. Explicit caller `--font-dir` faces take precedence. Native PowerPoint
 checks retain uncompressed EOT and use genuine regular and bold faces. Verify
 font retention after resaving in the receiving application.
+
+## Signatures
+
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365 -subj "/CN=Signer"   # a test pair
+rpptx sign F.pptx --key key.pem --cert cert.pem -o SIGNED.pptx [--json]
+rpptx verify-signatures [--json] F.pptx
+```
+`sign` writes a package signature over every part and relationship (`_xmlsignatures/sig1.xml`), with a PKCS#8 RSA
+key and an X.509 certificate, DER or one unencrypted PEM block each; it refuses an existing output, a package
+already signed and one with external relationships. `verify-signatures` prints `status` (`valid`, `invalid`,
+`partial`, `unsigned`) and `signatures` (`signer` with `subject`, `issuer`, `serial_number`;
+`cryptographically_valid`, `coverage_complete`, `covered_parts`, `issues` with `kind` such as `changed_reference`);
+exit 0 only when at least one signature is valid and complete and none is invalid or partial, 1 otherwise (an
+unsigned file included). Certificate trust (the chain, revocation) is not checked: say so when you report a
+signature as valid. Sign last: any later edit, by rdocx or by an application, invalidates it. In Python:
+`prs.sign(key_bytes, cert_bytes)` then `save`, `prs.verify_signatures()` (`references/python-api.md`).
 
 ## Rendering
 

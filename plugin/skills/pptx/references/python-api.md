@@ -52,6 +52,7 @@ Everything else (setters, `run.text`, appends: `add_slide`, `add_textbox`, `add_
 | `fit_report(*, font_dir=None)` → `FitReport` (`frames`: `FitFrameReport` with `context` (the part), `overflow`, `needed_scale` and `needed_reduction` (hundred-thousandths), `update` (an `AutofitUpdate`), `quantized_trial` and `persisted_trial` (`FitTrial`: `fits`, `font_scale`...); `diagnostics`) | what `rpptx fit` reports, every text owner of the slides, layouts, masters and notes, table cells included |
 | `refresh_autofit(*, font_dir=None)` → `AutofitRefreshResult` (`updates`, `changed`, `diagnostics`) | writes the stored autofit of every frame whose `auto_size` asks for one: Text fit and autofit below |
 | `validate()` → tuple of `ValidationIssue` (`kind`, `message`) | empty when the deck is valid |
+| `sign(private_key, certificate)` → report, `verify_signatures()` → tuple of reports | a package signature over every part and relationship, written by the next `save`: the bytes of a PKCS#8 RSA key and an X.509 certificate (DER or one unencrypted PEM block each). A report is a dict: `signature_part`, `signer` (`subject`, `issuer`, `serial_number`), `cryptographically_valid`, `coverage_complete`, `covered_parts`, `covered_relationships`, `issues` (`kind` such as `changed_reference`, `details`); `verify_signatures()` checks the deck as it is now (an empty tuple when unsigned), so any edit after signing shows. A signed package or one with external relationships raises. Certificate trust is not checked (`references/cli.md`, Signatures) |
 | `to_pdf(font_dir=None)`, `to_notes_pdf()`, `render_slide_to_png(i, dpi=150)`, `render_all_slides(dpi)`, `render_all_notes(dpi)`; `to_pdf_with_diagnostics()`, `render_slide_to_png_with_diagnostics(i)`... → (output, diagnostics) | zero-based slide index; the faces the deck embeds are drawn (not a compressed one, and the precedence of `font_dir=`: `embed_font`); `font_dir=` (also on the renders, `text_layout`, `fit_report` and `refresh_autofit`) adds fonts that are not installed. A slide with `show_master_shapes = False` is still drawn with the master's shapes (gap pptx-render-ignores-slide-show-master-shapes) |
 | `render_slides(dpi=150, format="png", quality=None, transparent=False, slides=None)` | a list of PNG or JPEG images (`slides` zero-based), one multi-page TIFF as bytes for `format="tiff"`; `quality` with PNG or `transparent` with JPEG or TIFF raises `ValueError` |
 | `to_pdfa("pdfa-2b")` (or `"pdfa-3b"`), `to_handout_pdf(slides_per_page=6)` (1, 2, 3, 4, 6 or 9), `render_all_handouts(slides_per_page, dpi)` | handouts with or without the deck's handout master; all accept keyword-only `fonts`, `font_dir` and `font_dirs` |
@@ -67,7 +68,8 @@ Everything else (setters, `run.text`, appends: `add_slide`, `add_textbox`, `add_
 the first idx missing: `[sh for sh in slide.shapes if sh.is_placeholder]` lists them all), `slide_layout` (settable), `hidden` (settable),
 `try_replace_text(old, new, *, expect=None, notes=True)` → int (this slide only, its notes unless `notes=False`;
 same all-or-nothing count as the presentation's), `notes_text` (get and set; None when the slide has no notes,
-setting it creates the notes slide; python-pptx's `notes_slide` is missing, gap python-pptx-names),
+setting it creates the notes slide), `has_notes_slide`, `notes_slide` (as python-pptx: creates the notes slide,
+a `NotesSlide` whose `notes_text_frame` is a `NotesTextFrame` with `text`, get and set, or None),
 `background.fill`, `follow_master_background`, `show_master_shapes` (False hides the master's and layout's shapes,
 a logo for example), `comments` (each a `Comment` with `id`, `author_id`, `created`, `text`, `status`, `replies`:
 `CommentReply` with the same fields but `replies`), `add_comment(*, id, author_id, created, text, shape_id=None,
@@ -165,8 +167,7 @@ has no `slide_id` (gap python-pptx-names): `prs.sections[k].slide_ids` and `rppt
 - `Paragraph`: `runs`, `add_run(text="")`, `text`, `alignment` (`PP_ALIGN`), `level`, `bullet` (a character, or
   False; also `bullet_char`), `bullet_color`, `bullet_size` (a multiple of the text size), `bullet_font`,
   `auto_number` (a numbering scheme such as `"arabicPeriod"`, `"alphaLcParenR"`, `"romanUcPeriod"`),
-  `auto_number_start`, `line_spacing` (a multiple such as 1.5 or a `Length`; a negative one raises, zero is saved as
-  0: gap pptx-bare-int-spacing-saved-as-zero), `space_before`, `space_after` (a `Length` such as `Pt(6)`, or a float
+  `auto_number_start`, `line_spacing` (a multiple such as 1.5 or a `Length`; zero or a negative one raises), `space_before`, `space_after` (a `Length` such as `Pt(6)`, or a float
   for a multiple of the line), `left_indent`, `right_indent`, `first_line_indent`, `font`,
   `add_field("slidenum")` (or `"datetime1"` to `"datetime13"`, optional cached text second; another type raises).
 - `Run`: `text`, `font` (`name`, `size`, `bold`, `italic`, `underline`, `strike`, `all_caps`, `small_caps`,
@@ -176,7 +177,7 @@ has no `slide_id` (gap python-pptx-names): `prs.sections[k].slide_ids` and `rppt
   (get and set). Shape fills and lines use `fill.fore_color.rgb` and `line.color.rgb`, as in python-pptx.
 - `ColorFormat`: `rgb`, `theme_color` (set `MSO_THEME_COLOR.ACCENT_2` or `"accent2"`: writes a scheme colour that
   follows the theme; reads the slot name, such as `"accent2"`), `type` (`"rgb"`, `"theme"`, `"preset"`, `"system"`
-  or None: strings, not python-pptx's `MSO_COLOR_TYPE`), `brightness` (-1 to 1).
+  or None: strings, not the `MSO_COLOR_TYPE` that `rpptx.enum.dml` has, gap python-pptx-names), `brightness` (-1 to 1).
 - `FillFormat`: `solid()`, `background()` (no fill), `fore_color`, `type` (`MSO_FILL`), `transparency` (0 opaque to
   1, written as the colour's alpha); `gradient()` (two stops in accent1), `gradient_angle` (degrees,
   counter-clockwise as in python-pptx), `gradient_path` (None for linear), `gradient_stops` (`GradientStops`: index,
@@ -231,13 +232,13 @@ result in LibreOffice. A replacement retires handles (Handles above).
 A slide whose groups (and `mc:AlternateContent`) nest deeper than 32 levels is refused at open with `XmlError`
 ("... nesting exceeds limit 32") instead of crashing, and `add_group_shape` refuses a 33rd level with `RpptxError`.
 
-A bare int is EMU: `font.size = 12` raises `ValueError` (from 1 to 4000 points), but `space_before = 6`,
-`space_after = 6`, `font.spacing = 2` and `line_spacing = 0` are saved as 0 without a word (gap
-pptx-bare-int-spacing-saved-as-zero): write `Pt(12)`, or a float for a multiple of the line in spacing.
+A bare int is EMU: `font.size = 12` (from 1 to 4000 points), `space_before = 6`, `space_after = 6` and
+`font.spacing = 2` raise `ValueError` naming `Pt`, and so does `line_spacing = 0`: write `Pt(12)`, or a float for a
+multiple of the line in spacing.
 `font.name = ""` raises. The values of gap pptx-invalid-values-accepted are not refused. An `RGBColor` is a value:
-assign a new one (`fill.fore_color.rgb = "7B1E3A"`). A python-pptx spelling rpptx lacks (`shape._element`,
-`prs.slides._sldIdLst`, `text_frame._txBody`) raises a bare `AttributeError`: use `element` (Raw XML),
-`prs.slides.remove(slide)` and `prs.slides.move(i, j)`.
+assign a new one (`fill.fore_color.rgb = "7B1E3A"`). `prs.slides._sldIdLst` raises an error naming
+`prs.slides.remove(slide)` and `prs.slides.move(i, j)`; `shape._element` and `text_frame._txBody` raise a bare
+`AttributeError`: use `element` (Raw XML).
 
 Embedded typefaces and faces are immutable detached snapshots. Authored
 `EmbeddedFont(font, kind="regular", *, license=...)` must match the kind and

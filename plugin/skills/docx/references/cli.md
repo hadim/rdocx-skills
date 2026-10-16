@@ -8,7 +8,7 @@ command line; 101 an internal panic (report it).
 
 | Commands | An existing output |
 |---|---|
-| `replace`, `comment add/reply/resolve/move/remove`, `revision accept/reject`, `compare`, `toc rebuild`, `font embed/remove/settings` (`-o` required) | refused, exit 1, "output already exists": they never overwrite anything, the input included |
+| `replace`, `comment add/reply/resolve/move/remove`, `revision accept/reject`, `compare`, `toc rebuild`, `font embed/remove/settings`, `sign` (`-o` required) | refused, exit 1, "output already exists": they never overwrite anything, the input included |
 | `render` (into `-o DIR`, default the current folder), `convert` (`-o` optional for pdf/md/html and for Markdown or HTML input: default, the input name with the new extension) | refused the same way; `--force` replaces an existing output, never the input. Render into a new, empty folder each time |
 
 **JSON.** `--json` output carries `"schema": 1`. The editing commands that take `--json` print an operation
@@ -51,6 +51,7 @@ placeholder as a regular expression and `$1` in the value as its first group.
 ```bash
 rdocx fields update F -o OUT [--now 2026-10-10T09:00:00] [--json]
 rdocx fill F --tag client=Acme --tag due=2026-10-31 -o OUT [--json]
+rdocx fill F --values values.json -o OUT [--json]
 rdocx meta get [--json] F
 rdocx meta set F [--title T] [--author A] [--subject S] [--keywords K] [--description D] [--category C] [--custom NAME=TYPE:VALUE] [--remove-custom NAME] -o OUT [--json]
 rdocx images extract F DIR [--json]
@@ -58,9 +59,12 @@ rdocx images extract F DIR [--json]
 `fields update` recomputes DATE, TIME (at `--now`, exactly `YYYY-MM-DDTHH:MM:SS`; without it they are left
 unresolved), SEQ, REF, FILENAME and the others, then the page fields from rdocx's pagination
 (`update_all_fields`; `--json` lists each field's `evaluations`). `fill` sets body content controls by tag
-(`--tag` repeatable; no alias: `set_content_control_value_by_alias` in Python); an unknown tag exits 1 and
-writes nothing; the value is written as given, placeholder flag kept (gap
-docx-content-control-value-like-word). `meta set` writes the core properties it is given and custom
+(`--tag` repeatable), or with `--values` a flat JSON object whose keys are content-control tags or aliases and
+legacy form field names (`{"client": "Acme", "Status": "Final", "Signer": "Jane Doe", "Agree": true, "Tier": 1}`): a
+control takes a string (`"true"` ticks a check box), a legacy text field a string, a legacy check box `true` /
+`false`, a legacy drop-down the index of its entry; `--json` lists each key's `target_kind` and `count`. A key that
+names no field or several, or a value of the wrong kind, exits 1 and writes nothing; a control's value is written
+as given, placeholder flag kept (gap docx-content-control-value-like-word). `meta set` writes the core properties it is given and custom
 properties (`--custom` repeatable, `TYPE` one of `str`, `int`, `float`, `bool`, `filetime`
 (`2026-10-31T00:00:00Z`), `empty`: `Client=str:Acme`, `Count=int:4`); `meta get --json` prints them all
 (`core`, `custom` with `name`, `type`, `value`). `images extract` writes each picture part once into `DIR`
@@ -145,6 +149,23 @@ Own deterministic rendering uses supported enabled embedded faces before bundled
 fallback. Explicit caller `--font-dir` faces take precedence. Word can display
 only one embedded face per font name and may synthesize bold. The API and own
 renderer retain all four face kinds. Verify the delivered file in Word.
+
+## Signatures
+
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365 -subj "/CN=Signer"   # a test pair
+rdocx sign F.docx --key key.pem --cert cert.pem -o SIGNED.docx [--json]
+rdocx verify-signatures [--json] F.docx
+```
+`sign` writes a package signature over every part and relationship (`_xmlsignatures/sig1.xml`), with a PKCS#8 RSA
+key and an X.509 certificate, DER or one unencrypted PEM block each; it refuses an existing output, a package
+already signed and one with external relationships. `verify-signatures` prints `status` (`valid`, `invalid`,
+`partial`, `unsigned`) and `signatures` (`signer` with `subject`, `issuer`, `serial_number`;
+`cryptographically_valid`, `coverage_complete`, `covered_parts`, `issues` with `kind` such as `changed_reference`);
+exit 0 only when at least one signature is valid and complete and none is invalid or partial, 1 otherwise (an
+unsigned file included). Certificate trust (the chain, revocation) is not checked: say so when you report a
+signature as valid. Sign last: any later edit, by rdocx or by an application, invalidates it. In Python:
+`doc.sign(key_bytes, cert_bytes)` then `save`, `doc.verify_signatures()` (`references/python-api.md`).
 
 ## Rendering and conversion
 

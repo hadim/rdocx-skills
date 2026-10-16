@@ -72,7 +72,7 @@ call for each task.
 ### ✍️ Create and edit
 
 - 🆕 New documents from scratch, from Markdown or HTML, or from a `.dotx` or `.potx` template
-- 🧩 Templates filled from data: `{{ fields }}`, loops and content controls
+- 🧩 Templates and forms filled from data: `{{ fields }}`, loops, content controls and legacy form fields
 - 🔁 Counted find and replace, regular expressions included, across runs and without losing the formatting
 - 🎨 Paragraphs, headings, lists, styles and numbering; tables with merges, borders and shading; page setup
 - 🖼️ Pictures, hyperlinks, charts, equations from a subset of LaTeX, headers, footers and page numbers
@@ -85,6 +85,7 @@ call for each task.
 - ✅ Tracked changes listed, accepted or rejected: all of them, or by id, author or date
 - 🔀 A redline of two versions, word by word
 - 📑 Tables of contents and page fields rebuilt; `rpptx diff` to see what changed between two decks
+- 🔏 Documents and decks signed, and their signatures checked (certificate trust stays yours to judge)
 
 ### 🖨️ Render, convert and export
 
