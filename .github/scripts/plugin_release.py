@@ -9,8 +9,9 @@
       (`v<version>`) already hold that day
   plugin_release.py title LOCK
       the label of the build the lock pins
-  plugin_release.py notes --repo OWNER/REPO --version V LOCK
-      the head of the release notes: the pinned build, where it comes from, how to install
+  plugin_release.py notes --repo OWNER/REPO --version V --run-url URL LOCK
+      the head of the release notes: what the release's own files hold, where they come from, the run that built
+      and tested them, how to install (LOCK: the lock the release branch gets, which points at this release)
   plugin_release.py set-version PLUGIN_JSON V
       write `"version": "V"` into plugin.json, right after `name`
 """
@@ -57,24 +58,27 @@ def next_version(day, tags):
     return f"{base}.{n}"
 
 
-def release_page(download_url):
-    """The page of the release whose download URL is `download_url` (.../releases/download/<tag>)."""
-    return download_url.rstrip("/").replace("/releases/download/", "/releases/tag/")
-
-
-def notes(lock, repo, version):
-    """The head of a release's notes; GitHub's list of merged pull requests follows it."""
+def notes(lock, repo, version, run_url):
+    """The head of a release's notes; the acceptance suite of its files and GitHub's list of merged pull requests
+    follow it. The release carries its own files: `lock` is the one written on the release branch, which points
+    at them."""
     upstream = repo_of(lock)
     commit, ref = lock["commit"], lock.get("ref", "")
-    build = lock["release"].rstrip("/").rsplit("/", 1)[-1]
+    platforms = sorted(lock.get("artifacts", {}))
+    if not platforms:
+        sys.exit("the lock records no files")
     return "\n".join([
-        f"Plugin version `{version}`: the skills, the tests and the pinned build move together.",
+        f"Plugin version `{version}`: the skills, the tests and the rdocx build move together.",
         "",
         "- **rdocx and rpptx**: " + " and ".join(f"{f} {lock['versions'][f]}" for f in FAMILIES)
         + f", built from [{upstream}@{commit[:12]}](https://github.com/{upstream}/tree/{commit})"
         + (f" (`{ref}`)" if ref and ref != commit else "") + ".",
-        f"- **Pinned build**: the release [{build}]({release_page(lock['release'])}), with its files, their SHA-256, "
-        "their provenance and the acceptance suite on four platforms.",
+        f"- **Files**: the CLIs and wheels for {', '.join(platforms[:-1])} and {platforms[-1]}" if len(platforms) > 1
+        else f"- **Files**: the CLIs and wheels for {platforms[0]}",
+        "  are attached to this release with their `SHA256SUMS`, and the plugin of this version installs them from",
+        f"  here, each checked against its `rdocx.lock.json`. [This run]({run_url}) built them from the commit above",
+        "  and ran the acceptance suite on them (below). Provenance: "
+        f"`gh attestation verify FILE -R {repo}`.",
         f"- **Install**: `/plugin marketplace add {repo}`, then `/plugin install rdocx@rdocx-skills`.",
         "",
     ])
@@ -106,6 +110,7 @@ def main(argv=None):
     p = sub.add_parser("notes")
     p.add_argument("--repo", required=True)
     p.add_argument("--version", required=True)
+    p.add_argument("--run-url", required=True)
     p.add_argument("lock", type=Path)
     p = sub.add_parser("set-version")
     p.add_argument("manifest", type=Path)
@@ -119,7 +124,7 @@ def main(argv=None):
         lock = json.loads(args.lock.read_text())
         print(label(lock.get("versions", {}), lock.get("ref", ""), repo_of(lock)))
     elif args.cmd == "notes":
-        sys.stdout.write(notes(json.loads(args.lock.read_text()), args.repo, args.version))
+        sys.stdout.write(notes(json.loads(args.lock.read_text()), args.repo, args.version, args.run_url))
     else:
         args.manifest.write_bytes(set_version(args.manifest.read_text(), args.version).encode())
 

@@ -1,6 +1,6 @@
 {
   "name": "rdocx",
-  "version": "2026.10.15.4",
+  "version": "2026.10.16",
   "displayName": "rdocx",
   "description": "Read, write, edit, review and render Word and PowerPoint files with the rdocx and rpptx CLIs and Python bindings, pinned by hash, with an acceptance suite.",
   "author": {"name": "Hadrien Mary"},
