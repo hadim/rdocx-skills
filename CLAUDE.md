@@ -82,21 +82,19 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`).
-- Pinned: tensorbee/rdocx `main` at `3a3b0de8` (rdocx 0.16.1 and rpptx 0.14.1 plus sprints S92 and S93, no
-  upstream release yet), released as plugin `v2026.10.16`. Upstream closed every
-  pull request of the integration branches as adapted: it rewrote them, so the Python API was reshaped (handles
-  retire on different edits, many names and signatures changed) and the skills were rewritten for it. No
-  integration branch is pinned any more: none is needed while no pull request of the maintainer is open upstream.
-- Open gaps: 17 (`tests/gaps.py`, both `references/gaps.md`). Four are the python-docx and python-pptx names and the
-  bare ints saved as 0 that upstream plans for its sprint S94 (tensorbee/rdocx#379). The others were met on this
-  pin: among them `docx-validate-paraid-in-content-control` (`rdocx validate` stops on every Word table of
-  contents; `docx_ops.py validate` checks a scratch copy meanwhile). All are reported upstream: #379, #384 (validate)
-  and #385 (the other twelve).
-- Suite against `3a3b0de8`: 180 passed, 49 xfailed on macos-arm64 from the release files, in 3 minutes (1 minute on
-  the previous pin). The Python binding is slower since v0.16.1: tensorbee/rdocx#378 made opening and one edit
-  linear, but an edit is still 2 to 3 times slower than on the previous pin, and walking `table.rows` /
-  `row.cells` is quadratic (1,600 cells: 50 s, against 0.001 s before; reported on #378). The behaviour files
-  hold only strict xfails: a test that passes on the pinned upstream commit is deleted.
+- Pinned: tensorbee/rdocx `main` at `d44a69af` (rdocx 0.16.1 and rpptx 0.14.1 plus sprints S92 to S94, no
+  upstream release yet). S94 brought most python-docx and python-pptx names (tensorbee/rdocx#379), package signing
+  and verification in Python and both CLIs, and Word form filling (`rdocx fill --values`, legacy form fields;
+  tensorbee/rdocx#380). The previous pin, `3a3b0de8`, is plugin `v2026.10.16`. No integration branch is pinned:
+  none is needed while no pull request of the maintainer is open upstream.
+- Open gaps: 16 (`tests/gaps.py`, both `references/gaps.md`). Three are what #379 left (python-docx-names,
+  python-pptx-names, docx-bare-int-length-saved-as-zero: `font.size = 12` raises now, `space_after = 6` still saves
+  0), reported as tensorbee/rdocx#386. The others are reported: #384 (validate refuses w14:paraId inside a content control)
+  and #385 (twelve others), both planned upstream for S95 and S95.1.
+- Suite against `d44a69af`: 151 passed, 41 xfailed, 18 skipped (the install and release tests, without recorded
+  hashes) on macos-arm64 from a local build, in 2.5 minutes. Walking `table.rows` / `row.cells` is still quadratic
+  (400 cells: 3.0 s, 800 cells: 12 s; reported on tensorbee/rdocx#378); one edit is twice as fast as on `3a3b0de8`.
+  The behaviour files hold only strict xfails: a test that passes on the pinned upstream commit is deleted.
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).
@@ -104,6 +102,6 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 
 ## Next steps
 
-1. When upstream `main` moves (S94 brings tensorbee/rdocx#379) or tags a release: `bump <ref>` on a branch,
-   `install --build` and `test` (or let ci.yml build it on the pull request), as docs/setup.md (Moving the pin)
-   describes; delete the gap tests that pass; release the plugin when the maintainer asks.
+1. When upstream `main` moves (S95 brings tensorbee/rdocx#384 and part of #385) or tags a release: `bump <ref>` on a
+   branch, `install --build` and `test` (or let ci.yml build it on the pull request), as docs/setup.md (Moving the
+   pin) describes; delete the gap tests that pass; release the plugin when the maintainer asks.
