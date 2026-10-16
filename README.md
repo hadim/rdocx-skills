@@ -132,6 +132,9 @@ The skills never run them on their own:
   repository's build workflow on four platforms and published as a pre-release with build provenance
   attestations. Its title says what it holds: `rdocx 0.16.1 · rpptx 0.14.1` for an upstream release, or `rdocx
   0.16.0 · rpptx 0.14.0 + integration/open-prs-2026-10-14 from hadim/rdocx` for an integration branch.
+- 📦 **The plugin's releases** carry their own files: each one builds the pinned commit again on the four platforms,
+  runs the acceptance suite on those files and attaches them with their `SHA256SUMS` and provenance, and its lock
+  points at them.
 - 🍴 **Integration branches** live on the maintainer's fork, [hadim/rdocx](https://github.com/hadim/rdocx): an
   upstream release plus the maintainer's pull requests still open on tensorbee/rdocx, pinned when the skills need
   a fix before upstream releases it. The lock's `upstream` and `ref` name the fork and the branch.
