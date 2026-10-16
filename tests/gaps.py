@@ -10,7 +10,7 @@ A gap about a missing API calls the name we expect it to get. When the API lands
 test keeps failing with AttributeError: adapt it to the real name, and it then reports the gap as closed.
 
 When a gap is reported upstream, a comment on its entry names the issue (`# upstream: owner/repo#N`). The
-issue's state decides nothing: the suite run on each new build (the build workflow's release notes) says which
+issue's state decides nothing: the suite run on each new pin (ci.yml's job summaries) says which
 gaps closed.
 """
 

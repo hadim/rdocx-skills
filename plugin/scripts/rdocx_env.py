@@ -39,15 +39,12 @@ for the platform or with --allow-local; `lock --write` records them after review
 CLIs, the wrapper, every file of the two packages (and refuses any other file there), the interpreter
 link, pyvenv.cfg and the start-up files (.pth, sitecustomize) recorded at install.
 
-Releases. Every pinned commit, an upstream release tag as much as an integration branch, is built by the build
-workflow of this repository, which publishes it as the release
-`rdocx-<UTC build date and time YYYYMMDDHHMM>-<first 12 characters of the commit>` (GitHub
-lists releases by tag name: the time keeps two builds of the same day in build order; the older releases are
-`rdocx-<YYYYMMDD>-<commit12>`, still valid) whose assets are `<platform>.<file>` plus a SHA256SUMS listing them,
-and `release` is its URL (found through `git ls-remote --tags` of this repository, the release whose tag ends
-with `-<commit12>` whatever its format; no API call, no token). A downloaded file is trusted only
-through the lock: it lands in RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the same staging and hash
-check as any dist folder.
+Releases. The plugin's releases are the only published builds: each one builds the pinned commit, attaches its
+files as `<platform>.<file>` plus a SHA256SUMS listing them, and the lock of the `release` branch names it in
+`release` (main's lock names the commit only: CI builds it). `lock --write --release` records the release the lock
+names, or, when it names none, a release of this repository whose tag ends with `-<commit12>` (found through
+`git ls-remote --tags`, no API call, no token). A downloaded file is trusted only through the lock: it lands in
+RDOCX_HOME/dist/<commit>/<platform>/ and is installed by the same staging and hash check as any dist folder.
 
 Environment: RDOCX_HOME (default ~/.local/share/rdocx-skills), RDOCX_SRC (a local clone of rdocx; default:
 a sibling `rdocx` folder of this repository), RDOCX_DIST (a folder holding <commit>/<platform>/),
@@ -88,7 +85,7 @@ def child_env(**extra):
 
 
 GIT_ENV = child_env(GIT_NO_REPLACE_OBJECTS="1")
-RELEASES_REPO = "hadim/rdocx-skills"  # the builds of the pinned upstream commits
+RELEASES_REPO = "hadim/rdocx-skills"  # the releases that carry the builds of the pinned upstream commits
 WINDOWS = os.name == "nt"
 TRIPLES = {"linux-x86_64": "x86_64-unknown-linux-gnu", "linux-aarch64": "aarch64-unknown-linux-gnu"}
 ZIGBUILD_VERSION = "0.20.1"
@@ -235,7 +232,7 @@ def wheel_files(wheel):
 
 # ---------------------------------------------------------------- releases
 def release_tags(repo):
-    """Tag names of `repo` on GitHub, from `git ls-remote --tags`: each release the build workflow publishes is
+    """Tag names of `repo` on GitHub, from `git ls-remote --tags`: each release of this repository is
     tagged, and a public repository's tags need no API call and no token."""
     out = subprocess.run(["git", "ls-remote", "--tags", f"https://github.com/{repo}"], capture_output=True,
                          text=True, env=GIT_ENV)
@@ -249,7 +246,7 @@ def release_url(repo, tags, commit):
     """Download URL of the one release of `commit`: its tag ends with `-<first 12 characters of the commit>`."""
     tags = sorted(t for t in tags if t.endswith(f"-{commit[:12]}"))
     if not tags:
-        die(f"{repo} has no release of commit {commit[:12]} yet: run the build workflow on it first")
+        die(f"{repo} has no release of commit {commit[:12]}: name one in the lock's `release`")
     if len(tags) > 1:
         die(f"{repo} has several releases of commit {commit[:12]} ({', '.join(tags)}): name one in the lock")
     return f"https://github.com/{repo}/releases/download/{tags[0]}"
@@ -738,9 +735,8 @@ def main():
             return
         lock.update(commit=commit, ref=args.ref, release="", versions={}, artifacts={}, installed_files={})
         write_lock(lock)
-        say(f"pinned {args.ref} = {commit}; no release nor hashes recorded yet. Next: run the build workflow on "
-            f"it, which publishes the release rdocx-<YYYYMMDDHHMM>-{commit[:12]}, then `lock --write --release` "
-            "finds and records it.")
+        say(f"pinned {args.ref} = {commit}; no build nor hashes recorded: `install --build` compiles it here, "
+            "ci.yml on the pull request, and the next plugin release (release.yml) publishes it.")
         return
     if args.cmd == "lock" and args.release:
         if not args.write:

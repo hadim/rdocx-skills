@@ -57,7 +57,7 @@ def dist():
 
 
 def own_release(dist, mirror, tag):
-    """(mirror, lock): this repository's release `tag` of the pinned commit, as the build workflow publishes it."""
+    """(mirror, lock): this repository's release `tag` of the pinned commit, its files as release.yml attaches them."""
     lock = json.loads(json.dumps(LOCK))
     lock["release"] = f"https://github.com/hadim/rdocx-skills/releases/download/{tag}"
     lock["artifacts"], lock["installed_files"] = {PLAT: WANT}, {PLAT: rdocx_env.expected_files(LOCK, PLAT)}
@@ -143,7 +143,7 @@ def test_bump_to_a_commit_empties_the_hashes(tmp_path):
     assert res.returncode == 0, res.stderr
     lock = json.loads((repo / "rdocx.lock.json").read_text())
     assert lock["commit"] == other and lock["ref"] == other
-    assert lock["release"] == "" and "rdocx-<YYYYMMDDHHMM>-0123456789ab" in res.stderr
+    assert lock["release"] == "" and "install --build" in res.stderr
     assert lock["artifacts"] == lock["installed_files"] == lock["versions"] == {}
     res = cmd(repo, tmp_path / "home", tmp_path, "bump", other)
     assert res.returncode == 0 and "already pinned" in res.stderr

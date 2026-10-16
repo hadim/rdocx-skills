@@ -2,23 +2,24 @@
 # is the repository's default branch, so Claude Code and Claude Desktop users (`/plugin marketplace add
 # hadim/rdocx-skills`) and the Claude plugin directory follow it, and get a new version only from here.
 #
-# Every release carries its own files, so that it never depends on another release (build.yml's pre-releases may be
-# deleted): it builds the pinned commit on the four platforms (no macos-x86_64; each time, even when an earlier
-# release or build holds the same commit), runs the acceptance suite on those very files, and attaches the CLIs and
-# wheels to the release with their SHA256SUMS and build provenance attestations. Nothing is published unless the
-# four platforms build and pass.
+# The plugin's releases are the only published builds, and each one carries its own files: it builds the pinned
+# commit on the four platforms (no macos-x86_64; each time, even when the previous release holds the same commit),
+# runs the acceptance suite on those very files, and attaches the CLIs and wheels to the release with their
+# SHA256SUMS and build provenance attestations. Nothing is published unless the four platforms build and pass. Then
+# every other release and tag is deleted: only the latest release exists.
 #
 # The release takes main as it is, once ci.yml passed on it: the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for
 # another release the same day), the `release` branch moved to main's tree with that version written into
 # plugin/.claude-plugin/plugin.json and the lock pointed at this release's files and their hashes (a merge of main, so
 # that `release` only moves forward), a tag on it, and a GitHub release titled with the rdocx and rpptx versions of
-# the pinned build, marked latest, whose notes describe its files, give the suite on the four platforms and list
-# the merged pull requests since the previous release. The version, the title and the head of the notes come from
+# the build, marked latest, whose notes describe its files, give the suite on the four platforms and list the
+# merged pull requests since the previous release. The version, the title and the head of the notes come from
 # .github/scripts/plugin_release.py (tested in tests/test_ci_scripts.py).
 #
 # `dry_run`: everything but the release itself, on the branch the workflow runs from (to try a change of this
 # workflow on a pull request branch): build, suite, release files and lock kept as the workflow artifact
-# `release-files`; no attestation, no branch, no tag, no release.
+# `release-files`, and the clean-up lists what it would delete; no attestation, no branch, no tag, no release, nothing
+# deleted.
 name: release
 
 on:
@@ -46,7 +47,6 @@ jobs:
       sha: ${{ steps.plan.outputs.sha }}
       commit: ${{ steps.plan.outputs.commit }}
       version: ${{ steps.plan.outputs.version }}
-      title: ${{ steps.plan.outputs.title }}
       previous: ${{ steps.plan.outputs.previous }}
     env:
       GH_TOKEN: ${{ github.token }}
@@ -71,20 +71,19 @@ jobs:
             exit 1
           fi
 
-      - name: Version and title
+      - name: Version
         id: plan
         run: |
           mapfile -t tags < <(git tag -l 'v*')
           version=$(python3 .github/scripts/plugin_release.py version --date "$(date -u +%F)" "${tags[@]}")
-          title=$(python3 .github/scripts/plugin_release.py title plugin/rdocx.lock.json)
           previous=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
           commit=$(python3 -c 'import json; print(json.load(open("plugin/rdocx.lock.json"))["commit"])')
-          { echo "sha=$(git rev-parse HEAD)"; echo "commit=$commit"; echo "version=$version"; echo "title=$title"
+          { echo "sha=$(git rev-parse HEAD)"; echo "commit=$commit"; echo "version=$version"
             echo "previous=$previous"; } >> "$GITHUB_OUTPUT"
           echo "release v$version of skills $(git rev-parse --short=12 HEAD), rdocx ${commit:0:12}, dry run: ${{ inputs.dry_run }}" >> "$GITHUB_STEP_SUMMARY"
 
-  # The pinned commit built from source on each platform (the same steps as build.yml's build job), installed as a
-  # local build, and the acceptance suite run on it.
+  # The pinned commit built from source on each platform (the same steps as ci.yml), installed as a local build,
+  # recorded into this run's copy of the lock, and the acceptance suite run on it.
   build:
     needs: plan
     strategy:
@@ -129,7 +128,7 @@ jobs:
           echo "CARGO_PROFILE_RELEASE_LTO=thin" >> "$GITHUB_ENV"
           echo "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16" >> "$GITHUB_ENV"
 
-      # build.yml's cache: a commit it built compiles again in a few minutes
+      # ci.yml's cache: a commit it built compiles again in a few minutes
       - name: Restore the cargo registry and the build folder
         id: cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -142,11 +141,8 @@ jobs:
           key: rdocx-build-thin-${{ matrix.platform }}-${{ needs.plan.outputs.commit }}
           restore-keys: rdocx-build-thin-${{ matrix.platform }}-
 
-      # A mirror that holds nothing: the download of the lock's build fails, so `install --build` compiles the
-      # commit and installs it as a local build (for this step only; the suite's own tests use the real URLs).
+      # main's lock names no build: `install --build` compiles the commit and installs it as a local build
       - name: Build and install
-        env:
-          RDOCX_RELEASE_URL: file:///nonexistent-rdocx-release-mirror
         run: python plugin/scripts/rdocx_env.py install --build
 
       # also after a failed build: the next attempt starts from what compiled
@@ -167,6 +163,9 @@ jobs:
           "$bin/rdocx" --version
           "$bin/rpptx" --version
           "$bin/python" -c "import rdocx, rpptx"
+
+      - name: Record this build in the run's copy of the lock
+        run: python plugin/scripts/rdocx_env.py lock --write
 
       - name: Poppler, for the PDF text and raster checks
         run: .github/scripts/poppler.sh
@@ -204,12 +203,10 @@ jobs:
       contents: write
       id-token: write
       attestations: write
-      pull-requests: read  # gh pr list: the builds the open pull requests pin
     env:
       GH_TOKEN: ${{ github.token }}
       SHA: ${{ needs.plan.outputs.sha }}
       VERSION: ${{ needs.plan.outputs.version }}
-      TITLE: ${{ needs.plan.outputs.title }}
       PREVIOUS: ${{ needs.plan.outputs.previous }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -227,7 +224,7 @@ jobs:
           pattern: suite-*
           path: ${{ runner.temp }}/suites
 
-      # The asset names and SHA256SUMS of build.yml's releases: `<platform>.<file>`, which rdocx_env.py downloads.
+      # The asset names that rdocx_env.py downloads, `<platform>.<file>`, listed in SHA256SUMS.
       - name: Release files
         run: |
           mkdir assets
@@ -248,6 +245,7 @@ jobs:
       # The lock of the release branch: this release's URL and the hashes of its files, recorded by rdocx_env.py from
       # a local mirror of the release (file:// URLs), the same way as from a published one.
       - name: Lock of the release
+        id: lock
         run: |
           mkdir -p "$RUNNER_TEMP/mirror"
           cp -R assets "$RUNNER_TEMP/mirror/v$VERSION"
@@ -263,14 +261,7 @@ jobs:
             python3 plugin/scripts/rdocx_env.py lock --write --release
           mv plugin/rdocx.lock.json "$RUNNER_TEMP/release-lock.json"
           git checkout -- plugin/rdocx.lock.json
-          # the builds kept by the clean-up below: the one main's lock pins (ci.yml on main installs it) and those
-          # the locks of open pull requests pin (their CI installs them, and main gets them on merge)
-          python3 .github/scripts/release_notes.py tag --repo "$GITHUB_REPOSITORY" plugin/rdocx.lock.json > "$RUNNER_TEMP/keep-builds"
-          for sha in $(gh pr list -R "$GITHUB_REPOSITORY" --state open --limit 100 --json headRefOid --jq '.[].headRefOid'); do
-            gh api "repos/$GITHUB_REPOSITORY/contents/plugin/rdocx.lock.json?ref=$sha" --jq .content | base64 -d \
-              > "$RUNNER_TEMP/pr-lock.json" || continue
-            python3 .github/scripts/release_notes.py tag --repo "$GITHUB_REPOSITORY" "$RUNNER_TEMP/pr-lock.json" >> "$RUNNER_TEMP/keep-builds"
-          done
+          echo "title=$(python3 .github/scripts/plugin_release.py title "$RUNNER_TEMP/release-lock.json")" >> "$GITHUB_OUTPUT"
 
       - name: Notes
         run: |
@@ -323,6 +314,8 @@ jobs:
       # gh creates the release as a draft, uploads the files, then publishes it.
       - name: Publish
         if: ${{ !inputs.dry_run }}
+        env:
+          TITLE: ${{ steps.lock.outputs.title }}
         run: |
           changes=()  # the merged pull requests since the previous release, after the notes' head
           if [ -n "$PREVIOUS" ]; then changes=(--generate-notes --notes-start-tag "$PREVIOUS"); fi
@@ -330,13 +323,13 @@ jobs:
             --notes-file "$RUNNER_TEMP/notes.md" "${changes[@]}" --latest
           echo "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$VERSION" >> "$GITHUB_STEP_SUMMARY"
 
-      # Only the new release remains, with the builds that main and the open pull requests pin:
-      # every other release and its tag, and any other v* or rdocx-* tag, is deleted. A dry run lists them.
+      # Only the new release remains: every other release and its tag, and any other v* or rdocx-* tag (the build
+      # pre-releases this repository published before included), is deleted. A dry run lists them.
       - name: Delete the older releases and tags
         env:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          keep=" v$VERSION $(echo $(cat "$RUNNER_TEMP/keep-builds")) "
+          keep=" v$VERSION "
           echo "Kept:$keep" >> "$GITHUB_STEP_SUMMARY"
           drop() {
             case "$keep" in *" $1 "*) return ;; esac
