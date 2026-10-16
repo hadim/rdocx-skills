@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -105,8 +106,9 @@ def test_recipe_outputs(workdirs):
     assert [p.style for p in visit.paragraphs][:1] == ["Heading1"] and visit.tables[0].cell(1, 0).text == "Pier 2"
     findings = [p.text for p in rdocx.Document.open(d / "findings.docx").paragraphs]
     assert findings[:2] == ["Findings", "Inserted after the heading."]
-    charts = rdocx.Document.open(d / "chart.docx").charts
-    assert [(c.categories, c.series[0].values) for c in charts] == [(("2024", "2025", "2026"), (12.0, 15.0, 9.0))]
+    with zipfile.ZipFile(d / "chart.docx") as z:
+        chart = re.findall(r"<c:v>([^<]*)</c:v>", z.read("word/charts/chart1.xml").decode())
+    assert chart == ["Inspections", "2024", "2025", "2026", "12", "15", "9"]
     for name in ("embedded.docx", "embedded-py.docx"):
         font = next(f for f in rdocx.Document.open(d / name).fonts if f.name == "Aileron")
         assert [(e.kind, e.license.identity) for e in font.embedded_fonts] == [("regular", "CC0-1.0: Aileron")]
@@ -119,7 +121,7 @@ def test_recipe_outputs(workdirs):
     chart = next(sh for sh in pptx.Presentation(p / "chart.pptx").slides[base].shapes if sh.has_chart).chart
     assert list(chart.plots[0].categories) == ["Option A", "Option B", "Option C"]
     assert list(chart.plots[0].series[0].values) == [236.0, 230.0, 251.0]
-    assert (p / "deck.md").read_text().startswith("# ") and "<section" in (p / "deck.html").read_text()
+    assert "\n# " in (p / "deck.md").read_text() and "<section" in (p / "deck.html").read_text()
     for name in ("embedded.pptx", "embedded-py.pptx"):
         fonts = rpptx.Presentation(p / name).embedded_fonts
         assert [(t.typeface, [f.format for f in t.faces]) for t in fonts] == [("Aileron", ["eot"])]
@@ -171,7 +173,7 @@ def test_recipe_outputs(workdirs):
                if sh.placeholder_format.type == pptx.enum.shapes.PP_PLACEHOLDER.FOOTER]
     assert footers == ["Riverton Footbridge"] * 7
     import json
-    assert json.loads((p / "fit.json").read_text())["fits"] is False
+    assert json.loads((p / "fit.json").read_text())["overflow"] is True
     branded = rpptx.Presentation(p / "branded.pptx")
     assert str(branded.slide_master.theme.colors["accent1"]) == "7B1E3A" and branded.slide_master.theme.fonts.major.latin == "Georgia"
     assert branded.slide_master.shapes[len(branded.slide_master.shapes) - 1].alt_text == "Company logo"
@@ -182,4 +184,4 @@ def test_recipe_outputs(workdirs):
     assert steps[1].text_frame.paragraphs[0].runs[0].font.size <= rpptx.Pt(24) and steps[2].alt_text == "Survey"
     assert b'<a:stCxn id="' in steps[4].xml and b"<a:endCxn" in steps[4].xml
     raw = rpptx.Presentation(p / "raw.pptx").slides[3].shapes
-    assert any(b'numCol="2"' in sh.text_frame.xml for sh in raw if sh.has_text_frame)
+    assert any('numCol="2"' in sh.text_frame.element.xml for sh in raw if sh.has_text_frame)

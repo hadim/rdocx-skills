@@ -77,32 +77,31 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 15/10/2026
+## State on 16/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`).
-- Pinned: the integration branch `integration/open-prs-2026-10-14` of hadim/rdocx (commit `d17e1da9`) through this
-  repository's release `rdocx-202610141943-d17e1da9e773` (ThinLTO, four platforms, no macos-x86_64): the previous pin
-  `integration/open-prs-2026-10-12-4` (`52e7f0b8`: tensorbee/rdocx `v0.16.0` plus every open PR of the user and #363)
-  with tensorbee/rdocx#374 (compare tracks a whole paragraph holding a hyperlink, a paragraph next to a table, an
-  empty paragraph gaining properties and several deleted final paragraphs, and groups word changes into one deletion
-  then one insertion) and #375 (`revision_style="legal"` / `--revision-style legal` for a tracked view in colour, raw
-  XML on header and footer paragraphs, a namespace declared on an ancestor kept by `replace_xml`), ported onto the
-  integration branch with one integration fix (`render_page_to_png` takes `revision_style` next to #315's fonts).
-- Open gaps: none. The six gaps met redlining real document pairs on 14/10/2026 (tensorbee/rdocx#368 to #373)
-  closed on this pin; their tests stay as behaviour tests until an upstream release carries #374 and #375.
-- Suite against `d17e1da9`: 372 passed, 1 skipped (Poppler absent) on linux-x86_64 from the release files, in 1
-  minute. The behaviour files hold the tests that fail on upstream v0.16.0, that is the PRs carried on the
-  integration branch: when the pin moves to an upstream release that carries them, run them against it and delete
-  those that pass.
+- Pinned: tensorbee/rdocx `main` at `3a3b0de8` (rdocx 0.16.1 and rpptx 0.14.1 plus sprints S92 and S93, no
+  upstream release yet) through this repository's build `rdocx-202610160525-3a3b0de8be9f`. Upstream closed every
+  pull request of the integration branches as adapted: it rewrote them, so the Python API was reshaped (handles
+  retire on different edits, many names and signatures changed) and the skills were rewritten for it. No
+  integration branch is pinned any more: none is needed while no pull request of the maintainer is open upstream.
+- Open gaps: 17 (`tests/gaps.py`, both `references/gaps.md`). Four are the python-docx and python-pptx names and the
+  bare ints saved as 0 that upstream plans for its sprint S94 (tensorbee/rdocx#379). The others were met on this
+  pin: among them `docx-validate-paraid-in-content-control` (`rdocx validate` stops on every Word table of
+  contents; `docx_ops.py validate` checks a scratch copy meanwhile). Only the #379 ones are reported upstream.
+- Suite against `3a3b0de8`: 180 passed, 49 xfailed on macos-arm64 from the release files, in 3 minutes (1 minute on
+  the previous pin: edits are 2 to 3 times slower in the Python binding since v0.16.1, tensorbee/rdocx#378 fixed
+  the quadratic part). The behaviour files hold only strict xfails: a test that passes on the pinned upstream
+  commit is deleted.
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).
-- A skills `main` pinned on the fork steps back from upstream releases: go back to tensorbee/rdocx with `bump
-  v<version>` once a release carries these PRs. Older pins: `git log -p --follow plugin/rdocx.lock.json`.
+- Older pins: `git log -p --follow plugin/rdocx.lock.json`.
 
 ## Next steps
 
-1. When rdocx tags a release: run `build.yml` on it, then `bump v<version>`, `lock --write --release`, `install`,
-   `test`, as docs/setup.md (Moving the pin) describes; release the plugin when the maintainer asks.
+1. When upstream `main` moves (S94 brings tensorbee/rdocx#379) or tags a release: run `build.yml` on it, then
+   `bump <ref>`, `lock --write --release`, `install`, `test`, as docs/setup.md (Moving the pin) describes; delete
+   the gap tests that pass; release the plugin when the maintainer asks.

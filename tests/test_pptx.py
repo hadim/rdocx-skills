@@ -1,196 +1,177 @@
-"""pptx: reading, creating, editing, comments, notes, rendering, layout checks, package round trip."""
+"""pptx: what the pinned build (tensorbee/rdocx main) lacks, as strict xfails of tests/gaps.py. Everything else rpptx
+does is upstream's to test; the skills' own contract is checked by test_docs_snippets.py and test_skill_docs.py."""
 import io
-import re
 
+import pptx
 import pytest
 import rpptx
 from PIL import Image
-from rpptx.dml.color import RGBColor
-from rpptx.enum.dml import (MSO_COLOR_TYPE, MSO_THEME_COLOR_INDEX)
-from rpptx.enum.text import MSO_ANCHOR
+from rpptx.util import Inches, Pt
 
-from conftest import MONOSPACE_FONTS, digest, font_dir, parts, run
-
-EMU = 914400
+from conftest import digest, run
 
 
-def walk(shapes):
-    for sh in shapes:
-        yield sh
-        if int(sh.shape_type or 0) == 6:  # group
-            yield from walk(sh.shapes)
-
-
-def png_bytes(size=(300, 150), color=(200, 60, 60)):
-    buf = io.BytesIO()
-    Image.new("RGB", size, color).save(buf, "PNG")
-    return buf.getvalue()
-
-
-# ---------------------------------------------------------------- editing
-def test_run_edit_keeps_font(deck_pptx):
-    prs = rpptx.Presentation(deck_pptx)
-    r = prs.slides[1].shapes[1].text_frame.paragraphs[0].runs[0]
-    before = (r.font.name, r.font.size, r.font.color.rgb)
-    r.text = r.text + " (edited)"
-    r = prs.slides[1].shapes[1].text_frame.paragraphs[0].runs[0]
-    assert (r.font.name, r.font.size, r.font.color.rgb) == before
-    assert r.text.endswith("(edited)")
-
-
-def test_font_color_is_a_colour_format(deck_pptx):
-    """As python-pptx: `font.color` is a ColorFormat; `font.color = ...` stays as a shortcut for `.rgb`. Every colour
-    setter takes an RGBColor, a hex string with or without '#', or an int triple."""
-    prs = rpptx.Presentation(deck_pptx)
-    font = prs.slides[1].shapes[1].text_frame.paragraphs[0].runs[0].font
-    font.color = RGBColor(0x12, 0x34, 0x56)
-    assert type(font.color).__name__ == "ColorFormat" and font.color.rgb == RGBColor(0x12, 0x34, 0x56)
-    assert str(font.color.rgb) == "123456" and font.color.type == MSO_COLOR_TYPE.RGB
-    for value in ("#654321", "654321", (0x65, 0x43, 0x21)):
-        font.color.rgb = value
-        assert str(font.color.rgb) == "654321"
-    font.color.theme_color = MSO_THEME_COLOR_INDEX.ACCENT_2
-    assert (font.color.type, font.color.theme_color) == (MSO_COLOR_TYPE.SCHEME, MSO_THEME_COLOR_INDEX.ACCENT_2)
-    shape = prs.slides[1].shapes[1]
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = "#00FF00"
-    shape.line.color.rgb = (0, 0, 255)
-    assert (str(shape.fill.fore_color.rgb), str(shape.line.color.rgb)) == ("00FF00", "0000FF")
-    with pytest.raises(TypeError):
-        font.color.rgb = 0x123456
-
-
-PPTX_EDITS = {   # edit -> the held handles it retires (slide, shapes, paragraph, run); the others stay valid
-    "add_textbox": (lambda p: p.slides[1].shapes.add_textbox(EMU, EMU, EMU, EMU), ""),
-    "add_slide": (lambda p: p.slides.add_slide(p.slide_layouts[6]), ""),
-    "add_paragraph_and_run": (lambda p: p.slides[0].shapes[0].text_frame.add_paragraph().add_run("x"), ""),
-    "geometry_font_paragraph": (lambda p: (setattr(p.slides[0].shapes[0], "left", 2 * EMU),
-                                           setattr(p.slides[0].shapes[0].text_frame.paragraphs[0], "space_after", 12700),
-                                           setattr(p.slides[0].shapes[0].text_frame.paragraphs[0].runs[0].font, "bold", True)), ""),
-    "run_text": (lambda p: setattr(p.slides[0].shapes[0].text_frame.paragraphs[0].runs[0], "text", "y"), ""),
-    "notes_text": (lambda p: setattr(p.slides[0], "notes_text", "n"), ""),
-    "text_frame_text": (lambda p: setattr(p.slides[0].shapes[0].text_frame, "text", "new"), "paragraph run"),
-    "shape_text": (lambda p: setattr(p.slides[1].shapes[0], "text", "new"), "paragraph run"),
-    "try_replace_text": (lambda p: p.try_replace_text("Draft", "Final", expect=4), "run"),
-    "shapes_move": (lambda p: p.slides[1].shapes.move(0, 1), "shapes paragraph run"),
-    "shapes_remove": (lambda p: p.slides[1].shapes.remove(p.slides[1].shapes[1]), "shapes paragraph run"),
-    "shapes_group": (lambda p: p.slides[1].shapes.group([p.slides[1].shapes[0], p.slides[1].shapes[1]]), "shapes paragraph run"),
-    "slides_move": (lambda p: p.slides.move(0, 1), "slide shapes paragraph run"),
-    "slides_remove": (lambda p: p.slides.remove(p.slides[1]), "slide shapes paragraph run"),
-    "slide_hidden": (lambda p: setattr(p.slides[1], "hidden", True), ""),
-}
-
-
-@pytest.mark.parametrize("op", sorted(PPTX_EDITS))
-def test_handles_after_each_kind_of_edit(op):
-    """The rule in python-api.md, "Handles": an edit retires the handles of the kind it renumbers and those below
-    it (slide > shape > paragraph > run), in every slide; appends and setters retire none."""
+def deck(*layouts):
     prs = rpptx.Presentation()
-    for _ in range(2):
-        prs.slides.add_slide(prs.slide_layouts[6])
-    for k in range(2):
-        prs.slides[k].shapes.add_textbox(EMU, EMU, 4 * EMU, EMU)
-        prs.slides[k].shapes.add_textbox(EMU, 3 * EMU, 4 * EMU, EMU)
-        prs.slides[k].shapes[0].text_frame.text = "Draft a"
-        prs.slides[k].shapes[1].text_frame.text = "Draft b"
-    slide, shape = prs.slides[0], prs.slides[0].shapes[1]
-    paragraph = prs.slides[0].shapes[1].text_frame.paragraphs[0]
-    run_ = paragraph.runs[0]
-    held = {"slide": lambda: slide.notes_text, "shapes": lambda: shape.left, "paragraph": lambda: paragraph.text,
-            "run": lambda: run_.text}
-    edit, retired = PPTX_EDITS[op]
-    edit(prs)
-    for kind, read in held.items():
-        if kind in retired.split():
-            with pytest.raises(rpptx.StaleElementError):
-                read()
-        else:
-            read()
-
-
-def test_a_new_shape_handle_stays_valid_after_its_text_is_set():
-    prs = rpptx.Presentation()
-    prs.slides.add_slide(prs.slide_layouts[6])
-    box = prs.slides[0].shapes.add_textbox(EMU, 2 * EMU, EMU, EMU)
-    box.text_frame.text = "x"
-    box.left = 2 * EMU
-    assert prs.slides[0].shapes[0].left == 2 * EMU and box.text == "x"
-
-
-def blank_slide():
-    prs = rpptx.Presentation()
-    prs.slides.add_slide(prs.slide_layouts[6])
+    for k in layouts or (6,):
+        prs.slides.add_slide(prs.slide_layouts[k])
     return prs
 
 
-def test_replace_text_in_one_slide_or_one_frame():
-    prs = blank_slide()
-    prs.slides.add_slide(prs.slide_layouts[6])
-    for k in range(2):
-        prs.slides[k].shapes.add_textbox(EMU, EMU, 4 * EMU, EMU)
-        prs.slides[k].shapes[0].text_frame.text = "Draft a"
-        prs.slides[k].notes_text = "Draft note"
-    assert prs.slides[1].try_replace_text("Draft", "Final", expect=2) == 2  # the shape and the notes
-    assert [s.shapes[0].text for s in prs.slides] == ["Draft a", "Final a"]
-    assert [s.notes_text for s in prs.slides] == ["Draft note", "Final note"]
-    assert prs.slides[0].try_replace_text("Draft", "Final", expect=1, notes=False) == 1
-    assert prs.slides[0].notes_text == "Draft note"
-    with pytest.raises(rpptx.ReplacementCountError):
-        prs.slides[0].try_replace_text("Final", "X", expect=2)
-    with pytest.raises(rpptx.ReplacementCountError):
-        prs.slides[0].shapes[0].text_frame.try_replace_text("Final", "X", expect=2)
-    assert prs.slides[0].shapes[0].text == "Final a"  # all or nothing
-    for replace in (lambda: prs.slides[0].shapes[0].text_frame.try_replace_text("Final", "F", expect=1),
-                    lambda: prs.slides[0].try_replace_text("F", "G", expect=1),
-                    lambda: prs.try_replace_text("G", "H", expect=1)):
-        sh, r = prs.slides[0].shapes[0], prs.slides[0].shapes[0].text_frame.paragraphs[0].runs[0]
-        replace()
-        sh.left                                        # a replacement retires run handles only
-        with pytest.raises(rpptx.StaleElementError):
-            r.text
-    assert prs.slides[0].shapes[0].text == "H a"
+def text_box(prs, text="x"):
+    prs.slides[0].shapes.add_textbox(0, 0, Inches(2), Inches(1)).text_frame.text = text
+    return prs.slides[0].shapes[len(prs.slides[0].shapes) - 1]
 
 
-# ---------------------------------------------------------------- gaps reported 2026-10-09
-def test_table_cell_text_is_formatted_through_its_text_frame(tmp_path):
-    prs = rpptx.Presentation()
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
-    slide.shapes.add_table(2, 2, rpptx.Inches(1), rpptx.Inches(1), rpptx.Inches(4), rpptx.Inches(1.5))
-    cell = prs.slides[0].shapes[0].table.cell(0, 0)
-    cell.text = "Header"
-    font = prs.slides[0].shapes[0].table.cell(0, 0).text_frame.paragraphs[0].runs[0].font
-    font.size, font.bold = rpptx.Pt(18), True
-    prs.slides[0].shapes[0].table.cell(0, 0).vertical_anchor = MSO_ANCHOR.MIDDLE
-    assert prs.slides[0].shapes[0].table.cell(0, 0).vertical_anchor == MSO_ANCHOR.MIDDLE
-    prs.save(tmp_path / "t.pptx")
-    slide_xml = parts(tmp_path / "t.pptx")["ppt/slides/slide1.xml"].decode()
-    assert '<a:tcPr anchor="ctr"' in slide_xml
-    assert re.search(r'<a:tc>.*?<a:rPr[^>]*\bsz="1800"[^>]*\bb="1"|<a:tc>.*?<a:rPr[^>]*\bb="1"[^>]*\bsz="1800"', slide_xml, re.S)
+# ---------------------------------------------------------------- python-pptx names
+@pytest.mark.gap("python-pptx-names")
+def test_notes_slide_as_in_python_pptx():
+    prs = deck(6, 6)
+    assert (prs.slides[0].has_notes_slide, prs.slides[0].notes_text) == (False, None)
+    notes = prs.slides[0].notes_slide
+    assert prs.slides[0].has_notes_slide and notes.notes_text_frame.text == ""
+    notes.notes_text_frame.text = "Say hello"
+    assert prs.slides[0].notes_text == "Say hello"
 
 
-def test_run_font_color_rgb_as_in_python_pptx(tmp_path):
-    prs = rpptx.Presentation()
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
-    slide.shapes.add_textbox(rpptx.Inches(1), rpptx.Inches(1), rpptx.Inches(3), rpptx.Inches(1))
-    prs.slides[0].shapes[0].text_frame.paragraphs[0].add_run().text = "red"
-    run_ = prs.slides[0].shapes[0].text_frame.paragraphs[0].runs[0]
-    run_.font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
-    assert str(prs.slides[0].shapes[0].text_frame.paragraphs[0].runs[0].font.color.rgb) == "FF0000"
+@pytest.mark.gap("python-pptx-names")
+def test_slide_id_as_in_python_pptx():
+    prs = deck(6, 6)
+    assert prs.slides[0].slide_id == 256 and prs.slides[1].slide_id == 257
 
 
-def test_font_dir_reaches_rpptx_output(rpptx_cli, tmp_path):
-    fonts = font_dir(tmp_path, MONOSPACE_FONTS, "Monofamily")
-    prs = rpptx.Presentation()
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
-    slide.shapes.add_textbox(rpptx.Inches(1), rpptx.Inches(1), rpptx.Inches(6), rpptx.Inches(1))
-    prs.slides[0].shapes[0].text_frame.paragraphs[0].add_run().text = "Sample text in a font from a folder"
-    prs.slides[0].shapes[0].text_frame.paragraphs[0].runs[0].font.name = "Monofamily"
-    prs.save(tmp_path / "f.pptx")
-    for args in (["convert", "--to", "pdf"], ["convert", "--to", "png"], ["render"]):
-        res = run([rpptx_cli, *args, tmp_path / "f.pptx", "--font-dir", fonts, "-o", tmp_path / args[-1]])
-        assert res.returncode == 0, res.stderr
-    deck = rpptx.Presentation.from_bytes((tmp_path / "f.pptx").read_bytes())
-    assert digest(deck.render_slide_to_png(0, 100.0, font_dir=fonts)) != digest(deck.render_slide_to_png(0, 100.0))
-    assert deck.to_pdf(font_dir=fonts) != deck.to_pdf()
-    width = [deck.text_layout(**kw)[0].lines[0].bounds.width for kw in ({}, {"font_dir": fonts})]
-    assert width[0] != width[1]                        # the fit check measures with the fonts the render draws
+@pytest.mark.gap("python-pptx-names")
+def test_colour_type_and_theme_colour_as_in_python_pptx():
+    from rpptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR_INDEX
+    font = text_box(deck()).text_frame.paragraphs[0].runs[0].font
+    font.color.rgb = "123456"
+    assert font.color.type == MSO_COLOR_TYPE.RGB
+    font.color.theme_color = MSO_THEME_COLOR_INDEX.ACCENT_2
+    assert (font.color.type, font.color.theme_color) == (MSO_COLOR_TYPE.SCHEME, MSO_THEME_COLOR_INDEX.ACCENT_2)
+
+
+@pytest.mark.gap("python-pptx-names")
+def test_language_id_as_in_python_pptx():
+    from rpptx.enum.lang import MSO_LANGUAGE_ID
+    font = text_box(deck(), "Bonjour").text_frame.paragraphs[0].runs[0].font
+    font.language = "fr-FR"
+    assert font.language_id == MSO_LANGUAGE_ID.FRENCH
+    font.language_id = MSO_LANGUAGE_ID.GERMAN
+    assert font.language == "de-DE"
+
+
+@pytest.mark.gap("python-pptx-names")
+@pytest.mark.parametrize("name", ["_sldIdLst", "_element", "_txBody"])
+def test_a_python_pptx_private_attribute_names_the_rpptx_way(name):
+    prs = deck()
+    shape = text_box(prs)
+    owner, way = {"_sldIdLst": (prs.slides, r"slides\.(remove|move)"), "_element": (shape, r"\belement\b"),
+                  "_txBody": (shape.text_frame, r"\belement\b")}[name]
+    with pytest.raises(AttributeError, match=way):
+        getattr(owner, name)
+
+
+# ---------------------------------------------------------------- values saved as zero or accepted silently
+@pytest.mark.gap("pptx-bare-int-spacing-saved-as-zero")
+@pytest.mark.parametrize("attr,value", [("space_before", 6), ("space_after", 6), ("spacing", 2), ("line_spacing", 0),
+                                        ("line_spacing", Pt(0))], ids=["space_before", "space_after", "font_spacing",
+                                                                      "line_spacing_0", "line_spacing_Pt0"])
+def test_a_spacing_that_would_be_saved_as_zero_raises(attr, value):
+    """A bare int is EMU: 6 EMU of space_before is spcPts val="0", 2 EMU of character spacing is spc="0"."""
+    prs = deck()
+    paragraph = text_box(prs).text_frame.paragraphs[0]
+    owner = paragraph.runs[0].font if attr == "spacing" else paragraph
+    before = prs.to_bytes()
+    with pytest.raises(ValueError, match="Pt|positive"):
+        setattr(owner, attr, value)
+    assert digest(prs.to_bytes()) == digest(before)
+
+
+def save_as_pdf(prs, tmp_path):
+    prs.save(tmp_path / "x.pdf")
+
+
+INVALID = {   # call -> what PowerPoint cannot honour
+    "save_to_a_pdf_path": save_as_pdf,                                    # writes a PPTX package named x.pdf
+    "slide_width_over_56_inches": lambda prs, _: setattr(prs, "slide_width", Inches(60)),   # out of the schema range
+    "slide_height_under_1_inch": lambda prs, _: setattr(prs, "slide_height", Inches(0.5)),
+    "flip_a_table": lambda prs, _: setattr(prs.slides[0].shapes[0], "flip_h", True),
+    "unknown_table_style": lambda prs, _: setattr(prs.slides[0].shapes[0].table, "style_id",
+                                                  "{00000000-0000-0000-0000-000000000000}"),
+}
+
+
+@pytest.mark.gap("pptx-invalid-values-accepted")
+@pytest.mark.parametrize("case", sorted(INVALID))
+def test_a_value_powerpoint_cannot_honour_is_refused(case, tmp_path):
+    prs = deck()
+    prs.slides[0].shapes.add_table(1, 1, Inches(1), Inches(1), Inches(2), Inches(1))
+    before = prs.to_bytes()
+    with pytest.raises((ValueError, rpptx.RpptxError)):
+        INVALID[case](prs, tmp_path)
+    assert digest(prs.to_bytes()) == digest(before) and not (tmp_path / "x.pdf").exists()
+
+
+RAW = {   # owner -> (old, new) of a replace_xml that PowerPoint cannot open
+    "misplaced_in_p_sp": ("shape", "</p:sp>", "<a:p/></p:sp>"),
+    "unknown_in_a_prstGeom": ("shape", "<a:avLst/>", "<a:avLst/><a:bogus/>"),
+    "unknown_in_a_p": ("text_frame", "<a:r>", "<a:bogus/><a:r>"),
+    "unknown_in_p_sld": ("slide", "<p:clrMapOvr>", "<p:bogus/><p:clrMapOvr>"),
+}
+
+
+@pytest.mark.gap("pptx-raw-xml-unchecked")
+@pytest.mark.parametrize("case", sorted(RAW))
+def test_raw_xml_with_an_unknown_or_misplaced_element_is_refused(case):
+    prs = deck()
+    prs.slides[0].shapes.add_shape(rpptx.MSO_SHAPE.RECTANGLE, Inches(1), Inches(2), Inches(2), Inches(1)).text = "Box"
+    kind, old, new = RAW[case]
+    owner = {"shape": prs.slides[0].shapes[0], "text_frame": prs.slides[0].shapes[0].text_frame,
+             "slide": prs.slides[0]}[kind].element
+    xml = owner.xml
+    assert old in xml
+    before = prs.to_bytes()
+    with pytest.raises((ValueError, rpptx.RpptxError)):
+        owner.replace_xml(xml.replace(old, new, 1))
+    assert digest(prs.to_bytes()) == digest(before)
+
+
+# ---------------------------------------------------------------- wrong results
+@pytest.mark.gap("pptx-chart-type-family-only")
+@pytest.mark.parametrize("kind", ["BAR_STACKED", "COLUMN_STACKED", "LINE", "PIE_EXPLODED"])
+def test_chart_type_of_a_chart_rpptx_does_not_author(kind, tmp_path):
+    """python-pptx writes these; rpptx reads only the plot family (a stacked bar reads as COLUMN_CLUSTERED, a line
+    without markers as LINE, which is python-pptx's LINE_MARKERS). The type, or None when rpptx cannot tell."""
+    from pptx.chart.data import CategoryChartData
+    from pptx.enum.chart import XL_CHART_TYPE
+    p = pptx.Presentation()
+    data = CategoryChartData()
+    data.categories = ["A", "B"]
+    data.add_series("Cost", (1, 2))
+    p.slides.add_slide(p.slide_layouts[6]).shapes.add_chart(getattr(XL_CHART_TYPE, kind), 0, 0, Inches(4), Inches(3), data)
+    p.save(tmp_path / "c.pptx")
+    chart = next(sh for sh in rpptx.Presentation(tmp_path / "c.pptx").slides[0].shapes if sh.has_chart).chart
+    assert chart.chart_type in (None, int(getattr(XL_CHART_TYPE, kind)))
+
+
+@pytest.mark.gap("pptx-replace-map-zero-match")
+def test_a_map_pair_without_expect_that_finds_nothing_is_refused(rpptx_cli, tmp_path):
+    """As `rpptx replace -p` does: a pair without "expect" must find at least one, so that a mistyped placeholder
+    does not pass unnoticed."""
+    deck().save(tmp_path / "in.pptx")
+    (tmp_path / "map.json").write_text('[{"placeholder": "nothere", "value": "y"}]')
+    res = run([rpptx_cli, "replace", tmp_path / "in.pptx", "--map", tmp_path / "map.json", "-o", tmp_path / "out.pptx"])
+    assert res.returncode == 1 and not (tmp_path / "out.pptx").exists()
+
+
+@pytest.mark.gap("pptx-render-ignores-slide-show-master-shapes")
+def test_a_slide_that_hides_the_master_shapes_renders_without_them():
+    prs = deck(5, 5)
+    plain = prs.render_slide_to_png(1, 40)
+    logo = io.BytesIO()
+    Image.new("RGB", (20, 20), (0, 0, 0)).save(logo, "PNG")
+    logo.seek(0)
+    prs.slide_master.shapes.add_picture(logo, Inches(9), Inches(6), width=Inches(1))   # a logo on every slide
+    assert digest(prs.render_slide_to_png(1, 40)) != digest(plain)
+    prs.slides[1].show_master_shapes = False                              # written as showMasterSp="0"
+    assert digest(prs.render_slide_to_png(1, 40)) == digest(plain)
