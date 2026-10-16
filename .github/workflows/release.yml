@@ -5,8 +5,8 @@
 # The plugin's releases are the only published builds, and each one carries its own files: it builds the pinned
 # commit on the four platforms (no macos-x86_64; each time, even when the previous release holds the same commit),
 # runs the acceptance suite on those very files, and attaches the CLIs and wheels to the release with their
-# SHA256SUMS and build provenance attestations. Nothing is published unless the four platforms build and pass. Then
-# every other release and tag is deleted: only the latest release exists.
+# SHA256SUMS and build provenance attestations. Nothing is published unless the four platforms build and pass. Older
+# releases stay, each with its own files, so an older plugin version still installs; clean-ups are done by hand.
 #
 # The release takes main as it is, once ci.yml passed on it: the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for
 # another release the same day), the `release` branch moved to main's tree with that version written into
@@ -18,8 +18,7 @@
 #
 # `dry_run`: everything but the release itself, on the branch the workflow runs from (to try a change of this
 # workflow on a pull request branch): build, suite, release files and lock kept as the workflow artifact
-# `release-files`, and the clean-up lists what it would delete; no attestation, no branch, no tag, no release, nothing
-# deleted.
+# `release-files`; no attestation, no branch, no tag, no release.
 name: release
 
 on:
@@ -322,30 +321,3 @@ jobs:
           gh release create "v$VERSION" assets/* -R "$GITHUB_REPOSITORY" --verify-tag --title "$TITLE" \
             --notes-file "$RUNNER_TEMP/notes.md" "${changes[@]}" --latest
           echo "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$VERSION" >> "$GITHUB_STEP_SUMMARY"
-
-      # Only the new release remains: every other release and its tag, and any other v* or rdocx-* tag (the build
-      # pre-releases this repository published before included), is deleted. A dry run lists them.
-      - name: Delete the older releases and tags
-        env:
-          DRY_RUN: ${{ inputs.dry_run }}
-        run: |
-          keep=" v$VERSION "
-          echo "Kept:$keep" >> "$GITHUB_STEP_SUMMARY"
-          drop() {
-            case "$keep" in *" $1 "*) return ;; esac
-            if [ "$DRY_RUN" = true ]; then echo "would delete $2 $1" >> "$GITHUB_STEP_SUMMARY"; return; fi
-            if [ "$2" = release ]; then
-              gh release delete "$1" -R "$GITHUB_REPOSITORY" --yes --cleanup-tag
-            else
-              gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$1"
-            fi
-            echo "deleted $2 $1" >> "$GITHUB_STEP_SUMMARY"
-          }
-          # no pipe: a failed listing stops the step here, before any tag is deleted as if it had no release
-          releases=$(gh release list -R "$GITHUB_REPOSITORY" --limit 1000 --json tagName --jq '.[].tagName')
-          releases=" $(echo $releases) "
-          for tag in $releases; do drop "$tag" release; done
-          # tags left without a release (`--cleanup-tag` took the others)
-          for tag in $(git ls-remote --tags --refs origin 'v*' 'rdocx-*' | sed 's#.*refs/tags/##'); do
-            case "$releases" in *" $tag "*) ;; *) drop "$tag" tag ;; esac
-          done
