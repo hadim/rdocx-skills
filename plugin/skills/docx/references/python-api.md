@@ -78,6 +78,10 @@ held across an append does not. When in doubt, re-fetch: a retired handle always
 the wrong element. A note's handle cannot be fetched again (gap docx-note-reference-and-removal): finish with
 it before the next edit.
 
+Collect a table's cells once, then edit them: `cell.text = ...` keeps rows and cells valid, and walking
+`table.rows` and `row.cells` costs time that grows with the square of the document on this build (400 cells in
+a short document: 3 s; 1,600 cells: 50 s; tensorbee/rdocx#378). Re-walk only after an edit that retires them.
+
 ## Document
 
 | Member | Notes |

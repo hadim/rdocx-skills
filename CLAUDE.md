@@ -59,7 +59,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   integration branch, and `lock --write --release` records that release (its `SHA256SUMS`), after review.
 - Every plugin release carries its own files: `release.yml` builds the pinned commit again (even when it is
   unchanged), tests those files and attaches them, and the lock on `release` points at that `v<version>` release.
-  Then it deletes every other release and tag: only the latest release remains, with the build `main` pins.
+  Then it deletes every other release and tag: only the latest release remains, with the builds that `main` and
+  the open pull requests pin.
 - `main` always pairs a lock whose build exists and is recorded with the tests and skills that match it
   (docs/setup.md, Moving the pin), but a push to `main` reaches nobody: `release` is the default branch, which users
   (Claude Code, Claude Desktop) and the Claude plugin directory follow, and only `release.yml` moves it (CalVer
@@ -95,11 +96,13 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 - Open gaps: 17 (`tests/gaps.py`, both `references/gaps.md`). Four are the python-docx and python-pptx names and the
   bare ints saved as 0 that upstream plans for its sprint S94 (tensorbee/rdocx#379). The others were met on this
   pin: among them `docx-validate-paraid-in-content-control` (`rdocx validate` stops on every Word table of
-  contents; `docx_ops.py validate` checks a scratch copy meanwhile). Only the #379 ones are reported upstream.
+  contents; `docx_ops.py validate` checks a scratch copy meanwhile). All are reported upstream: #379, #384 (validate)
+  and #385 (the other twelve).
 - Suite against `3a3b0de8`: 180 passed, 49 xfailed on macos-arm64 from the release files, in 3 minutes (1 minute on
-  the previous pin: edits are 2 to 3 times slower in the Python binding since v0.16.1, tensorbee/rdocx#378 fixed
-  the quadratic part). The behaviour files hold only strict xfails: a test that passes on the pinned upstream
-  commit is deleted.
+  the previous pin). The Python binding is slower since v0.16.1: tensorbee/rdocx#378 made opening and one edit
+  linear, but an edit is still 2 to 3 times slower than on the previous pin, and walking `table.rows` /
+  `row.cells` is quadratic (1,600 cells: 50 s, against 0.001 s before; reported on #378). The behaviour files
+  hold only strict xfails: a test that passes on the pinned upstream commit is deleted.
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).
