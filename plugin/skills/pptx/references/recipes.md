@@ -54,8 +54,8 @@ pptx_ops.save_atomic(prs, "scoped.pptx", "deck.pptx")
 import pptx_ops, rpptx
 prs = rpptx.Presentation("deck.pptx")
 k = next(i for i, sh in enumerate(prs.slides[5].shapes) if sh.has_text_frame and sh.text.startswith("Works:"))
-prs.slides[5].shapes[k].text_frame.paragraphs[0].runs[0].text = "Works: EUR 188,000"
-run = prs.slides[5].shapes[k].text_frame.paragraphs[0].runs[0]      # re-fetch after Run.text
+run = prs.slides[5].shapes[k].text_frame.paragraphs[0].runs[0]
+run.text = "Works: EUR 188,000"                                     # the run keeps its font
 assert run.font.size is not None
 pptx_ops.save_atomic(prs, "run-edited.pptx", "deck.pptx")
 ```
@@ -162,13 +162,14 @@ other = rpptx.Presentation()                     # stands for rpptx.Presentation
 other.slides.add_slide(other.slide_layouts[1]).shapes.title.text = "Appendix A"
 other.slides.add_slide(other.slide_layouts[1]).shapes.title.text = "Appendix B"
 prs = rpptx.Presentation("deck.pptx")
-copies = prs.slides.import_slides(other, [0, 1], keep_source_formatting=True)   # the source layout and theme
-print([s.shapes.title.text for s in copies], copies[0].slide_layout.name)
+copies, diagnostics = prs.slides.import_slides(other, [0, 1], keep_source_formatting=True)  # source layout, theme
+print([s.shapes.title.text for s in copies], copies[0].slide_layout.name, diagnostics)
 pptx_ops.save_atomic(prs, "merged-py.pptx", "deck.pptx")
 ```
 
 Charts, embedded objects, comments and notes travel with the slides. A slide jump to a slide left behind is
-dropped, with a `UserWarning` (Python) or a `Warning:` line (CLI): read them.
+dropped and reported in the diagnostics (Python: the second value `import_slides` returns, or
+`import_slide_with_diagnostics`; CLI: a line, and `diagnostics` with `--json`): read them.
 
 ## Replace a picture, keeping its frame
 
@@ -217,9 +218,10 @@ pptx_ops.save_atomic(prs, "branded.pptx", "deck.pptx")
 ```python
 import pptx_ops, rpptx
 from rpptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
+from rpptx.enum.text import MSO_AUTO_SIZE
 from rpptx.util import Inches, Pt
 prs = rpptx.Presentation("deck.pptx")
-slide = prs.slides.add_slide(prs.slide_layouts.get_by_name("Title Only"))
+slide = prs.slides.add_slide(next(lay for lay in prs.slide_layouts if lay.name == "Title Only"))
 slide.shapes.title.text = "Next steps"
 box = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(4), Inches(1.5))
 box.text_frame.text = "Confirm the bearing survey"
@@ -233,6 +235,11 @@ b = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(7.5), Inches(4), Inches(1
 line = slide.shapes.add_connector(MSO_CONNECTOR.ELBOW, 0, 0, 0, 0)
 line.begin_connect(a, 3); line.end_connect(b, 1)      # right side of a to left side of b, glued
 a.alt_text, b.alt_text = "Survey", "Closure"
+note = slide.shapes.add_textbox(Inches(0.5), Inches(4.5), Inches(4), Inches(0.5))
+note.text_frame.word_wrap = True
+note.text_frame.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT   # the shape grows to its text...
+note.text_frame.text = "Closure dates to be agreed with the council and the river authority before booking."
+prs.refresh_autofit()                                 # ...once refresh_autofit computes it, before the save
 pptx_ops.save_atomic(prs, "steps.pptx", "deck.pptx")
 ```
 
@@ -242,11 +249,11 @@ pptx_ops.save_atomic(prs, "steps.pptx", "deck.pptx")
 import pptx_ops, rpptx
 prs = rpptx.Presentation("deck.pptx")
 k = next(i for i, sh in enumerate(prs.slides[3].shapes) if sh.has_text_frame and sh.text.startswith("Option B is recommended"))
-xml = prs.slides[3].shapes[k].text_frame.xml          # bytes: the p:txBody
-prs.slides[3].shapes[k].text_frame.replace_xml(xml.replace(b"<a:bodyPr", b'<a:bodyPr numCol="2"', 1))  # two columns
+body = prs.slides[3].shapes[k].text_frame.element   # the p:txBody
+body.replace_xml(body.xml.replace("<a:bodyPr", '<a:bodyPr numCol="2"', 1))   # str in, str out: two columns
 try:
-    prs.slides[3].shapes[k].replace_xml(b"<p:sp/>")   # refused, deck unchanged
-except ValueError as e:
+    prs.slides[3].shapes[k].element.replace_xml("<p:sp/>")   # refused (unbound prefix), deck unchanged
+except rpptx.RpptxError as e:
     print("refused:", e)
 pptx_ops.save_atomic(prs, "raw.pptx", "deck.pptx")
 ```
@@ -315,8 +322,7 @@ with zipfile.ZipFile("from-template.pptx") as z:
 
 ```python
 import pptx_ops, rpptx
-from rpptx.chart.data import CategoryChartData
-from rpptx.enum.chart import XL_CHART_TYPE
+from rpptx import XL_CHART_TYPE, CategoryChartData
 from rpptx.util import Inches
 prs = rpptx.Presentation("deck.pptx")
 data = CategoryChartData()
@@ -325,6 +331,7 @@ data.add_series("Cost (EUR k)", (236, 230))
 slide = prs.slides.add_slide(prs.slide_layouts[5])
 slide.shapes.title.text = "Costs"
 frame = slide.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(1), Inches(1.5), Inches(8), Inches(5), data)
+frame.chart.legend_position = "b"                 # legend below the plot ("r" by default)
 new = CategoryChartData()                         # later: the same chart, revised figures
 new.categories = ["Option A", "Option B", "Option C"]
 new.add_series("Cost (EUR k)", (236, 230, 251))
@@ -341,7 +348,7 @@ $R/rpptx convert deck.pptx --to md --notes --skip-hidden -o deck.md    # one sec
 $R/rpptx convert deck.pptx --to html -o deck.html                      # pictures embedded, a section per slide
 ```
 
-`prs.to_markdown(notes=True, skip_hidden=True)` and `prs.to_html()` return the same text from Python.
+`prs.to_markdown(include_notes=True, skip_hidden=True)` and `prs.to_html()` return the same text from Python.
 
 ## Embed a font
 

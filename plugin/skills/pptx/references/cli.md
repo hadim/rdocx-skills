@@ -8,8 +8,8 @@ numbers on the command line are one-based.
 
 | Commands | An existing output |
 |---|---|
-| `replace`, `comment add/reply/resolve/remove`, `footer`, `slide add/duplicate/remove/move/hide/show/import`, `notes set`, `meta set`, `font embed/remove/settings` (`-o` required) | refused, exit 1, "output already exists", the input included |
-| `render` (into `-o DIR`), `convert`, `thumbnail` | refused the same way; `--force` replaces an existing output, never the input. Render into a new, empty folder each time |
+| `replace`, `comment add/reply/resolve/remove`, `slide add/duplicate/remove/move/hide/show/import`, `notes set`, `meta set`, `font embed/remove/settings` (`-o` required) | refused, exit 1, "output already exists", the input included |
+| `render` (into `-o DIR`), `convert`, `thumbnail`, `footer` | refused the same way; `--force` replaces an existing output, never the input. Render into a new, empty folder each time |
 
 ## Reading
 
@@ -23,7 +23,7 @@ numbers on the command line are one-based.
 | `rpptx diff A B` | slide text differences (longest common subsequence); prints nothing when the text is identical |
 | `rpptx validate F` | package and PresentationML invariants |
 | `rpptx meta get [--json] F` | core properties (`title`, `author`, `subject`, `keywords`, `description`, `category`, dates, `revision`...) |
-| `rpptx fit [--json] F` | every text frame whose text overflows, with `needed_font_scale` (the "shrink text on overflow" scale that fits it, null below 25 %); exit 0 when all fit, 1 when one overflows, 2 on an error. Tables are not checked |
+| `rpptx fit [--json] [--font-dir DIR] F` | every text owner (slides, layouts, masters, notes, table cells), one line each with `overflow` and `needed_scale` (the "shrink text on overflow" scale that fits it, in hundred-thousandths: 92500 is 92.5 %); `--json`: `overflow` (true when one overflows) and `frames`, each with `owner_kind` (`slide`, `notes-slide`, `layout`, `master`...), `slide` (one-based, null for a layout or master), `shape_id`, `name`, `cell`, `overflow`, `needed_scale`. Exit 0 when all fit, 1 when one overflows, 2 on an error |
 
 ## Editing
 
@@ -33,11 +33,12 @@ rpptx replace F --map pairs.json -o OUT [--json]   # [{"placeholder": "{{name}}"
 ```
 Literal replacement in slide text, groups, tables and speaker notes, keeping run formatting. With
 `--expect N` nothing is written unless exactly N replacements were made: always pass it. `--map` applies
-the pairs in order, all or nothing (the error names the failing pair); a pair without `expect` must find at
-least one, `"expect": 0` allows none. `--json` prints each pair's `count`.
+the pairs in order, all or nothing (the error names the failing pair); give every pair its `expect`: a pair
+without one that finds nothing is not refused (gap pptx-replace-map-zero-match), `"expect": 0` allows none.
+`--json` prints each pair's `count` and the `total_count`.
 
 ```bash
-rpptx footer F [--slide-number] [--footer T] [--date off|auto|TEXT] [--date-format datetime1] [--skip-title] -o OUT [--json]
+rpptx footer F [--slide-number] [--footer T] [--date off|auto|TEXT] [--date-format datetime1] [--date-cache TEXT] [--skip-title] -o OUT [--json]
 rpptx slide add F --layout NAME|NUMBER [--at N] -o OUT [--json]
 rpptx slide duplicate/remove/hide/show F N -o OUT [--json]
 rpptx slide move F N --to M -o OUT [--json]
@@ -45,21 +46,23 @@ rpptx notes set F N --text T | --from-file PATH -o OUT [--json]
 rpptx meta set F [--title T] [--author A] [--subject S] [--keywords K] [--description D] [--category C] -o OUT [--json]
 ```
 `footer` is PowerPoint's Header and Footer dialog with Apply to All: every flag is opt-in (Python's
-`set_header_footer` shows the slide number by default), `--date auto` writes a date field PowerPoint refreshes,
-`--skip-title` leaves title slides without them. Slide numbers are one-based; `slide add --layout` takes a
+`set_header_footer` shows the slide number by default), `--date auto` writes a date field PowerPoint fills
+(empty until then; `--date-cache TEXT` gives its text), `--skip-title` leaves title slides without them; `--json`
+prints the number of slides, not their fields (read them with Python's `slide.header_footer`). Slide numbers are one-based; `slide add --layout` takes a
 layout name or its one-based number (an unknown one lists them), `duplicate` inserts the copy after the slide,
 `move N --to M` gives the final position. A `slide` edit that changes nothing still writes the output and
-reports `"changed": false`. `notes set` replaces that slide's notes (one paragraph per line), creating them.
+reports `"changed": false`. `notes set` replaces that slide's notes (one paragraph per line), creating them; the
+text is written as given, a final newline included (an empty last paragraph).
 
 ```bash
-rpptx slide import DEST SOURCE [--slides 1,3-5] [--at N] [--keep-source-formatting] [--keep-sections] -o OUT [--json]
+rpptx slide import DEST SOURCE [--slides 1,3-5] [--at N] [--keep-source-formatting] -o OUT [--json]
 ```
-Copies the slides of SOURCE (all, or the one-based `--slides` range, in source order) into DEST, appended or
-from the one-based position `--at`, and writes OUT. Charts, embedded objects, comments and notes travel with
-them; a slide jump whose target is not imported stops working and is reported as a `Warning:` line on stderr
-and in `warnings` of the `--json` record, which also gives `source_slides` and the `slides` they became.
-`--keep-source-formatting` keeps the source layout, master and theme of each slide (otherwise the copy takes
-DEST's layout of the same name), `--keep-sections` the source sections.
+Copies the slides of SOURCE (all, or the one-based `--slides` selection, in the order given) into DEST, appended
+or from the one-based position `--at`, and writes OUT. Charts, embedded objects, comments and notes travel with
+them; a slide jump whose target is not imported stops working and is reported as a diagnostic line (and in
+`diagnostics` of the `--json` record, which also gives the `selected_slides` and the `inserted_slides` they
+became): read it. `--keep-source-formatting` keeps the source layout, master and theme of each slide (otherwise
+the copy takes DEST's layout of the same name). Sections: Python's `import_slides(..., keep_sections=True)`.
 
 ```bash
 rpptx comment add F --slide N --author NAME [--initials I] --text T --date 2026-09-27T12:00:00Z -o OUT [--json]
@@ -84,7 +87,9 @@ rpptx font settings F --embed-true-type-fonts true|false|none [--save-subset-fon
 ```
 
 `--font` is required for embedding. Python uses `bold_italic`, the CLI uses
-`bold-italic`. Removing without `--kind` removes the whole record and its faces.
+`bold-italic`. Removing without `--kind` removes the whole record and its faces;
+removing the last face with `--kind` leaves an empty record. A name that is not
+embedded prints `Removed: false` and exits 0.
 Settings reads require no output. Mutations require an output and at least one
 explicit setting. `none` removes the setting, preserving its distinction from
 `false`. Embedding requires explicit caller authorization and a nonempty exact
@@ -108,7 +113,7 @@ font retention after resaving in the receiving application.
 
 ```bash
 rpptx convert F --to pdf -o NEW.pdf [--force] [--font-dir DIR]
-rpptx convert F --to md|html -o NEW.md [--notes] [--skip-hidden] [--force]
+rpptx convert F --to md|html -o NEW.md [--notes] [--skip-hidden] [--embed-images=false] [--force]
 rpptx convert F --to png|jpeg|tiff -o OUT.png [--slides 1,3-5] [--dpi 150] [--quality 90] [--transparent]
 rpptx render F -o NEW_DIR [--slide N] [--dpi 150] [--format png|jpeg|tiff] [--quality 90] [--transparent] [--force] [--font-dir DIR]
 rpptx thumbnail F -o NEW.png [--force] [--font-dir DIR]     # slide 1, 320 pixels wide
@@ -117,9 +122,11 @@ rpptx thumbnail F -o NEW.png [--force] [--font-dir DIR]     # slide 1, 320 pixel
 writes `NEW_DIR/<name>_slide<N>.png`. `--quality` sets the JPEG quality (1 to 100), `--transparent` leaves unpainted PNG
 pixels transparent. `--font-dir DIR` adds the fonts of a folder (.ttf, .otf, .ttc) before the bundled ones, to
 every output; a missing folder is an error.
-`--to md` writes CommonMark with GitHub tables, one section per slide headed by its title, the rest in the
-order `outline` prints: paragraphs as list items nested by level with their bold, italic, strikethrough and
-external links, tables with the first row as header, pictures as images with their alt text (the bytes stay
-in the deck). `--to html` writes the same as one HTML document, a `section` per slide, pictures embedded as
-data URIs. `--notes` adds the speaker notes (a block quote, an `aside`), `--skip-hidden` leaves hidden slides
-out; both are refused for PDF and images.
+`--to md` writes CommonMark with GitHub tables, one section per slide headed by its title (an anchor before
+each), the rest in the order `outline` prints: paragraphs as list items nested by level with their bold, italic,
+strikethrough and external links, tables with the first row as header, pictures as images with their alt text.
+`--to html` writes the same as one HTML document, a `section` per slide. Pictures are embedded as data URIs;
+`--embed-images=false` writes them as files next to the output instead. `--notes` adds the speaker notes (a
+"Notes" heading and a block quote, an `aside`), `--skip-hidden` leaves hidden slides out; the three are refused
+for PDF and images. The Markdown keeps whitespace exact (the spaces of titles, formatted runs and notes as
+`&#32;`, emphasis as `<strong>` / `<em>`): to read a deck, `text` or `outline` is plainer.

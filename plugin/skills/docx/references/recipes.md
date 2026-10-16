@@ -274,7 +274,7 @@ docx_ops.save_atomic(doc, "reviewed.docx", "commented.docx")
 ```bash
 $R/rdocx comment list --json reviewed.docx                # anchor_text and anchor of each comment
 $R/rdocx comment move commented.docx 0 --text "bearing positions" -o moved-cli.docx --json
-$R/rdocx validate reviewed.docx                           # exit 1 for a comment left without an anchor
+$R/python "$SKILL/scripts/docx_ops.py" validate reviewed.docx  # exit 1 for a comment left without an anchor
 ```
 
 Removing content never leaves a comment pointing at nothing: a comment the removed block covers whole goes
@@ -352,15 +352,17 @@ print(rep.entry_count)
 
 ```bash
 $R/python "$SKILL/scripts/docx_ops.py" replace report.docx checked.docx --edit "three points lower" "two points lower" 1
-$R/rdocx validate checked.docx
+$R/python "$SKILL/scripts/docx_ops.py" validate checked.docx
 $R/rdocx diff report.docx checked.docx
 pages=$(mktemp -d)                                       # render into a new folder each time
 $R/rdocx render checked.docx -o "$pages" --pages 1-3 --dpi 80
 ls "$pages"
 ```
 
-`validate` reads every part the document relates to and checks every style id. Look at the PNG of every
-page you touched. Page numbers come from rdocx's layout, which
+`validate` reads every part the document relates to and checks every style id. On a document whose table of
+contents Word wrote, it fails with "main document paragraph owners do not match validation scope" (gap
+docx-validate-paraid-in-content-control): `docx_ops.py validate F` validates a scratch copy then. Look at
+the PNG of every page you touched. Page numbers come from rdocx's layout, which
 lays lines at Word's heights: still check in Word before quoting one as Word's.
 
 ## Page breaks before cutting text
@@ -467,30 +469,33 @@ doc, warnings = rdocx.Document.from_html(
     "<h1>Findings</h1><p>See <a href='https://example.com/survey'>the survey</a>.</p><ul><li>Pier 2</li></ul>")
 for w in warnings:
     print(w.location, w.message)                           # what the import dropped or approximated
-heading = next(item for item in doc.story_items if item.text == "Findings")
-doc.insert_html("<p><em>Inserted after the heading.</em></p>", after=heading)
+heading = next(p for p in doc.paragraphs if p.text == "Findings")
+doc.insert_html("<p><em>Inserted after the heading.</em></p>", after=heading)   # after a body paragraph
 docx_ops.save_atomic(doc, "findings.docx")
 ```
 
 `from_markdown(text, template=rdocx.Document.open("brand.dotx"))` and `open_markdown(path)` do what
-`convert` does from Python; each returns the document and its diagnostics.
+`convert` does from Python, each returning the document and its diagnostics, except for pictures: pass them
+as `images=[("pic.png", data, "image/png")]`, they are not read from the disk.
 
 ## A chart
 
 ```python
 import docx_ops, rdocx
-from rdocx.chart.data import CategoryChartData
-from rdocx.enum.chart import XL_CHART_TYPE
 doc = rdocx.Document.open("report.docx")
-data = CategoryChartData()
+data = rdocx.CategoryChartData()
 data.categories = ["2024", "2025", "2026"]
 data.add_series("Inspections", (12, 15, 9))
-heading = next(item for item in doc.story_items if item.text == "Recommendations")
-doc.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, rdocx.Inches(5), rdocx.Inches(3), data, after=heading)
-chart = doc.charts[0]
-print(chart.chart_type, chart.categories, [(s.name, s.values) for s in chart.series])
+heading = next(p for p in doc.paragraphs if p.text == "Recommendations")
+chart = doc.add_chart(rdocx.XL_CHART_TYPE.COLUMN_CLUSTERED, data, rdocx.Inches(5), rdocx.Inches(3), after=heading)
+doc.set_chart_legend(chart, visible=True, position="b")      # a new chart has no legend
+print(doc.chart_legend(chart))
 docx_ops.save_atomic(doc, "chart.docx", "report.docx")
 ```
+
+`add_chart` returns the paragraph that holds the chart, the handle `chart_legend` and `set_chart_legend`
+take. The chart is not read back from a document (gap docx-chart-read-back): its categories and values are in
+its part, `word/charts/chart1.xml` for the first chart, which `zipfile` reads.
 
 ## Embed a font
 
