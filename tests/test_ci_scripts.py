@@ -180,15 +180,25 @@ def test_the_version_goes_into_plugin_json_after_the_name(tmp_path):
     assert json.loads(manifest.read_text())["version"] == "2026.10.5.2"
 
 
-def test_the_release_notes_name_the_pinned_build_and_how_to_install(tmp_path):
-    lock = {"upstream": "https://github.com/hadim/rdocx", "commit": COMMIT, "ref": "integration/x",
-            "release": f"https://github.com/{REPO}/releases/download/rdocx-202610141943-{COMMIT[:12]}",
-            "versions": {"rdocx": "0.16.0", "rpptx": "0.14.0"}}
+def test_the_release_notes_describe_the_release_s_own_files_and_how_to_install(tmp_path):
+    lock = {"upstream": "https://github.com/tensorbee/rdocx", "commit": COMMIT, "ref": "main",
+            "release": f"https://github.com/{REPO}/releases/download/v2026.10.5",
+            "versions": {"rdocx": "0.16.1", "rpptx": "0.14.1"},
+            "artifacts": {p: {} for p in ("windows-x86_64", "linux-x86_64", "macos-arm64", "linux-aarch64")}}
     (tmp_path / "lock.json").write_text(json.dumps(lock))
     res = subprocess.run([sys.executable, SCRIPTS / "plugin_release.py", "notes", "--repo", REPO, "--version",
-                          "2026.10.5", tmp_path / "lock.json"], capture_output=True, text=True, encoding="utf-8")
+                          "2026.10.5", "--run-url", RUN, tmp_path / "lock.json"],
+                         capture_output=True, text=True, encoding="utf-8")
     assert res.returncode == 0, res.stderr
-    assert res.stdout == plugin_release.notes(lock, REPO, "2026.10.5")
-    assert "rdocx 0.16.0 and rpptx 0.14.0" in res.stdout and "(`integration/x`)" in res.stdout
-    assert f"/releases/tag/rdocx-202610141943-{COMMIT[:12]})" in res.stdout
+    assert res.stdout == plugin_release.notes(lock, REPO, "2026.10.5", RUN)
+    assert "rdocx 0.16.1 and rpptx 0.14.1" in res.stdout and "(`main`)" in res.stdout
+    assert "linux-aarch64, linux-x86_64, macos-arm64 and windows-x86_64" in res.stdout
+    assert f"[This run]({RUN})" in res.stdout and f"`gh attestation verify FILE -R {REPO}`" in res.stdout
     assert f"`/plugin marketplace add {REPO}`, then" in res.stdout
+
+
+def test_release_notes_need_recorded_files():
+    lock = {"upstream": "https://github.com/tensorbee/rdocx", "commit": COMMIT,
+            "versions": {"rdocx": "0.16.1", "rpptx": "0.14.1"}}
+    with pytest.raises(SystemExit):
+        plugin_release.notes(lock, REPO, "2026.10.5", RUN)

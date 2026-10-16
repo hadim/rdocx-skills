@@ -77,7 +77,9 @@ sets how many installs stay, 0 keeps them all); build caches and the test enviro
 - **Local builds**: files built in the same run are installed as a local build (`installed.json` records
   their hashes and every installed file); `status`, `install` and `test` accept one only where the lock has
   no hashes for the platform, or with `--allow-local`. Builds are not bit-reproducible across machines: the
-  lock records the release's files, built once by the build workflow, rather than each machine's own.
+  lock records the release's files, built once by a workflow, rather than each machine's own (on `main`, the
+  build workflow's pre-release; on `release`, the plugin release's own files, built again by the release
+  workflow).
 
 ## Where prebuilt files are looked for
 
@@ -164,7 +166,8 @@ the built-in ones, or `install --build` compiles the pinned commit on the machin
   `-<commit12>` (through `git ls-remote --tags` of this repository, with no API call and no token; the tag cannot
   be derived from the commit, since the date and time are the build's). It records its URL: the lock's `release`
   is the only source of truth.
-- `.github/workflows/release.yml`, by hand: publishes a release of the plugin (next section).
+- `.github/workflows/release.yml`, by hand: builds the pinned commit again, tests it and publishes a release of the
+  plugin that carries those files (next section).
 
 ## Moving the pin
 
@@ -207,11 +210,23 @@ follow it, and get a new version only from `.github/workflows/release.yml`: Acti
 
 1. refuses a `main` whose `ci.yml` run did not succeed, or that is released already;
 2. picks the CalVer version of the day, `YYYY.M.D` (`YYYY.M.D.2` and on for another release the same day);
-3. moves the `release` branch to `main`'s tree with that `version` written into `plugin/.claude-plugin/plugin.json`, as a
-   merge of `main` so that `release` only moves forward, and tags it `v<version>`;
-4. publishes the GitHub release `v<version>`, titled with the rdocx and rpptx versions of the pinned build
-   (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <integration branch> from hadim/rdocx`), marked latest, whose notes name the pinned
-   build and list the pull requests merged since the previous release.
+3. builds the pinned commit again on the four platforms, every time, even when an earlier release or build holds
+   the same commit (the same runners, ThinLTO profile and build cache as `build.yml`), installs each build and runs
+   the acceptance suite on it: nothing is published unless the four platforms build and pass;
+4. moves the `release` branch to `main`'s tree with that `version` written into `plugin/.claude-plugin/plugin.json`
+   and the lock pointed at this release's own files (`release` = `.../releases/download/v<version>`, their
+   hashes recorded by `lock --write --release` from a local mirror of the files), as a merge of `main` so that
+   `release` only moves forward, and tags it `v<version>`;
+5. publishes the GitHub release `v<version>` with those files (`<platform>.<file>`, the two CLIs and two wheels of
+   each platform), their `SHA256SUMS` and build provenance attestations, titled with the rdocx and rpptx versions
+   (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <ref>`), marked latest, whose notes describe the files, give the
+   suite of the four platforms and list the pull requests merged since the previous release.
+
+So a plugin release never depends on another release: the build pre-releases of `build.yml` serve `main` and the
+pull requests, and may be deleted once nothing on `main` pins them; a `v<version>` release is never deleted, since
+installs of that version download from it. Input `dry_run`: everything but the release, on the branch the workflow
+runs from (to try a change of the workflow on a pull request branch): the files, the lock and the notes are kept
+as the workflow artifact `release-files`, and nothing is attested, pushed, tagged or published.
 
 `main` carries no `version`: whoever adds the marketplace as `hadim/rdocx-skills#main` gets every push, the
 development channel. Pull requests target `main`, not the default branch: pick it as the base on GitHub, and run
