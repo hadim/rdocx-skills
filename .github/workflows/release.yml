@@ -267,7 +267,8 @@ jobs:
           python3 .github/scripts/plugin_release.py notes --repo "$GITHUB_REPOSITORY" --version "$VERSION" \
             --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             "$RUNNER_TEMP/release-lock.json" > "$RUNNER_TEMP/notes.md"
-          { echo "## Acceptance suite"; echo; cat "$RUNNER_TEMP"/suites/suite-*/suite-*.md; echo; } >> "$RUNNER_TEMP/notes.md"
+          { echo; echo "## Acceptance suite"; for f in "$RUNNER_TEMP"/suites/suite-*/suite-*.md; do echo; cat "$f"; done
+            echo; } >> "$RUNNER_TEMP/notes.md"
           cat "$RUNNER_TEMP/notes.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: What a release would publish (dry run)
