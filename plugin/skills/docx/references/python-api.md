@@ -120,9 +120,19 @@ cannot be replaced (rpptx's `Chart.replace_data` is for decks).
 | Member | Notes |
 |---|---|
 | `fonts` → tuple of `FontDefinition` (`name`, `alternate_name`, `family`, `pitch`, `embedded_fonts`: `EmbeddedFont` with `kind` `"regular"` / `"bold"` / `"italic"` / `"bold_italic"`, `data` (the font bytes, deobfuscated), `font_key`, `subsetted`, `license`) | the font table (`word/fontTable.xml`), a snapshot |
-| `embed_font(font_name, font, kind="regular", *, license, font_key=None, subsetted=False)` | `font`: a path, bytes, a bytearray, a memoryview or a binary file of one TrueType or OpenType face (a `.ttc` collection, or a face without `OS/2`, `head` or `name`, raises). `license=rdocx.FontEmbeddingLicense(authorized=True, identity="OFL-1.1: Example Sans")`: both keywords required; `authorized=False` or an empty identity raises `RdocxError` and changes nothing. Creates the record when missing, obfuscates the face as Word does, and turns `embed_true_type_fonts` on. rdocx's own renders (`to_pdf`, PNG, `rdocx convert`) draw the embedded face; a `font_dir=` / `--font-dir` font of that name wins over it, whether its own family is the name or only its file name gives it (`Aileron.ttf`). Embed only a font whose licence allows it (SKILL.md, rule 9) |
-| `remove_embedded_font(font_name, kind)` → `EmbeddedFont` or None, `remove_font(name)` → `FontDefinition` or None, `set_font(name, *, alternate_name=, family=, pitch=)` | remove one face (the record stays), a record and its faces, or add or replace a record (its faces kept). `family`: `roman`, `swiss`, `modern`, `script`, `decorative`, `auto`; `pitch`: `default`, `fixed`, `variable` |
+| `embed_font(name, font, kind="regular", *, license, font_key=None, subsetted=False)` | `font`: a path, bytes, a bytearray, a memoryview or a binary file of one TrueType or OpenType face (a `.ttc` collection, or a face without `OS/2`, `head` or `name`, raises). `license=rdocx.FontEmbeddingLicense(authorized=True, identity="OFL-1.1: Example Sans")`: both keywords required; `authorized=False` or an empty identity raises `RdocxError` and changes nothing. Creates the record when missing, obfuscates the face as Word does, and turns `embed_true_type_fonts` on. rdocx's own renders (`to_pdf`, PNG, `rdocx convert`) draw the embedded face; a `font_dir=` / `--font-dir` font of that name wins over it, within the caller tier, exact sfnt families win before file aliases. Explicit `fonts=[]` selects deterministic embedded and bundled rendering, bypassing system fonts. Embed only a font whose licence allows it (SKILL.md, rule 9) |
+| `remove_embedded_font(name, kind="regular")` → `EmbeddedFont` or None, `remove_font(name)` → `FontDefinition` or None, `set_font(font: FontDefinition)` | remove one face (the record stays), a record and its faces, or add or replace a record (its faces kept). `family`: `roman`, `swiss`, `modern`, `script`, `decorative`, `auto`; `pitch`: `default`, `fixed`, `variable` |
 | `embed_true_type_fonts`, `embed_system_fonts`, `save_subset_fonts` (get and set: True, False or None for unset) | the settings Word follows when it saves the document again: keep embedding the fonts, also embed common system fonts, embed only the characters in use (`w:embedTrueTypeFonts`, `w:embedSystemFonts`, `w:saveSubsetFonts`) |
+
+Font records and faces are immutable detached snapshots. `set_font` accepts a
+`FontDefinition`, rather than record fields as method keywords. Invalid inputs
+and read failures leave the document unchanged. Own rendering treats an absent
+embedding flag as enabled and explicit false as disabled.
+
+Word can display only one embedded face per font name. Native Word may
+synthesize bold and discard the saved bold part. The API retains all four face
+kinds and rdocx's renderer selects the supplied faces. Verify the delivered file
+in Word when multiple faces of one family matter.
 
 ## Paragraph, Run, Font, ParagraphFormat
 

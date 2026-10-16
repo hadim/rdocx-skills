@@ -111,21 +111,33 @@ number, so its title stays on the left when the TOC style has only the page-numb
 ## Fonts
 
 ```bash
-rdocx font list [--json] F
-rdocx font embed F FONT.ttf --name 'Example Sans' [--face regular|bold|italic|bold_italic] --license-authorized \
-      --license-identity 'OFL-1.1: Example Sans' [--font-key '{GUID}'] [--subsetted] -o OUT [--json]
-rdocx font remove F --name 'Example Sans' [--face bold] -o OUT [--json]   # without --face: the whole record
-rdocx font settings F [--embed-true-type-fonts true|false] [--embed-system-fonts true|false] [--save-subset-fonts true|false] -o OUT [--json]
+rdocx font list F [--json]
+rdocx font embed F --font FONT.ttf --name 'Example Sans' [--kind regular|bold|italic|bold-italic] --license-authorized \
+      --license-identity 'OFL-1.1: Example Sans' [--font-key GUID] [--subsetted] -o OUT [--json]
+rdocx font remove F --name 'Example Sans' [--kind bold] -o OUT [--json]
+rdocx font settings F [--json]
+rdocx font settings F --embed-true-type-fonts true|false|none [--embed-system-fonts true|false|none] [--save-subset-fonts true|false|none] -o OUT [--json]
 ```
-`font list` prints each font-table record (`--json`: `fonts`, each with `name`, `alternate_name`, `family`,
-`pitch`, `embedded`: `face`, `font_key`, `subsetted`, `license_authorized`, `license_identity`, `byte_count`;
-and `settings`: `embed_true_type_fonts`, `embed_system_fonts`, `save_subset_fonts`, null when unset).
-`font embed` adds a TrueType or OpenType file (not a `.ttc` collection) as one face of the record `--name`, creating
-the record, and turns `embedTrueTypeFonts` on, which makes Word keep the font when it saves the document
-again; Word uses the embedded face either way (observed upstream, tensorbee/rdocx#361). Without
-`--license-authorized`, or with an empty `--license-identity`, it exits 1 and writes nothing: pass them only
-for a font whose licence allows embedding (SKILL.md, rule 9). `font remove` without `--face` removes the
-record and all its faces.
+
+`--font` is required for embedding. Python uses `bold_italic`, the CLI uses
+`bold-italic`. Removing without `--kind` removes the whole record and its faces.
+Settings reads require no output. Mutations require an output and at least one
+explicit setting. `none` removes the setting, preserving its distinction from
+`false`. Embedding requires explicit caller authorization and a nonempty exact
+licence identity, check permission from the actual font source first. Invalid
+inputs and existing outputs refuse without changing the input or publishing a
+partial output.
+
+`font list --json` returns `schema: 1` and `fonts`, it does not include settings.
+Each record has `name`, `alternate_name`, `family`, `pitch` and `faces`.
+Each face has `kind`, `format` (`odttf`), `part_name`, `stored_len`,
+`decoded_len`, `font_key` and `subsetted`. Read the three flags separately
+with `font settings --json`.
+
+Own deterministic rendering uses supported enabled embedded faces before bundled
+fallback. Explicit caller `--font-dir` faces take precedence. Word can display
+only one embedded face per font name and may synthesize bold. The API and own
+renderer retain all four face kinds. Verify the delivered file in Word.
 
 ## Rendering and conversion
 
