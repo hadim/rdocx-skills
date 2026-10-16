@@ -31,8 +31,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   releases: `rdocx-<YYYYMMDD>-<commit12>`, still valid), titled `rdocx X · rpptx Y` or `... + <ref>`; no suite there;
   inputs `lto` (`thin` by default, about half the build time of `fat`, upstream's profile) and `dry_run` (build from
   scratch, publish nothing, to time a profile)), `release.yml` (by hand: a release of the plugin, below, which
-  builds the pinned commit again on the four platforms, runs the suite on those files and attaches them to the
-  release; input `dry_run`).
+  builds the pinned commit again on the four platforms, runs the suite on those files, attaches them to the
+  release and deletes the older releases and tags; input `dry_run`).
   `.github/scripts/suite-summary.sh` groups a suite log (gaps closed, docs not yet updated, other failures);
   `plugin_release.py` names the builds and the plugin's releases and writes their version; the scripts are tested in
   `tests/test_ci_scripts.py`.
@@ -59,7 +59,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   integration branch, and `lock --write --release` records that release (its `SHA256SUMS`), after review.
 - Every plugin release carries its own files: `release.yml` builds the pinned commit again (even when it is
   unchanged), tests those files and attaches them, and the lock on `release` points at that `v<version>` release.
-  Never delete a `v<version>` release; a build pre-release may go once `main` no longer pins it.
+  Then it deletes every other release and tag: only the latest release remains, with the build `main` pins.
 - `main` always pairs a lock whose build exists and is recorded with the tests and skills that match it
   (docs/setup.md, Moving the pin), but a push to `main` reaches nobody: `release` is the default branch, which users
   (Claude Code, Claude Desktop) and the Claude plugin directory follow, and only `release.yml` moves it (CalVer
