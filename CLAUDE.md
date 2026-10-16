@@ -21,20 +21,16 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 - `plugin/skills/<name>/scripts/`: helpers importable and runnable as commands; tested in `tests/test_skill_scripts.py`.
 - `plugin/scripts/rdocx_env.py`: install (from a dist folder, else the releases), build, verify, bump, lock, test;
   standard library only, Python >= 3.9, Linux, macOS and Windows (Git Bash: `.exe` CLIs, `current` a junction).
-- `plugin/rdocx.lock.json`: the pin (upstream commit and ref, release URLs, SHA-256 per platform). `dist/`
+- `plugin/rdocx.lock.json`: the pin. On `main`, the upstream commit and ref only (no release, no hashes: CI builds
+  it); on `release`, also the plugin release that carries its files and their SHA-256 per platform. `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
-- `.github/workflows/`: `ci.yml` (the suite on four platforms, every push and PR, Intel Macs left out; on a push to `main` whose lock
-  pins one of this repository's releases, its summaries become the "Acceptance suite" section of that release's
-  notes, through `.github/scripts/release_notes.py`), `build.yml` (every pin, an upstream release tag included, by
-  hand: builds it on four runners (no macos-x86_64), checks that it installs and runs, and publishes the pre-release
-  `rdocx-<YYYYMMDDHHMM>-<commit12>`, UTC build date and time first since GitHub lists releases by tag name (older
-  releases: `rdocx-<YYYYMMDD>-<commit12>`, still valid), titled `rdocx X · rpptx Y` or `... + <ref>`; no suite there;
-  inputs `lto` (`thin` by default, about half the build time of `fat`, upstream's profile) and `dry_run` (build from
-  scratch, publish nothing, to time a profile)), `release.yml` (by hand: a release of the plugin, below, which
-  builds the pinned commit again on the four platforms, runs the suite on those files, attaches them to the
-  release and deletes the older releases and tags; input `dry_run`).
+- `.github/workflows/`: `ci.yml` (every push and PR: builds the pinned commit on four runners, Intel Macs left out,
+  with ThinLTO and a build cache per platform and commit, records the build into the run's copy of the lock, and
+  runs the suite on it), `release.yml` (by hand: a release of the plugin, below, which builds the pinned commit again
+  on the four platforms, runs the suite on those files, attaches them to the release and deletes every other release
+  and tag; input `dry_run`). The plugin's releases are the only published builds.
   `.github/scripts/suite-summary.sh` groups a suite log (gaps closed, docs not yet updated, other failures);
-  `plugin_release.py` names the builds and the plugin's releases and writes their version; the scripts are tested in
+  `plugin_release.py` names the plugin's releases, writes their version and the head of their notes; the scripts are tested in
   `tests/test_ci_scripts.py`.
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
@@ -55,13 +51,12 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   then, and an upstream issue.
 - A behaviour change of rdocx is either a fix (remove the gap marker) or a regression (keep the test red and the
   previous pin, or narrow the skills); never weaken a test to make it pass.
-- Every pin is a build of this repository: `build.yml` builds the commit, an upstream release tag as much as an
-  integration branch, and `lock --write --release` records that release (its `SHA256SUMS`), after review.
-- Every plugin release carries its own files: `release.yml` builds the pinned commit again (even when it is
-  unchanged), tests those files and attaches them, and the lock on `release` points at that `v<version>` release.
-  Then it deletes every other release and tag: only the latest release remains, with the build `main` pins.
-- `main` always pairs a lock whose build exists and is recorded with the tests and skills that match it
-  (docs/setup.md, Moving the pin), but a push to `main` reaches nobody: `release` is the default branch, which users
+- Only the plugin's releases publish builds: `main`'s lock names an upstream commit (`bump REF`), `ci.yml` builds it
+  on every push and PR, and `release.yml` builds it again (even when it is unchanged), tests those files, attaches
+  them to the `v<version>` release and points the lock of `release` at it. Then it deletes every other release and
+  tag: only the latest release exists.
+- `main` always pairs a lock with the tests and skills that match it (docs/setup.md, Moving the pin), but a push
+  to `main` reaches nobody: `release` is the default branch, which users
   (Claude Code, Claude Desktop) and the Claude plugin directory follow, and only `release.yml` moves it (CalVer
   `vYYYY.M.D`, `version` in plugin.json there only; docs/setup.md, Releasing the plugin). Pull requests target `main`
   (`gh pr create --base main`). Releasing is the maintainer's call: never run it unasked.
@@ -71,8 +66,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   coverage check only asks a pointer per public class and CLI command, so a new method or flag gets no line unless
   this pass writes it. Onto an upstream release, also delete the behaviour tests that pass on it. Stop before the
   merge: a short brief, and the merge asked as a question.
-- No release is asked of upstream: the pin takes what upstream publishes, or a commit carried on an integration
-  branch, and builds it with `build.yml` (above).
+- No release is asked of upstream: the pin takes any upstream commit or tag, or a commit carried on an integration
+  branch, and this repository builds it (above).
 - Git on a clone reached through a shell on another machine (a remote or sandboxed shell over a synced folder):
   run git with `GIT_OPTIONAL_LOCKS=0`; switching branches needs the permission to delete files there. The
   session commits on a branch; the maintainer pushes and files any upstream issue.
@@ -87,19 +82,19 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`).
-- Pinned: tensorbee/rdocx `main` at `3a3b0de8` (rdocx 0.16.1 and rpptx 0.14.1 plus sprints S92 and S93, no
-  upstream release yet) through this repository's build `rdocx-202610160525-3a3b0de8be9f`. Upstream closed every
-  pull request of the integration branches as adapted: it rewrote them, so the Python API was reshaped (handles
-  retire on different edits, many names and signatures changed) and the skills were rewritten for it. No
-  integration branch is pinned any more: none is needed while no pull request of the maintainer is open upstream.
-- Open gaps: 17 (`tests/gaps.py`, both `references/gaps.md`). Four are the python-docx and python-pptx names and the
-  bare ints saved as 0 that upstream plans for its sprint S94 (tensorbee/rdocx#379). The others were met on this
-  pin: among them `docx-validate-paraid-in-content-control` (`rdocx validate` stops on every Word table of
-  contents; `docx_ops.py validate` checks a scratch copy meanwhile). Only the #379 ones are reported upstream.
-- Suite against `3a3b0de8`: 180 passed, 49 xfailed on macos-arm64 from the release files, in 3 minutes (1 minute on
-  the previous pin: edits are 2 to 3 times slower in the Python binding since v0.16.1, tensorbee/rdocx#378 fixed
-  the quadratic part). The behaviour files hold only strict xfails: a test that passes on the pinned upstream
-  commit is deleted.
+- Pinned: tensorbee/rdocx `main` at `d44a69af` (rdocx 0.16.1 and rpptx 0.14.1 plus sprints S92 to S94, no
+  upstream release yet). S94 brought most python-docx and python-pptx names (tensorbee/rdocx#379), package signing
+  and verification in Python and both CLIs, and Word form filling (`rdocx fill --values`, legacy form fields;
+  tensorbee/rdocx#380). The previous pin, `3a3b0de8`, is plugin `v2026.10.16`. No integration branch is pinned:
+  none is needed while no pull request of the maintainer is open upstream.
+- Open gaps: 16 (`tests/gaps.py`, both `references/gaps.md`). Three are what #379 left (python-docx-names,
+  python-pptx-names, docx-bare-int-length-saved-as-zero: `font.size = 12` raises now, `space_after = 6` still saves
+  0), reported as tensorbee/rdocx#386. The others are reported: #384 (validate refuses w14:paraId inside a content control)
+  and #385 (twelve others), both planned upstream for S95 and S95.1.
+- Suite against `d44a69af`: 151 passed, 41 xfailed, 18 skipped (the install and release tests, without recorded
+  hashes) on macos-arm64 from a local build, in 2.5 minutes. Walking `table.rows` / `row.cells` is still quadratic
+  (400 cells: 3.0 s, 800 cells: 12 s; reported on tensorbee/rdocx#378); one edit is twice as fast as on `3a3b0de8`.
+  The behaviour files hold only strict xfails: a test that passes on the pinned upstream commit is deleted.
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).
@@ -107,6 +102,6 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 
 ## Next steps
 
-1. When upstream `main` moves (S94 brings tensorbee/rdocx#379) or tags a release: run `build.yml` on it, then
-   `bump <ref>`, `lock --write --release`, `install`, `test`, as docs/setup.md (Moving the pin) describes; delete
-   the gap tests that pass; release the plugin when the maintainer asks.
+1. When upstream `main` moves (S95 brings tensorbee/rdocx#384 and part of #385) or tags a release: `bump <ref>` on a
+   branch, `install --build` and `test` (or let ci.yml build it on the pull request), as docs/setup.md (Moving the
+   pin) describes; delete the gap tests that pass; release the plugin when the maintainer asks.

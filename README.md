@@ -72,7 +72,7 @@ call for each task.
 ### ✍️ Create and edit
 
 - 🆕 New documents from scratch, from Markdown or HTML, or from a `.dotx` or `.potx` template
-- 🧩 Templates filled from data: `{{ fields }}`, loops and content controls
+- 🧩 Templates and forms filled from data: `{{ fields }}`, loops, content controls and legacy form fields
 - 🔁 Counted find and replace, regular expressions included, across runs and without losing the formatting
 - 🎨 Paragraphs, headings, lists, styles and numbering; tables with merges, borders and shading; page setup
 - 🖼️ Pictures, hyperlinks, charts, equations from a subset of LaTeX, headers, footers and page numbers
@@ -85,6 +85,7 @@ call for each task.
 - ✅ Tracked changes listed, accepted or rejected: all of them, or by id, author or date
 - 🔀 A redline of two versions, word by word
 - 📑 Tables of contents and page fields rebuilt; `rpptx diff` to see what changed between two decks
+- 🔏 Documents and decks signed, and their signatures checked (certificate trust stays yours to judge)
 
 ### 🖨️ Render, convert and export
 
@@ -119,8 +120,7 @@ The skills never run them on their own:
 
 - `install --build` compiles the pinned commit from source: the commit from GitHub, crates from crates.io with
   `cargo --locked`, build tools from PyPI pinned by hash.
-- `lock --write --release` reads this repository's release tags with `git ls-remote` and records the files of the
-  pinned build.
+- `lock --write --release` downloads the files of the release the lock names and records their hashes.
 
 </details>
 
@@ -128,13 +128,11 @@ The skills never run them on their own:
 
 - 📌 **The pin**: `rdocx.lock.json` names an upstream commit and, per platform, the SHA-256 of each CLI, each
   wheel and every file the wheels install.
-- 🏗️ **The builds**: every pinned commit, an upstream release as much as an integration branch, is built by this
-  repository's build workflow on four platforms and published as a pre-release with build provenance
-  attestations. Its title says what it holds: `rdocx 0.16.1 · rpptx 0.14.1` for an upstream release, or `rdocx
-  0.16.0 · rpptx 0.14.0 + integration/open-prs-2026-10-14 from hadim/rdocx` for an integration branch.
-- 📦 **The plugin's releases** carry their own files: each one builds the pinned commit again on the four platforms,
-  runs the acceptance suite on those files and attaches them with their `SHA256SUMS` and provenance, and its lock
-  points at them.
+- 📦 **The builds**: the plugin's releases are the only published builds. Each one builds the pinned commit, an
+  upstream release as much as an integration branch, on four platforms, runs the acceptance suite on those files,
+  attaches them with their `SHA256SUMS` and build provenance attestations, and its lock points at them. Its
+  title says what it holds: `rdocx 0.16.1 · rpptx 0.14.1` for an upstream release, or `... + <ref>` for anything
+  else. Only the latest release is kept.
 - 🍴 **Integration branches** live on the maintainer's fork, [hadim/rdocx](https://github.com/hadim/rdocx): an
   upstream release plus the maintainer's pull requests still open on tensorbee/rdocx, pinned when the skills need
   a fix before upstream releases it. The lock's `upstream` and `ref` name the fork and the branch.
@@ -191,7 +189,7 @@ See [docs/setup.md](https://github.com/hadim/rdocx-skills/blob/main/docs/setup.m
 | `plugin/scripts/` | `rdocx_env.py` (install, build, verify, test, bump) and the hash-pinned build requirements |
 | `plugin/rdocx.lock.json` | the pinned build |
 | `plugin/assets/` | the plugin icon and the pictures of this page |
-| `.github/` | CI on every push, the build workflow of a pinned commit, the release workflow of the plugin |
+| `.github/` | CI on every push (it builds the pinned commit), the release workflow of the plugin |
 | `tests/` | acceptance suite, fixture generators, gap registry |
 | `findings/` | gaps met in real use, as neutral reproductions, before they become tests and gap entries |
 | `docs/` | setup, releases and maintenance |

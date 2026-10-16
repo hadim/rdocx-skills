@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The plugin's releases (release.yml) and the titles of the builds (build.yml). Standard library only.
+"""The plugin's releases (release.yml): their version, title and notes. Standard library only.
 
   plugin_release.py label --ref REF --rdocx V --rpptx V [--upstream OWNER/REPO]
       `rdocx V` and `rpptx V` joined by a middle dot, followed by ` + REF` unless REF is an upstream

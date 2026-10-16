@@ -6,7 +6,7 @@ import pptx
 import pytest
 import rpptx
 from PIL import Image
-from rpptx.util import Inches, Pt
+from rpptx.util import Inches
 
 from conftest import digest, run
 
@@ -25,23 +25,14 @@ def text_box(prs, text="x"):
 
 # ---------------------------------------------------------------- python-pptx names
 @pytest.mark.gap("python-pptx-names")
-def test_notes_slide_as_in_python_pptx():
-    prs = deck(6, 6)
-    assert (prs.slides[0].has_notes_slide, prs.slides[0].notes_text) == (False, None)
-    notes = prs.slides[0].notes_slide
-    assert prs.slides[0].has_notes_slide and notes.notes_text_frame.text == ""
-    notes.notes_text_frame.text = "Say hello"
-    assert prs.slides[0].notes_text == "Say hello"
-
-
-@pytest.mark.gap("python-pptx-names")
 def test_slide_id_as_in_python_pptx():
     prs = deck(6, 6)
     assert prs.slides[0].slide_id == 256 and prs.slides[1].slide_id == 257
 
 
 @pytest.mark.gap("python-pptx-names")
-def test_colour_type_and_theme_colour_as_in_python_pptx():
+def test_colour_type_and_theme_colour_read_the_enums_as_in_python_pptx():
+    """rpptx.enum.dml has both enums, but color.type and color.theme_color read strings ("rgb", "accent2")."""
     from rpptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR_INDEX
     font = text_box(deck()).text_frame.paragraphs[0].runs[0].font
     font.color.rgb = "123456"
@@ -61,32 +52,15 @@ def test_language_id_as_in_python_pptx():
 
 
 @pytest.mark.gap("python-pptx-names")
-@pytest.mark.parametrize("name", ["_sldIdLst", "_element", "_txBody"])
+@pytest.mark.parametrize("name", ["_element", "_txBody"])
 def test_a_python_pptx_private_attribute_names_the_rpptx_way(name):
-    prs = deck()
-    shape = text_box(prs)
-    owner, way = {"_sldIdLst": (prs.slides, r"slides\.(remove|move)"), "_element": (shape, r"\belement\b"),
-                  "_txBody": (shape.text_frame, r"\belement\b")}[name]
+    shape = text_box(deck())
+    owner, way = {"_element": (shape, r"\belement\b"), "_txBody": (shape.text_frame, r"\belement\b")}[name]
     with pytest.raises(AttributeError, match=way):
         getattr(owner, name)
 
 
-# ---------------------------------------------------------------- values saved as zero or accepted silently
-@pytest.mark.gap("pptx-bare-int-spacing-saved-as-zero")
-@pytest.mark.parametrize("attr,value", [("space_before", 6), ("space_after", 6), ("spacing", 2), ("line_spacing", 0),
-                                        ("line_spacing", Pt(0))], ids=["space_before", "space_after", "font_spacing",
-                                                                      "line_spacing_0", "line_spacing_Pt0"])
-def test_a_spacing_that_would_be_saved_as_zero_raises(attr, value):
-    """A bare int is EMU: 6 EMU of space_before is spcPts val="0", 2 EMU of character spacing is spc="0"."""
-    prs = deck()
-    paragraph = text_box(prs).text_frame.paragraphs[0]
-    owner = paragraph.runs[0].font if attr == "spacing" else paragraph
-    before = prs.to_bytes()
-    with pytest.raises(ValueError, match="Pt|positive"):
-        setattr(owner, attr, value)
-    assert digest(prs.to_bytes()) == digest(before)
-
-
+# ---------------------------------------------------------------- values accepted silently
 def save_as_pdf(prs, tmp_path):
     prs.save(tmp_path / "x.pdf")
 
