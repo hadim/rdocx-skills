@@ -25,7 +25,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { platform: linux-x86_64, runner: ubuntu-24.04 }
+          # release.yml's runners: the build folder they cache is reused as it is, links included, so the release
+          # files keep the glibc 2.35 floor of ubuntu-22.04
+          - { platform: linux-x86_64, runner: ubuntu-22.04 }
           - { platform: linux-aarch64, runner: ubuntu-22.04-arm }
           - { platform: macos-arm64, runner: macos-14 }
           - { platform: windows-x86_64, runner: windows-2025 }
@@ -71,8 +73,8 @@ jobs:
             ~/.cargo/registry/cache
             ~/.cargo/git/db
             ~/.local/share/rdocx-skills/target
-          key: rdocx-build-thin-${{ matrix.platform }}-${{ steps.pin.outputs.commit }}
-          restore-keys: rdocx-build-thin-${{ matrix.platform }}-
+          key: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-${{ steps.pin.outputs.commit }}
+          restore-keys: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-
 
       - name: Build and install the pinned commit
         run: python plugin/scripts/rdocx_env.py install --build
