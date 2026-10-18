@@ -98,7 +98,8 @@ jobs:
         run: .github/scripts/poppler.sh
 
       - name: Acceptance suite
-        run: python plugin/scripts/rdocx_env.py test --allow-local 2>&1 | tee "$RUNNER_TEMP/pytest.log"
+        # one worker per core, each file on one worker in order (the recipes of a file build on each other)
+        run: python plugin/scripts/rdocx_env.py test --allow-local -n auto --dist loadfile 2>&1 | tee "$RUNNER_TEMP/pytest.log"
 
       - name: Suite summary
         if: always()
