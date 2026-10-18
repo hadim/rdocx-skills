@@ -64,16 +64,6 @@ def test_count_and_all_text(tmp_path):
     assert docx_ops.count(word_textbox_docx(tmp_path / "w.docx"), "NEEDLE") == {"body": 1, "footnote": 1}
 
 
-def test_validate_gets_past_word_paragraph_ids(report_docx, tmp_path):
-    assert docx_ops.validate(report_docx).returncode == 0
-    broken = tmp_path / "broken.docx"
-    with zipfile.ZipFile(report_docx) as src, zipfile.ZipFile(broken, "w") as dst:
-        for info in src.infolist():
-            if info.filename != "word/styles.xml":
-                dst.writestr(info, src.read(info.filename))
-    assert docx_ops.validate(broken).returncode != 0
-
-
 def test_save_refuses_to_overwrite_the_input(report_docx):
     with pytest.raises(docx_ops.EditError):
         docx_ops.save_atomic(rdocx.Document.open(report_docx), report_docx, report_docx)

@@ -371,7 +371,7 @@ class ObjectReader:
         self.proc.wait()
 
 
-def export_tree(reader, oid, dest):
+def export_tree(reader, oid, dest, mtime):
     kind, data = reader.read(oid)
     if kind != "tree":
         die(f"{oid} is not a tree")
@@ -385,11 +385,12 @@ def export_tree(reader, oid, dest):
             die(f"unsafe path {name!r} in the source tree")
         target = dest / name
         if mode == "40000":
-            export_tree(reader, child, target)
+            export_tree(reader, child, target, mtime)
         elif mode in ("100644", "100755"):
             _, blob = reader.read(child)
             target.write_bytes(blob)
             os.chmod(target, 0o755 if mode == "100755" else 0o644)
+            os.utime(target, (mtime, mtime))
         elif mode == "120000":
             _, blob = reader.read(child)
             link = blob.decode()
@@ -422,7 +423,13 @@ def export_source(lock, dest):
     kind, data = reader.read(commit)
     if kind != "commit" or not data.startswith(b"tree "):
         die(f"{commit} is not a commit")
-    export_tree(reader, data[5:45].decode(), dest)
+    # every file gets the commit's time, as `git archive` gives it: cargo finds a file changed when it is newer than
+    # the build that read it, so a fresh export of the commit built before, over the restored build folder, compiles
+    # nothing again instead of every workspace crate
+    committer = re.search(rb"^committer .* (\d+) [+-]\d{4}$", data, re.M)
+    if not committer:
+        die(f"{commit} has no committer time")
+    export_tree(reader, data[5:45].decode(), dest, int(committer.group(1)))
     reader.close()
     say(f"source: commit {commit[:12]} exported, every object verified")
     return dest

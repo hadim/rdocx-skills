@@ -59,8 +59,7 @@ background).
    License). When it does not, or you cannot tell, do not embed and tell the user.
 8. **Lengths and spacings take `Pt(...)` or `Inches(...)`.** A bare int is EMU: `font.size = 12`,
    `space_before = 6` and `font.spacing = 2` raise `ValueError`; write `Pt(6)`, or a float such as 1.5 for a
-   multiple of the line. And
-   `prs.save("x.pdf")` writes a PPTX under that name (gap pptx-invalid-values-accepted): a PDF is `prs.to_pdf()`.
+   multiple of the line. `prs.save("x.pdf")` raises `ValueError`: a PDF is `prs.to_pdf()`.
 
 ## What to use for what
 
@@ -98,14 +97,14 @@ background).
 | Comments | `rpptx comment list/add/reply/resolve/remove` | `prs.add_comment_author`, `slide.add_comment`, `reply_to_comment`, `resolve_comment`, `remove_comment`, `move_comment` | `shape_id=` anchors on a shape; add the author first |
 | Text fit | `rpptx fit [--json] F` | `prs.text_layout(width_factor=1.0)`, `prs.fit_report()`, `text_frame.fit_text(max_size=18)`, `text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE` then `prs.refresh_autofit()` | rpptx's line breaks; `auto_size` alone writes no font scale and no new height: `refresh_autofit()` before the save |
 | PDF | `rpptx convert F --to pdf -o NEW.pdf [--font-dir DIR]` | `prs.to_pdf(font_dir=)`, `prs.to_notes_pdf()`, `to_pdfa()`, `to_handout_pdf(6)` | `font_dir` for fonts that are not installed |
-| PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)`, `render_slides(format="jpeg")` | CLI slides one-based, Python zero-based; the renders ignore a slide's `show_master_shapes = False` (gap pptx-render-ignores-slide-show-master-shapes) |
+| PNG | `rpptx render F -o NEW_DIR --slide N --dpi 100`, `rpptx convert F --to png --slides 1-3 -o NEW.png` | `prs.render_slide_to_png(i, dpi)`, `render_all_slides(dpi)`, `render_slides(format="jpeg")` | CLI slides one-based, Python zero-based; a slide's `show_master_shapes = False` hides the master's shapes, as in PowerPoint |
 | Markdown, HTML | `rpptx convert F --to md -o NEW.md [--notes] [--skip-hidden]`, `--to html` | `prs.to_markdown(include_notes=True, skip_hidden=True)`, `prs.to_html(...)` | one section per slide, in outline order; to read a deck, `rpptx text` is plainer |
 | Embedded fonts | `rpptx font list/embed/remove/settings` | `prs.embedded_fonts`, `prs.embed_font(typeface, "ExampleSans-Regular.ttf", "regular", license=rpptx.FontEmbeddingLicense(...))`, `remove_embedded_font`, `remove_font` | rule 7; leave `embed_true_type_fonts` on; embed last (PowerPoint for Mac drops embedded fonts when it saves); a compressed embedded face is not rendered: pass its file with `font_dir` |
 | From a .potx template | | `rpptx.Presentation("t.potx")`, then save as .pptx | the save writes the content type the extension names |
 | Validity | `rpptx validate F` | `prs.validate()` | a tuple of issues (`kind`, `message`), empty when valid |
 | Sign, check signatures | `rpptx sign F --key K.pem --cert C.pem -o OUT`, `rpptx verify-signatures --json F` | `prs.sign(key, cert)`, `prs.verify_signatures()` | sign last: an edit breaks it; no chain trust |
 | What changed | `rpptx diff A B` | | slide text only |
-| An element with no API | | `shape.element.xml` / `shape.element.replace_xml(xml)` (str), also on text frames, paragraphs, runs, tables, cells, slides, layouts, masters | instead of lxml; malformed XML raises and changes nothing, an unknown element does not (gap pptx-raw-xml-unchecked) |
+| An element with no API | | `shape.element.xml` / `shape.element.replace_xml(xml)` (str), also on text frames, paragraphs, runs, tables, cells, slides, layouts, masters | instead of lxml; malformed XML or an unknown or misplaced element raises and changes nothing |
 
 Commands and signatures: `references/cli.md`, `references/python-api.md` (and the `.pyi` stubs it points
 to). Tested examples: `references/recipes.md`. Ready-made commands: `scripts/pptx_ops.py` (`replace`,

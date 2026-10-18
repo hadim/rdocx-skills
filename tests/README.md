@@ -1,9 +1,10 @@
 # Acceptance suite
 
 ```bash
-python3 scripts/rdocx_env.py test                 # everything
-python3 scripts/rdocx_env.py test -k pptx         # one vertical
-python3 scripts/rdocx_env.py test --runxfail      # show how each known gap fails today
+python3 plugin/scripts/rdocx_env.py test                                # everything
+python3 plugin/scripts/rdocx_env.py test -n auto --dist loadfile        # in parallel, as CI does (a quarter faster)
+python3 plugin/scripts/rdocx_env.py test -k pptx                        # one vertical
+python3 plugin/scripts/rdocx_env.py test --runxfail                     # show how each known gap fails today
 ```
 
 The suite covers the skills' own contract; rdocx's behaviour is upstream's to test. The behaviour files hold only
@@ -25,7 +26,7 @@ Fixtures are generated at run time by `fixtures/make_fixture_docx.py` and `fixtu
 body, table cell, inline and block content controls, tracked insertion and deletion, text box, headers and
 footers per variant, footnote, endnote; a paragraph with one wrapped run) and by small builders inside the
 tests. Test dependencies
-(pytest, python-docx, python-pptx, Pillow) are pinned by hash in `requirements.txt`; python-docx and
+(pytest, pytest-xdist, python-docx, python-pptx, Pillow) are pinned by hash in `requirements.txt`; python-docx and
 python-pptx serve only to build inputs and to re-read outputs independently.
 
 **Gaps.** `@pytest.mark.gap("key")` turns a test into a strict expected failure, with its reason from

@@ -7,7 +7,6 @@
   python docx_ops.py comment IN.docx OUT.docx --anchor TEXT --text COMMENT --author NAME [--occurrence N] [--in-tables] [--date ISO]
   python docx_ops.py toc IN.docx OUT.docx                                        rebuild the table of contents
   python docx_ops.py pages IN.docx                                               page count from rdocx's layout
-  python docx_ops.py validate IN.docx                                            rdocx validate, past Word's TOC (exit code kept)
 
 Every function that writes takes an output path, writes a temporary file next to it, flushes it to disk and
 renames it into place, keeps the input's file mode, and refuses to write over its input. Exit codes: 0 done, 1 refused (nothing written), 2 usage.
@@ -429,27 +428,6 @@ def image_size(data):
     return None
 
 
-VALIDATE_SCOPE = "paragraph owners do not match validation scope"
-
-
-def validate(path):
-    """`rdocx validate` on `path` (the CLI's CompletedProcess, exit code kept). When it stops on Word's paragraph ids
-    inside a content control, as in every Word table of contents (gap docx-validate-paraid-in-content-control),
-    it validates a scratch copy without the `w14:paraId` and `w14:textId` attributes of word/document.xml."""
-    res = cli("validate", path, check=False)
-    if res.returncode == 0 or VALIDATE_SCOPE not in res.stdout + res.stderr:
-        return res
-    with tempfile.TemporaryDirectory() as tmp:
-        copy = Path(tmp) / Path(path).name
-        with zipfile.ZipFile(path) as src, zipfile.ZipFile(copy, "w") as dst:
-            for info in src.infolist():
-                data = src.read(info.filename)
-                if info.filename == "word/document.xml":
-                    data = re.sub(rb' w14:(?:paraId|textId)="[^"]*"', b"", data)
-                dst.writestr(info, data)
-        return cli("validate", copy, check=False)
-
-
 def pages(path):
     """Page count from rdocx's own layout (on Word's line heights; confirm in Word when it matters)."""
     return max(f.physical_page for f in rdocx.Document.open(path).layout())
@@ -483,8 +461,6 @@ def main():
     p.add_argument("out")
     p = sub.add_parser("pages")
     p.add_argument("src")
-    p = sub.add_parser("validate")
-    p.add_argument("src")
     a = ap.parse_args()
     try:
         if a.cmd == "text":
@@ -507,11 +483,6 @@ def main():
             print(f"{rep.entry_count} entries, {len(rep.diagnostics)} diagnostics, written to {a.out}")
         elif a.cmd == "pages":
             print(pages(a.src))
-        elif a.cmd == "validate":
-            res = validate(a.src)
-            sys.stdout.write(res.stdout)
-            sys.stderr.write(res.stderr)
-            sys.exit(res.returncode)
     except EditError as e:
         print(f"refused: {e}", file=sys.stderr)
         sys.exit(1)

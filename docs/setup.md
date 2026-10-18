@@ -131,9 +131,10 @@ the built-in ones, or `install --build` compiles the pinned commit on the machin
 ## Continuous integration
 
 - `.github/workflows/ci.yml`, on every push to `main` and every pull request: `install --build` of the pinned
-  commit on linux-x86_64, linux-aarch64 (ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64 and
-  windows-x86_64, with ThinLTO and 16 codegen units (`release.yml`'s profile) and a build cache per platform and
-  commit (a commit built before compiles again in a few minutes, a new one in 10 to 30). `lock --write` then
+  commit on linux-x86_64 and linux-aarch64 (ubuntu-22.04 and ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64
+  and windows-x86_64, on `release.yml`'s runners (the cache key names the runner: a reused build keeps its links), with ThinLTO and 16 codegen units (`release.yml`'s profile) and a build cache per platform and
+  commit (a commit built before compiles nothing again: its export gives every file the commit's time, so
+  cargo finds the restored build fresh and only packages it, in seconds; a new commit takes 10 to 30 minutes). `lock --write` then
   records that build into the run's copy of the lock (never committed), so that the install and download tests
   check it as they would a release's files, and the acceptance suite runs, summarised per platform by
   `.github/scripts/suite-summary.sh` in the job summary. On Windows it runs from Git Bash, as an agent does, on a
@@ -190,13 +191,10 @@ follow it, and get a new version only from `.github/workflows/release.yml`: Acti
    each platform), their `SHA256SUMS` and build provenance attestations, titled with the rdocx and rpptx versions
    (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <ref>`), marked latest, whose notes describe the files, give the
    suite of the four platforms and list the pull requests merged since the previous release;
-6. deletes every other release and its tag, and any other `v*` or `rdocx-*` tag: only the new release remains.
-
-So a plugin release never depends on another release, and only the latest one is valid: an install of an older
-plugin version can no longer download its files (users following `release` get the new version). Input `dry_run`: everything but the release, on the branch the workflow
+So a plugin release never depends on another release, and older releases stay: an install of an older plugin
+version still downloads its own files (users following `release` get the newest). Clean-ups are done by hand. Input `dry_run`: everything but the release, on the branch the workflow
 runs from (to try a change of the workflow on a pull request branch): the files, the lock and the notes are kept
-as the workflow artifact `release-files`, the clean-up lists what it would delete, and nothing is attested,
-pushed, tagged, published or deleted.
+as the workflow artifact `release-files`, and nothing is attested, pushed, tagged or published.
 
 `main` carries no `version`: whoever adds the marketplace as `hadim/rdocx-skills#main` gets every push, the
 development channel (its lock names no build: `install` there needs `--build`). Pull requests target `main`, not

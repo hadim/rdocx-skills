@@ -274,7 +274,7 @@ docx_ops.save_atomic(doc, "reviewed.docx", "commented.docx")
 ```bash
 $R/rdocx comment list --json reviewed.docx                # anchor_text and anchor of each comment
 $R/rdocx comment move commented.docx 0 --text "bearing positions" -o moved-cli.docx --json
-$R/python "$SKILL/scripts/docx_ops.py" validate reviewed.docx  # exit 1 for a comment left without an anchor
+$R/rdocx validate reviewed.docx                          # exit 1 for a comment left without an anchor
 ```
 
 Removing content never leaves a comment pointing at nothing: a comment the removed block covers whole goes
@@ -352,16 +352,14 @@ print(rep.entry_count)
 
 ```bash
 $R/python "$SKILL/scripts/docx_ops.py" replace report.docx checked.docx --edit "three points lower" "two points lower" 1
-$R/python "$SKILL/scripts/docx_ops.py" validate checked.docx
+$R/rdocx validate checked.docx
 $R/rdocx diff report.docx checked.docx
 pages=$(mktemp -d)                                       # render into a new folder each time
 $R/rdocx render checked.docx -o "$pages" --pages 1-3 --dpi 80
 ls "$pages"
 ```
 
-`validate` reads every part the document relates to and checks every style id. On a document whose table of
-contents Word wrote, it fails with "main document paragraph owners do not match validation scope" (gap
-docx-validate-paraid-in-content-control): `docx_ops.py validate F` validates a scratch copy then. Look at
+`validate` reads every part the document relates to and checks every style id. Look at
 the PNG of every page you touched. Page numbers come from rdocx's layout, which
 lays lines at Word's heights: still check in Word before quoting one as Word's.
 
@@ -491,11 +489,12 @@ chart = doc.add_chart(rdocx.XL_CHART_TYPE.COLUMN_CLUSTERED, data, rdocx.Inches(5
 doc.set_chart_legend(chart, visible=True, position="b")      # a new chart has no legend
 print(doc.chart_legend(chart))
 docx_ops.save_atomic(doc, "chart.docx", "report.docx")
+for c in rdocx.Document.open("chart.docx").charts:       # read back: type, categories, series
+    print(c.chart_type, c.categories, [(s.name, s.values) for s in c.series])
 ```
 
 `add_chart` returns the paragraph that holds the chart, the handle `chart_legend` and `set_chart_legend`
-take. The chart is not read back from a document (gap docx-chart-read-back): its categories and values are in
-its part, `word/charts/chart1.xml` for the first chart, which `zipfile` reads.
+take. `doc.charts` reads every chart of a document back, in body order.
 
 ## Embed a font
 

@@ -1,6 +1,7 @@
 """scripts/rdocx_env.py: a fresh install from a verified dist folder of this machine (the repository's dist/,
 or the release files downloaded into RDOCX_HOME/dist), then each kind of change `status` must catch and
 `install` must repair. Skipped when there is none."""
+import datetime
 import hashlib
 import json
 import os
@@ -121,3 +122,24 @@ def test_install_keeps_the_pin_and_the_previous_install_only(home):
     assert (home / "target").is_dir() and (home / "testenv").is_dir()
     assert env_cmd(home, "status").returncode == 0
 
+
+
+def test_a_source_export_carries_the_commit_time(tmp_path, monkeypatch):
+    """Cargo compiles a crate again when one of its files is newer than its last build: every export of a commit
+    gives each file the commit's time, so that the restored build folder of that commit compiles nothing again."""
+    when = "2026-10-17T09:49:21+01:00"
+    env = dict(os.environ, GIT_AUTHOR_DATE=when, GIT_COMMITTER_DATE=when, GIT_AUTHOR_NAME="t", GIT_COMMITTER_NAME="t",
+               GIT_AUTHOR_EMAIL="t@example.com", GIT_COMMITTER_EMAIL="t@example.com")
+    repo = tmp_path / "rdocx"
+    (repo / "crates" / "a").mkdir(parents=True)
+    (repo / "crates" / "a" / "lib.rs").write_text("pub fn a() {}\n")
+    (repo / "Cargo.toml").write_text("[workspace]\n")
+    for args in (["init", "-q"], ["add", "-A"], ["-c", "commit.gpgsign=false", "commit", "-q", "-m", "x"]):
+        subprocess.run(["git", "-C", str(repo), *args], check=True, env=env)
+    commit = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], check=True, capture_output=True,
+                            text=True).stdout.strip()
+    monkeypatch.setenv("RDOCX_SRC", str(repo))
+    out = rdocx_env.export_source({"commit": commit, "upstream": "unused"}, tmp_path / "src")
+    files = [p for p in out.rglob("*") if p.is_file()]
+    stamp = int(datetime.datetime.fromisoformat(when).timestamp())
+    assert len(files) == 2 and {int(p.stat().st_mtime) for p in files} == {stamp}

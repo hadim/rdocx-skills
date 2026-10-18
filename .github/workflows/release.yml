@@ -5,8 +5,8 @@
 # The plugin's releases are the only published builds, and each one carries its own files: it builds the pinned
 # commit on the four platforms (no macos-x86_64; each time, even when the previous release holds the same commit),
 # runs the acceptance suite on those very files, and attaches the CLIs and wheels to the release with their
-# SHA256SUMS and build provenance attestations. Nothing is published unless the four platforms build and pass. Then
-# every other release and tag is deleted: only the latest release exists.
+# SHA256SUMS and build provenance attestations. Nothing is published unless the four platforms build and pass. Older
+# releases stay, each with its own files, so an older plugin version still installs; clean-ups are done by hand.
 #
 # The release takes main as it is, once ci.yml passed on it: the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for
 # another release the same day), the `release` branch moved to main's tree with that version written into
@@ -18,8 +18,7 @@
 #
 # `dry_run`: everything but the release itself, on the branch the workflow runs from (to try a change of this
 # workflow on a pull request branch): build, suite, release files and lock kept as the workflow artifact
-# `release-files`, and the clean-up lists what it would delete; no attestation, no branch, no tag, no release, nothing
-# deleted.
+# `release-files`; no attestation, no branch, no tag, no release.
 name: release
 
 on:
@@ -128,7 +127,7 @@ jobs:
           echo "CARGO_PROFILE_RELEASE_LTO=thin" >> "$GITHUB_ENV"
           echo "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16" >> "$GITHUB_ENV"
 
-      # ci.yml's cache: a commit it built compiles again in a few minutes
+      # ci.yml's cache: a commit it built compiles nothing again
       - name: Restore the cargo registry and the build folder
         id: cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -138,8 +137,8 @@ jobs:
             ~/.cargo/registry/cache
             ~/.cargo/git/db
             ~/.local/share/rdocx-skills/target
-          key: rdocx-build-thin-${{ matrix.platform }}-${{ needs.plan.outputs.commit }}
-          restore-keys: rdocx-build-thin-${{ matrix.platform }}-
+          key: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-${{ needs.plan.outputs.commit }}
+          restore-keys: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-
 
       # main's lock names no build: `install --build` compiles the commit and installs it as a local build
       - name: Build and install
@@ -157,6 +156,16 @@ jobs:
             ~/.local/share/rdocx-skills/target
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
+      # a binary needs the glibc it was linked against: one reused from a newer image would raise the floor
+      - name: The Linux CLIs need glibc 2.35 at most
+        if: runner.os == 'Linux'
+        run: |
+          for cli in rdocx rpptx; do
+            need=$(objdump -T ~/.local/share/rdocx-skills/current/bin/$cli | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)
+            echo "$cli needs $need"
+            test "$(printf '%s\nGLIBC_2.35\n' "$need" | sort -V | tail -n 1)" = GLIBC_2.35
+          done
+
       - name: The installed CLIs and modules run
         run: |
           bin=~/.local/share/rdocx-skills/current/bin
@@ -171,7 +180,8 @@ jobs:
         run: .github/scripts/poppler.sh
 
       - name: Acceptance suite on the files built here
-        run: python plugin/scripts/rdocx_env.py test --allow-local 2>&1 | tee "$RUNNER_TEMP/pytest.log"
+        # one worker per core, each file on one worker in order (the recipes of a file build on each other)
+        run: python plugin/scripts/rdocx_env.py test --allow-local -n auto --dist loadfile 2>&1 | tee "$RUNNER_TEMP/pytest.log"
 
       - name: Suite summary
         if: always()
@@ -322,30 +332,3 @@ jobs:
           gh release create "v$VERSION" assets/* -R "$GITHUB_REPOSITORY" --verify-tag --title "$TITLE" \
             --notes-file "$RUNNER_TEMP/notes.md" "${changes[@]}" --latest
           echo "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$VERSION" >> "$GITHUB_STEP_SUMMARY"
-
-      # Only the new release remains: every other release and its tag, and any other v* or rdocx-* tag (the build
-      # pre-releases this repository published before included), is deleted. A dry run lists them.
-      - name: Delete the older releases and tags
-        env:
-          DRY_RUN: ${{ inputs.dry_run }}
-        run: |
-          keep=" v$VERSION "
-          echo "Kept:$keep" >> "$GITHUB_STEP_SUMMARY"
-          drop() {
-            case "$keep" in *" $1 "*) return ;; esac
-            if [ "$DRY_RUN" = true ]; then echo "would delete $2 $1" >> "$GITHUB_STEP_SUMMARY"; return; fi
-            if [ "$2" = release ]; then
-              gh release delete "$1" -R "$GITHUB_REPOSITORY" --yes --cleanup-tag
-            else
-              gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$1"
-            fi
-            echo "deleted $2 $1" >> "$GITHUB_STEP_SUMMARY"
-          }
-          # no pipe: a failed listing stops the step here, before any tag is deleted as if it had no release
-          releases=$(gh release list -R "$GITHUB_REPOSITORY" --limit 1000 --json tagName --jq '.[].tagName')
-          releases=" $(echo $releases) "
-          for tag in $releases; do drop "$tag" release; done
-          # tags left without a release (`--cleanup-tag` took the others)
-          for tag in $(git ls-remote --tags --refs origin 'v*' 'rdocx-*' | sed 's#.*refs/tags/##'); do
-            case "$releases" in *" $tag "*) ;; *) drop "$tag" tag ;; esac
-          done
