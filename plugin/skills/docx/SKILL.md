@@ -8,7 +8,7 @@ description: "Use this skill whenever a Word file (.docx or .dotx) is involved, 
 rdocx reads and writes the OOXML package natively, keeps every part it does not touch byte for byte, and
 renders pages itself (no LibreOffice). One pinned build serves two interfaces: the `rdocx` CLI for whole-file
 operations and the `rdocx` Python module for anything finer. Use them for every .docx task. Most python-docx
-code runs as is; the rest raises or needs a rewrite (gap python-docx-names; `references/python-api.md`,
+code runs as is; the rest raises an error that names the rdocx way (`references/python-api.md`,
 "python-docx names"). The tool is young: the gaps that force another tool for one
 step are in `references/gaps.md`, and every new one you meet is reported (last section).
 
@@ -61,15 +61,13 @@ background).
 6. **Read what reviewers see**: `rdocx text`, `rdocx text --json` and `Paragraph.text` show the accepted view
    (tracked insertions in, deletions out), the body then every other story; `docx_ops.py text F` lists every
    paragraph with its part and style.
-7. **Verify after writing**: `docx_ops.py validate OUT` (`rdocx validate`, past a Word TOC: gap
-   docx-validate-paraid-in-content-control), re-read the text you changed (`rdocx diff IN OUT`), render the
+7. **Verify after writing**: `rdocx validate OUT`, re-read the text you changed (`rdocx diff IN OUT`), render the
    touched pages to PNG and look at them.
 8. **The file will be opened elsewhere** (Word, Google Docs, LibreOffice): keep what you do not understand,
    edit in place rather than rebuild, and read `references/interop.md` before touching fields, content
    controls, numbering or tracked changes.
-9. **Build lengths with `rdocx.Pt(...)`, `Inches(...)`, `Twips(...)`**: a bare int is EMU: `font.size = 12` raises, but
-   `space_after = 6` silently saves 0 (gap docx-bare-int-length-saved-as-zero); a line-spacing multiple is a float
-   (`2.0`).
+9. **Build lengths with `rdocx.Pt(...)`, `Inches(...)`, `Twips(...)`**: a bare int is EMU, so `font.size = 12`,
+   `space_after = 6` and a margin of `1440` raise; a line spacing of `2` (or `2.0`) is a multiple, a length is exact.
 10. **Embed a font only when its licence allows embedding.** `rdocx.FontEmbeddingLicense(authorized=True,
    identity="OFL-1.1: Example Sans")` is your statement that it does: rdocx checks nothing, not even `fsType`.
    OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not (`fsType` bit 0x0002: Restricted
@@ -85,7 +83,7 @@ background).
 | Counts, styles used, metadata | `rdocx inspect --json F`, `rdocx meta get/set F` | `doc.word_count()`, `doc.page_count()`, `doc.styles`, `doc.core_properties`, `doc.custom_properties` | |
 | Page of every block | `rdocx layout --json F` | `doc.layout()` | rdocx's pagination: confirm in Word |
 | Counted replacement | `docx_ops.py replace IN OUT --edit OLD NEW N` | `docx_ops.replace_batch` | crosses runs; `rdocx replace --expect N` does not check what it could not reach |
-| Fill a template or a form | `rdocx replace F --map pairs.json -o OUT`, `rdocx fill F --values v.json -o OUT` | `doc.render_template(data)`, `doc.bind_content_controls({tag: v})`, legacy fields | `--map`: pairs in order, each with its `expect`; controls: gap docx-content-control-value-like-word |
+| Fill a template or a form | `rdocx replace F --map pairs.json -o OUT`, `rdocx fill F --values v.json -o OUT` | `doc.render_template(data)`, `doc.bind_content_controls({tag: v})`, legacy fields | `--map`: pairs in order, each with its `expect`; controls: an unknown tag raises `KeyError` |
 | Replacement in one paragraph, cell or story item | | `p.replace_text(old, new, expect=1)`, `cell.replace_text(old, new, expect=1)`, `doc.replace_text_at(item, old, new, expect=1)` | a wrong count raises, nothing changed |
 | Regex replacement | `rdocx replace F --regex -p PATTERN -v '$1' --expect N -o OUT` | `doc.replace_all_regex_expected([(pattern, repl, n)])` | `$1` groups; a wrong count raises |
 | Paragraph after an anchor, same format | | `doc.clone_content(p, bi + 1)`, then set run texts | not comment anchors |
@@ -100,7 +98,7 @@ background).
 | Page setup, sections | | `doc.update_section(i, margin_top=rdocx.Inches(0.5), orientation="landscape")`, `doc.section(i).left_margin = rdocx.Inches(1)`, `doc.insert_section(i)` | `doc.sections` are read-only snapshots |
 | Pictures | `rdocx images extract F DIR` | `doc.add_picture(image, name, w, h, options=rdocx.PictureOptions(...))`, `run.add_picture(...)`, `doc.pictures()`, `doc.replace_image(rid, bytes)` | both sizes or neither; `replace_image` keeps the old size |
 | Hyperlinks | | `doc.hyperlinks`, `p.add_hyperlink(text, url)`, `p.add_internal_hyperlink(text, bookmark)`, `doc.add_heading_hyperlink(p, heading, text)`, `doc.remove_hyperlink(hyperlink)` | re-fetch `doc.hyperlinks` after a removal |
-| Headers, footers, page numbers, notes | | `doc.section(i).header.add_paragraph(t)`, `run.add_field("PAGE")`, `doc.add_footnote(p, text)` | a new header holds no paragraph; notes: gap docx-note-reference-and-removal |
+| Headers, footers, page numbers, notes | | `doc.section(i).header.add_paragraph(t)`, `run.add_field("PAGE")`, `doc.add_footnote(p, text)` | a new header holds no paragraph; `doc.remove_footnote(id)` removes a note after later edits |
 | Comments, replies, resolution | `docx_ops.py comment`; `rdocx comment list/reply/resolve/remove`, `--date` | `docx_ops.comment_on_text`, `reply_to(date=)`, `resolve_comment`, `remove_comment` | always date a comment |
 | What each comment points at, moving a thread | `rdocx comment list --json F` (`anchor_text`, `anchor`), `rdocx comment move F ID --text TEXT -o OUT` | `c.anchor_text`, `c.anchor` for `c in doc.comments`; `doc.move_comment(id, range)` | move a thread off a paragraph before deleting it |
 | Tracked changes | `rdocx revision list/accept/reject --id/--author/--start-date/--end-date` | `doc.revisions`, `accept_all()`, `reject_all()`, by id, author or dates | every story: `r.story.kind` |
@@ -111,13 +109,13 @@ background).
 | PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100 [--font-dir DIR]` | `doc.render_pages(dpi=, pages=[0, 1], font_dir=)` | CLI pages one-based, Python zero-based; `font_dir`: fonts not installed |
 | Markdown, HTML, ODT, RTF, EPUB | `rdocx convert F --to md -o NEW.md` / `--to html` | `doc.text()`, `doc.to_markdown()`, `to_html()`, `to_odt()`, `to_rtf()`, `to_epub()` | no comments; ODT, RTF and EPUB return `bytes` and the `diagnostics` of what they dropped |
 | New document from Markdown or HTML | `rdocx convert notes.md -o NEW.docx [--template brand.dotx]`, `rdocx convert page.html -o NEW.docx` | `rdocx.Document.from_markdown(text, template=, images=)`, `Document.from_html(html)`, `doc.insert_html(html, after=p)` | each returns what it dropped: read it |
-| Charts | | `doc.add_chart(rdocx.XL_CHART_TYPE.COLUMN_CLUSTERED, data, w, h, after=p)`, `doc.set_chart_legend(p, visible=True, position="b")` | data as in python-pptx (`rdocx.CategoryChartData`); gap docx-chart-read-back |
+| Charts | | `doc.add_chart(rdocx.XL_CHART_TYPE.COLUMN_CLUSTERED, data, w, h, after=p)`, `doc.set_chart_legend(p, visible=True, position="b")` | data as in python-pptx (`rdocx.CategoryChartData`); `doc.charts` reads them back |
 | Embedded fonts | `rdocx font list/embed/remove/settings` | `doc.fonts`, `doc.embed_font(name, file, "regular", license=...)`, `remove_embedded_font(name, kind)` | rule 10 |
 | Validity | `rdocx validate F` | `doc.validate()` | every related part and every style id (rule 7) |
 | Sign, check signatures | `rdocx sign F --key K.pem --cert C.pem -o OUT`, `rdocx verify-signatures --json F` | `doc.sign(key, cert)`, `doc.verify_signatures()` | sign last: an edit breaks it; no chain trust |
 | What changed between two files | `rdocx diff A B` | | by paragraph, in every story |
 | New document | | `rdocx.Document()`, or a template .docx or .dotx emptied | Word's usual styles; a .dotx saved as .docx becomes a document |
-| Combine documents, equations, a missing feature | | `doc.insert_document(other, at=bi)`, `doc.import_fragment(location, fragment)`; `p.add_equation(latex, format="latex")`; `p.xml` / `p.replace_xml(xml)` | raw XML, the way out instead of lxml: gap docx-raw-xml-unchecked |
+| Combine documents, equations, a missing feature | | `doc.insert_document(other, at=bi)`, `doc.import_fragment(location, fragment)`; `p.add_equation(latex, format="latex", display=False)`; `p.xml` / `p.replace_xml(xml)` | raw XML, the way out instead of lxml: an element Word does not know raises |
 
 Commands and full signatures: `references/cli.md`, `references/python-api.md` (and the `.pyi` stubs it
 points to). Worked, tested examples for each row: `references/recipes.md`. Ready-made commands:

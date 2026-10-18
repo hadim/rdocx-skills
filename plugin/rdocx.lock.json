@@ -1,7 +1,7 @@
 {
   "upstream": "https://github.com/tensorbee/rdocx",
   "source": "git",
-  "commit": "d44a69af2c6e583fad68bfe0b8d4690c830da78d",
+  "commit": "7496a81cd355acae88a10728aeba509de5d1ff2b",
   "ref": "main",
   "release": "",
   "versions": {},

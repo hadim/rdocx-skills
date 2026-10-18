@@ -26,7 +26,7 @@ record: `output`, `scope` and the result (`comment_id`, `main_story_revisions`, 
 | `rdocx comment list [--json] F` | `comments`: `id`, `author`, `initials`, `date`, `text`, `parent_id`, `resolved`, in package order; with `--json` also `anchor_text` (the accepted-view text the comment covers, paragraphs joined with a newline; null for a reply), `anchor` (`start` and `end`, each with `story_kind`, `part_name`, `owner_index`, `item_kind`, `index_path`, `direct_body_index` and `run_index`, end exclusive; null for a reply) |
 | `rdocx revision list [--json] F` | `revisions`: `id`, `kind` (insertion, deletion, paragraph_property_change, run_property_change, section_property_change, ...), `author`, `timestamp`, `story` (`kind`, `part_name`, `owner_index`): every supported story |
 | `rdocx diff A B [--json] [--exit-code]` | paragraphs that differ in every story, `-` and `+` lines, each labelled with its body position or its story (`[4]`, `[header default, section 1, paragraph 1]`), with the paragraph and table counts of each file. `--json`: `differences` (`change`, `story`, `location_a`, `location_b`, `text_a`, `text_b`) with `added`, `removed`, `changed` counts. Exit 0 whether or not they differ, unless `--exit-code`: 1 when they differ, as `diff` does |
-| `rdocx validate F` | package and schema invariants: every XML part the main document relates to must be well formed (a truncated header fails, naming the part), and every paragraph, character or table style id used by the body, headers, footers, notes and comments must be defined; a comment with no range and no reference anywhere is an error too (`invalid comment ownership: comment N is an orphan root with no source range or reference`, exit 1, on stdout). Warnings (empty paragraphs, a paragraph holding only a picture not counted; missing title or author) keep exit 0. A paragraph with `w14:paraId` inside a block content control, as Word writes a table of contents, makes it exit 1 with "main document paragraph owners do not match validation scope" (gap docx-validate-paraid-in-content-control) |
+| `rdocx validate F` | package and schema invariants: every XML part the main document relates to must be well formed (a truncated header fails, naming the part), and every paragraph, character or table style id used by the body, headers, footers, notes and comments must be defined; a comment with no range and no reference anywhere is an error too (`invalid comment ownership: comment N is an orphan root with no source range or reference`, exit 1, on stdout). Warnings (empty paragraphs, a paragraph holding only a picture not counted; missing title or author) keep exit 0. A Word table of contents (paragraphs with `w14:paraId` inside a block content control) validates |
 
 ## Editing
 
@@ -63,8 +63,9 @@ unresolved), SEQ, REF, FILENAME and the others, then the page fields from rdocx'
 legacy form field names (`{"client": "Acme", "Status": "Final", "Signer": "Jane Doe", "Agree": true, "Tier": 1}`): a
 control takes a string (`"true"` ticks a check box), a legacy text field a string, a legacy check box `true` /
 `false`, a legacy drop-down the index of its entry; `--json` lists each key's `target_kind` and `count`. A key that
-names no field or several, or a value of the wrong kind, exits 1 and writes nothing; a control's value is written
-as given, placeholder flag kept (gap docx-content-control-value-like-word). `meta set` writes the core properties it is given and custom
+names no field or several, or a value of the wrong kind, exits 1 and writes nothing; a control takes its value as Word
+does: the placeholder flag goes, a date control gets `w:fullDate`, a drop-down takes one of its items (value or display
+text). `meta set` writes the core properties it is given and custom
 properties (`--custom` repeatable, `TYPE` one of `str`, `int`, `float`, `bool`, `filetime`
 (`2026-10-31T00:00:00Z`), `empty`: `Client=str:Acme`, `Count=int:4`); `meta get --json` prints them all
 (`core`, `custom` with `name`, `type`, `value`). `images extract` writes each picture part once into `DIR`

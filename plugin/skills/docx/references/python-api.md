@@ -7,10 +7,10 @@ are in the type stubs, `rdocx/_rdocx.pyi` next to the installed module (`$R/pyth
 print(os.path.dirname(rdocx.__file__))"`).
 
 **Lengths are EMU integers: build every one with `rdocx.Pt(12)`, `rdocx.Inches(1)`, `rdocx.Cm(2)`,
-`rdocx.Mm(5)`, `rdocx.Twips(1440)` or `rdocx.Emu(n)`.** A bare int is taken as EMU: `font.size = 12` raises
-`ValueError`, but `space_after = 6`, `character_spacing = 2` and a margin of 1440 silently save as about 0, and
-`line_spacing = 2` an exact spacing of 0 (gap docx-bare-int-length-saved-as-zero); a line spacing multiple is a float
-(`2.0`). Each length has `.pt`,
+`rdocx.Mm(5)`, `rdocx.Twips(1440)` or `rdocx.Emu(n)`.** A bare int is taken as EMU, so one that would store 0 raises
+`ValueError` naming the unit: `font.size = 12`, `space_after = 6`, `character_spacing = 2`, and
+`update_section(0, margin_top=1440)` (write `rdocx.Twips(1440)`). `line_spacing = 2` (or `2.0`) is a multiple of the
+line, a length is exact. Each length has `.pt`,
 `.inches`, `.cm`, `.mm`, `.emu`, `.twips`, and widths, margins and sizes read back as `rdocx.Length`, the int
 subclass they share. Colours: an `rdocx.RGBColor(r, g, b)` (or `RGBColor.from_string("7B1E3A")`), a hex string
 with or without `#`, or an `(r, g, b)` triple; they read back as an `RGBColor` (a tuple whose `str()` is the
@@ -23,23 +23,21 @@ met); lookups by text raise `ValueError`, refused options `ValueError` or `Rdocx
 These python-docx calls work as they do there: `doc.add_heading(text, level)` (level 0 is Title), `add_paragraph(text="",
 style=None)` (a style the document has: a new one lacks List Bullet and List Number, below), `add_table(rows, cols, style=None)`, `doc.add_page_break()`, `p.insert_paragraph_before(text, style=None)`
 (an insert: it retires every handle), `run.bold` / `italic` / `underline`, `run.add_break(WD_BREAK.PAGE)`,
-`font.highlight_color = WD_COLOR_INDEX.YELLOW` (`rdocx.enum.text`), `WD_SECTION` and `WD_ORIENT` (alias
+`font.highlight_color = WD_COLOR_INDEX.YELLOW` (`rdocx.enum.text`), `font.color.type == MSO_COLOR_TYPE.RGB`
+(`rdocx.enum.dml`), `doc.custom_properties["k"] = v` (and `del`, `in`), `WD_SECTION` and `WD_ORIENT` (alias
 `WD_ORIENTATION`, `rdocx.enum.section`), and a binary stream for `Document(f)`, `save(f)` and `add_picture(f)`. These
-need a rewrite; the ones marked "raises" fail with an error naming the rdocx way, the others with a bare
-`AttributeError` or `TypeError` (gap python-docx-names):
+need a rewrite; the ones marked "raises" fail with an error that names the rdocx way:
 
 | python-docx | rdocx |
 |---|---|
-| `add_paragraph(text, style="List Bullet")`, `style="List Number"` (`KeyError` on a new document) | `doc.add_bullet_list_item(text)`, `doc.add_numbered_list_item(text)`, or a template that has those styles |
+| `add_paragraph(text, style="List Bullet")`, `style="List Number"` (raises `KeyError` on a new document) | `doc.add_bullet_list_item(text)`, `doc.add_numbered_list_item(text)`, or a template that has those styles |
 | `table.add_column(w)`, `table.columns` (raise) | `t.insert_column(i, before=False)` then `t.set_column_width(i + 1, w)`; `len(t.rows[0].cells)` |
-| `font.color.type == MSO_COLOR_TYPE.RGB` | `font.color.type == "rgb"` (`"theme"`...) |
-| `doc.sections[i].header` (raises), `section.left_margin = x`, `doc.add_section(WD_SECTION.NEW_PAGE)` (raises) | `doc.section(i).header`, `doc.section(i).left_margin = x` (or `update_section`), `doc.insert_section(i)` |
+| `doc.sections[i].header`, `section.left_margin = x`, `doc.add_section(WD_SECTION.NEW_PAGE)` (raise) | `doc.section(i).header`, `doc.section(i).left_margin = x` (or `update_section`), `doc.insert_section(i)` |
 | a new header's `paragraphs[0]` | `doc.section(i).header.add_paragraph(text)`: a new header holds no paragraph |
 | `doc.styles["Normal"]` (raises), and changing it | `next(s for s in doc.styles if s.name == "Normal")` (a snapshot); `doc.set_style("Normal", font_size=rdocx.Pt(11))` |
-| `tab_stops[i].alignment = ...` | `del tab_stops[i]`, then `add_tab_stop(position, alignment, leader)` |
-| `doc.custom_properties["k"] = v` | `custom_properties.set("k", v)`, `.get("k")`, `.delete("k")` |
+| `tab_stops[i].alignment = ...` (raises) | `del tab_stops[i]`, then `add_tab_stop(position, alignment, leader)` |
 | `add_picture` with a width alone (raises) | both sizes, `add_picture(image, filename, w, h)` (`docx_ops.image_size` gives the ratio), or neither (the image's own size) |
-| `paragraph._p`, `run._r` | `paragraph.xml` and `replace_xml(xml)` ("Raw XML") |
+| `paragraph._p`, `run._r` (raise) | `paragraph.xml` and `replace_xml(xml)` ("Raw XML") |
 
 ## Three index spaces
 
@@ -79,8 +77,8 @@ retires:
 Re-navigate from `doc` after an edit (`doc.paragraphs[i].runs[j]`, `doc.tables[t].cell(r, c)`,
 `doc.section(i).header`, `doc.story_items`): `doc.paragraphs[2].runs[0].font.bold = True` always works, a run
 held across an append does not. When in doubt, re-fetch: a retired handle always raises, it never points at
-the wrong element. A note's handle cannot be fetched again (gap docx-note-reference-and-removal): finish with
-it before the next edit.
+the wrong element. A note's handle cannot be fetched again: finish with
+it before the next edit, or remove the note later by its `id` (`doc.remove_footnote(id)`).
 
 Collect a table's cells once, then edit them: `cell.text = ...` keeps rows and cells valid, and walking
 `table.rows` and `row.cells` costs time that grows with the square of the document on this build (400 cells in
@@ -90,7 +88,7 @@ a short document: 3 s; 1,600 cells: 50 s; tensorbee/rdocx#378). Re-walk only aft
 
 | Member | Notes |
 |---|---|
-| `Document()`, `Document(path or stream)`, `Document.open(path or stream)`, `Document.from_bytes(b)`, `doc.to_bytes()`, `doc.save(path or stream)` | a stream is a binary file object (`io.BytesIO`, `open(f, "rb")`). A new document has Word's usual styles (Normal, Title, Subtitle, Heading 1 to 9, No Spacing, Quote, List Paragraph, Caption, Table Grid). `save` writes the package class its extension names (a .dotx saved as .docx becomes a document), and any other extension too: `save("x.pdf")` writes a DOCX under that name (gap docx-invalid-values-accepted), so convert with `to_pdf()`. `docx_ops.save_atomic(doc, out, src)` also refuses the input |
+| `Document()`, `Document(path or stream)`, `Document.open(path or stream)`, `Document.from_bytes(b)`, `doc.to_bytes()`, `doc.save(path or stream)` | a stream is a binary file object (`io.BytesIO`, `open(f, "rb")`). A new document has Word's usual styles (Normal, Title, Subtitle, Heading 1 to 9, No Spacing, Quote, List Paragraph, Caption, Table Grid). `save` writes the package class its extension names (a .dotx saved as .docx becomes a document), and any other extension too, but `save("x.pdf")` raises `ValueError`: convert with `to_pdf()`. `docx_ops.save_atomic(doc, out, src)` also refuses the input |
 | `Document.from_markdown(text, *, template=None, images=())`, `Document.open_markdown(path, *, template=None, images=())` → `(Document, diagnostics)` | CommonMark with GitHub tables and strikethrough: headings get Heading N, lists numbering, tables a header row, links hyperlinks, images inline pictures scaled to the text column, block quotes Quote, code HTML Preformatted. Images come from `images=[(name, data, content_type), ...]` only (`[("pic.png", data, "image/png")]` for `![x](pic.png)`), not from the disk: `rdocx convert` reads the files next to the input. `template` is a `Document` or a path whose styles, numbering, headers and footers the new one takes. Each `HtmlDiagnostic` (`location` such as `"bytes 0..23"`, `message`) names what was dropped or approximated |
 | `Document.from_html(html, *, images=())`, `Document.open_html(path, *, images=())` → `(Document, diagnostics)`, `doc.insert_html(html, *, after=paragraph, images=())` → diagnostics | HTML the same way: safe links and data-URI images kept (a `javascript:` link loses its target), `insert_html` after a body `Paragraph` (required: `doc.paragraphs[-1]` for the end). Each `HtmlDiagnostic` has `location` (`html/body/p[1]/a[2]`), `message` and the CSS `property` it is about, or None. Both importers keep a space before or after an underlined, struck, bold or italic span outside it, collapse spaces on both sides of a span edge into one (`a <s>b </s> c` reads `a b c`), and keep `&nbsp;` |
 | `paragraphs`, `tables`, `sections`, `styles`, `stories`, `story_items`, `header_footer_variants`, `hyperlinks`, `comments`, `revisions`, `bookmarks`, `fonts` | read-only collections (sections and styles are tuples of snapshots; `revisions` covers every story, `r.story.kind`) |
@@ -99,8 +97,8 @@ a short document: 3 s; 1,600 cells: 50 s; tensorbee/rdocx#378). Re-walk only aft
 | `add_style(name, style_type="paragraph", *, style_id=None, based_on=None, next_style=None, font_name=, font_size=, bold=, italic=, color=, space_before=, space_after=, left_indent=, right_indent=, first_line_indent=, underline=, alignment=, line_spacing=, keep_with_next=, keep_together=, page_break_before=, shading=, borders=, tab_stops=)` → `Style` | as python-docx's `styles.add_style`: unless given, the id keeps the letters, digits and hyphens of the name (`"Note box"` → `Notebox`). `based_on` and `next_style` take an id or a name. Lengths and `font_size` in EMU (`rdocx.Pt(11)`); `line_spacing` a float multiple or a length; `borders` maps an edge to `(style, eighths of a point, colour)`, `tab_stops` lists `(position, WD_TAB_ALIGNMENT, WD_TAB_LEADER or None)`. `KeyError` for an unknown base, `ValueError` for a duplicate or for paragraph keywords on a character style |
 | `set_style(style, *, based_on=, ...)` → `Style`, the keywords of `add_style` | changes an existing style, chosen by id or name; what it is not given keeps its value; `borders` sets the edges it names (the others stay), `tab_stops` replaces the whole set. It cannot remove a theme font or a theme colour the style already has, which Word keeps using over `font_name` / `color`. `KeyError` for an unknown style, and on any error the document is left unchanged |
 | `remove_style(style)` → bool, `set_default_style(style)`, `default_font_name`, `default_font_size` (get and set) | the default font writes `w:docDefaults`; styles that set their own font, such as headings, keep it |
-| `add_bullet_list_item(text, level=0)`, `add_numbered_list_item(text, level=0)` → `Paragraph` | append to the document's plain bullet or decimal list, continuing the last body paragraph on it. No restart (gap docx-list-numbering-options): a new count is a new instance, below |
-| `add_numbering_definition([rdocx.ListLevel(format="decimal", text="%1.", start=1, left_indent=, hanging_indent=), ...])` → definition id, `ListLevel.checklist(checked=False)`, `add_numbering_instance(definition_id, *, start=None, level=0)` → `num_id`, `link_style_to_numbering(style, num_id, level)` | a custom list: define its levels once, make an instance (`start` writes a `w:startOverride`), then `paragraph.numbering = (num_id, level)` or link a style to it. `checklist` gives a ballot-box level |
+| `add_bullet_list_item(text, level=0)`, `add_numbered_list_item(text, level=0, *, restart=False)` → `Paragraph`, `restart_numbering(paragraph, *, start=1)` → `num_id` | append to the document's plain bullet or decimal list, continuing the last body paragraph on it; `restart=True` starts a new count at 1 (Word's Restart at 1), and the items added after it continue that count. `restart_numbering` gives that one paragraph a new instance counting from `start`: put the next items on the `num_id` it returns (`p.numbering = (num_id, level)`) |
+| `add_numbering_definition([rdocx.ListLevel(format="decimal", text="%1.", start=1, left_indent=, hanging_indent=, font=), ...])` → definition id, `ListLevel.checklist(checked=False)`, `add_numbering_instance(definition_id, *, start=None, level=0)` → `num_id`, `link_style_to_numbering(style, num_id, level)` | a custom list: define its levels once, make an instance (`start` writes a `w:startOverride`), then `paragraph.numbering = (num_id, level)` or link a style to it. `checklist` gives a ballot-box level; `font="Symbol"` sets the font of a level's number or bullet |
 | `add_paragraph(text="", style=None)`, `insert_paragraph(bi, text, style=None)`, `add_heading(text="", level=1)`, `add_page_break()` → `Paragraph`, `add_table(rows, cols, style=None)`, `insert_table(bi, rows, cols)` → `Table` | append or insert at body index `bi`; `style` an id or a name (`KeyError` when the document lacks it); `add_heading` uses Title for level 0, Heading N otherwise |
 | `add_picture(image, filename=None, width=None, height=None, *, after=None, options=None)` → `Picture` | a picture in a new paragraph at the end of the body, or after a `StoryItem` or `Picture`. `image`: bytes, a path or a binary stream. Both sizes or neither (the image's own size); one alone raises `RdocxError`. `options=rdocx.PictureOptions(description=, title=, decorative=False, name=, crop=(left, top, right, bottom), placement="inline", horizontal_relative_from="page", vertical_relative_from="page", horizontal_offset=, vertical_offset=, horizontal_alignment=, vertical_alignment=, distances=, relative_height=)`: `description` is the alt text, `decorative=True` marks it decorative, `crop` in fractions, `placement` `inline` / `square` / `tight` / `top_and_bottom` / `behind` / `in_front`, alignments such as `"right"` or `"top"`, offsets in EMU, `relative_from` such as `"margin"` or `"paragraph"` (`ValueError` for an unknown one) |
 | `pictures()` → tuple of `Picture` (`relationship_id`, `name`, `description`, `title`, `decorative`, `anchored`, `width`, `height`, `content_type`, `bytes`, `media_part_name`, `external_url`, `story`, `occurrence`, `location`), `set_picture_size(picture, width, height)`, `set_picture_sizes_for_relationship(rid, width, height)` → count | every picture of the body, table cells, headers and footers (`story.kind`); a `Picture` resizes that picture only, a relationship id every picture showing it |
@@ -116,16 +114,16 @@ a short document: 3 s; 1,600 cells: 50 s; tensorbee/rdocx#378). Re-walk only aft
 | `replace_text_at(item, old, new, *, expect=None)` → int | the same replacement in one `StoryItem` only (`doc.story_items`): a body paragraph or table, a table cell's paragraph, a header, footer or footnote paragraph. A Word text box: both its copies (DrawingML and the VML fallback) are edited and counted once; copies that differ raise `RdocxError`, nothing changed. For one body paragraph or cell, `Paragraph.replace_text` and `Cell.replace_text` |
 | `bookmarks` → tuple of `Bookmark` (`id`, `name`, `text`, `range`, `direct_range`, `issue`), `add_bookmark(name, range)` → id | `add_bookmark` takes a body `RunRange`; `direct_range` gives it back that way (None for a bookmark in a table cell or a content-control block), `range` counts paragraphs through tables; `issue` describes a broken marker, None otherwise |
 | `set_header(text)`, `set_footer(text)`, `add_hyperlink_to_story(story, text, url)` | `set_header` / `set_footer` replace the default story's content (fields included); a comment anchored only in the replaced header or footer goes with it, replies included |
-| `add_footnote(reference, text="")`, `add_endnote(reference, text="")` → `FootnoteEndnote` (`id`, `paragraphs`, `tables`, `add_paragraph(text)`, `add_table(r, c)`, `delete()`), `set_note_policy(family, *, format="decimal", start=None, restart="continuous", placement=None)` | `reference` is a body paragraph or its last run: the reference ends it. `family` `"footnote"` / `"endnote"`, `format` `decimal`, `upperRoman`, `lowerRoman`, `upperLetter`, `lowerLetter`; `doc.section(i).set_note_policy` for one section. The reference is written unstyled, and the handle is the only way to delete a note (gap docx-note-reference-and-removal) |
+| `add_footnote(reference, text="")`, `add_endnote(reference, text="")` → `FootnoteEndnote` (`id`, `paragraphs`, `tables`, `add_paragraph(text)`, `add_table(r, c)`, `delete()`), `remove_footnote(id)`, `remove_endnote(id)`, `set_note_policy(family, *, format="decimal", start=None, restart="continuous", placement=None)` | `reference` is a body paragraph or its last run: the reference ends it. `family` `"footnote"` / `"endnote"`, `format` `decimal`, `upperRoman`, `lowerRoman`, `upperLetter`, `lowerLetter`; `doc.section(i).set_note_policy` for one section. The reference takes Word's `FootnoteReference` / `EndnoteReference` style; `remove_footnote(id)` removes a note by the `id` its handle had, after any later edit |
 | `set_page_color("FDF6E3")`, `set_text_watermark(text)`, `set_image_watermark(data, filename, width, height)`, `doc.section(i).set_page_border(edge, *, style="single", width=8, space=0, color="000000")`, `doc.section(i).remove_watermark()` | page colour: six hex digits, no `#`, writes `w:background` and turns on its display (no getter); watermarks are VML shapes in the headers (Google Docs drops them), `doc.section(i).set_text_watermark(text, width=, height=, font_size=, rotation=, color=, opacity=)` for one section; a page border per edge `top`, `left`, `bottom`, `right`, `width` in eighths of a point |
 | `text()`, `text_report()` → `TextReport` (`text`, `scope`, `diagnostics`: `TextDiagnostic`), `to_markdown()`, `to_html()` (str), `to_odt()` → `OdtExportResult`, `to_rtf()` → `RtfExportResult`, `to_epub()` → `EpubExportResult` (each `bytes`, `diagnostics`) | `text()` is what `rdocx text` prints (body, then the other stories), Markdown and HTML what `convert` writes. What a format cannot hold is a diagnostic of the result (`OdtDiagnostic` and `EpubDiagnostic`: `path`, `message`; `RtfDiagnostic`: `offset`, `destination`, `message`): read them |
 | `word_count()`, `character_count(*, include_spaces=True)`, `page_count(*, font_dir=None)` | body and tables, as Word counts them; pages from rdocx's layout |
-| `validate()` → `ValidationReport` (`is_valid`, `findings`: `ValidationFinding` `severity` `"error"` / `"warning"`, `message`), `rdocx.validate_file(path)`, `rdocx.validate_bytes(data)` | the checks of `rdocx validate`, on the document as it would be saved now, or on a file that may not even open (a truncated part is an error naming it). A Word table of contents makes it raise (gap docx-validate-paraid-in-content-control) |
+| `validate()` → `ValidationReport` (`is_valid`, `findings`: `ValidationFinding` `severity` `"error"` / `"warning"`, `message`), `rdocx.validate_file(path)`, `rdocx.validate_bytes(data)` | the checks of `rdocx validate`, on the document as it would be saved now, or on a file that may not even open (a truncated part is an error naming it) |
 | `sign(private_key, certificate)` → report, `verify_signatures()` → tuple of reports | a package signature over every part and relationship, written by the next `save`: `private_key` and `certificate` are the bytes of a PKCS#8 RSA key and an X.509 certificate (DER or one unencrypted PEM block each). A report is a dict: `signature_part`, `signer` (`subject`, `issuer`, `serial_number`), `cryptographically_valid`, `coverage_complete`, `covered_parts`, `covered_relationships`, `issues` (`kind` such as `changed_reference`, `details`); `verify_signatures()` checks the document as it is now (an empty tuple when unsigned), so any edit after signing shows. A signed package or one with external relationships raises `PackageError`. Certificate trust is not checked (`references/cli.md`, Signatures) |
 | `render_template(data)` → tag count | `{{ path.to.value }}` tags (across runs, first run's format) and `{% for x in path %}` / `{% if path %}` blocks, each marker alone in its paragraph, closed by `{% endfor %}` / `{% endif %}`. Values render as JSON writes them: pass formatted strings. A missing path raises `RdocxError` naming the tag, nothing changed |
 | `insert_document(other, *, at, policy=None)`, `import_fragment(destination, fragment, *, policy=None)`, `DocumentFragment.from_range(document, start, end)` | the body of another document before body index `at` (`len(doc.paragraphs) + len(doc.tables)` for the end of a plain body), with its styles, lists, pictures and links; or the body items of `other` from `start` up to `end` excluded, both `ContentLocation(story, "paragraph", [i])` on `other`'s body story (`next(s for s in other.stories if s.kind == "body")`), imported at a `ContentLocation` of `doc` (`ContentLocation.end(story)` for the end). `policy=rdocx.FragmentConflictPolicy.rename_all()` renames every style instead of reusing identical ones (`reuse_equivalent()`, the default; `.with_style_reuse(False)`...). Headers, footers and page setup of `other` are not copied |
-| `custom_properties` → `CustomProperties` (`get(name)` → `CustomProperty` or None, `set(name, value)`, `delete(name)` → bool), `app_properties` → `AppProperties`, `settings` → `Settings` | custom properties: `value` str, int, float, bool or `rdocx.CustomFileTime("2026-10-31T00:00:00Z")` for a date; `CustomProperty` has `name`, `type` (`lpwstr`, `i4`, `r8`, `bool`, `filetime`...) and `value`; no listing in Python (`rdocx meta get --json` lists them), no `[k]` (gap python-docx-names); Google Docs drops them. App properties: `company`, `manager`, `template`, `application` (get and set), `pages`, `words`, `characters`, `characters_with_spaces`, `lines`, `paragraphs` (read-only). Settings: `track_revisions`, `odd_and_even_pages_header_footer` (get and set) |
-| `content_controls()` → tuple of `ContentControl` (`tag`, `alias`, `id`, `type`, `text`), `set_content_control_value_by_tag(tag, value)`, `set_content_control_value_by_alias(alias, value)` → count, `fill_content_control_tags([(tag, value), ...])` → counts | body controls; `type` such as `plain_text`, `rich_text`, `dropdown_list`, `combo_box`, `date`, `checkbox` (`"true"` / `"false"` ticks a box). Check the count: 0 means no control has that tag. The placeholder flag stays, a date gets no `w:fullDate` and a drop-down takes any text (gap docx-content-control-value-like-word) |
+| `custom_properties` → `CustomProperties` (`get(name)` → `CustomProperty` or None, `set(name, value)`, `delete(name)` → bool), `app_properties` → `AppProperties`, `settings` → `Settings` | custom properties: `value` str, int, float, bool or `rdocx.CustomFileTime("2026-10-31T00:00:00Z")` for a date; `CustomProperty` has `name`, `type` (`lpwstr`, `i4`, `r8`, `bool`, `filetime`...) and `value`; `custom_properties[name] = value`, `del custom_properties[name]` and `name in custom_properties` work as on a dict, but nothing lists them and `[name]` does not read (gap docx-custom-properties-not-listed: `rdocx meta get --json` lists them); Google Docs drops them. App properties: `company`, `manager`, `template`, `application` (get and set), `pages`, `words`, `characters`, `characters_with_spaces`, `lines`, `paragraphs` (read-only). Settings: `track_revisions`, `odd_and_even_pages_header_footer` (get and set) |
+| `content_controls()` → tuple of `ContentControl` (`tag`, `alias`, `id`, `type`, `text`), `set_content_control_value_by_tag(tag, value)`, `set_content_control_value_by_alias(alias, value)` → count, `fill_content_control_tags([(tag, value), ...])` → counts | body controls; `type` such as `plain_text`, `rich_text`, `dropdown_list`, `combo_box`, `date`, `checkbox` (`"true"` / `"false"` ticks a box). An unknown tag or alias raises `KeyError`. As Word does, the placeholder flag goes, a date control gets `w:fullDate`, and a drop-down takes one of its items, by value or display text, and shows the display text (another value raises `ValueError` naming the items) |
 | `bind_content_controls({key: value, ...})` → count, `legacy_form_fields()` → tuple of `LegacyFormField` (`name`, `type` `"text"` / `"checkbox"` / `"dropdown"`, `value`, `choices`, `enabled`, `calculate_on_exit`, `source_part`, `ordinal`), `set_legacy_form_field_value(name, value, *, source_part=None, ordinal=None)` → `LegacyFormField` | `bind_content_controls` sets body controls by tag or alias in one call, as `rdocx fill --values` does (0 when no key matches: check the count). Legacy fields are Word's older form fields (`FORMTEXT`, `FORMCHECKBOX`, `FORMDROPDOWN`): a text field takes a str, a check box a bool, a drop-down the index of one of its `choices`; an unknown name raises `ValueError`, an index out of range `XmlError`; `source_part` and `ordinal` pick one of several fields sharing a name |
 | `set_hyperlink_url(hyperlink, url)`, `remove_hyperlink(hyperlink)` | `hyperlink` from `doc.hyperlinks`. Removal keeps the text. After a removal or an added link, the older entries of that story raise `RdocxError`: re-fetch `doc.hyperlinks` |
 | `image_data(rid)`, `replace_image(rid, bytes)`, `replace_image_for_story(story, rid, bytes)` | the relationship id is the `r:embed` of the picture (`Picture.relationship_id`). `replace_image` keeps the old extent |
@@ -153,9 +151,10 @@ same x values). `chart_type` is a `rdocx.XL_CHART_TYPE`: `COLUMN_CLUSTERED`, `LI
 `RADAR`, `XY_SCATTER`. Invalid data raises and changes nothing (one number format per chart).
 `doc.chart_legend(paragraph)` → `{"visible": bool, "position": "r", "overlay": bool}` and
 `doc.set_chart_legend(paragraph, *, visible=None, position=None, overlay=None)` read and set the legend of the
-chart in that paragraph (positions `r`, `l`, `t`, `b`, `tr`; a new chart has none: `visible=True` adds it). A
-Word document's charts are not read back (gap docx-chart-read-back) and their data is not replaced (rpptx's
-`Chart.replace_data` is for decks).
+chart in that paragraph (positions `r`, `l`, `t`, `b`, `tr`; a new chart has none: `visible=True` adds it). `doc.charts`
+→ tuple of `Chart` reads every chart back: `chart_type` (python-pptx's `XL_CHART_TYPE` value as an int, None for a
+kind rdocx cannot name), `categories`, `series` (`CategorySeriesData`: `name`, `values`). Their data is not replaced
+(rpptx's `Chart.replace_data` is for decks).
 
 ## Fonts
 
@@ -195,14 +194,16 @@ delivered file in Word when multiple faces of one family matter.
   `\lim` and `\,` thin spaces; what it drops is a diagnostic. `equations()` → `Equation` (`is_display`,
   `to_latex()`, `to_mathml()` → an `EquationConversionResult` whose `equations` are `MathConversionResult`s:
   `equations[0].value` is the text, normalized (`E = mc^2` reads back `E=m{c}^{2}`), with
-  `MathConversionDiagnostic`s (`path`, `message`) for what did not convert). Body and table-cell paragraphs. No display equation (gap docx-display-equation).
+  `MathConversionDiagnostic`s (`path`, `message`) for what did not convert). Body and table-cell paragraphs. `display=True` writes a display equation (`m:oMathPara`, on its own line;
+  `is_display` reads True).
 - `ParagraphFormat`: `space_before`, `space_after`, `line_spacing` (a float is a multiple, `2.0` double
   spacing; a length is exact), `left_indent`, `right_indent`, `first_line_indent`, `keep_with_next`,
   `keep_together`, `page_break_before`, `widow_control`, `alignment`, `outline_level` (0 to 9), `rtl`,
   `shading` (fill), `set_border(edge, style, *, size, color)`, `border(edge)` → `(style, size, RGBColor)` or
   None, `clear_border(edge)`, `clear_borders()` (edges `top`, `bottom`, `left`, `right`, `between`, `bar`),
   `tab_stops` (`add_tab_stop(position, alignment=WD_TAB_ALIGNMENT.LEFT, leader=WD_TAB_LEADER.SPACES)` keeps
-  position order; `tab_stops[i]` is a read-only `TabStop` with `position`, `alignment`, `leader`; `del
+  position order; `tab_stops[i]` is a read-only `TabStop` with `position`, `alignment`, `leader` (setting one raises); a second stop at
+  one position raises `ValueError`; `del
   tab_stops[i]`, `clear_all()`, `len`). None means inherited; assigning None clears a direct value.
 - `Run`: `text` (settable), `font`, `style_id`, `remove()`, `add_tab()` (a tab at the end of the run),
   `add_break(kind="line")` (`"page"`, `"column"`), `add_field(instruction, cached_result="")` (a simple field
@@ -214,9 +215,9 @@ delivered file in Word when multiple faces of one family matter.
   `double_strike`, `all_caps`, `small_caps` (written, not drawn by rdocx's renderer), `hidden`,
   `superscript` / `subscript` (python-docx's tri-state: setting one False clears only itself),
   `character_spacing` (a length, negative condenses), `highlight` (Word colour name: `"yellow"`, `"green"`,
-  ..., `"none"`), `language`, `language_east_asia`, `language_bidi` (tags such as `"fr-FR"`, unchecked: gap docx-invalid-values-accepted),
+  ..., `"none"`), `language`, `language_east_asia`, `language_bidi` (BCP 47 tags such as `"fr-FR"`; a malformed one raises `ValueError`),
   `name_east_asia`, `name_complex_script` (fonts that `name` also sets), `rtl`, `color` (a `ColorFormat`:
-  `rgb`, `type` `"rgb"` / `"theme"` / `"auto"` or None, `theme_color` read as a string such as `"accent1"`,
+  `rgb`, `type` an `rdocx.enum.dml.MSO_COLOR_TYPE` (`RGB`, `THEME`, `AUTO`) or None, `theme_color` read as a string such as `"accent1"`,
   set as a string or `rdocx.MSO_THEME_COLOR.ACCENT_1`; `font.color = ...` is a shortcut for
   `font.color.rgb = ...`, None removes the colour), `shading` (fill, `RGBColor` or None). None means
   inherited, and assigning None clears the run's own value (bold, size, highlight...), so it takes the style's
@@ -275,8 +276,8 @@ section's `w:sectPr`. Start from `xml` and change it: every prefix the replaceme
 (`xml` declares them on the root; a bare `<w:p>...` raises `XmlError`). A replacement is refused with an
 `RdocxError` (`XmlError` for the XML itself), the document unchanged, when the XML is malformed or has a
 DOCTYPE, holds another or a second element, leaves a cell without a paragraph, references a relationship id
-the part lacks, or adds or removes a section break. It does not check the schema: an unknown `w:` element or
-a foreign one is written (gap docx-raw-xml-unchecked). Body, table-cell, header and footer elements (a
+the part lacks, or adds or removes a section break. An unknown `w:` element, or a foreign one whose namespace
+the root's `mc:Ignorable` does not list, is refused too. Body, table-cell, header and footer elements (a
 header's relationship ids are those of its own part). A namespace declared on an ancestor inside the
 replacement (on the `w:p` rather than on `asvg:svgBlip`) is kept. The element's own handle stays valid; the
 handles inside it retire.

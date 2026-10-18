@@ -77,24 +77,22 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 16/10/2026
+## State on 18/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
-  the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`).
-- Pinned: tensorbee/rdocx `main` at `d44a69af` (rdocx 0.16.1 and rpptx 0.14.1 plus sprints S92 to S94, no upstream
-  release yet). S94 brought most python-docx and python-pptx names (tensorbee/rdocx#379), package signing and
-  verification in Python and both CLIs, and Word form filling (`rdocx fill --values`, legacy form fields;
-  tensorbee/rdocx#380). Released as plugin `v2026.10.16.2`; the release of the previous pin, `v2026.10.16`
-  (`3a3b0de8`), was deleted by the clean-up this repository no longer runs. No integration branch is pinned: none is
-  needed while no pull request of the maintainer is open upstream.
-- Open gaps: 16 (`tests/gaps.py`, both `references/gaps.md`). Three are what #379 left (python-docx-names,
-  python-pptx-names, docx-bare-int-length-saved-as-zero: `font.size = 12` raises now, `space_after = 6` still saves
-  0), reported as tensorbee/rdocx#386. The others are reported: #384 (validate refuses w14:paraId inside a content control)
-  and #385 (twelve others), both planned upstream for S95 and S95.1.
-- Suite against `d44a69af`: 151 passed, 41 xfailed, 18 skipped (the install and release tests, without recorded
-  hashes) on macos-arm64 from a local build, in 2.5 minutes. Walking `table.rows` / `row.cells` is still quadratic
-  (400 cells: 3.0 s, 800 cells: 12 s; reported on tensorbee/rdocx#378); one edit is twice as fast as on `3a3b0de8`.
+  the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
+  `v2026.10.16.2` (pin `d44a69af`).
+- Pinned: tensorbee/rdocx `main` at `7496a81c` (rdocx 0.16.2 and rpptx 0.14.2, tagged at `57f4d743`, plus sprint
+  S95.11). Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
+  `main` or its tags rather than an integration branch.
+- Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-custom-properties-not-listed (reported as
+  tensorbee/rdocx#387). Every gap of `d44a69af` closed with `7496a81c` (tensorbee/rdocx#384, #385, #386); the
+  python-docx and python-pptx names it does not take raise an error naming the rdocx or rpptx way, the contract
+  #379 asked for.
+- Suite against `7496a81c`: 150 passed, 1 xfailed, 18 skipped (the install and release tests, without recorded
+  hashes) on linux-x86_64 from a local build, in 1.5 minutes. Walking `table.rows` / `row.cells` is still quadratic
+  (400 cells: 0.9 s, 800 cells: 3.7 s on linux-x86_64; tensorbee/rdocx#378 reduced it).
   The behaviour files hold only strict xfails: a test that passes on the pinned upstream commit is deleted.
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
@@ -103,6 +101,6 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 
 ## Next steps
 
-1. When upstream `main` moves (S95 brings tensorbee/rdocx#384 and part of #385) or tags a release: `bump <ref>` on a
-   branch, `install --build` and `test` (or let ci.yml build it on the pull request), as docs/setup.md (Moving the
+1. When upstream `main` moves (S96 brings fillable PDF forms, tensorbee/rdocx#381) or tags a release: `bump <ref>` on
+   a branch, `install --build` and `test` (or let ci.yml build it on the pull request), as docs/setup.md (Moving the
    pin) describes; delete the gap tests that pass; release the plugin when the maintainer asks.
