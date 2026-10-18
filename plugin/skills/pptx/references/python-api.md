@@ -1,13 +1,14 @@
 # rpptx Python API (pinned build)
 
-`import rpptx` with the pinned Python (`$R/python`). The API follows python-pptx in its main names, not in all
-(`references/gaps.md`, gap python-pptx-names): `rpptx.Presentation`, `rpptx.util` (`Inches`, `Pt`, `Length` only:
+`import rpptx` with the pinned Python (`$R/python`). The API follows python-pptx in its main names; a python-pptx name
+it lacks raises an error that names the rpptx way: `rpptx.Presentation`, `rpptx.util` (`Inches`, `Pt`, `Length` only:
 there is no `Emu`, `Cm` or `Mm`; lengths are plain EMU integers, 914400 per inch, 12700 per point, and `Inches(1)` or
 `Pt(12)` is a `Length`, an int with `.emu`, `.inches` and `.pt`), `rpptx.dml.color.RGBColor` (also
 `RGBColor.from_string("7B1E3A")`; every colour setter also takes a hex string, with or without `#`, or an `(r, g, b)`
 triple), `rpptx.enum.shapes` (`MSO_SHAPE`, `MSO_SHAPE_TYPE`, `MSO_CONNECTOR`, `PP_PLACEHOLDER`), `rpptx.enum.text`
 (`PP_ALIGN`, `MSO_ANCHOR`, `MSO_AUTO_SIZE`, `MSO_UNDERLINE`), `rpptx.enum.dml` (`MSO_FILL`, `MSO_LINE_DASH_STYLE`,
-`MSO_ARROWHEAD_STYLE`, `MSO_ARROWHEAD_WIDTH`, `MSO_ARROWHEAD_LENGTH`, `MSO_THEME_COLOR`, `MSO_PATTERN_TYPE`), and at
+`MSO_ARROWHEAD_STYLE`, `MSO_ARROWHEAD_WIDTH`, `MSO_ARROWHEAD_LENGTH`, `MSO_THEME_COLOR`, `MSO_COLOR_TYPE`,
+`MSO_PATTERN_TYPE`), `rpptx.enum.lang` (`MSO_LANGUAGE_ID`), and at
 the top level the chart names (`rpptx.XL_CHART_TYPE`, `rpptx.CategoryChartData`, `rpptx.XyChartData`). Errors:
 `rpptx.RpptxError`, `XmlError`, `PackageError`, `StaleElementError`, `ReplacementCountError`. The modules have no
 docstrings: exact signatures are in `rpptx/_rpptx.pyi` next to the installed module
@@ -35,8 +36,8 @@ Everything else (setters, `run.text`, appends: `add_slide`, `add_textbox`, `add_
 
 | Member | Notes |
 |---|---|
-| `Presentation(path=None)` (a path), `Presentation.from_bytes(b)` (bytes, a stream's content for example), `save(path)` (a path), `to_bytes()` | `save` does not refuse the input (use `pptx_ops.save_atomic`); a new presentation is 16:9 with the eleven default layouts, and `save` writes the package class its extension names: a .potx saved as .pptx becomes a presentation; `save` writes a PPTX whatever the extension, also to `"x.pdf"` (gap pptx-invalid-values-accepted): write the bytes of `to_pdf()` |
-| `slides`, `slide_layouts`, `slide_width`, `slide_height` (keep them from 1 to 56 inches, gap pptx-invalid-values-accepted), `slide_number_start` (the number of the first slide, None for 1), `comment_authors` (each a `CommentAuthor`: `id`, `name`, `initials`, `user_id`, `provider_id`) | |
+| `Presentation(path=None)` (a path), `Presentation.from_bytes(b)` (bytes, a stream's content for example), `save(path)` (a path), `to_bytes()` | `save` does not refuse the input (use `pptx_ops.save_atomic`); a new presentation is 16:9 with the eleven default layouts, and `save` writes the package class its extension names: a .potx saved as .pptx becomes a presentation; `save` to another format's extension (`"x.pdf"`) raises `ValueError`: write the bytes of `to_pdf()` |
+| `slides`, `slide_layouts`, `slide_width`, `slide_height` (from 1 to 56 inches, `ValueError` otherwise), `slide_number_start` (the number of the first slide, None for 1), `comment_authors` (each a `CommentAuthor`: `id`, `name`, `initials`, `user_id`, `provider_id`) | |
 | `slides.add_slide(layout)`, `slides.add_slide_at(layout, position)`, `slides.duplicate(slide)` → the copy, `slides.move(from_, to)`, `slides.remove(slide)`, `slide_layouts.index(layout)` | |
 | `slides.import_slide(slide, layout=None, index=None, *, keep_source_formatting=False)` → the copy; `import_slide_with_diagnostics(...)` → (copy, diagnostics) | copies a slide of another presentation (at the end, or at `index`) with its charts, embedded objects, comments (authors merged) and notes; without `layout` it takes the destination layout of the same name and raises `RpptxError` ("no layout named ...") when there is none: pass `layout=prs.slide_layouts[k]`, or `keep_source_formatting=True` to bring the source layout, master and theme (each such import adds the source master, even an equal one; with `layout=` too it raises). Both presentations are read as they are in memory: a layout renamed or a theme colour changed before the import, in either, counts without saving first. A slide jump to a slide that is not copied is dropped and reported in the diagnostics: read them |
 | `slides.import_slides(source, indexes=None, *, layout=None, index=None, keep_source_formatting=False, keep_sections=False)` → (copies, diagnostics) | several slides of `source` (zero-based `indexes`, all by default) in one call: a jump between two copied slides is kept. `keep_sections=True` brings their sections (the slides already here go into a "Default Section"). Merging two decks: `copies, diagnostics = prs.slides.import_slides(other)` |
@@ -53,7 +54,7 @@ Everything else (setters, `run.text`, appends: `add_slide`, `add_textbox`, `add_
 | `refresh_autofit(*, font_dir=None)` → `AutofitRefreshResult` (`updates`, `changed`, `diagnostics`) | writes the stored autofit of every frame whose `auto_size` asks for one: Text fit and autofit below |
 | `validate()` → tuple of `ValidationIssue` (`kind`, `message`) | empty when the deck is valid |
 | `sign(private_key, certificate)` → report, `verify_signatures()` → tuple of reports | a package signature over every part and relationship, written by the next `save`: the bytes of a PKCS#8 RSA key and an X.509 certificate (DER or one unencrypted PEM block each). A report is a dict: `signature_part`, `signer` (`subject`, `issuer`, `serial_number`), `cryptographically_valid`, `coverage_complete`, `covered_parts`, `covered_relationships`, `issues` (`kind` such as `changed_reference`, `details`); `verify_signatures()` checks the deck as it is now (an empty tuple when unsigned), so any edit after signing shows. A signed package or one with external relationships raises. Certificate trust is not checked (`references/cli.md`, Signatures) |
-| `to_pdf(font_dir=None)`, `to_notes_pdf()`, `render_slide_to_png(i, dpi=150)`, `render_all_slides(dpi)`, `render_all_notes(dpi)`; `to_pdf_with_diagnostics()`, `render_slide_to_png_with_diagnostics(i)`... → (output, diagnostics) | zero-based slide index; the faces the deck embeds are drawn (not a compressed one, and the precedence of `font_dir=`: `embed_font`); `font_dir=` (also on the renders, `text_layout`, `fit_report` and `refresh_autofit`) adds fonts that are not installed. A slide with `show_master_shapes = False` is still drawn with the master's shapes (gap pptx-render-ignores-slide-show-master-shapes) |
+| `to_pdf(font_dir=None)`, `to_notes_pdf()`, `render_slide_to_png(i, dpi=150)`, `render_all_slides(dpi)`, `render_all_notes(dpi)`; `to_pdf_with_diagnostics()`, `render_slide_to_png_with_diagnostics(i)`... → (output, diagnostics) | zero-based slide index; the faces the deck embeds are drawn (not a compressed one, and the precedence of `font_dir=`: `embed_font`); `font_dir=` (also on the renders, `text_layout`, `fit_report` and `refresh_autofit`) adds fonts that are not installed. A slide with `show_master_shapes = False` is drawn without the master's shapes, a layout's own shapes stay |
 | `render_slides(dpi=150, format="png", quality=None, transparent=False, slides=None)` | a list of PNG or JPEG images (`slides` zero-based), one multi-page TIFF as bytes for `format="tiff"`; `quality` with PNG or `transparent` with JPEG or TIFF raises `ValueError` |
 | `to_pdfa("pdfa-2b")` (or `"pdfa-3b"`), `to_handout_pdf(slides_per_page=6)` (1, 2, 3, 4, 6 or 9), `render_all_handouts(slides_per_page, dpi)` | handouts with or without the deck's handout master; all accept keyword-only `fonts`, `font_dir` and `font_dirs` |
 | `to_markdown(*, include_notes=False, skip_hidden=False, inline_images=True)`, `to_html(...)` → str; `export_markdown(...)`, `export_html(...)` → `PresentationTextExport` (`text`, `assets`: (file name, bytes) pairs, `diagnostics`); `save_markdown(path, ...)`, `save_html(path, ...)` → diagnostics | what `rpptx convert --to md` / `--to html` write: one section per slide headed by its title, in outline order, lists nested by level, tables, links, pictures with their alt text (data URIs when `inline_images`, else separate files that `save_*` writes next to `path` and refuses to overwrite); `include_notes=True` adds the speaker notes. The Markdown keeps whitespace exact: the spaces of titles, formatted runs and notes come out as `&#32;`, emphasis as `<strong>` / `<em>`; to read a deck's text, `rpptx text` or `outline` is plainer |
@@ -78,7 +79,8 @@ text; an unknown shape or author raises `RpptxError` and changes nothing),
 `reply_to_comment(comment_id, *, id, author_id, created, text)`, `resolve_comment(comment_id)`,
 `remove_comment(comment_id)`, `move_comment(from_, to)`, `move_reply(comment_id, from_, to)`. `created` is RFC 3339
 with its zone. Two handles of one slide compare equal (`==`); a `Slide` is unhashable (no sets, no dict keys) and
-has no `slide_id` (gap python-pptx-names): `prs.sections[k].slide_ids` and `rpptx text --json` give the ids.
+`slide.slide_id` is the id PowerPoint registers (256 and up, as in python-pptx; `prs.sections[k].slide_ids` lists them
+by section).
 
 - `header_footer` (`HeaderFooter`: `slide_number` bool, `footer` text or None, `date` text, `"auto"` or None,
   `date_format`, settable; read only: `date_cache`, `date_mode`, `footer_present`, `date_present`,
@@ -131,7 +133,7 @@ has no `slide_id` (gap python-pptx-names): `prs.sections[k].slide_ids` and `rppt
 - `Shape`: `shape_id`, `name` (settable), `shape_type` (`MSO_SHAPE_TYPE`), `left`, `top`, `width`, `height`
   (settable; None on a placeholder that inherits its geometry from the layout: `effective_geometry()` returns the
   inherited `(left, top, width, height)`, and a setter copies it before changing one value), `rotation`, `flip_h`,
-  `flip_v` (not on a table or chart: gap pptx-invalid-values-accepted), `has_text_frame`, `text` (setting it drops run
+  `flip_v` (`ValueError` on a table or chart frame), `has_text_frame`, `text` (setting it drops run
   formatting), `text_frame`, `fill`, `line`, `shadow`, `auto_shape_type` (get and set: `MSO_SHAPE` or a preset name
   such as `"roundRect"`; ValueError on a shape that is not an autoshape), `theme_effect_index` (the `effectRef` of
   `p:style`, None without one; setting it raises `RpptxError` on a shape without `p:style`), `click_action`
@@ -147,7 +149,8 @@ has no `slide_id` (gap python-pptx-names): `prs.sections[k].slide_ids` and `rppt
   `rpptx.XyChartData` (`add_series(name)` → `XySeriesData`: `add_data_point(x, y)`, `x_values`, `y_values`);
   `chart_type` a `rpptx.XL_CHART_TYPE` (`COLUMN_CLUSTERED`, `LINE` (with markers: python-pptx's `LINE_MARKERS`),
   `PIE`, `DOUGHNUT`, `AREA`, `RADAR`, `XY_SCATTER` (with lines)). `shape.has_chart`, `shape.chart` (`Chart`:
-  `chart_type` (an int, the plot family only for a kind rpptx does not write: gap pptx-chart-type-family-only);
+  `chart_type` (python-pptx's `XL_CHART_TYPE` value as an int, also for a stacked, horizontal, marker-free or
+  exploded kind that rpptx does not write; None for a valid kind it cannot name);
   `categories`; `series`: `ChartSeries` with `name` and `values`, nan for a missing point; `has_legend`,
   `legend_position` (`"r"`, `"l"`, `"t"`, `"b"` or `"tr"`), `legend_overlay` (True draws the legend over the plot),
   get and set, drawn by the renders) reads any chart, `chart.replace_data(chart_data)` rewrites its numbers,
@@ -172,12 +175,15 @@ has no `slide_id` (gap python-pptx-names): `prs.sections[k].slide_ids` and `rppt
   `add_field("slidenum")` (or `"datetime1"` to `"datetime13"`, optional cached text second; another type raises).
 - `Run`: `text`, `font` (`name`, `size`, `bold`, `italic`, `underline`, `strike`, `all_caps`, `small_caps`,
   `baseline` (0.3 superscript, -0.25 subscript), `spacing` (character spacing, a `Length`: `Pt(2)`), `highlight_color`
-  (a `ColorFormat`), `language` (a tag, `"fr-FR"`), `east_asian_name`, `complex_script_name`, `color`: a
+  (a `ColorFormat`), `language` (a tag, `"fr-FR"`), `language_id` (the same as an `MSO_LANGUAGE_ID`, `FRENCH` for
+  `"fr-FR"`; None clears it), `east_asian_name`, `complex_script_name`, `color`: a
   `ColorFormat` as in python-pptx, `font.color.rgb = ...` or the shortcut `font.color = ...`), `hyperlink.address`
   (get and set). Shape fills and lines use `fill.fore_color.rgb` and `line.color.rgb`, as in python-pptx.
 - `ColorFormat`: `rgb`, `theme_color` (set `MSO_THEME_COLOR.ACCENT_2` or `"accent2"`: writes a scheme colour that
-  follows the theme; reads the slot name, such as `"accent2"`), `type` (`"rgb"`, `"theme"`, `"preset"`, `"system"`
-  or None: strings, not the `MSO_COLOR_TYPE` that `rpptx.enum.dml` has, gap python-pptx-names), `brightness` (-1 to 1).
+  follows the theme; reads an `MSO_THEME_COLOR`, `NOT_THEME_COLOR` for a direct RGB colour, and raises
+  `AttributeError` when the run has no direct colour), `type` (`rpptx.enum.dml.MSO_COLOR_TYPE`: `RGB`, `SCHEME`,
+  `HSL`, `PRESET`, `SCRGB`, `SYSTEM`, or None; compare with the enum, not a string; `MSO_THEME_COLOR_INDEX` is an alias of
+  `MSO_THEME_COLOR`), `brightness` (-1 to 1).
 - `FillFormat`: `solid()`, `background()` (no fill), `fore_color`, `type` (`MSO_FILL`), `transparency` (0 opaque to
   1, written as the colour's alpha); `gradient()` (two stops in accent1), `gradient_angle` (degrees,
   counter-clockwise as in python-pptx), `gradient_path` (None for linear), `gradient_stops` (`GradientStops`: index,
@@ -196,8 +202,7 @@ has no `slide_id` (gap python-pptx-names): `prs.sections[k].slide_ids` and `rppt
   `columns.remove(column)`: a new row or column copies a neighbour's size; re-fetch the cells and rows after each.
   Style options as in PowerPoint's Table Design tab: `first_row`, `last_row`, `first_col`, `last_col`,
   `horz_banding`, `vert_banding`; `style_id` (a built-in style GUID such as `"{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}"`,
-  Medium Style 2 - Accent 1, or one of the deck's, stored as written; another is not refused: gap
-  pptx-invalid-values-accepted).
+  Medium Style 2 - Accent 1, or one of the deck's, stored as written; another raises `RpptxError`).
 
 ## Text fit and autofit
 
@@ -223,9 +228,8 @@ The way out when rpptx has no API for an element (no lxml, no `_element`): `elem
 element as a str (`p:sp`, `p:txBody`, `a:p`, `a:tbl`, `p:sld`...), `element.replace_xml(xml)` (a str) replaces it.
 `shape.xml` is the same XML as bytes, read only. A replacement raises `RpptxError` and leaves the presentation
 unchanged when the XML is malformed, has a DOCTYPE, has another root element or references an `r:id` the part lacks
-(add the picture or link first). An unknown or misplaced `p:` or `a:` element is not refused, and `validate()` does
-not flag it (gap pptx-raw-xml-unchecked): copy the structure from XML PowerPoint wrote, then render and open the
-result in LibreOffice. A replacement retires handles (Handles above).
+(add the picture or link first), and so does an unknown or misplaced `p:` or `a:` element ("unknown or misplaced
+direct XML child"): copy the structure from XML PowerPoint wrote. A replacement retires handles (Handles above).
 
 ## Errors instead of silent results
 
@@ -235,10 +239,11 @@ A slide whose groups (and `mc:AlternateContent`) nest deeper than 32 levels is r
 A bare int is EMU: `font.size = 12` (from 1 to 4000 points), `space_before = 6`, `space_after = 6` and
 `font.spacing = 2` raise `ValueError` naming `Pt`, and so does `line_spacing = 0`: write `Pt(12)`, or a float for a
 multiple of the line in spacing.
-`font.name = ""` raises. The values of gap pptx-invalid-values-accepted are not refused. An `RGBColor` is a value:
+`font.name = ""` raises, and so do `save` to a `.pdf` path, a slide size outside 1 to 56 inches, a flip on a table or
+chart frame and an unknown table `style_id`. An `RGBColor` is a value:
 assign a new one (`fill.fore_color.rgb = "7B1E3A"`). `prs.slides._sldIdLst` raises an error naming
-`prs.slides.remove(slide)` and `prs.slides.move(i, j)`; `shape._element` and `text_frame._txBody` raise a bare
-`AttributeError`: use `element` (Raw XML).
+`prs.slides.remove(slide)` and `prs.slides.move(i, j)`; `shape._element` and `text_frame._txBody` raise
+`NotImplementedError` naming `element.xml` and `element.replace_xml` (Raw XML).
 
 Embedded typefaces and faces are immutable detached snapshots. Authored
 `EmbeddedFont(font, kind="regular", *, license=...)` must match the kind and

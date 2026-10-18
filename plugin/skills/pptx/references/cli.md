@@ -33,8 +33,8 @@ rpptx replace F --map pairs.json -o OUT [--json]   # [{"placeholder": "{{name}}"
 ```
 Literal replacement in slide text, groups, tables and speaker notes, keeping run formatting. With
 `--expect N` nothing is written unless exactly N replacements were made: always pass it. `--map` applies
-the pairs in order, all or nothing (the error names the failing pair); give every pair its `expect`: a pair
-without one that finds nothing is not refused (gap pptx-replace-map-zero-match), `"expect": 0` allows none.
+the pairs in order, all or nothing (the error names the failing pair); a pair
+without `expect` must find at least one ("pair N: no replacements found"), `"expect": 0` allows none.
 `--json` prints each pair's `count` and the `total_count`.
 
 ```bash
@@ -88,8 +88,8 @@ rpptx font settings F --embed-true-type-fonts true|false|none [--save-subset-fon
 
 `--font` is required for embedding. Python uses `bold_italic`, the CLI uses
 `bold-italic`. Removing without `--kind` removes the whole record and its faces;
-removing the last face with `--kind` leaves an empty record. A name that is not
-embedded prints `Removed: false` and exits 0.
+removing the last face with `--kind` leaves an empty record. A name (or kind) that is not
+embedded exits 1 and writes nothing (`rdocx font remove` prints `Removed: false` and exits 0).
 Settings reads require no output. Mutations require an output and at least one
 explicit setting. `none` removes the setting, preserving its distinction from
 `false`. Embedding requires explicit caller authorization and a nonempty exact
