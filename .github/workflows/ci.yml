@@ -2,7 +2,8 @@
 # on a build of the pinned commit made here: main's lock names the upstream commit only, and the plugin's releases
 # (release.yml) are the only published builds. The build's hashes are recorded into this run's copy of the lock
 # (`lock --write`, never committed), so that the install and download tests check it as they would a release. The
-# build folder is cached per platform and commit: a commit already built here compiles again in a few minutes.
+# build folder is cached per platform and commit: a commit already built here compiles nothing again (the source
+# export carries the commit's time, so cargo finds the restored build fresh).
 name: ci
 
 on:
