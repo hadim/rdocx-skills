@@ -2,7 +2,8 @@
 # on a build of the pinned commit made here: main's lock names the upstream commit only, and the plugin's releases
 # (release.yml) are the only published builds. The build's hashes are recorded into this run's copy of the lock
 # (`lock --write`, never committed), so that the install and download tests check it as they would a release. The
-# build folder is cached per platform and commit: a commit already built here compiles again in a few minutes.
+# build folder is cached per platform and commit: a commit already built here compiles nothing again (the source
+# export carries the commit's time, so cargo finds the restored build fresh).
 name: ci
 
 on:
@@ -24,7 +25,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { platform: linux-x86_64, runner: ubuntu-24.04 }
+          # release.yml's runners: the build folder they cache is reused as it is, links included, so the release
+          # files keep the glibc 2.35 floor of ubuntu-22.04
+          - { platform: linux-x86_64, runner: ubuntu-22.04 }
           - { platform: linux-aarch64, runner: ubuntu-22.04-arm }
           - { platform: macos-arm64, runner: macos-14 }
           - { platform: windows-x86_64, runner: windows-2025 }
@@ -70,8 +73,8 @@ jobs:
             ~/.cargo/registry/cache
             ~/.cargo/git/db
             ~/.local/share/rdocx-skills/target
-          key: rdocx-build-thin-${{ matrix.platform }}-${{ steps.pin.outputs.commit }}
-          restore-keys: rdocx-build-thin-${{ matrix.platform }}-
+          key: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-${{ steps.pin.outputs.commit }}
+          restore-keys: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-
 
       - name: Build and install the pinned commit
         run: python plugin/scripts/rdocx_env.py install --build
@@ -95,7 +98,8 @@ jobs:
         run: .github/scripts/poppler.sh
 
       - name: Acceptance suite
-        run: python plugin/scripts/rdocx_env.py test --allow-local 2>&1 | tee "$RUNNER_TEMP/pytest.log"
+        # one worker per core, each file on one worker in order (the recipes of a file build on each other)
+        run: python plugin/scripts/rdocx_env.py test --allow-local -n auto --dist loadfile 2>&1 | tee "$RUNNER_TEMP/pytest.log"
 
       - name: Suite summary
         if: always()

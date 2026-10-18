@@ -127,7 +127,7 @@ jobs:
           echo "CARGO_PROFILE_RELEASE_LTO=thin" >> "$GITHUB_ENV"
           echo "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16" >> "$GITHUB_ENV"
 
-      # ci.yml's cache: a commit it built compiles again in a few minutes
+      # ci.yml's cache: a commit it built compiles nothing again
       - name: Restore the cargo registry and the build folder
         id: cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -137,8 +137,8 @@ jobs:
             ~/.cargo/registry/cache
             ~/.cargo/git/db
             ~/.local/share/rdocx-skills/target
-          key: rdocx-build-thin-${{ matrix.platform }}-${{ needs.plan.outputs.commit }}
-          restore-keys: rdocx-build-thin-${{ matrix.platform }}-
+          key: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-${{ needs.plan.outputs.commit }}
+          restore-keys: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-
 
       # main's lock names no build: `install --build` compiles the commit and installs it as a local build
       - name: Build and install
@@ -156,6 +156,16 @@ jobs:
             ~/.local/share/rdocx-skills/target
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
+      # a binary needs the glibc it was linked against: one reused from a newer image would raise the floor
+      - name: The Linux CLIs need glibc 2.35 at most
+        if: runner.os == 'Linux'
+        run: |
+          for cli in rdocx rpptx; do
+            need=$(objdump -T ~/.local/share/rdocx-skills/current/bin/$cli | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)
+            echo "$cli needs $need"
+            test "$(printf '%s\nGLIBC_2.35\n' "$need" | sort -V | tail -n 1)" = GLIBC_2.35
+          done
+
       - name: The installed CLIs and modules run
         run: |
           bin=~/.local/share/rdocx-skills/current/bin
@@ -170,7 +180,8 @@ jobs:
         run: .github/scripts/poppler.sh
 
       - name: Acceptance suite on the files built here
-        run: python plugin/scripts/rdocx_env.py test --allow-local 2>&1 | tee "$RUNNER_TEMP/pytest.log"
+        # one worker per core, each file on one worker in order (the recipes of a file build on each other)
+        run: python plugin/scripts/rdocx_env.py test --allow-local -n auto --dist loadfile 2>&1 | tee "$RUNNER_TEMP/pytest.log"
 
       - name: Suite summary
         if: always()

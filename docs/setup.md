@@ -131,9 +131,10 @@ the built-in ones, or `install --build` compiles the pinned commit on the machin
 ## Continuous integration
 
 - `.github/workflows/ci.yml`, on every push to `main` and every pull request: `install --build` of the pinned
-  commit on linux-x86_64, linux-aarch64 (ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64 and
-  windows-x86_64, with ThinLTO and 16 codegen units (`release.yml`'s profile) and a build cache per platform and
-  commit (a commit built before compiles again in a few minutes, a new one in 10 to 30). `lock --write` then
+  commit on linux-x86_64 and linux-aarch64 (ubuntu-22.04 and ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64
+  and windows-x86_64, on `release.yml`'s runners (the cache key names the runner: a reused build keeps its links), with ThinLTO and 16 codegen units (`release.yml`'s profile) and a build cache per platform and
+  commit (a commit built before compiles nothing again: its export gives every file the commit's time, so
+  cargo finds the restored build fresh and only packages it, in seconds; a new commit takes 10 to 30 minutes). `lock --write` then
   records that build into the run's copy of the lock (never committed), so that the install and download tests
   check it as they would a release's files, and the acceptance suite runs, summarised per platform by
   `.github/scripts/suite-summary.sh` in the job summary. On Windows it runs from Git Bash, as an agent does, on a
