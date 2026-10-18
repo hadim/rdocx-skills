@@ -86,8 +86,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 - Pinned: tensorbee/rdocx `main` at `7496a81c` (rdocx 0.16.2 and rpptx 0.14.2, tagged at `57f4d743`, plus sprint
   S95.11). Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
   `main` or its tags rather than an integration branch.
-- Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-custom-properties-not-listed (not reported
-  upstream yet). Every gap of `d44a69af` closed with `7496a81c` (tensorbee/rdocx#384, #385, #386); the
+- Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-custom-properties-not-listed (reported as
+  tensorbee/rdocx#387). Every gap of `d44a69af` closed with `7496a81c` (tensorbee/rdocx#384, #385, #386); the
   python-docx and python-pptx names it does not take raise an error naming the rdocx or rpptx way, the contract
   #379 asked for.
 - Suite against `7496a81c`: 150 passed, 1 xfailed, 18 skipped (the install and release tests, without recorded

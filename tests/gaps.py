@@ -43,7 +43,7 @@ gaps closed.
 # rdocx or rpptx way (KeyError or NotImplementedError), the contract #379 asked for; custom_properties became a
 # mapping for writing only (below).
 GAPS = {
-    # not reported upstream yet
+    # upstream: tensorbee/rdocx#387
     "docx-custom-properties-not-listed": "custom_properties takes item assignment, deletion and `in`, and "
     "get(name).value reads one property, but nothing lists the properties a document holds (no keys(), items() or "
     "iteration); rdocx meta get --json lists them",
