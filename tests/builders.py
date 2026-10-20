@@ -82,6 +82,32 @@ def wrapped_run_docx(path, wrapper, target="TARGET"):
     return path
 
 
+def many_tables_docx(path, tables=40, rows=5, cols=5, paragraphs=10):
+    """`tables` blocks of `paragraphs` body paragraphs followed by a `rows` x `cols` table, each cell holding one
+    paragraph of text."""
+    d = docx.Document()
+    for k in range(tables):
+        for i in range(paragraphs):
+            d.add_paragraph(f"Body {k}.{i}")
+        t = d.add_table(rows=rows, cols=cols)
+        for r in range(rows):
+            for c in range(cols):
+                t.cell(r, c).text = f"Cell {k}.{r}.{c}"
+    d.save(path)
+    return path
+
+
+def bare_cell_docx(path, text="alpha"):
+    """One 2 x 2 table whose cells have no w:tcPr (python-docx writes a w:tcW in each), cell 0,0 holding `text`."""
+    d = docx.Document()
+    t = d.add_table(rows=2, cols=2)
+    t.cell(0, 0).text = text
+    for tc in t._tbl.iter(qn("w:tc")):
+        for pr in tc.findall(qn("w:tcPr")):
+            tc.remove(pr)
+    d.save(path)
+    return path
+
 def block_sdt(document, text):
     """A body-level content control holding one paragraph (as Google Docs and Word forms write them)."""
     body = document.element.body
