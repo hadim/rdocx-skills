@@ -42,10 +42,11 @@ background).
    notes), `prs.try_replace_text(old, new, expect=n)`, or `pptx_ops.replace_batch(src, out, [(old, new, n),
    ...])`, all or nothing.
 3. **Re-fetch the handles an edit retires**: a handle follows its element through moves, inserts and edits
-   elsewhere; `text_frame.text =` / `shape.text =`, a replacement or `add_field` retire the paragraphs and runs
+   elsewhere; `text_frame.text =` / `shape.text =`, `clear()` or a replacement retire the paragraphs and runs
    of that frame, `element.replace_xml` what lies below that element, adding or removing table rows or columns
-   the table's cells, removing a shape or slide its own handle. A retired handle raises `StaleElementError`
-   naming the call: write `prs.slides[i].shapes[j]` again (`references/python-api.md`, "Handles").
+   the table's cells, removing a shape or slide its own handle; appends keep earlier handles, but not a `runs`
+   or `paragraphs` collection taken before them. A retired handle raises `StaleElementError` naming the call:
+   write `prs.slides[i].shapes[j]` again (`references/python-api.md`, "Handles").
 4. **Walk groups**: `slide.shapes` lists top-level shapes; a group's children are in `shape.shapes`
    (`shape_type == MSO_SHAPE_TYPE.GROUP`, value 6). `pptx_ops.walk(slide.shapes)` yields all of them.
 5. **Check the fit after any text change**: `rpptx fit F` (exit 1 when a frame overflows, with the font scale
@@ -79,7 +80,7 @@ background).
 | Shadow | | `shape.shadow.visible = True`, `.color.rgb`, `.blur_radius`, `.distance` | `shadow.inherit = False` removes the theme's shadow |
 | Connector without the theme effect | | `connector.theme_effect_index = 0` | `add_connector` takes the theme's effect 1, a shadow in the default theme |
 | Change a shape's preset | | `shape.auto_shape_type = MSO_SHAPE.RECTANGLE` | autoshapes only |
-| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group grows with each `add_*` on its `shapes`; `add_shape` writes python-pptx's theme style, `add_textbox` none |
+| Add shapes | | `shapes.add_textbox`, `add_shape(MSO_SHAPE.X, ...)`, `add_connector`, `add_picture`, `add_table`, `add_group_shape()` | a group grows with each `add_*` on its `shapes`; `add_shape` writes python-pptx's theme style (`shape.remove_style()` drops it), `add_textbox` none |
 | Z-order, arrange | | `shapes.move(from_, to)`, `shapes.group([...])`, `shape.ungroup()`, `shapes.align([...], "top")`, `shapes.distribute([...], "horizontal")`, `shape.flip_h` | index 0 is the back; distribute takes three shapes or more |
 | Alt text | | `shape.alt_text = "..."`, `shape.decorative = True` | every kind of shape |
 | Glued connector | | `connector.begin_connect(shape, site)`, `end_connect(shape, site)` | sites of a rectangle: 0 top, 1 left, 2 bottom, 3 right |

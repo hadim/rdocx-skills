@@ -69,7 +69,7 @@ docx_ops.save_atomic(doc, "scoped.docx", "report.docx")
 A count other than `expect` raises `rdocx.ReplacementCountError` and changes nothing. The match may cross
 runs, and a comment on the paragraph stays. `doc.replace_text_at(item, old, new, expect=N)` does
 the same in one item of `doc.story_items` (a header, footer or footnote paragraph, a table cell's
-paragraph); a text box or a comment is refused.
+paragraph, a comment, a Word text box: both its copies).
 
 ## Rewrite without losing or spreading run formatting
 
@@ -124,6 +124,9 @@ doc.move_content(doc.paragraphs[j], doc.find_content_index(doc.paragraphs[j]) + 
 docx_ops.save_atomic(doc, "restructured.docx", "report.docx")
 ```
 
+Several neighbouring blocks go in one edit with `doc.remove_content_range(start, stop)` (body indices, `stop`
+excluded): each `remove_content` call costs a pass over the document.
+
 ## Bold one phrase inside a run
 
 ```python
@@ -147,6 +150,9 @@ doc.paragraphs[i].paragraph_format.space_after = rdocx.Pt(12)
 doc.paragraphs[i].paragraph_format.keep_with_next = True
 j = next(k for k, p in enumerate(doc.paragraphs) if p.numbering)
 doc.paragraphs[j].numbering = (doc.paragraphs[j].numbering[0], 1)   # one level deeper
+doc.set_default_paragraph_format(space_after=rdocx.Pt(6), line_spacing=1.15)  # what paragraphs inherit (w:pPrDefault)
+assert doc.default_paragraph_format.space_after == rdocx.Pt(6)
+assert "w:pPrDefault" in doc.part_xml("word/styles.xml")   # any part's XML as a save would write it, read-only
 docx_ops.save_atomic(doc, "styled.docx", "report.docx")
 ```
 
@@ -399,15 +405,15 @@ document's: an image can be used by the theme, a header or a chart alone.
 ```python
 import docx_ops, rdocx
 doc = rdocx.Document.open("report.docx")                  # any .docx that defines the styles you need
-while len(doc.paragraphs) or len(doc.tables):
-    doc.remove_content(0)
+end = 1 + max(it.direct_body_index for it in doc.story_items if it.direct_body_index is not None)
+doc.remove_content_range(0, end)                           # every body block in one edit
 doc.add_paragraph("Site visit note")
 doc.paragraphs[0].style = "Heading1"
 doc.add_paragraph("Visited on 27 September 2026.")
 docx_ops.save_atomic(doc, "note.docx")
 ```
 
-`remove_content` leaves the section properties, headers, footers, styles and numbering of the template.
+`remove_content_range` leaves the section properties, headers, footers, styles and numbering of the template.
 From a .dotx, save as .docx the same way: rdocx writes the content type the extension names.
 
 ```python

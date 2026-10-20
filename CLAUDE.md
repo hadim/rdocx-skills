@@ -77,23 +77,25 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 18/10/2026
+## State on 20/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
   `v2026.10.16.2` (pin `d44a69af`).
-- Pinned: tensorbee/rdocx `main` at `7496a81c` (rdocx 0.16.2 and rpptx 0.14.2, tagged at `57f4d743`, plus sprint
-  S95.11). Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
-  `main` or its tags rather than an integration branch.
+- Pinned: hadim/rdocx `integration/open-prs-2026-10-20` at `6e286888`: tensorbee/rdocx `main` `b072b985` plus the
+  open pull requests tensorbee/rdocx#393 to #397 and #399 (the fix of #398, Python handles that rescanned the whole
+  document). Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
+  `main` or its tags again once a sprint carries them.
 - Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-custom-properties-not-listed (reported as
   tensorbee/rdocx#387). Every gap of `d44a69af` closed with `7496a81c` (tensorbee/rdocx#384, #385, #386); the
   python-docx and python-pptx names it does not take raise an error naming the rdocx or rpptx way, the contract
   #379 asked for.
-- Suite against `7496a81c`: 150 passed, 1 xfailed, 18 skipped (the install and release tests, without recorded
-  hashes) on linux-x86_64 from a local build, in 1.5 minutes. Walking `table.rows` / `row.cells` is still quadratic
-  (400 cells: 0.9 s, 800 cells: 3.7 s on linux-x86_64; tensorbee/rdocx#378 reduced it).
-  The behaviour files hold only strict xfails: a test that passes on the pinned upstream commit is deleted.
+- Suite against `6e286888`: 159 passed, 1 xfailed, 18 skipped (the install and release tests, without recorded
+  hashes) on macos-arm64 from a local build, in under a minute. Walking every body and cell paragraph handle is
+  linear with #399 (600 paragraphs and 965 cells: 0.2 s, nested-table cells about 15 ms each).
+  `tests/test_docx_carried.py` and `tests/test_pptx_carried.py` hold what the carried pull requests fix: delete each
+  test once upstream `main` has its fix.
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).

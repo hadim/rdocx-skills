@@ -24,13 +24,15 @@ its element is removed or rewritten:
 | Edit | Retires |
 |---|---|
 | `shapes.remove(shape)`, `slides.remove(slide)`, `slide_layouts.remove(layout)` | that shape, slide or layout and what it holds |
-| `text_frame.text = ...`, `shape.text = ...`, a replacement that changes the frame (`try_replace_text` of the deck, slide or frame), `paragraph.add_field(...)` | the paragraphs and runs of that frame (`paragraph.text = ...` the runs of that paragraph) |
+| `text_frame.text = ...`, `shape.text = ...`, `text_frame.clear()`, a replacement that changes the frame (`try_replace_text` of the deck, slide or frame) | the paragraphs and runs of that frame (`paragraph.text = ...` the runs of that paragraph) |
 | `element.replace_xml(xml)` | what lies below that element (a slide's: its shapes) |
 | `rows.add_row`, `rows.remove`, `columns.add_column`, `columns.remove` | that table's rows and cells (the table's own shape handle stays) |
 
 Everything else (setters, `run.text`, appends: `add_slide`, `add_textbox`, `add_chart`, `add_paragraph`,
-`add_run`...) retires nothing. `prs.slides` never goes stale. The handle a call returns (`group`, `ungroup`,
-`insert_picture`, `add_*`, `duplicate`) is fresh.
+`add_run`, `add_field`...) retires nothing: earlier paragraphs and runs stay live across appends, and only a
+`paragraphs` or `runs` collection taken before an append raises (read `text_frame.paragraphs` or `p.runs` again).
+`prs.slides` never goes stale. The handle a call returns (`group`, `ungroup`, `insert_picture`, `add_*`,
+`duplicate`) is fresh.
 
 ## Presentation
 
@@ -65,8 +67,8 @@ Everything else (setters, `run.text`, appends: `add_slide`, `add_textbox`, `add_
 
 ## Slide
 
-`shapes`, `placeholders` (`slide.placeholders[idx]` looks one up by its `idx`; it has no `len`, and a loop over it stops at
-the first idx missing: `[sh for sh in slide.shapes if sh.is_placeholder]` lists them all), `slide_layout` (settable), `hidden` (settable),
+`shapes`, `placeholders` (`slide.placeholders[idx]` looks one up by its `idx`; `len` and a loop give them all, in idx
+order, past a missing idx), `slide_layout` (settable), `hidden` (settable),
 `try_replace_text(old, new, *, expect=None, notes=True)` → int (this slide only, its notes unless `notes=False`;
 same all-or-nothing count as the presentation's), `notes_text` (get and set; None when the slide has no notes,
 setting it creates the notes slide), `has_notes_slide`, `notes_slide` (as python-pptx: creates the notes slide,
@@ -124,6 +126,7 @@ by section).
   calls, and the group grows to hold its members. `add_shape`, on a slide or in a group, writes python-pptx's
   `p:style` (accent1 fill and line, `effectRef idx="2"`, the minor font in `lt1`): the shape draws in the theme's
   colours with no direct fill or line (`fill.type` None) until they are set; `add_textbox` writes none.
+  `shape.remove_style()` drops that `p:style` (an autoshape or a connector; a no-op without one).
   `add_connector` writes python-pptx's `p:style` (accent1 line, `effectRef idx="1"`: the theme's first effect style,
   an outer shadow in the default theme); `theme_effect_index = 0` gives a line without it.
 - Arrange: `group([shapes])` → the group, members keep their slide position and id, a placeholder raises
@@ -163,12 +166,14 @@ by section).
 - Connectors: `begin_connect(shape, site)`, `end_connect(shape, site)` glue an end to a connection site of
   another shape (for a rectangle 0 top, 1 left, 2 bottom, 3 right) and move it there; `begin_x`, `begin_y`,
   `end_x`, `end_y` read and move an end, releasing its glue.
-- `TextFrame`: `paragraphs`, `add_paragraph()`, `text`, `try_replace_text(old, new, *, expect=None)` → int
+- `TextFrame`: `paragraphs`, `add_paragraph()`, `text` (`""` leaves one paragraph with no run), `clear()` (as
+  python-pptx: keeps the first paragraph and its formatting, drops its runs and the other paragraphs), `try_replace_text(old, new, *, expect=None)` → int
   (this frame only), `margin_left`, `margin_right`, `margin_top`, `margin_bottom`, `word_wrap`,
   `auto_size` (`MSO_AUTO_SIZE`), `autofit`, `vertical_anchor` (`MSO_ANCHOR`), `fit_text(...)`, `element`. Table
   cells have one too (`cell.text_frame`).
 - `Paragraph`: `runs`, `add_run(text="")`, `text`, `alignment` (`PP_ALIGN`), `level`, `bullet` (a character, or
-  False; also `bullet_char`), `bullet_color`, `bullet_size` (a multiple of the text size), `bullet_font`,
+  False; also `bullet_char`), `bullet_color`, `bullet_size` (a multiple of the text size, or a
+  `Length` such as `Pt(14)` for an absolute size), `bullet_font`,
   `auto_number` (a numbering scheme such as `"arabicPeriod"`, `"alphaLcParenR"`, `"romanUcPeriod"`),
   `auto_number_start`, `line_spacing` (a multiple such as 1.5 or a `Length`; zero or a negative one raises), `space_before`, `space_after` (a `Length` such as `Pt(6)`, or a float
   for a multiple of the line), `left_indent`, `right_indent`, `first_line_indent`, `font`,
@@ -178,14 +183,14 @@ by section).
   (a `ColorFormat`), `language` (a tag, `"fr-FR"`), `language_id` (the same as an `MSO_LANGUAGE_ID`, `FRENCH` for
   `"fr-FR"`; None clears it), `east_asian_name`, `complex_script_name`, `color`: a
   `ColorFormat` as in python-pptx, `font.color.rgb = ...` or the shortcut `font.color = ...`), `hyperlink.address`
-  (get and set). Shape fills and lines use `fill.fore_color.rgb` and `line.color.rgb`, as in python-pptx.
+  (get and set, also on a table cell's runs). Shape fills and lines use `fill.fore_color.rgb` and `line.color.rgb`, as in python-pptx.
 - `ColorFormat`: `rgb`, `theme_color` (set `MSO_THEME_COLOR.ACCENT_2` or `"accent2"`: writes a scheme colour that
   follows the theme; reads an `MSO_THEME_COLOR`, `NOT_THEME_COLOR` for a direct RGB colour, and raises
   `AttributeError` when the run has no direct colour), `type` (`rpptx.enum.dml.MSO_COLOR_TYPE`: `RGB`, `SCHEME`,
   `HSL`, `PRESET`, `SCRGB`, `SYSTEM`, or None; compare with the enum, not a string; `MSO_THEME_COLOR_INDEX` is an alias of
   `MSO_THEME_COLOR`), `brightness` (-1 to 1).
 - `FillFormat`: `solid()`, `background()` (no fill), `fore_color`, `type` (`MSO_FILL`), `transparency` (0 opaque to
-  1, written as the colour's alpha); `gradient()` (two stops in accent1), `gradient_angle` (degrees,
+  1, written as the colour's alpha, rounded as python-pptx does: 0.8 writes 20000); `gradient()` (two stops in accent1), `gradient_angle` (degrees,
   counter-clockwise as in python-pptx), `gradient_path` (None for linear), `gradient_stops` (`GradientStops`: index,
   `len`, `del gradient_stops[k]`, `append(position)` → a `GradientStop` with `position` 0 to 1 and `color`);
   `patterned()`, `pattern` (`MSO_PATTERN_TYPE`), `back_color`; `picture(file)` (shapes, table cells, backgrounds).
@@ -197,7 +202,8 @@ by section).
 - `Table`: `cell(r, c)` (a `Cell`: `text`, `text_frame`, `vertical_anchor`, `merge(other)`, `split()`,
   `is_merge_origin`, `is_spanned` (covered by a merge), `span_height`, `span_width`, `fill`, `margin_left`,
   `margin_right`, `margin_top`, `margin_bottom` (settable), `border_left`, `border_right`, `border_top`,
-  `border_bottom` (each a `LineFormat`: set its `width` and `color.rgb`)), `columns[k].width`, `rows[k].height`,
+  `border_bottom` (each a `LineFormat`: set its `width` and `color.rgb`)), `columns[k].width`, `rows[k].height`
+  (a render grows a row to its tallest cell text, as PowerPoint does; the file keeps the stored height),
   `rows[k].cells`, `rows.add_row(index=None)` → the new row, `rows.remove(row)`, `columns.add_column(index=None)`,
   `columns.remove(column)`: a new row or column copies a neighbour's size; re-fetch the cells and rows after each.
   Style options as in PowerPoint's Table Design tab: `first_row`, `last_row`, `first_col`, `last_col`,

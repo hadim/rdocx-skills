@@ -42,6 +42,10 @@ gaps closed.
 # document, a settable TabStop, paragraph._p, shape._element and text_frame._txBody now raise an error that names the
 # rdocx or rpptx way (KeyError or NotImplementedError), the contract #379 asked for; custom_properties became a
 # mapping for writing only (below).
+# 2026-10-20: integration/open-prs-2026-10-20 (main b072b985 plus tensorbee/rdocx#393, #394, #395, #396, #397 and
+# #399: cell runs after cell edits, rpptx handles across appends, placeholders and python-pptx behaviours, part XML,
+# default paragraph format, text-box paragraph handles, range removal, linear handle walks) closed no gap; the fixes
+# the skills rely on are in test_docx_carried.py and test_pptx_carried.py until upstream main has them.
 GAPS = {
     # upstream: tensorbee/rdocx#387
     "docx-custom-properties-not-listed": "custom_properties takes item assignment, deletion and `in`, and "
