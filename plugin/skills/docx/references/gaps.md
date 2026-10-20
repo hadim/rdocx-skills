@@ -5,7 +5,7 @@ says so, and this page is updated. "Fallback" means: do that step only with the 
 (python-docx, lxml or LibreOffice), and keep rdocx for the rest and for the verification.
 
 Before reaching for lxml, try the raw XML of the element (`paragraph.xml` / `replace_xml`, also on runs,
-tables, cells and `doc.section(i)`: `references/python-api.md`, "Raw XML").
+tables, cells and `doc.section(i)`; `doc.part_xml(name)` reads any XML part: `references/python-api.md`, "Raw XML").
 
 | Gap | What happens | Workaround / fallback |
 |---|---|---|

@@ -67,38 +67,38 @@ background).
    edit in place rather than rebuild, and read `references/interop.md` before touching fields, content
    controls, numbering or tracked changes.
 9. **Build lengths with `rdocx.Pt(...)`, `Inches(...)`, `Twips(...)`**: a bare int is EMU, so `font.size = 12`,
-   `space_after = 6` and a margin of `1440` raise; a line spacing of `2` (or `2.0`) is a multiple, a length is exact.
+   `space_after = 6` and a margin of `1440` raise; a line spacing of `2` is a multiple, a length is exact.
 10. **Embed a font only when its licence allows embedding.** `rdocx.FontEmbeddingLicense(authorized=True,
    identity="OFL-1.1: Example Sans")` is your statement that it does: rdocx checks nothing, not even `fsType`.
-   OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not (`fsType` bit 0x0002: Restricted
-   License). When it does not, or you cannot tell, do not embed and tell the user.
+   OFL, Apache 2.0 and CC0 allow it; a commercial licence often does not (`fsType` bit 0x0002). When it does
+   not, or you cannot tell, do not embed and tell the user.
 
 ## What to use for what
 
 | Task | CLI | Python | Notes |
 |---|---|---|---|
 | Text of the body and tables | `rdocx text --json F` | `docx_ops.textmap(F)`, `[p.text for p in doc.paragraphs]` | accepted view of tracked changes |
-| Headers, footers, footnotes, text boxes, comments | `rdocx text F`, `rdocx text --json F` (`stories`), `docx_ops.py text F` | `doc.story_items`, `docx_ops.story_paragraphs(doc)` | after the body; a Word text box once |
+| Headers, footers, footnotes, text boxes, comments | `rdocx text F`, `rdocx text --json F` (`stories`), `docx_ops.py text F` | `doc.story_items` (`item.paragraph` edits one), `docx_ops.story_paragraphs(doc)` | after the body; a Word text box once |
 | Where a string occurs | `docx_ops.py count F TEXT` | `docx_ops.count(doc, text)` | by story kind |
 | Counts, styles used, metadata | `rdocx inspect --json F`, `rdocx meta get/set F` | `doc.word_count()`, `doc.page_count()`, `doc.styles`, `doc.core_properties`, `doc.custom_properties` | |
 | Page of every block | `rdocx layout --json F` | `doc.layout()` | rdocx's pagination: confirm in Word |
 | Counted replacement | `docx_ops.py replace IN OUT --edit OLD NEW N` | `docx_ops.replace_batch` | crosses runs; `rdocx replace --expect N` does not check what it could not reach |
-| Fill a template or a form | `rdocx replace F --map pairs.json -o OUT`, `rdocx fill F --values v.json -o OUT` | `doc.render_template(data)`, `doc.bind_content_controls({tag: v})`, legacy fields | `--map`: pairs in order, each with its `expect`; controls: an unknown tag raises `KeyError` |
+| Fill a template or a form | `rdocx replace F --map pairs.json -o OUT`, `rdocx fill F --values v.json -o OUT` | `doc.render_template(data)`, `doc.bind_content_controls({tag: v})`, legacy fields | `--map`: pairs in order, each with its `expect`; an unknown control tag raises |
 | Replacement in one paragraph, cell or story item | | `p.replace_text(old, new, expect=1)`, `cell.replace_text(old, new, expect=1)`, `doc.replace_text_at(item, old, new, expect=1)` | a wrong count raises, nothing changed |
 | Regex replacement | `rdocx replace F --regex -p PATTERN -v '$1' --expect N -o OUT` | `doc.replace_all_regex_expected([(pattern, repl, n)])` | `$1` groups; a wrong count raises |
 | Paragraph after an anchor, same format | | `doc.clone_content(p, bi + 1)`, then set run texts | not comment anchors |
 | New paragraphs, headings, lists | | `doc.add_heading(text, 1)`, `doc.add_paragraph(text, style="Quote")`, `doc.add_bullet_list_item(text)`, `doc.add_numbered_list_item(text)`, `doc.insert_paragraph(bi, text)` | a list restart: a new `add_numbering_instance` |
-| Delete, move a block | | `remove_content(bi)`, `pop_content(bi)` + `insert_content(bi, frag)`, `move_content(source, destination)` | cutting a comment in part raises: move the thread first |
+| Delete, move a block | | `remove_content(bi)`, `remove_content_range(start, stop)`, `pop_content(bi)` + `insert_content(bi, frag)`, `move_content(source, destination)` | cutting a comment in part raises: move the thread first |
 | Rewrite a paragraph's text | | `doc.paragraphs[i].text = text`, `doc.set_story_text(item, text)` | the setter leaves one plain run; `set_story_text` keeps the first run's format |
 | Format part of a run | | `docx_ops.locate` + `docx_ops.isolate`, then `runs[k].font.bold = True` | |
 | Paragraph format, style, numbering | | `.paragraph_format.*`, `run.font.*`, `.style = "Heading 1"`, `.numbering = (num_id, level)` | style id or name, checked (`KeyError`: `add_style` first) |
-| New or changed styles, lists | | `doc.add_style(name, based_on=, ...)`, `doc.set_style(style, bold=, ...)`, `add_numbering_definition([ListLevel(...)])`, `add_numbering_instance(d)`, `link_style_to_numbering(style, num_id, level)` | `set_style` keeps what it is not given |
+| New or changed styles, lists | | `doc.add_style(name, based_on=, ...)`, `doc.set_style(style, bold=, ...)`, `doc.set_default_paragraph_format(space_after=)`, `add_numbering_definition([ListLevel(...)])`, `add_numbering_instance(d)`, `link_style_to_numbering(style, num_id, level)` | what a setter is not given keeps its value |
 | Tables | | `t = doc.add_table(r, c, style="Table Grid")`, `.cell(r, c).text`, `.add_row().cells`, `.insert_column(i, before=False)`, `.delete_column(i)`, `.remove_row(i)`, `cell.add_table(r, c)` | |
 | Table merges and format | | `.set_cell_grid_span(r, c, n)`, `.set_cell_vertical_merge(r, c, "restart")`, `.set_borders(...)`, `cell.shading = "RRGGBB"` | re-fetch the table after a merge |
 | Page setup, sections | | `doc.update_section(i, margin_top=rdocx.Inches(0.5), orientation="landscape")`, `doc.section(i).left_margin = rdocx.Inches(1)`, `doc.insert_section(i)` | `doc.sections` are read-only snapshots |
 | Pictures | `rdocx images extract F DIR` | `doc.add_picture(image, name, w, h, options=rdocx.PictureOptions(...))`, `run.add_picture(...)`, `doc.pictures()`, `doc.replace_image(rid, bytes)` | both sizes or neither; `replace_image` keeps the old size |
 | Hyperlinks | | `doc.hyperlinks`, `p.add_hyperlink(text, url)`, `p.add_internal_hyperlink(text, bookmark)`, `doc.add_heading_hyperlink(p, heading, text)`, `doc.remove_hyperlink(hyperlink)` | re-fetch `doc.hyperlinks` after a removal |
-| Headers, footers, page numbers, notes | | `doc.section(i).header.add_paragraph(t)`, `run.add_field("PAGE")`, `doc.add_footnote(p, text)` | a new header holds no paragraph; `doc.remove_footnote(id)` removes a note after later edits |
+| Headers, footers, page numbers, notes | | `doc.section(i).header.add_paragraph(t)`, `run.add_field("PAGE")`, `doc.add_footnote(p, text)` | a new header holds no paragraph; a note goes by id: `doc.remove_footnote(id)` |
 | Comments, replies, resolution | `docx_ops.py comment`; `rdocx comment list/reply/resolve/remove`, `--date` | `docx_ops.comment_on_text`, `reply_to(date=)`, `resolve_comment`, `remove_comment` | always date a comment |
 | What each comment points at, moving a thread | `rdocx comment list --json F` (`anchor_text`, `anchor`), `rdocx comment move F ID --text TEXT -o OUT` | `c.anchor_text`, `c.anchor` for `c in doc.comments`; `doc.move_comment(id, range)` | move a thread off a paragraph before deleting it |
 | Tracked changes | `rdocx revision list/accept/reject --id/--author/--start-date/--end-date` | `doc.revisions`, `accept_all()`, `reject_all()`, by id, author or dates | every story: `r.story.kind` |
@@ -114,8 +114,8 @@ background).
 | Validity | `rdocx validate F` | `doc.validate()` | every related part and every style id (rule 7) |
 | Sign, check signatures | `rdocx sign F --key K.pem --cert C.pem -o OUT`, `rdocx verify-signatures --json F` | `doc.sign(key, cert)`, `doc.verify_signatures()` | sign last: an edit breaks it; no chain trust |
 | What changed between two files | `rdocx diff A B` | | by paragraph, in every story |
-| New document | | `rdocx.Document()`, or a template .docx or .dotx emptied | Word's usual styles; a .dotx saved as .docx becomes a document |
-| Combine documents, equations, a missing feature | | `doc.insert_document(other, at=bi)`, `doc.import_fragment(location, fragment)`; `p.add_equation(latex, format="latex", display=False)`; `p.xml` / `p.replace_xml(xml)` | raw XML, the way out instead of lxml: an element Word does not know raises |
+| New document | | `rdocx.Document()`, or a template .docx or .dotx emptied | Word's usual styles; save a .dotx as .docx |
+| Combine documents, equations, a missing feature | | `doc.insert_document(other, at=bi)`, `doc.import_fragment(location, fragment)`; `p.add_equation(latex, format="latex", display=False)`; `p.xml` / `p.replace_xml(xml)`, `doc.part_xml(name)` (read-only) | raw XML instead of lxml; an unknown element raises |
 
 Commands and full signatures: `references/cli.md`, `references/python-api.md` (and the `.pyi` stubs it
 points to). Worked, tested examples for each row: `references/recipes.md`. Ready-made commands:
