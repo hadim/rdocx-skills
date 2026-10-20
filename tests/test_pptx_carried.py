@@ -26,8 +26,8 @@ def test_appends_keep_earlier_paragraph_and_run_handles():
 
 # carried by tensorbee/rdocx#394, delete once upstream main has it
 def test_placeholders_after_a_gap_clear_and_remove_style():
-    """slide.placeholders has a len and iterates past a missing idx; TextFrame.clear() keeps one paragraph;
-    Shape.remove_style() drops the p:style add_shape writes; MSO_SHAPE.UP_ARROW exists."""
+    """slide.placeholders has a len and iterates past a missing idx; TextFrame.clear() keeps the first paragraph
+    and its formatting; Shape.remove_style() drops the p:style add_shape writes; MSO_SHAPE.UP_ARROW exists."""
     prs = rpptx.Presentation()
     slide = prs.slides.add_slide(prs.slide_layouts[1])
     slide.shapes.remove(slide.placeholders[0])
@@ -36,8 +36,9 @@ def test_placeholders_after_a_gap_clear_and_remove_style():
     frame = slide.shapes.add_textbox(0, 0, Inches(3), Inches(1)).text_frame
     frame.text = "one"
     frame.add_paragraph().text = "two"
+    frame.paragraphs[0].font.bold = True
     frame.clear()
-    assert len(frame.paragraphs) == 1 and frame.text == ""
+    assert len(frame.paragraphs) == 1 and frame.text == "" and frame.paragraphs[0].font.bold is True
     arrow = slide.shapes.add_shape(MSO_SHAPE.UP_ARROW, 0, 0, Inches(1), Inches(1))
     assert "p:style" in arrow.element.xml
     arrow.remove_style()

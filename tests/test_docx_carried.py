@@ -9,7 +9,7 @@ import rdocx
 
 from builders import bare_cell_docx, many_tables_docx, word_textbox_docx
 
-WALK_BOUND_S = 20.0  # measured 0.1 s on the pinned build; main b072b985 takes hours on this walk
+WALK_BOUND_S = 20.0  # 0.1 s on the pinned build; #399 took its synthetic document's cell walk from hours to 0.2 s
 
 
 # carried by tensorbee/rdocx#399, delete once upstream main has it

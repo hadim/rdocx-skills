@@ -68,7 +68,7 @@ Everything else (setters, `run.text`, appends: `add_slide`, `add_textbox`, `add_
 ## Slide
 
 `shapes`, `placeholders` (`slide.placeholders[idx]` looks one up by its `idx`; `len` and a loop give them all, in idx
-order, a missing idx included), `slide_layout` (settable), `hidden` (settable),
+order, past a missing idx), `slide_layout` (settable), `hidden` (settable),
 `try_replace_text(old, new, *, expect=None, notes=True)` → int (this slide only, its notes unless `notes=False`;
 same all-or-nothing count as the presentation's), `notes_text` (get and set; None when the slide has no notes,
 setting it creates the notes slide), `has_notes_slide`, `notes_slide` (as python-pptx: creates the notes slide,
