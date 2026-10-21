@@ -144,7 +144,9 @@ the built-in ones, or `install --build` compiles the pinned commit on the machin
   `.github/scripts/tested-tree.sh`; for a pull request, its merge into `main`), keeps the files it built (artifacts
   `dist-<platform>`, 90 days) and attests them (not on a fork's pull request). A push to `main` whose tree carries
   that mark, which is what merging a green pull request while `main` stood still gives, runs no suite again, and
-  `release.yml` takes the mark and those files: merge, then release at once, without compiling again. Only this repository's runs count, not a
+  `release.yml` takes the mark and those files: merge, then release at once, without compiling again. A writer of
+  this repository could still plant a build cache from an earlier commit of a pull request (caches are per branch):
+  the same trust as the right to merge. Only this repository's runs count, not a
   fork's pull request, whose workflow the fork could change.
 - `.github/workflows/release.yml`, by hand: takes the files `ci.yml` built and tested on that tree (or builds
   them), tests them and publishes a release of the plugin that carries those files (next section).
@@ -187,8 +189,9 @@ follow it, and get a new version only from `.github/workflows/release.yml`: Acti
 1. refuses a `main` whose tree `ci.yml` has not passed on (on `main` or on the pull request merged into it), or
    that is released already;
 2. picks the CalVer version of the day, `YYYY.M.D` (`YYYY.M.D.2` and on for another release the same day);
-3. takes, per platform, the files of the `ci.yml` run that passed on that tree (kept 90 days and attested by that
-   run; `gh attestation verify --signer-workflow .../ci.yml` must pass on each, or the release stops), else builds
+3. takes, per platform, the files of the `ci.yml` run that passed on that tree (kept 90 days), when an attestation
+   of `ci.yml` on a GitHub-hosted runner (`gh attestation verify --signer-workflow .../ci.yml`) names a commit with
+   exactly that tree: the same workflow and build steps on the same sources as `main`. Otherwise it builds
    the pinned commit (the ThinLTO profile and build cache of `ci.yml`) and attests it, installs those files and runs
    the acceptance suite on them: nothing is published unless the four platforms pass;
 4. moves the `release` branch to `main`'s tree with that `version` written into `plugin/.claude-plugin/plugin.json`

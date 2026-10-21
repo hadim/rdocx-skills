@@ -47,6 +47,7 @@ jobs:
     outputs:
       sha: ${{ steps.plan.outputs.sha }}
       run: ${{ steps.tree.outputs.run }}
+      tree: ${{ steps.tree.outputs.tree }}
       commit: ${{ steps.plan.outputs.commit }}
       version: ${{ steps.plan.outputs.version }}
       previous: ${{ steps.plan.outputs.previous }}
@@ -133,25 +134,46 @@ jobs:
       - name: This runner builds this platform
         run: test "$(python -c 'import sys; sys.path.insert(0, "plugin/scripts"); import rdocx_env; print(rdocx_env.platform_key())')" = "$PLATFORM"
 
+      # A file is reused only when an attestation of ci.yml, on a GitHub-hosted runner, names a commit with exactly
+      # the tree released here, that is this very ci.yml and build steps on these sources; else it is built here.
       - name: Files of the ci.yml run that passed on this tree
         id: reuse
         if: needs.plan.outputs.run != ''
         env:
           GH_TOKEN: ${{ github.token }}
           RUN: ${{ needs.plan.outputs.run }}
+          TREE: ${{ needs.plan.outputs.tree }}
         run: |
           dir="plugin/dist/$COMMIT/$PLATFORM"
+          reused=false
           if gh run download "$RUN" -R "$GITHUB_REPOSITORY" -n "dist-$PLATFORM" -D "$dir"; then
-            for f in "$dir"/*; do  # built by ci.yml in this repository, or the release stops here
-              gh attestation verify "$f" -R "$GITHUB_REPOSITORY" \
-                --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/ci.yml" > /dev/null
+            reused=true
+            for f in "$dir"/*; do
+              commits=$(gh attestation verify "$f" -R "$GITHUB_REPOSITORY" --deny-self-hosted-runners \
+                --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/ci.yml" --format json \
+                --jq '.[].verificationResult.statement.predicate.buildDefinition.resolvedDependencies[0].digest.gitCommit' \
+                || true)
+              ok=false
+              for c in $commits; do
+                if [ "$(gh api "repos/$GITHUB_REPOSITORY/git/commits/$c" --jq .tree.sha || true)" = "$TREE" ]; then
+                  ok=true
+                  break
+                fi
+              done
+              if [ "$ok" != true ]; then
+                echo "$PLATFORM: $(basename "$f") has no ci.yml attestation built from this tree: building here" >> "$GITHUB_STEP_SUMMARY"
+                reused=false
+                break
+              fi
             done
+          fi
+          if [ "$reused" = true ]; then
             python plugin/scripts/rdocx_env.py lock --write  # then `install` takes this folder, checked against it
-            echo "reused=true" >> "$GITHUB_OUTPUT"
-            echo "$PLATFORM: the files of ci.yml run $RUN, attested there" >> "$GITHUB_STEP_SUMMARY"
+            echo "$PLATFORM: the files of ci.yml run $RUN, attested there from this tree" >> "$GITHUB_STEP_SUMMARY"
           else
             rm -rf "$dir"
           fi
+          echo "reused=$reused" >> "$GITHUB_OUTPUT"
 
       - name: Rust toolchain named by rdocx's rust-toolchain.toml
         if: steps.reuse.outputs.reused != 'true'
