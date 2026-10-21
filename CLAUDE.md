@@ -83,17 +83,16 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
   `v2026.10.16.2` (pin `d44a69af`).
-- Pinned: hadim/rdocx `integration/open-prs-2026-10-20` at `6e286888`: tensorbee/rdocx `main` `b072b985` plus the
-  open pull requests tensorbee/rdocx#393 to #397 and #399 (the fix of #398, Python handles that rescanned the whole
-  document). Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
+- Pinned: hadim/rdocx `integration/open-prs-2026-10-21` at `3af55af1`: `integration/open-prs-2026-10-20`
+  (`6e286888`: tensorbee/rdocx `main` `b072b985` plus the open pull requests tensorbee/rdocx#393 to #397 and #399, the
+  fix of #398, Python handles that rescanned the whole document) plus tensorbee/rdocx#401, the fix of #400 (`rebuild_toc`
+  let Heading 2 into `TOC \o "1-1" \u`, a regression of main 2a88a8f5, F-283, that the `-10-20` pin and `v2026.10.20`
+  carry). Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
   `main` or its tags again once a sprint carries them.
-- Open gaps: 3 (`tests/gaps.py`, both `references/gaps.md`): docx-custom-properties-not-listed (reported as
-  tensorbee/rdocx#387); docx-toc-outline-switch-ignores-depth, a regression of this pin (2026-10-21: tensorbee/rdocx
-  2a88a8f5, F-283, lets Heading 2 into `TOC \o "1-1" \u`; `7496a81c` passes it), and
-  docx-toc-outline-level-beyond-depth, the same missing range check on a paragraph's own outline level, `7496a81c`
-  included; `recipes.md` carries the workaround (take `\u` out for the rebuild). Every gap of `d44a69af` closed
-  with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx and python-pptx names it does not take raise
-  an error naming the rdocx or rpptx way, the contract #379 asked for.
+- Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-custom-properties-not-listed (reported as
+  tensorbee/rdocx#387). docx-toc-outline-switch-ignores-depth and docx-toc-outline-level-beyond-depth (#400) closed
+  with `-10-21`. Every gap of `d44a69af` closed with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx
+  and python-pptx names it does not take raise an error naming the rdocx or rpptx way, the contract #379 asked for.
 - Suite against `6e286888`: 160 passed, 4 xfailed, 18 skipped (the install and release tests, without recorded
   hashes) on macos-arm64 from a local build, in under a minute. Walking every body and cell paragraph handle is
   linear with #399 (600 paragraphs and 965 cells: 0.2 s, nested-table cells about 15 ms each).

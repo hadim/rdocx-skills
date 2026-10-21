@@ -49,16 +49,12 @@ gaps closed.
 # 2026-10-21: the same pin regressed on rebuild_toc: tensorbee/rdocx 2a88a8f5 (F-283) made `\\u` read the outline
 # level a heading style gives, and the outline branch never honoured the `\\o` range, so `\\o "1-1" \\u` lists Heading 2
 # (docx-toc-outline-switch-ignores-depth; 7496a81c passes it). docx-toc-outline-level-beyond-depth is the same missing
-# range check on a paragraph's own outline level, already there in 7496a81c.
+# range check on a paragraph's own outline level, already there in 7496a81c. Both reported as tensorbee/rdocx#400 and
+# closed with integration/open-prs-2026-10-21 (the fix tensorbee/rdocx#401 on top of -10-20); the tests moved to
+# test_docx_carried.py until upstream main has it.
 GAPS = {
     # upstream: tensorbee/rdocx#387
     "docx-custom-properties-not-listed": "custom_properties takes item assignment, deletion and `in`, and "
     "get(name).value reads one property, but nothing lists the properties a document holds (no keys(), items() or "
     "iteration); rdocx meta get --json lists them",
-    # regression of 6e286888 (tensorbee/rdocx 2a88a8f5, F-283); upstream: tensorbee/rdocx#400
-    "docx-toc-outline-switch-ignores-depth": "rebuild_toc() ignores the depth of \\o \"1-N\" when the TOC also "
-    "carries \\u: \\o \"1-1\" \\h \\z \\u (Word's own TOC dialog writes it) lists Heading 2 too, with no diagnostic",
-    # upstream: tensorbee/rdocx#400
-    "docx-toc-outline-level-beyond-depth": "under \\o \"1-N\" \\u, rebuild_toc() lists a paragraph whose own outline "
-    "level is beyond N; Word leaves it out",
 }
