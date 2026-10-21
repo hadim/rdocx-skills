@@ -77,23 +77,24 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 20/10/2026
+## State on 21/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
   `v2026.10.16.2` (pin `d44a69af`).
-- Pinned: hadim/rdocx `integration/open-prs-2026-10-20` at `6e286888`: tensorbee/rdocx `main` `b072b985` plus the
-  open pull requests tensorbee/rdocx#393 to #397 and #399 (the fix of #398, Python handles that rescanned the whole
-  document). Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
+- Pinned: hadim/rdocx `integration/open-prs-2026-10-21` at `3af55af1`: `integration/open-prs-2026-10-20`
+  (`6e286888`: tensorbee/rdocx `main` `b072b985` plus the open pull requests tensorbee/rdocx#393 to #397 and #399, the
+  fix of #398, Python handles that rescanned the whole document) plus tensorbee/rdocx#401, the fix of #400 (`rebuild_toc`
+  let Heading 2 into `TOC \o "1-1" \u`, a regression of main 2a88a8f5, F-283, that the `-10-20` pin and `v2026.10.20`
+  carry). Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
   `main` or its tags again once a sprint carries them.
 - Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-custom-properties-not-listed (reported as
-  tensorbee/rdocx#387). Every gap of `d44a69af` closed with `7496a81c` (tensorbee/rdocx#384, #385, #386); the
-  python-docx and python-pptx names it does not take raise an error naming the rdocx or rpptx way, the contract
-  #379 asked for.
-- Suite against `6e286888`: 159 passed, 1 xfailed, 18 skipped (the install and release tests, without recorded
-  hashes) on macos-arm64 from a local build, in under a minute. Walking every body and cell paragraph handle is
-  linear with #399 (600 paragraphs and 965 cells: 0.2 s, nested-table cells about 15 ms each).
+  tensorbee/rdocx#387). docx-toc-outline-switch-ignores-depth and docx-toc-outline-level-beyond-depth (#400) closed
+  with `-10-21`. Every gap of `d44a69af` closed with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx
+  and python-pptx names it does not take raise an error naming the rdocx or rpptx way, the contract #379 asked for.
+- Suite against `3af55af1`: 180 passed, 1 xfailed on the four CI platforms (PR #57, 2026-10-21). Walking every
+  body and cell paragraph handle is linear with #399 (600 paragraphs and 965 cells: 0.2 s, nested-table cells about 15 ms each).
   `tests/test_docx_carried.py` and `tests/test_pptx_carried.py` hold what the carried pull requests fix: delete each
   test once upstream `main` has its fix.
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)

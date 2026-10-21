@@ -15,3 +15,4 @@ def test_custom_properties_are_listed(tmp_path):
     doc.save(tmp_path / "c.docx")
     back = rdocx.Document.open(tmp_path / "c.docx").custom_properties
     assert dict(back.items()) == {"Client": "Acme", "Revision": 3, "Due": "2026-10-31T00:00:00Z"}
+
