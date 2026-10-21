@@ -8,7 +8,8 @@
 # SHA256SUMS and build provenance attestations. Nothing is published unless the four platforms build and pass. Older
 # releases stay, each with its own files, so an older plugin version still installs; clean-ups are done by hand.
 #
-# The release takes main as it is, once ci.yml passed on it: the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for
+# The release takes main as it is, once ci.yml passed on its tree (on main, or on the pull request merged into it,
+# .github/scripts/tested-tree.sh): the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for
 # another release the same day), the `release` branch moved to main's tree with that version written into
 # plugin/.claude-plugin/plugin.json and the lock pointed at this release's files and their hashes (a merge of main, so
 # that `release` only moves forward), a tag on it, and a GitHub release titled with the rdocx and rpptx versions of
@@ -41,7 +42,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      actions: read  # gh run list: the ci.yml run of main
+      actions: read  # the artifacts of ci.yml's runs: the mark of main's tree
     outputs:
       sha: ${{ steps.plan.outputs.sha }}
       commit: ${{ steps.plan.outputs.commit }}
@@ -59,10 +60,9 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: |
           main=$(git rev-parse HEAD)
-          conclusion=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main --event push \
-            --commit "$main" --json conclusion --jq '.[0].conclusion // ""')
-          if [ "$conclusion" != success ]; then
-            echo "ci.yml on main ${main:0:12}: ${conclusion:-no finished run}; release only a main that passed" >> "$GITHUB_STEP_SUMMARY"
+          passed=$(.github/scripts/tested-tree.sh 2>> "$GITHUB_STEP_SUMMARY" | sed -n 's/^passed=//p')
+          if [ "$passed" != true ]; then
+            echo "ci.yml has not passed on the tree of main ${main:0:12}; release only a main that passed" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
           if git fetch -q origin release 2>/dev/null && git merge-base --is-ancestor "$main" FETCH_HEAD; then

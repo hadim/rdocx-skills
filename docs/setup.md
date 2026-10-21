@@ -140,6 +140,11 @@ the built-in ones, or `install --build` compiles the pinned commit on the machin
   `.github/scripts/suite-summary.sh` in the job summary. On Windows it runs from Git Bash, as an agent does, on a
   checkout made with `core.autocrlf false` (the repository has no `.gitattributes`: the plugin directory refuses
   one that rewrites files at checkout). No build is published from here: the plugin's releases are the only ones.
+  A run whose four suites pass marks the tree it tested (artifact `tested-tree-<tree>`, kept 90 days;
+  `.github/scripts/tested-tree.sh`; for a pull request, its merge into `main`). A push to `main` whose tree carries
+  that mark, which is what merging a green pull request while `main` stood still gives, runs no suite again,
+  and `release.yml` accepts the mark: merge, then release at once. Only this repository's runs count, not a
+  fork's pull request, whose workflow the fork could change.
 - `.github/workflows/release.yml`, by hand: builds the pinned commit again, tests it and publishes a release of the
   plugin that carries those files (next section).
 
@@ -178,7 +183,8 @@ Pushes to `main` reach nobody. `release` is the repository's default branch, so 
 a ref (`/plugin marketplace add hadim/rdocx-skills`, the only form Claude Desktop takes) and the Claude plugin directory
 follow it, and get a new version only from `.github/workflows/release.yml`: Actions, release, Run workflow. It:
 
-1. refuses a `main` whose `ci.yml` run did not succeed, or that is released already;
+1. refuses a `main` whose tree `ci.yml` has not passed on (on `main` or on the pull request merged into it), or
+   that is released already;
 2. picks the CalVer version of the day, `YYYY.M.D` (`YYYY.M.D.2` and on for another release the same day);
 3. builds the pinned commit again on the four platforms, every time, even when an earlier release or build holds
    the same commit (the ThinLTO profile and build cache of `ci.yml`), installs each build and runs

@@ -1,8 +1,10 @@
 """.github/scripts: suite-summary.sh groups a suite log for the job summaries and the release notes,
-plugin_release.py names the plugin's releases, writes their version and the head of their notes. Synthetic logs and
-locks only; no network, no release touched."""
+plugin_release.py names the plugin's releases, writes their version and the head of their notes, tested-tree.sh tells
+whether ci.yml passed on a tree. Synthetic logs, locks and API answers only; no network, no release touched."""
 import datetime
 import json
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -110,3 +112,34 @@ def test_release_notes_need_recorded_files():
             "versions": {"rdocx": "0.16.1", "rpptx": "0.14.1"}}
     with pytest.raises(SystemExit):
         plugin_release.notes(lock, REPO, "2026.10.5", RUN)
+
+
+@pytest.mark.parametrize("artifacts,passed", [
+    ([], "false"),
+    ([{"expired": False, "workflow_run": {"id": 7, "repository_id": 1, "head_repository_id": 1}}], "true"),
+    ([{"expired": True, "workflow_run": {"id": 7, "repository_id": 1, "head_repository_id": 1}}], "false"),
+    ([{"expired": False, "workflow_run": {"id": 8, "repository_id": 1, "head_repository_id": 2}}], "false"),
+])
+@pytest.mark.skipif(shutil.which("jq") is None, reason="jq, which gh embeds, stands in for gh's --jq")
+def test_a_tree_passed_only_on_a_live_mark_from_this_repository(tmp_path, artifacts, passed):
+    """tested-tree.sh: the mark of a ci.yml run that passed on HEAD's tree, from this repository and not expired."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git = ["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    (repo / "f").write_text("x\n")
+    subprocess.run(git + ["add", "f"], check=True)
+    subprocess.run(git + ["commit", "-qm", "c"], check=True)
+    tree = subprocess.run(git + ["rev-parse", "HEAD^{tree}"], capture_output=True, text=True, check=True).stdout.strip()
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    (tmp_path / "artifacts.json").write_text(json.dumps({"artifacts": artifacts}))
+    # a stand-in for `gh api URL --jq FILTER`: checks the artifact name asked for, applies the filter with jq
+    gh = bin_dir / "gh"
+    gh.write_text(f'#!/bin/sh\ncase "$2" in *"name=tested-tree-{tree}&"*) ;; *) exit 3 ;; esac\n'
+                  f'exec jq -r "$4" "{(tmp_path / "artifacts.json").as_posix()}"\n')
+    gh.chmod(0o755)
+    env = {**os.environ, "GITHUB_REPOSITORY": REPO, "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}"}
+    res = subprocess.run([BASH, SCRIPTS / "tested-tree.sh"], cwd=repo, env=env, capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    assert res.stdout.splitlines() == [f"tree={tree}", f"passed={passed}"]
