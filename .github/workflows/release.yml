@@ -243,7 +243,7 @@ jobs:
       - name: Poppler, for the PDF text and raster checks
         run: .github/scripts/poppler.sh
 
-      - name: Acceptance suite on the files built here
+      - name: Acceptance suite on the files it publishes
         # one worker per core, each file on one worker in order (the recipes of a file build on each other)
         run: python plugin/scripts/rdocx_env.py test --allow-local -n auto --dist loadfile 2>&1 | tee "$RUNNER_TEMP/pytest.log"
 
