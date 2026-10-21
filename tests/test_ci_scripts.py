@@ -114,15 +114,23 @@ def test_release_notes_need_recorded_files():
         plugin_release.notes(lock, REPO, "2026.10.5", RUN)
 
 
-@pytest.mark.parametrize("artifacts,passed", [
-    ([], "false"),
-    ([{"expired": False, "workflow_run": {"id": 7, "repository_id": 1, "head_repository_id": 1}}], "true"),
-    ([{"expired": True, "workflow_run": {"id": 7, "repository_id": 1, "head_repository_id": 1}}], "false"),
-    ([{"expired": False, "workflow_run": {"id": 8, "repository_id": 1, "head_repository_id": 2}}], "false"),
+RUN_OK = {"path": ".github/workflows/ci.yml", "event": "pull_request", "conclusion": "success"}
+MARK = {"expired": False, "workflow_run": {"id": 7, "repository_id": 1, "head_repository_id": 1}}
+
+
+@pytest.mark.parametrize("artifacts,run,passed", [
+    ([], RUN_OK, "false"),
+    ([MARK], RUN_OK, "true"),
+    ([MARK], {**RUN_OK, "event": "push"}, "true"),
+    ([{**MARK, "expired": True}], RUN_OK, "false"),
+    ([{**MARK, "workflow_run": {"id": 7, "repository_id": 1, "head_repository_id": 2}}], RUN_OK, "false"),
+    ([MARK], {**RUN_OK, "path": ".github/workflows/other.yml"}, "false"),
+    ([MARK], {**RUN_OK, "event": "workflow_dispatch"}, "false"),
+    ([MARK], {**RUN_OK, "conclusion": "failure"}, "false"),
 ])
-@pytest.mark.skipif(shutil.which("jq") is None, reason="jq, which gh embeds, stands in for gh's --jq")
-def test_a_tree_passed_only_on_a_live_mark_from_this_repository(tmp_path, artifacts, passed):
-    """tested-tree.sh: the mark of a ci.yml run that passed on HEAD's tree, from this repository and not expired."""
+def test_a_tree_passed_only_on_a_live_mark_from_this_repository(tmp_path, artifacts, run, passed):
+    """tested-tree.sh: the mark of a green ci.yml run (push or pull request) on HEAD's tree, from this repository,
+    not expired."""
     repo = tmp_path / "repo"
     repo.mkdir()
     git = ["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t"]
@@ -134,10 +142,13 @@ def test_a_tree_passed_only_on_a_live_mark_from_this_repository(tmp_path, artifa
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     (tmp_path / "artifacts.json").write_text(json.dumps({"artifacts": artifacts}))
-    # a stand-in for `gh api URL --jq FILTER`: checks the artifact name asked for, applies the filter with jq
+    (tmp_path / "run.json").write_text(json.dumps(run))
+    # a stand-in for `gh api URL --jq FILTER`: answers the artifact query for HEAD's tree and run 7, through jq
     gh = bin_dir / "gh"
-    gh.write_text(f'#!/bin/sh\ncase "$2" in *"name=tested-tree-{tree}&"*) ;; *) exit 3 ;; esac\n'
-                  f'exec jq -r "$4" "{(tmp_path / "artifacts.json").as_posix()}"\n')
+    gh.write_text(f'#!/bin/sh\ncase "$2" in\n'
+                  f'  *"/actions/artifacts?name=tested-tree-{tree}&"*) f="{(tmp_path / "artifacts.json").as_posix()}" ;;\n'
+                  f'  */actions/runs/7) f="{(tmp_path / "run.json").as_posix()}" ;;\n'
+                  f'  *) exit 3 ;;\nesac\nexec jq -r "$4" "$f"\n')
     gh.chmod(0o755)
     env = {**os.environ, "GITHUB_REPOSITORY": REPO, "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}"}
     res = subprocess.run([BASH, SCRIPTS / "tested-tree.sh"], cwd=repo, env=env, capture_output=True, text=True)
