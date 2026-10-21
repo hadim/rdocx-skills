@@ -55,10 +55,10 @@ GAPS = {
     "docx-custom-properties-not-listed": "custom_properties takes item assignment, deletion and `in`, and "
     "get(name).value reads one property, but nothing lists the properties a document holds (no keys(), items() or "
     "iteration); rdocx meta get --json lists them",
-    # regression of 6e286888 (tensorbee/rdocx 2a88a8f5, F-283); upstream: (to file)
+    # regression of 6e286888 (tensorbee/rdocx 2a88a8f5, F-283); upstream: tensorbee/rdocx#400
     "docx-toc-outline-switch-ignores-depth": "rebuild_toc() ignores the depth of \\o \"1-N\" when the TOC also "
     "carries \\u: \\o \"1-1\" \\h \\z \\u (Word's own TOC dialog writes it) lists Heading 2 too, with no diagnostic",
-    # upstream: (to file, same issue)
+    # upstream: tensorbee/rdocx#400
     "docx-toc-outline-level-beyond-depth": "under \\o \"1-N\" \\u, rebuild_toc() lists a paragraph whose own outline "
     "level is beyond N; Word leaves it out",
 }
