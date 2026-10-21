@@ -4,7 +4,7 @@
 # base). A push to main that merges such a pull request, main unmoved, has that very tree: ci.yml runs nothing again
 # and release.yml releases it at once. The mark counts only from a finished green run of ci.yml itself, on a push or
 # a pull request of this repository: not from a fork's pull request, whose workflow the fork could change. Prints
-# `tree=<sha>` and `passed=true|false` for $GITHUB_OUTPUT, and the run that passed on stderr. Needs git, gh, GH_TOKEN
+# `tree=<sha>`, `run=<id>` (empty when none) and `passed=true|false` for $GITHUB_OUTPUT, and the run that passed on stderr. Needs git, gh, GH_TOKEN
 # (actions: read) and GITHUB_REPOSITORY.
 set -eu
 tree=$(git rev-parse 'HEAD^{tree}')
@@ -18,6 +18,7 @@ for id in $runs; do  # the mark counts only from ci.yml itself, on a push or a p
   if [ "$ok" = true ]; then run=$id; break; fi
 done
 echo "tree=$tree"
+echo "run=$run"
 if [ -n "$run" ]; then
   echo "passed=true"
   echo "ci.yml run $run passed on tree $(printf %.12s "$tree")" >&2

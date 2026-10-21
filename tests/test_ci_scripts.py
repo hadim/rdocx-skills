@@ -153,4 +153,4 @@ def test_a_tree_passed_only_on_a_live_mark_from_this_repository(tmp_path, artifa
     env = {**os.environ, "GITHUB_REPOSITORY": REPO, "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}"}
     res = subprocess.run([BASH, SCRIPTS / "tested-tree.sh"], cwd=repo, env=env, capture_output=True, text=True)
     assert res.returncode == 0, res.stderr
-    assert res.stdout.splitlines() == [f"tree={tree}", f"passed={passed}"]
+    assert res.stdout.splitlines() == [f"tree={tree}", f"run={7 if passed == 'true' else ''}", f"passed={passed}"]

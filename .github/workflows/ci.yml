@@ -6,7 +6,7 @@
 # export carries the commit's time, so cargo finds the restored build fresh). A run whose four suites pass marks the
 # tree it tested (the artifact `tested-tree-<tree>`, .github/scripts/tested-tree.sh): a push to main with a tree
 # that already passed, a pull request merged while main stood still, runs the suite no more, and release.yml takes
-# that mark instead of a run on main's commit.
+# that mark instead of a run on main's commit, and the files that run built and attested instead of building again.
 name: ci
 
 on:
@@ -50,6 +50,10 @@ jobs:
   test:
     needs: tree
     if: needs.tree.outputs.passed != 'true'
+    permissions:
+      contents: read
+      id-token: write      # the provenance attestation of the built files
+      attestations: write
     strategy:
       fail-fast: false
       matrix:
@@ -119,6 +123,21 @@ jobs:
             ~/.cargo/git/db
             ~/.local/share/rdocx-skills/target
           key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      # The files release.yml publishes when this run passes on the tree it releases: kept 90 days, and attested
+      # here, the run that built them (not on a fork's pull request, whose token cannot attest)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist-${{ matrix.platform }}
+          path: plugin/dist/${{ steps.pin.outputs.commit }}/${{ matrix.platform }}/
+          if-no-files-found: error
+          retention-days: 90
+          overwrite: true  # a re-run job uploads it again in the same run
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        with:
+          subject-path: plugin/dist/${{ steps.pin.outputs.commit }}/${{ matrix.platform }}/*
 
       - name: Record this build in the run's copy of the lock
         run: python plugin/scripts/rdocx_env.py lock --write

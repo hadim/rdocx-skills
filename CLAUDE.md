@@ -25,11 +25,12 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   it); on `release`, also the plugin release that carries its files and their SHA-256 per platform. `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
 - `.github/workflows/`: `ci.yml` (every push and PR: builds the pinned commit on four runners, Intel Macs left out,
-  with ThinLTO and a build cache per platform and commit, records the build into the run's copy of the lock, and
-  runs the suite on it; a green run marks its tree, and a push to `main` whose tree passed already, a green pull
-  request merged while `main` stood still, runs nothing again), `release.yml` (by hand: a release of the plugin, below, which builds the pinned commit again
-  on the four platforms, runs the suite on those files and attaches them to the release; older releases stay;
-  input `dry_run`). The plugin's releases are the only published builds.
+  with ThinLTO and a build cache per platform and commit, records the build into the run's copy of the lock, and runs
+  the suite on it; a green run marks its tree, and a push to `main` whose tree passed already, a green pull request
+  merged while `main` stood still, runs nothing again), `release.yml` (by hand: a release of the plugin, below, which
+  takes the files `ci.yml` built, attested and tested on that tree (else builds them), runs the suite on them and
+  attaches them to the release; older releases stay; input `dry_run`). The plugin's releases are the only published
+  builds.
   `.github/scripts/suite-summary.sh` groups a suite log (gaps closed, docs not yet updated, other failures);
   `plugin_release.py` names the plugin's releases, writes their version and the head of their notes;
   `tested-tree.sh` tells whether `ci.yml` passed on a tree (`release.yml` takes that); the scripts are tested in

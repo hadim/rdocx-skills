@@ -2,20 +2,21 @@
 # is the repository's default branch, so Claude Code and Claude Desktop users (`/plugin marketplace add
 # hadim/rdocx-skills`) and the Claude plugin directory follow it, and get a new version only from here.
 #
-# The plugin's releases are the only published builds, and each one carries its own files: it builds the pinned
-# commit on the four platforms (no macos-x86_64; each time, even when the previous release holds the same commit),
-# runs the acceptance suite on those very files, and attaches the CLIs and wheels to the release with their
-# SHA256SUMS and build provenance attestations. Nothing is published unless the four platforms build and pass. Older
-# releases stay, each with its own files, so an older plugin version still installs; clean-ups are done by hand.
+# The plugin's releases are the only published builds, and each one carries its own files: those of the ci.yml run
+# that passed on the tree it releases (built and attested there, the attestation checked here), else the pinned
+# commit built here on the four platforms (no macos-x86_64) and attested here. It runs the acceptance suite on those
+# very files and attaches the CLIs and wheels to the release with their SHA256SUMS (attested here). Nothing is
+# published unless the four platforms pass. Older releases stay, each with its own files, so an older plugin version
+# still installs; clean-ups are done by hand.
 #
 # The release takes main as it is, once ci.yml passed on its tree (on main, or on the pull request merged into it,
-# .github/scripts/tested-tree.sh): the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for
-# another release the same day), the `release` branch moved to main's tree with that version written into
-# plugin/.claude-plugin/plugin.json and the lock pointed at this release's files and their hashes (a merge of main, so
-# that `release` only moves forward), a tag on it, and a GitHub release titled with the rdocx and rpptx versions of
-# the build, marked latest, whose notes describe its files, give the suite on the four platforms and list the
-# merged pull requests since the previous release. The version, the title and the head of the notes come from
-# .github/scripts/plugin_release.py (tested in tests/test_ci_scripts.py).
+# .github/scripts/tested-tree.sh): the CalVer version vYYYY.M.D (vYYYY.M.D.2 and on for another release the same
+# day), the `release` branch moved to main's tree with that version written into plugin/.claude-plugin/plugin.json
+# and the lock pointed at this release's files and their hashes (a merge of main, so that `release` only moves
+# forward), a tag on it, and a GitHub release titled with the rdocx and rpptx versions of the build, marked latest,
+# whose notes describe its files, give the suite on the four platforms and list the merged pull requests since the
+# previous release. The version, the title and the head of the notes come from .github/scripts/plugin_release.py
+# (tested in tests/test_ci_scripts.py).
 #
 # `dry_run`: everything but the release itself, on the branch the workflow runs from (to try a change of this
 # workflow on a pull request branch): build, suite, release files and lock kept as the workflow artifact
@@ -45,6 +46,7 @@ jobs:
       actions: read  # the artifacts of ci.yml's runs: the mark of main's tree
     outputs:
       sha: ${{ steps.plan.outputs.sha }}
+      run: ${{ steps.tree.outputs.run }}
       commit: ${{ steps.plan.outputs.commit }}
       version: ${{ steps.plan.outputs.version }}
       previous: ${{ steps.plan.outputs.previous }}
@@ -56,12 +58,18 @@ jobs:
           ref: ${{ inputs.dry_run && github.sha || 'main' }}
           fetch-depth: 0
 
+      # the ci.yml run that passed on this tree: its files are the release's (build job)
+      - name: Tree
+        id: tree
+        run: .github/scripts/tested-tree.sh 2>> "$GITHUB_STEP_SUMMARY" >> "$GITHUB_OUTPUT"
+
       - name: Check main
         if: ${{ !inputs.dry_run }}
+        env:
+          PASSED: ${{ steps.tree.outputs.passed }}
         run: |
           main=$(git rev-parse HEAD)
-          passed=$(.github/scripts/tested-tree.sh 2>> "$GITHUB_STEP_SUMMARY" | sed -n 's/^passed=//p')
-          if [ "$passed" != true ]; then
+          if [ "$PASSED" != true ]; then
             echo "ci.yml has not passed on the tree of main ${main:0:12}; release only a main that passed" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
@@ -81,10 +89,16 @@ jobs:
             echo "previous=$previous"; } >> "$GITHUB_OUTPUT"
           echo "release v$version of skills $(git rev-parse --short=12 HEAD), rdocx ${commit:0:12}, dry run: ${{ inputs.dry_run }}" >> "$GITHUB_STEP_SUMMARY"
 
-  # The pinned commit built from source on each platform (the same steps as ci.yml), installed as a local build,
-  # recorded into this run's copy of the lock, and the acceptance suite run on it.
+  # The files of the ci.yml run that passed on this tree, when it kept them (its attestation checked), else the pinned
+  # commit built from source here (the same steps as ci.yml, attested here); installed, recorded into this run's copy
+  # of the lock, and the acceptance suite run on them.
   build:
     needs: plan
+    permissions:
+      contents: read
+      actions: read        # the files of the ci.yml run
+      id-token: write      # the attestation of files built here
+      attestations: write
     strategy:
       fail-fast: false
       matrix:
@@ -119,10 +133,32 @@ jobs:
       - name: This runner builds this platform
         run: test "$(python -c 'import sys; sys.path.insert(0, "plugin/scripts"); import rdocx_env; print(rdocx_env.platform_key())')" = "$PLATFORM"
 
+      - name: Files of the ci.yml run that passed on this tree
+        id: reuse
+        if: needs.plan.outputs.run != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ needs.plan.outputs.run }}
+        run: |
+          dir="plugin/dist/$COMMIT/$PLATFORM"
+          if gh run download "$RUN" -R "$GITHUB_REPOSITORY" -n "dist-$PLATFORM" -D "$dir"; then
+            for f in "$dir"/*; do  # built by ci.yml in this repository, or the release stops here
+              gh attestation verify "$f" -R "$GITHUB_REPOSITORY" \
+                --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/ci.yml" > /dev/null
+            done
+            python plugin/scripts/rdocx_env.py lock --write  # then `install` takes this folder, checked against it
+            echo "reused=true" >> "$GITHUB_OUTPUT"
+            echo "$PLATFORM: the files of ci.yml run $RUN, attested there" >> "$GITHUB_STEP_SUMMARY"
+          else
+            rm -rf "$dir"
+          fi
+
       - name: Rust toolchain named by rdocx's rust-toolchain.toml
+        if: steps.reuse.outputs.reused != 'true'
         run: .github/scripts/rust-toolchain.sh "$COMMIT"
 
       - name: ThinLTO and 16 codegen units
+        if: steps.reuse.outputs.reused != 'true'
         run: |
           echo "CARGO_PROFILE_RELEASE_LTO=thin" >> "$GITHUB_ENV"
           echo "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16" >> "$GITHUB_ENV"
@@ -130,6 +166,7 @@ jobs:
       # ci.yml's cache: a commit it built compiles nothing again
       - name: Restore the cargo registry and the build folder
         id: cache
+        if: steps.reuse.outputs.reused != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -140,13 +177,18 @@ jobs:
           key: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-${{ needs.plan.outputs.commit }}
           restore-keys: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-
 
-      # main's lock names no build: `install --build` compiles the commit and installs it as a local build
+      # main's lock names no build: `install --build` installs the files above, or compiles the commit
       - name: Build and install
         run: python plugin/scripts/rdocx_env.py install --build
 
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: ${{ !inputs.dry_run && steps.reuse.outputs.reused != 'true' }}
+        with:
+          subject-path: plugin/dist/${{ needs.plan.outputs.commit }}/${{ matrix.platform }}/*
+
       # also after a failed build: the next attempt starts from what compiled
       - name: Save the cargo registry and the build folder
-        if: ${{ !cancelled() && steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ !cancelled() && steps.reuse.outputs.reused != 'true' && steps.cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -295,10 +337,11 @@ jobs:
           name: release-files
           path: ${{ runner.temp }}/release-files/
 
+      # the CLIs and wheels are attested by the run that built them (ci.yml, or the build job above)
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         if: ${{ !inputs.dry_run }}
         with:
-          subject-path: assets/*
+          subject-path: assets/SHA256SUMS
 
       - name: Move the release branch and tag it
         if: ${{ !inputs.dry_run }}
