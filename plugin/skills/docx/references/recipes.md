@@ -324,6 +324,46 @@ docx_ops.save_atomic(doc, "fields.docx", "report.docx")
 print(rep.entry_count, fields.updated_count)
 ```
 
+On the pinned build, `rebuild_toc()` lists every heading level under a TOC whose instruction carries `\u` next to
+`\o "1-N"` (`gaps.md`, docx-toc-outline-switch-ignores-depth): take `\u` out of `word/document.xml` for the rebuild,
+then put it back so that Word's next update reads the same instruction (in the package: a TOC in a content control,
+as Word writes it, has no `Paragraph.xml`). A paragraph that only its own outline level (no heading style) put in the
+TOC is then missing: compare `rep.entry_count` with the headings of levels 1 to N.
+
+```python
+import io, re, zipfile, rdocx
+TOC = re.compile(r"(<w:instrText[^>]*>\s*TOC\b[^<]*?)(\s*</w:instrText>)")
+U = re.compile(r"\s+\\u(?=\s|$)")
+
+def rewrite(data, edit):                       # the package with word/document.xml passed through edit(xml)
+    out = io.BytesIO()
+    with zipfile.ZipFile(io.BytesIO(data)) as zin, zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            part = zin.read(item.filename)
+            if item.filename == "word/document.xml":
+                part = edit(part.decode("utf-8")).encode("utf-8")
+            zout.writestr(item, part)
+    return out.getvalue()
+
+had_u = []                                     # one flag per TOC field, in document order
+def strip(xml):
+    def one(m):
+        had_u.append(bool(U.search(m.group(1))))
+        return U.sub("", m.group(1)) + m.group(2)
+    return TOC.sub(one, xml)
+flags = iter(had_u)
+def restore(xml):
+    return TOC.sub(lambda m: m.group(1) + (" \\u" if next(flags) else "") + m.group(2), xml)
+
+doc = rdocx.Document.from_bytes(rewrite(open("report.docx", "rb").read(), strip))
+rep = doc.rebuild_toc()
+buf = io.BytesIO()
+doc.save(buf)
+open("toc-depth.docx", "wb").write(rewrite(buf.getvalue(), restore))
+assert any(had_u) and next(flags, None) is None    # every TOC field found again after the rebuild
+print(rep.entry_count)
+```
+
 After a save in Google Docs or Word (the fixture's footer fields are packed with no cached result), refresh the
 fields and stop Word from asking to update them on open:
 
