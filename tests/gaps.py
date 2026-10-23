@@ -65,6 +65,7 @@ GAPS = {
     "Normal style",
     # test_pptx_scaling.py: 159 of the 248 public mutating calls of rpptx 0.14.3, its GROWING set; an XPASS removes
     # that call from GROWING, and this entry goes when GROWING is empty
+    # upstream: tensorbee/rdocx#403
     "pptx-edit-cost-grows-with-deck": "the call costs a time that grows with the rest of the deck: it copies the "
     "deck and rebuilds the inventory of every shape, and many calls also rewrite and reparse the whole package "
     "(about 22 ms a MB); build or update a large deck with python-pptx, add pictures last",
