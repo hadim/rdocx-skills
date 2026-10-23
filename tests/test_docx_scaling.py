@@ -706,9 +706,10 @@ def documents(tmp_path_factory):
             edit_cost_docx(folder / "4n.docx", 4 * N, picture_side=100))
 
 
-# Calls whose cost grows with the document on the pin (rdocx 0.16.3), 145 of the 252, in the order of TIMED;
-# `--runxfail` shows the numbers. An XPASS means a build fixed that call: remove it from here, and the gap's entry
-# once this set is empty. The passing calls are regression guards: keep them when the pin moves to an upstream release.
+# Calls whose cost grows with the document on the pin (rdocx 0.16.3, 145 of the 252, less Paragraph.xml, which
+# tensorbee/rdocx#415 fixed), in the order of TIMED; `--runxfail` shows the numbers. An XPASS means a build fixed that
+# call: remove it from here, and the gap's entry once this set is empty. The passing calls are regression guards: keep
+# them when the pin moves to an upstream release.
 GROWING = {
     "Document.set_font", "Document.embed_font", "Document.remove_embedded_font", "Document.remove_font",
     "Document.embed_true_type_fonts", "Document.save_subset_fonts", "Document.embed_system_fonts",
@@ -747,7 +748,7 @@ GROWING = {
     "Table.remove_row", "Row.height", "Row.height_rule", "Row.cant_split", "Row.is_header", "Cell.replace_xml",
     "Cell.add_picture", "Cell.replace_text", "Cell.text", "Cell.add_table", "Cell.merge", "Cell.split",
     "Cell.add_paragraph", "Cell.width", "Cell.vertical_alignment", "Cell.shading", "Cell.set_border",
-    "Cell.set_margins", "Paragraph.xml",
+    "Cell.set_margins",
 }
 
 
