@@ -1,11 +1,17 @@
-"""Small synthetic inputs for the tests, built with python-docx plus targeted XML where python-docx has no API.
-Each builder writes a file and returns its path."""
+"""Small synthetic inputs for the tests, built with python-docx (python-pptx for decks) plus targeted XML where
+they have no API. Each builder writes a file and returns its path."""
+import io
+import random
 import re
 import zipfile
 
 import docx
+import pptx
 import rdocx
 from docx.oxml.ns import qn
+from PIL import Image
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.util import Inches
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 FOOTNOTES_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes"
@@ -274,3 +280,34 @@ def google_wrapped(src, dst):
         return re.sub(r"<w:p\b(?:(?!<w:p\b).)*?goog_rdk_0.*?</w:p>", lambda m: GOOG_SDT % (2, m.group(0)), xml,
                       count=1, flags=re.S)
     return rewrite_body(src, dst, edit)
+
+
+def edit_cost_pptx(path, slides, picture_side=0):
+    """`slides` slides of 25 text boxes, 12 filled rectangles and a 4x4 table (the tensorbee/rdocx#389 build);
+    with `picture_side`, each slide also holds a random-noise PNG of that side in pixels (it does not compress,
+    about 3 bytes a pixel) and speaker notes."""
+    prs = pptx.Presentation()
+    for k in range(slides):
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
+        for i in range(25):
+            box = slide.shapes.add_textbox(Inches(0.2 + 0.5 * (i % 5)), Inches(0.2 + 0.5 * (i // 5)), Inches(2), Inches(0.4))
+            box.text_frame.text = f"text {i}"
+        for i in range(12):
+            slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(4 + 0.4 * i), Inches(4), Inches(0.3), Inches(0.3)).fill.solid()
+        table = slide.shapes.add_table(4, 4, Inches(0.5), Inches(5), Inches(6), Inches(1.5)).table
+        for r in range(4):
+            for c in range(4):
+                table.cell(r, c).text = f"{r}.{c}"
+        if picture_side:
+            slide.shapes.add_picture(io.BytesIO(noise_png(picture_side, k)), Inches(7), Inches(0.5), Inches(2.5))
+            slide.notes_slide.notes_text_frame.text = f"notes {k}"
+    prs.save(path)
+    return path
+
+
+def noise_png(side, seed):
+    """A PNG of random pixels, which does not compress: about 3 * side * side bytes."""
+    noise = random.Random(seed).randbytes(side * side * 3)
+    buffer = io.BytesIO()
+    Image.frombytes("RGB", (side, side), noise).save(buffer, format="PNG")
+    return buffer.getvalue()
