@@ -4,15 +4,11 @@ import pytest
 import rdocx
 
 
-@pytest.mark.gap("docx-custom-properties-not-listed")
-def test_custom_properties_are_listed(tmp_path):
-    """custom_properties takes item assignment, deletion and `in`, and get(name).value reads one property, but
-    nothing lists the properties a document holds (no keys, items or iteration)."""
+@pytest.mark.gap("docx-default-line-spacing-multiple")
+def test_default_line_spacing_takes_a_multiple():
+    """set_default_paragraph_format takes a length (an exact pitch) but no multiple, the rule of Word's own default
+    (1.08 lines); reading a multiple works."""
     doc = rdocx.Document()
-    doc.custom_properties["Client"] = "Acme"
-    doc.custom_properties["Revision"] = 3
-    doc.custom_properties["Due"] = rdocx.CustomFileTime("2026-10-31T00:00:00Z")
-    doc.save(tmp_path / "c.docx")
-    back = rdocx.Document.open(tmp_path / "c.docx").custom_properties
-    assert dict(back.items()) == {"Client": "Acme", "Revision": 3, "Due": "2026-10-31T00:00:00Z"}
-
+    doc.set_default_paragraph_format(line_spacing=1.15)
+    assert doc.default_paragraph_format.line_spacing == pytest.approx(1.15)
+    assert 'w:line="276" w:lineRule="auto"' in doc.part_xml("word/styles.xml")

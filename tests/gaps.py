@@ -52,9 +52,14 @@ gaps closed.
 # range check on a paragraph's own outline level, already there in 7496a81c. Both reported as tensorbee/rdocx#400 and
 # closed with integration/open-prs-2026-10-21 (the fix tensorbee/rdocx#401 on top of -10-20); the tests moved to
 # test_docx_carried.py until upstream main has it.
+# 2026-10-23: the pin moved to the upstream release v0.16.3 / rpptx-v0.14.3 (tensorbee/rdocx a57be365, S95.3), which
+# adapted every carried pull request (#393 to #397, #399, #401): test_docx_carried.py and test_pptx_carried.py were
+# deleted, their tests passing there, or for remove_content_range (start, end; RdocxError out of range) differing only
+# in names. docx-custom-properties-not-listed (#387) closed: custom_properties lists (items(), iteration, len,
+# [name] gives the CustomProperty). New gap docx-default-line-spacing-multiple: the carried #395 took a float multiple
+# in set_default_paragraph_format, upstream's version takes lengths only.
 GAPS = {
-    # upstream: tensorbee/rdocx#387
-    "docx-custom-properties-not-listed": "custom_properties takes item assignment, deletion and `in`, and "
-    "get(name).value reads one property, but nothing lists the properties a document holds (no keys(), items() or "
-    "iteration); rdocx meta get --json lists them",
+    "docx-default-line-spacing-multiple": "set_default_paragraph_format(line_spacing=) takes a length (an exact "
+    "pitch) and raises TypeError for a float multiple, the rule of Word's own default; set the multiple on the "
+    "Normal style",
 }
