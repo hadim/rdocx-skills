@@ -67,11 +67,9 @@ gaps closed.
 # docx-part-xml-without-relationships (#409), docx-insert-document-duplicate-style-ids and
 # docx-insert-document-new-document-refused (#410), docx-insert-document-reused-picture-swapped (#411) and
 # docx-comments-range-across-cells (#412); their tests moved to test_docx_carried.py until upstream main has them.
+# integration/open-prs-2026-10-23-2 (plus tensorbee/rdocx#414 and #415) closed docx-default-line-spacing-multiple
+# (#414: set_default_paragraph_format, add_style and set_style take a number of lines).
 GAPS = {
-    # upstream: tensorbee/rdocx#402
-    "docx-default-line-spacing-multiple": "set_default_paragraph_format(line_spacing=) takes a length (an exact "
-    "pitch) and raises TypeError for a float multiple, the rule of Word's own default; set the multiple on the "
-    "Normal style",
     # test_docx_scaling.py: the calls of its GROWING set; an XPASS removes that call from GROWING, and this entry goes
     # when GROWING is empty
     # upstream: tensorbee/rdocx#407

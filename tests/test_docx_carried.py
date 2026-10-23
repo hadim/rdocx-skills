@@ -1,4 +1,4 @@
-"""docx: fixes the pinned integration build (integration/open-prs-2026-10-23) carries and upstream `main` does not
+"""docx: fixes the pinned integration build (integration/open-prs-2026-10-23-2) carries and upstream `main` does not
 have yet, which the skills rely on. Each test names the pull request that carries it: delete the test once upstream
 main has it. Each test builds its own input."""
 import io
@@ -10,6 +10,16 @@ import rdocx
 
 from builders import W, noise_png
 from conftest import digest
+
+
+# carried by tensorbee/rdocx#414 (#402), delete once upstream main has it
+def test_default_line_spacing_takes_a_multiple():
+    """set_default_paragraph_format takes a number of lines, the rule of Word's own default (python-api.md, document
+    defaults). It used to take lengths only and raise TypeError for 1.15 (tensorbee/rdocx#402)."""
+    doc = rdocx.Document()
+    doc.set_default_paragraph_format(line_spacing=1.15)
+    assert doc.default_paragraph_format.line_spacing == pytest.approx(1.15)
+    assert 'w:line="276" w:lineRule="auto"' in doc.part_xml("word/styles.xml")
 
 
 def with_pictures(*pictures):
