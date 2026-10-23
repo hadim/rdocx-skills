@@ -59,6 +59,7 @@ gaps closed.
 # [name] gives the CustomProperty). New gap docx-default-line-spacing-multiple: the carried #395 took a float multiple
 # in set_default_paragraph_format, upstream's version takes lengths only.
 GAPS = {
+    # upstream: tensorbee/rdocx#402
     "docx-default-line-spacing-multiple": "set_default_paragraph_format(line_spacing=) takes a length (an exact "
     "pitch) and raises TypeError for a float multiple, the rule of Word's own default; set the multiple on the "
     "Normal style",

@@ -92,7 +92,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   its tags again once a sprint carries them. Its adaptations differ in names: `remove_content_range(start, end)`
   (`RdocxError` out of range), `part_names()` a method, `part_xml` `RdocxError` for a missing part.
 - Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-default-line-spacing-multiple
-  (`set_default_paragraph_format` takes lengths only; the carried #395 took a float multiple; not reported yet).
+  (`set_default_paragraph_format` takes lengths only; the carried #395 took a float multiple; reported as tensorbee/rdocx#402).
   docx-custom-properties-not-listed (tensorbee/rdocx#387) closed with `a57be365`. Every gap of `d44a69af` closed
   with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx and python-pptx names it does not take raise an
   error naming the rdocx or rpptx way, the contract #379 asked for.
