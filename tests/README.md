@@ -9,7 +9,8 @@ python3 plugin/scripts/rdocx_env.py test --runxfail                     # show h
 
 The suite covers the skills' own contract; rdocx's behaviour is upstream's to test. The behaviour files hold only
 what the pinned build has and upstream `main` does not yet: a fix or a feature carried on an integration branch, or a
-known gap (strict xfail). When the pin moves to an upstream release, run them against it and delete those that pass.
+known gap (strict xfail). When the pin moves to an upstream release, run them against it and delete those that pass,
+but `test_pptx_scaling.py`, whose passing calls guard against a regression.
 
 | File | Covers |
 |---|---|
@@ -20,12 +21,13 @@ known gap (strict xfail). When the pin moves to an upstream release, run them ag
 | `test_release.py` | `scripts/rdocx_env.py` and the releases (upstream's and this repository's builds): download and check, a changed file refused, `lock --write --release` with its provenance check, finding the release tags of a commit, `bump` |
 | `test_ci_scripts.py` | `.github/scripts`: the suite summary's groups (gaps closed, docs not yet updated, other failures), the final suite written into the notes of this repository's release only, idempotent, the build-time suite of older releases kept |
 | `test_docx_*.py`, `test_pptx*.py` | behaviour that upstream `main` does not have yet (see above) |
+| `test_pptx_scaling.py` | every public mutating call of rpptx, timed in a deck of 5 slides and in one of 20: a call whose cost grows with the deck is a strict xfail (gap `pptx-edit-cost-grows-with-deck`), the others guard against a regression; `test_every_mutating_call_is_timed` checks the list against the stubs. About 3.5 minutes on one worker of an M3 Max |
 
 Fixtures are generated at run time by `fixtures/make_fixture_docx.py` and `fixtures/make_fixture_pptx.py`
 (deterministic; invented text and drawn pictures), by `builders.py` (a document with a token in every story:
 body, table cell, inline and block content controls, tracked insertion and deletion, text box, headers and
-footers per variant, footnote, endnote; a paragraph with one wrapped run) and by small builders inside the
-tests. Test dependencies
+footers per variant, footnote, endnote; a paragraph with one wrapped run; decks of text boxes, tables and
+pictures) and by small builders inside the tests. Test dependencies
 (pytest, pytest-xdist, python-docx, python-pptx, Pillow) are pinned by hash in `requirements.txt`; python-docx and
 python-pptx serve only to build inputs and to re-read outputs independently.
 

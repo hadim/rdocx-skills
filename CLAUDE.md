@@ -50,8 +50,9 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   rdocx's behaviour is upstream's to test: the behaviour files (`test_docx_*.py`, `test_pptx*.py`) only hold what the
   pinned build has and upstream `main` does not yet (a fix or a feature carried on an integration branch, or a gap
   as a strict xfail in `tests/gaps.py`, with `# upstream: owner/repo#N` when reported). When the pin moves to an
-  upstream release, run them against it and delete those that pass. A regression that hits the skills gets a test
-  then, and an upstream issue.
+  upstream release, run them against it and delete those that pass, but `test_pptx_scaling.py`: it times every
+  public mutating call of rpptx, and its passing calls guard against a regression. A regression that hits the skills
+  gets a test then, and an upstream issue.
 - A behaviour change of rdocx is either a fix (remove the gap marker) or a regression (keep the test red and the
   previous pin, or narrow the skills); never weaken a test to make it pass.
 - Only the plugin's releases publish builds: `main`'s lock names an upstream commit (`bump REF`), `ci.yml` builds it
@@ -67,8 +68,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   asked: fix every cited name that moved, keep the recipes running, make the behaviour tests pass, and document what
   the new build adds that an agent would use (a SKILL.md table row or a references entry, a recipe when it helps). The
   coverage check only asks a pointer per public class and CLI command, so a new method or flag gets no line unless
-  this pass writes it. Onto an upstream release, also delete the behaviour tests that pass on it. Stop before the
-  merge: a short brief, and the merge asked as a question.
+  this pass writes it. Onto an upstream release, also delete the behaviour tests that pass on it (not the scaling
+  test's). Stop before the merge: a short brief, and the merge asked as a question.
 - No release is asked of upstream: the pin takes any upstream commit or tag, or a commit carried on an integration
   branch, and this repository builds it (above).
 - Git on a clone reached through a shell on another machine (a remote or sandboxed shell over a synced folder):
