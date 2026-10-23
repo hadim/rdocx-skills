@@ -124,7 +124,7 @@ doc.move_content(doc.paragraphs[j], doc.find_content_index(doc.paragraphs[j]) + 
 docx_ops.save_atomic(doc, "restructured.docx", "report.docx")
 ```
 
-Several neighbouring blocks go in one edit with `doc.remove_content_range(start, stop)` (body indices, `stop`
+Several neighbouring blocks go in one edit with `doc.remove_content_range(start, end)` (body indices, `end`
 excluded): each `remove_content` call costs a pass over the document.
 
 ## Bold one phrase inside a run
@@ -150,7 +150,8 @@ doc.paragraphs[i].paragraph_format.space_after = rdocx.Pt(12)
 doc.paragraphs[i].paragraph_format.keep_with_next = True
 j = next(k for k, p in enumerate(doc.paragraphs) if p.numbering)
 doc.paragraphs[j].numbering = (doc.paragraphs[j].numbering[0], 1)   # one level deeper
-doc.set_default_paragraph_format(space_after=rdocx.Pt(6), line_spacing=1.15)  # what paragraphs inherit (w:pPrDefault)
+doc.set_default_paragraph_format(space_after=rdocx.Pt(6))   # what paragraphs inherit (w:pPrDefault), lengths only
+doc.set_style("Normal", line_spacing=1.15)                  # a multiple goes on the style
 assert doc.default_paragraph_format.space_after == rdocx.Pt(6)
 assert "w:pPrDefault" in doc.part_xml("word/styles.xml")   # any part's XML as a save would write it, read-only
 docx_ops.save_atomic(doc, "styled.docx", "report.docx")
@@ -457,6 +458,36 @@ docx_ops.save_atomic(doc, "checklist.docx")
 `add_style` derives the id from the name as Word does (`"Note box"` → `Notebox`). Assign by that id or by
 the name. `set_style` changes only the properties it is given, on a style chosen by id or name.
 `link_style_to_numbering(style, num_id, level)` numbers every paragraph of a style instead.
+
+## Form fields: content controls
+
+```python
+import docx_ops, rdocx
+doc = rdocx.Document.open("report.docx")
+
+
+def at(pred):   # a ContentLocation from doc.story_items: build it again after each edit, which makes it stale
+    it = next(it for it in doc.story_items if pred(it))
+    return rdocx.ContentLocation(it.story, it.kind, it.index_path)
+
+
+def tagged(tag):
+    return lambda it: it.kind == "content_control" and f'<w:tag w:val="{tag}"/>'.encode() in it.xml
+
+
+anchor = at(lambda it: it.kind == "paragraph" and (it.text or "").startswith("The overall condition index"))
+doc.insert_content_control(anchor, "block", "plain_text", tag="status", alias="Status")   # empty, before the anchor
+doc.set_content_control_type(at(tagged("status")), rdocx.ContentControlTypePayload.drop_down_list(
+    [("Draft", "D"), ("Final", "F")]))                     # (display text, value) pairs
+doc.set_content_control_lock(at(tagged("status")), "sdtLocked")    # Word refuses to delete the control
+assert doc.set_content_control_value_by_tag("status", "Final") == 1
+docx_ops.save_atomic(doc, "form.docx", "report.docx")
+```
+
+A new control is `rich_text` or `plain_text`; `set_content_control_type` makes it a check box, a date, a combo box,
+a drop-down list, a picture, a group or a repeating section. `unwrap_content_control` keeps the content,
+`remove_content_control` drops it. `add_custom_xml_store` and `set_content_control_binding` bind a control to a
+custom XML part, as Word's data binding does.
 
 ## A document from Markdown or HTML
 
