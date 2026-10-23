@@ -85,14 +85,14 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
-  `v2026.10.21` (pin `3af55af1`, hadim/rdocx `integration/open-prs-2026-10-21`).
+  `v2026.10.23` (pin `a57be365`, the upstream release v0.16.3 / rpptx-v0.14.3).
 - Pinned: the upstream release `v0.16.3` / `rpptx-v0.14.3`, tensorbee/rdocx `a57be365` (S95.3), which adapted every
   pull request the integration branches carried (tensorbee/rdocx#393 to #397, #399, #401) and closed their issues.
   Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its `main` or
   its tags again once a sprint carries them. Its adaptations differ in names: `remove_content_range(start, end)`
   (`RdocxError` out of range), `part_names()` a method, `part_xml` `RdocxError` for a missing part.
 - Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-default-line-spacing-multiple
-  (`set_default_paragraph_format` takes lengths only; the carried #395 took a float multiple; not reported yet).
+  (`set_default_paragraph_format` takes lengths only; the carried #395 took a float multiple; reported as tensorbee/rdocx#402).
   docx-custom-properties-not-listed (tensorbee/rdocx#387) closed with `a57be365`. Every gap of `d44a69af` closed
   with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx and python-pptx names it does not take raise an
   error naming the rdocx or rpptx way, the contract #379 asked for.
