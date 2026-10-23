@@ -622,8 +622,9 @@ def decks(tmp_path_factory):
             Deck(edit_cost_pptx(folder / "4n.pptx", 4 * N, picture_side=600)))
 
 
-# Calls whose cost grows with the deck on the pin (rpptx 0.14.3), in the order of TIMED; `--runxfail` shows the
-# numbers. An XPASS means a build fixed that call: remove it from here, and the gap's entry once this set is empty.
+# Calls whose cost grows with the deck on the pin (rpptx 0.14.3 less the 52 that tensorbee/rdocx#413 fixed), in the
+# order of TIMED; `--runxfail` shows the numbers. An XPASS means a build fixed that call: remove it from here, and the
+# gap's entry once this set is empty.
 # The passing calls are regression guards: keep them when the pin moves to an upstream release.
 GROWING = {
     "Presentation.embed_true_type_fonts", "Presentation.save_subset_fonts", "Presentation.slide_number_start",
@@ -631,42 +632,30 @@ GROWING = {
     "Presentation.remove_font", "Presentation.apply_theme", "SlideLayout.name", "SlideLayout.show_master_shapes",
     "SlideLayout.follow_master_background", "SlideLayoutCollection.duplicate", "SlideLayoutCollection.remove",
     "Slide.show_master_shapes", "Slide.notes_text", "Slide.slide_layout", "Slide.follow_master_background",
-    "Slide.try_replace_text", "Slide.add_comment", "Slide.reply_to_comment", "Slide.resolve_comment",
-    "Slide.remove_comment", "Slide.move_comment", "Slide.move_reply", "Slide.replace_media", "Slide.remove_media",
-    "NotesTextFrame.text", "SlideCollection.add_slide", "SlideCollection.add_slide_at", "SlideCollection.import_slide",
-    "SlideCollection.import_slide_with_diagnostics", "SlideCollection.import_slides", "SlideCollection.remove",
-    "SlideCollection.duplicate", "SlideCollection.move", "SlideTransition.type", "SlideTransition.direction",
+    "Slide.add_comment", "Slide.reply_to_comment", "Slide.resolve_comment", "Slide.remove_comment",
+    "Slide.move_comment", "Slide.move_reply", "Slide.replace_media", "Slide.remove_media", "NotesTextFrame.text",
+    "SlideCollection.add_slide_at", "SlideCollection.import_slide", "SlideCollection.import_slide_with_diagnostics",
+    "SlideCollection.import_slides", "SlideCollection.remove", "SlideTransition.type", "SlideTransition.direction",
     "SlideTransition.duration", "SlideTransition.advance_on_click", "SlideTransition.advance_after",
     "HeaderFooter.slide_number", "HeaderFooter.footer", "HeaderFooter.date", "HeaderFooter.date_format",
     "FillFormat.solid (slide background)", "Theme.name", "ThemeColors.__setitem__", "ThemeFontSet.latin",
     "ThemeFontSet.east_asian", "ThemeFontSet.complex_script", "Font.size (master text style)",
-    "ShapeCollection.add_shape", "ShapeCollection.add_connector", "ShapeCollection.add_group_shape",
-    "ShapeCollection.add_table", "ShapeCollection.add_picture", "ShapeCollection.add_chart",
-    "ShapeCollection.add_movie", "ShapeCollection.group", "ShapeCollection.align", "ShapeCollection.distribute",
-    "ShapeCollection.remove", "ShapeCollection.move", "Shape.alt_title", "Shape.decorative", "Shape.flip_h",
-    "Shape.flip_v", "Shape.begin_x", "Shape.begin_y", "Shape.end_x", "Shape.end_y", "Shape.name",
-    "Shape.auto_shape_type", "Shape.theme_effect_index", "Shape.crop_left", "Shape.crop_top", "Shape.crop_right",
-    "Shape.crop_bottom", "Shape.text", "Shape.begin_connect", "Shape.end_connect", "Shape.ungroup",
-    "Shape.remove_style", "Shape.insert_picture", "Shape.replace_image", "AdjustmentCollection.__setitem__",
-    "ShapeClickAction.target_slide", "ShapeHyperlink.address", "Element.replace_xml (shape text)",
-    "Element.replace_xml (slide)", "FillFormat.picture", "FillFormat.solid (table cell)",
-    "FillFormat.background (table cell)", "TextFrame.text", "TextFrame.clear", "TextFrame.try_replace_text",
-    "TextFrame.fit_text", "TextFrame.add_paragraph", "Paragraph.text", "Paragraph.add_field", "Paragraph.add_run",
-    "Hyperlink.address", "Hyperlink.target_slide", "Table.first_row", "Table.last_row", "Table.first_col",
-    "Table.last_col", "Table.horz_banding", "Table.vert_banding", "Table.style_id", "ColumnCollection.add_column",
-    "ColumnCollection.remove", "RowCollection.add_row", "RowCollection.remove", "Cell.text", "Cell.merge", "Cell.split",
-    "Chart.has_legend", "Chart.legend_position", "Chart.legend_overlay", "Chart.replace_data", "CustomProperties.set",
-    "CustomProperties.delete", "CoreProperties.author", "CoreProperties.category", "CoreProperties.comments",
-    "CoreProperties.content_status", "CoreProperties.created", "CoreProperties.identifier", "CoreProperties.keywords",
-    "CoreProperties.language", "CoreProperties.last_modified_by", "CoreProperties.last_printed",
-    "CoreProperties.modified", "CoreProperties.revision", "CoreProperties.subject", "CoreProperties.title",
-    "CoreProperties.version", "AppProperties.template", "AppProperties.manager", "AppProperties.company",
-    "AppProperties.presentation_format", "AppProperties.application", "AppProperties.application_version",
-    "AppProperties.pages", "AppProperties.words", "AppProperties.characters", "AppProperties.lines",
-    "AppProperties.paragraphs", "AppProperties.slides", "AppProperties.notes", "AppProperties.total_time",
-    "AppProperties.hidden_slides", "AppProperties.multimedia_clips", "AppProperties.characters_with_spaces",
-    "AppProperties.scale_crop", "AppProperties.links_up_to_date", "AppProperties.shared_document",
-    "AppProperties.hyperlinks_changed",
+    "ShapeCollection.add_movie", "ShapeCollection.align", "ShapeCollection.distribute", "ShapeCollection.remove",
+    "Shape.flip_h", "Shape.flip_v", "Shape.begin_connect", "Shape.end_connect", "Shape.insert_picture",
+    "Shape.replace_image", "ShapeClickAction.target_slide", "ShapeHyperlink.address", "Element.replace_xml (slide)",
+    "FillFormat.picture", "FillFormat.solid (table cell)", "FillFormat.background (table cell)",
+    "TextFrame.fit_text", "Paragraph.add_field", "Chart.has_legend", "Chart.legend_position",
+    "Chart.legend_overlay", "Chart.replace_data", "CustomProperties.set", "CustomProperties.delete",
+    "CoreProperties.author", "CoreProperties.category", "CoreProperties.comments", "CoreProperties.content_status",
+    "CoreProperties.created", "CoreProperties.identifier", "CoreProperties.keywords", "CoreProperties.language",
+    "CoreProperties.last_modified_by", "CoreProperties.last_printed", "CoreProperties.modified",
+    "CoreProperties.revision", "CoreProperties.subject", "CoreProperties.title", "CoreProperties.version",
+    "AppProperties.template", "AppProperties.manager", "AppProperties.company", "AppProperties.presentation_format",
+    "AppProperties.application", "AppProperties.application_version", "AppProperties.pages", "AppProperties.words",
+    "AppProperties.characters", "AppProperties.lines", "AppProperties.paragraphs", "AppProperties.slides",
+    "AppProperties.notes", "AppProperties.total_time", "AppProperties.hidden_slides",
+    "AppProperties.multimedia_clips", "AppProperties.characters_with_spaces", "AppProperties.scale_crop",
+    "AppProperties.links_up_to_date", "AppProperties.shared_document", "AppProperties.hyperlinks_changed",
 }
 
 
