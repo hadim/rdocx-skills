@@ -63,36 +63,21 @@ gaps closed.
 # docx-edit-cost-grows-with-body (test_docx_scaling.py, the docx counterpart of test_pptx_scaling.py) and
 # docx-insert-document-duplicate-style-ids. Writing the scaling test met docx-insert-document-new-document-refused,
 # fixed in the pull request of #408 without an issue of its own.
+# 2026-10-23: integration/open-prs-2026-10-23 (v0.16.3 plus tensorbee/rdocx#409 to #413) closed
+# docx-part-xml-without-relationships (#409), docx-insert-document-duplicate-style-ids and
+# docx-insert-document-new-document-refused (#410), docx-insert-document-reused-picture-swapped (#411) and
+# docx-comments-range-across-cells (#412); their tests moved to test_docx_carried.py until upstream main has them.
 GAPS = {
     # upstream: tensorbee/rdocx#402
     "docx-default-line-spacing-multiple": "set_default_paragraph_format(line_spacing=) takes a length (an exact "
     "pitch) and raises TypeError for a float multiple, the rule of Word's own default; set the multiple on the "
     "Normal style",
-    # upstream: tensorbee/rdocx#404
-    "docx-insert-document-reused-picture-swapped": "insert_document reuses the target's picture parts that hold the "
-    "inserted pictures' bytes, paired in the wrong order: an inserted picture shows another one; pass "
-    "policy=FragmentConflictPolicy.reuse_equivalent().with_related_part_reuse(False)",
-    # upstream: tensorbee/rdocx#405
-    "docx-comments-range-across-cells": "Document.comments raises RdocxError when one comment's range runs from a "
-    "table cell into the next one, as Google Docs writes a comment across cells; remove_comment works, part_xml reads "
-    "word/comments.xml",
-    # upstream: tensorbee/rdocx#406
-    "docx-part-xml-without-relationships": "part_names() and part_xml() leave out the .rels parts and "
-    "[Content_Types].xml; unzip to_bytes() to read them",
     # test_docx_scaling.py: the calls of its GROWING set; an XPASS removes that call from GROWING, and this entry goes
     # when GROWING is empty
     # upstream: tensorbee/rdocx#407
     "docx-edit-cost-grows-with-body": "the call costs a time that grows with the body's XML, whatever the element "
     "read or edited; edit the structure in few calls (remove_content_range, insert_document of a document built "
     "aside)",
-    # upstream: tensorbee/rdocx#408
-    "docx-insert-document-duplicate-style-ids": "insert_document adds <id>Merge1 copies of the styles that the "
-    "styles part defines twice, though both documents carry the same part; keep the first definition of each id in "
-    "the inserted document",
-    # upstream: tensorbee/rdocx#410 (the pull request of #408)
-    "docx-insert-document-new-document-refused": "insert_document and import_fragment of a new Document() raise "
-    "RdocxError (more than one default) when the target's Normal style differs from rdocx's own, as in documents "
-    "from Word, Google Docs or python-docx; build the content in a copy of the target emptied by remove_content_range",
     # test_pptx_scaling.py: 159 of the 248 public mutating calls of rpptx 0.14.3, its GROWING set; an XPASS removes
     # that call from GROWING, and this entry goes when GROWING is empty
     # upstream: tensorbee/rdocx#403
