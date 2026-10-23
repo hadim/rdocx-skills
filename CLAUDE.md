@@ -87,27 +87,25 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
   `v2026.10.23` (pin `a57be365`, the upstream release v0.16.3 / rpptx-v0.14.3).
-- Pinned: the upstream release `v0.16.3` / `rpptx-v0.14.3`, tensorbee/rdocx `a57be365` (S95.3), which adapted every
-  pull request the integration branches carried (tensorbee/rdocx#393 to #397, #399, #401) and closed their issues.
-  Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its `main` or
-  its tags again once a sprint carries them. Its adaptations differ in names: `remove_content_range(start, end)`
-  (`RdocxError` out of range), `part_names()` a method, `part_xml` `RdocxError` for a missing part.
-- Open gaps: 8 (`tests/gaps.py`, both `references/gaps.md`): docx-default-line-spacing-multiple
-  (`set_default_paragraph_format` takes lengths only; the carried #395 took a float multiple; reported as tensorbee/rdocx#402);
-  pptx-edit-cost-grows-with-deck (#403, `test_pptx_scaling.py`); five findings of real use filed as #404 to #408:
-  docx-insert-document-reused-picture-swapped, docx-comments-range-across-cells, docx-part-xml-without-relationships,
-  docx-edit-cost-grows-with-body (`test_docx_scaling.py`) and docx-insert-document-duplicate-style-ids; and
-  docx-insert-document-new-document-refused, met writing the scaling test, fixed in tensorbee/rdocx#410.
-  docx-custom-properties-not-listed (tensorbee/rdocx#387) closed with `a57be365`. Every gap of `d44a69af` closed
-  with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx and python-pptx names it does not take raise an
-  error naming the rdocx or rpptx way, the contract #379 asked for.
-- Suite against `a57be365` (the release's own macOS arm64 files, locally): 178 passed, 1 xfailed; with the two
-  scaling tests, 358 passed, 18 skipped, 309 xfailed. Both scaling tests bound with a hysteresis (a call of GROWING
-  counts as fixed under 1.5 times, any other one as grown over 2.5) and time their two inputs in turn: a single bound
-  at 2 times flipped calls on loaded runners (hadim/rdocx-skills#61, #62). No behaviour test of a carried pull
-  request is left (`test_docx_carried.py` and `test_pptx_carried.py` deleted). New in the docs: content-control
-  authoring (`insert_content_control`, `set_content_control_type` with `ContentControlTypePayload`, locks, binding
-  to a custom XML part; recipe "Form fields").
+- Pinned: `integration/open-prs-2026-10-23-3` on hadim/rdocx (`b6196403`): the upstream release v0.16.3 /
+  rpptx-v0.14.3 (tensorbee/rdocx `a57be365`) plus the open pull requests tensorbee/rdocx#409 to #416, fixes of the
+  findings #402 to #408 and of #403's edit costs (#413, then #416 stacked on it). Upstream does not merge pull requests
+  from here: it adapts them in a sprint and closes them, so pin its `main` or its tags again once a sprint carries
+  them, and delete `tests/test_docx_carried.py` then (its tests name their pull requests).
+- Open gaps: 2 (`tests/gaps.py`, both `references/gaps.md`): docx-edit-cost-grows-with-body (tensorbee/rdocx#407,
+  144 of the 252 calls of `test_docx_scaling.py`; #415 made `Paragraph.xml` constant, but its faster edits do not
+  reach the test's documents) and pptx-edit-cost-grows-with-deck (#403: 9 of 248 calls left, slide transitions and
+  header and footer setters, about 1 ms more per slide, non-strict xfails since their growth is within the noise of
+  the bound). Closed by this pin: docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships
+  (#409), docx-insert-document-duplicate-style-ids and docx-insert-document-new-document-refused (#410),
+  docx-insert-document-reused-picture-swapped (#411), docx-comments-range-across-cells (#412, which adds
+  `Comment.anchor_issue`); 150 of the 159 rpptx calls that grew with the deck (#413, #416).
+- Suite against `b6196403` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included
+  (144 docx calls xfail, 9 pptx calls xfail or XPASS non-strict). The docx SKILL.md is 4 bytes under its 16,000-byte
+  budget.
+- `rdocx_env.py build` exports the source with the commit's time only over a build folder whose last build was that
+  commit (`target/<platform>/built-commit`): a folder restored from another commit's cache, built after this commit was
+  made, linked that commit's crates on Windows (2026-10-23).
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).

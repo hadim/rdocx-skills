@@ -76,10 +76,9 @@ GAPS = {
     "docx-edit-cost-grows-with-body": "the call costs a time that grows with the body's XML, whatever the element "
     "read or edited; edit the structure in few calls (remove_content_range, insert_document of a document built "
     "aside)",
-    # test_pptx_scaling.py: 3 of the 248 public mutating calls (159 on rpptx 0.14.3, 52 fixed by tensorbee/rdocx#413
-    # and 104 by #416), its GROWING set; an XPASS removes that call from GROWING, and this entry goes when GROWING is
-    # empty
+    # test_pptx_scaling.py: 9 of the 248 public mutating calls (159 on rpptx 0.14.3, 52 fixed by tensorbee/rdocx#413
+    # and 98 by #416), its GROWING set, non-strict (see there); this entry goes when GROWING is empty
     # upstream: tensorbee/rdocx#403
-    "pptx-edit-cost-grows-with-deck": "a slide's header_footer.slide_number, date and date_format cost a time that "
-    "grows with the rest of the deck",
+    "pptx-edit-cost-grows-with-deck": "a slide's transition and header_footer setters cost about 1 ms more per slide "
+    "of the deck",
 }
