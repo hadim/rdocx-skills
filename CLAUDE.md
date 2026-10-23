@@ -25,12 +25,15 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   it); on `release`, also the plugin release that carries its files and their SHA-256 per platform. `dist/`
   (gitignored) holds local builds; downloads land in `$RDOCX_HOME/dist/`.
 - `.github/workflows/`: `ci.yml` (every push and PR: builds the pinned commit on four runners, Intel Macs left out,
-  with ThinLTO and a build cache per platform and commit, records the build into the run's copy of the lock, and
-  runs the suite on it), `release.yml` (by hand: a release of the plugin, below, which builds the pinned commit again
-  on the four platforms, runs the suite on those files and attaches them to the release; older releases stay;
-  input `dry_run`). The plugin's releases are the only published builds.
+  with ThinLTO and a build cache per platform and commit, records the build into the run's copy of the lock, and runs
+  the suite on it; a green run marks its tree, and a push to `main` whose tree passed already, a green pull request
+  merged while `main` stood still, runs nothing again), `release.yml` (by hand: a release of the plugin, below, which
+  takes the files `ci.yml` built, attested and tested on that tree (else builds them), runs the suite on them and
+  attaches them to the release; older releases stay; input `dry_run`). The plugin's releases are the only published
+  builds.
   `.github/scripts/suite-summary.sh` groups a suite log (gaps closed, docs not yet updated, other failures);
-  `plugin_release.py` names the plugin's releases, writes their version and the head of their notes; the scripts are tested in
+  `plugin_release.py` names the plugin's releases, writes their version and the head of their notes;
+  `tested-tree.sh` tells whether `ci.yml` passed on a tree (`release.yml` takes that); the scripts are tested in
   `tests/test_ci_scripts.py`.
 - `tests/`: acceptance suite; `tests/gaps.py` is the registry of known gaps (strict xfails).
 - `findings/`: gaps met in real use, waiting for triage into tests (see `findings/README.md`); empty now.
@@ -77,26 +80,26 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 21/10/2026
+## State on 23/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
-  `v2026.10.16.2` (pin `d44a69af`).
-- Pinned: hadim/rdocx `integration/open-prs-2026-10-21` at `3af55af1`: `integration/open-prs-2026-10-20`
-  (`6e286888`: tensorbee/rdocx `main` `b072b985` plus the open pull requests tensorbee/rdocx#393 to #397 and #399, the
-  fix of #398, Python handles that rescanned the whole document) plus tensorbee/rdocx#401, the fix of #400 (`rebuild_toc`
-  let Heading 2 into `TOC \o "1-1" \u`, a regression of main 2a88a8f5, F-283, that the `-10-20` pin and `v2026.10.20`
-  carry). Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
-  `main` or its tags again once a sprint carries them.
-- Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-custom-properties-not-listed (reported as
-  tensorbee/rdocx#387). docx-toc-outline-switch-ignores-depth and docx-toc-outline-level-beyond-depth (#400) closed
-  with `-10-21`. Every gap of `d44a69af` closed with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx
-  and python-pptx names it does not take raise an error naming the rdocx or rpptx way, the contract #379 asked for.
-- Suite against `3af55af1`: 180 passed, 1 xfailed on the four CI platforms (PR #57, 2026-10-21). Walking every
-  body and cell paragraph handle is linear with #399 (600 paragraphs and 965 cells: 0.2 s, nested-table cells about 15 ms each).
-  `tests/test_docx_carried.py` and `tests/test_pptx_carried.py` hold what the carried pull requests fix: delete each
-  test once upstream `main` has its fix.
+  `v2026.10.21` (pin `3af55af1`, hadim/rdocx `integration/open-prs-2026-10-21`).
+- Pinned: the upstream release `v0.16.3` / `rpptx-v0.14.3`, tensorbee/rdocx `a57be365` (S95.3), which adapted every
+  pull request the integration branches carried (tensorbee/rdocx#393 to #397, #399, #401) and closed their issues.
+  Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its `main` or
+  its tags again once a sprint carries them. Its adaptations differ in names: `remove_content_range(start, end)`
+  (`RdocxError` out of range), `part_names()` a method, `part_xml` `RdocxError` for a missing part.
+- Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-default-line-spacing-multiple
+  (`set_default_paragraph_format` takes lengths only; the carried #395 took a float multiple; not reported yet).
+  docx-custom-properties-not-listed (tensorbee/rdocx#387) closed with `a57be365`. Every gap of `d44a69af` closed
+  with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx and python-pptx names it does not take raise an
+  error naming the rdocx or rpptx way, the contract #379 asked for.
+- Suite against `a57be365` (the release's own macOS arm64 files, locally): 178 passed, 1 xfailed. No behaviour test
+  of a carried pull request is left (`test_docx_carried.py` and `test_pptx_carried.py` deleted). New in the docs:
+  content-control authoring (`insert_content_control`, `set_content_control_type` with `ContentControlTypePayload`,
+  locks, binding to a custom XML part; recipe "Form fields").
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).

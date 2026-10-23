@@ -83,12 +83,12 @@ background).
 | Counts, styles used, metadata | `rdocx inspect --json F`, `rdocx meta get/set F` | `doc.word_count()`, `doc.page_count()`, `doc.styles`, `doc.core_properties`, `doc.custom_properties` | |
 | Page of every block | `rdocx layout --json F` | `doc.layout()` | rdocx's pagination: confirm in Word |
 | Counted replacement | `docx_ops.py replace IN OUT --edit OLD NEW N` | `docx_ops.replace_batch` | crosses runs; `rdocx replace --expect N` does not check what it could not reach |
-| Fill a template or a form | `rdocx replace F --map pairs.json -o OUT`, `rdocx fill F --values v.json -o OUT` | `doc.render_template(data)`, `doc.bind_content_controls({tag: v})`, legacy fields | `--map`: pairs in order, each with its `expect`; an unknown control tag raises |
+| Fill a template or a form | `rdocx replace F --map pairs.json -o OUT`, `rdocx fill F --values v.json -o OUT` | `doc.render_template(data)`, `doc.bind_content_controls({tag: v})`, `doc.insert_content_control(loc, ...)`, legacy fields | `--map`: pairs in order, each with its `expect`; unknown tags raise |
 | Replacement in one paragraph, cell or story item | | `p.replace_text(old, new, expect=1)`, `cell.replace_text(old, new, expect=1)`, `doc.replace_text_at(item, old, new, expect=1)` | a wrong count raises, nothing changed |
 | Regex replacement | `rdocx replace F --regex -p PATTERN -v '$1' --expect N -o OUT` | `doc.replace_all_regex_expected([(pattern, repl, n)])` | `$1` groups; a wrong count raises |
 | Paragraph after an anchor, same format | | `doc.clone_content(p, bi + 1)`, then set run texts | not comment anchors |
 | New paragraphs, headings, lists | | `doc.add_heading(text, 1)`, `doc.add_paragraph(text, style="Quote")`, `doc.add_bullet_list_item(text)`, `doc.add_numbered_list_item(text)`, `doc.insert_paragraph(bi, text)` | a list restart: a new `add_numbering_instance` |
-| Delete, move a block | | `remove_content(bi)`, `remove_content_range(start, stop)`, `pop_content(bi)` + `insert_content(bi, frag)`, `move_content(source, destination)` | cutting a comment in part raises: move the thread first |
+| Delete, move a block | | `remove_content(bi)`, `remove_content_range(start, end)`, `pop_content(bi)` + `insert_content(bi, frag)`, `move_content(source, destination)` | cutting a comment in part raises: move the thread first |
 | Rewrite a paragraph's text | | `doc.paragraphs[i].text = text`, `doc.set_story_text(item, text)` | the setter leaves one plain run; `set_story_text` keeps the first run's format |
 | Format part of a run | | `docx_ops.locate` + `docx_ops.isolate`, then `runs[k].font.bold = True` | |
 | Paragraph format, style, numbering | | `.paragraph_format.*`, `run.font.*`, `.style = "Heading 1"`, `.numbering = (num_id, level)` | style id or name, checked (`KeyError`: `add_style` first) |

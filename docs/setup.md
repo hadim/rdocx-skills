@@ -140,8 +140,16 @@ the built-in ones, or `install --build` compiles the pinned commit on the machin
   `.github/scripts/suite-summary.sh` in the job summary. On Windows it runs from Git Bash, as an agent does, on a
   checkout made with `core.autocrlf false` (the repository has no `.gitattributes`: the plugin directory refuses
   one that rewrites files at checkout). No build is published from here: the plugin's releases are the only ones.
-- `.github/workflows/release.yml`, by hand: builds the pinned commit again, tests it and publishes a release of the
-  plugin that carries those files (next section).
+  A run whose four suites pass marks the tree it tested (artifact `tested-tree-<tree>`, kept 90 days;
+  `.github/scripts/tested-tree.sh`; for a pull request, its merge into `main`), keeps the files it built (artifacts
+  `dist-<platform>`, 90 days) and attests them (not on a fork's pull request). A push to `main` whose tree carries
+  that mark, which is what merging a green pull request while `main` stood still gives, runs no suite again, and
+  `release.yml` takes the mark and those files: merge, then release at once, without compiling again. A writer of
+  this repository could still plant a build cache from an earlier commit of a pull request (caches are per branch):
+  the same trust as the right to merge. Only this repository's runs count, not a
+  fork's pull request, whose workflow the fork could change.
+- `.github/workflows/release.yml`, by hand: takes the files `ci.yml` built and tested on that tree (or builds
+  them), tests them and publishes a release of the plugin that carries those files (next section).
 
 ## Moving the pin
 
@@ -178,17 +186,21 @@ Pushes to `main` reach nobody. `release` is the repository's default branch, so 
 a ref (`/plugin marketplace add hadim/rdocx-skills`, the only form Claude Desktop takes) and the Claude plugin directory
 follow it, and get a new version only from `.github/workflows/release.yml`: Actions, release, Run workflow. It:
 
-1. refuses a `main` whose `ci.yml` run did not succeed, or that is released already;
+1. refuses a `main` whose tree `ci.yml` has not passed on (on `main` or on the pull request merged into it), or
+   that is released already;
 2. picks the CalVer version of the day, `YYYY.M.D` (`YYYY.M.D.2` and on for another release the same day);
-3. builds the pinned commit again on the four platforms, every time, even when an earlier release or build holds
-   the same commit (the ThinLTO profile and build cache of `ci.yml`), installs each build and runs
-   the acceptance suite on it: nothing is published unless the four platforms build and pass;
+3. takes, per platform, the files of the `ci.yml` run that passed on that tree (kept 90 days), when an attestation
+   of `ci.yml` on a GitHub-hosted runner (`gh attestation verify --signer-workflow .../ci.yml`) names a commit with
+   exactly that tree: the same workflow and build steps on the same sources as `main`. Otherwise it builds
+   the pinned commit (the ThinLTO profile and build cache of `ci.yml`) and attests it, installs those files and runs
+   the acceptance suite on them: nothing is published unless the four platforms pass;
 4. moves the `release` branch to `main`'s tree with that `version` written into `plugin/.claude-plugin/plugin.json`
    and the lock pointed at this release's own files (`release` = `.../releases/download/v<version>`, their
    hashes recorded by `lock --write --release` from a local mirror of the files), as a merge of `main` so that
    `release` only moves forward, and tags it `v<version>`;
 5. publishes the GitHub release `v<version>` with those files (`<platform>.<file>`, the two CLIs and two wheels of
-   each platform), their `SHA256SUMS` and build provenance attestations, titled with the rdocx and rpptx versions
+   each platform) and their `SHA256SUMS`, each with a build provenance attestation (the CLIs and wheels from
+   the run that built them), titled with the rdocx and rpptx versions
    (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <ref>`), marked latest, whose notes describe the files, give the
    suite of the four platforms and list the pull requests merged since the previous release;
 So a plugin release never depends on another release, and older releases stay: an install of an older plugin
