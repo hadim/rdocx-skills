@@ -24,8 +24,11 @@ from rpptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE, PP_ALIGN
 from builders import edit_cost_pptx, noise_png
 
 N = 5
-CALLS = 3  # fresh targets a call is timed on, the fastest counting; in the larger deck one call over 50 ms is enough
-RATIO, FLOOR_MS = 2, 5  # a cost independent of the deck measures about 1; one that grows with it about 4
+CALLS = 3  # fresh targets a call is timed on in each deck, the fastest counting; over 50 ms, two are enough
+# A cost independent of the deck measures about 1 time, one that grows with it 2 to 4 times. Between the two bounds,
+# the result stays: a call of GROWING counts as fixed under FIXED times, any other one as grown over RATIO times, so
+# that the noise of a loaded runner does not turn a call near 2 times into an XPASS or a failure.
+RATIO, FIXED, FLOOR_MS = 2.5, 1.5, 5
 REOPEN = 16  # timed calls between two openings of a deck, so that the probe slides stay small next to N slides
 GROWS = "pptx-edit-cost-grows-with-deck"
 AUTHOR = "{6F1B3A52-0000-4000-8000-0000000000A0}"
@@ -596,20 +599,20 @@ class Deck:
         return self.prs, self.slide
 
 
-def cost_ms(deck, setup, enough_s=float("inf")):
-    """The fastest of CALLS calls on fresh targets, or of fewer once one takes over `enough_s`. A slow sample can only
-    hide a gap in the smaller deck, so that one always takes all CALLS."""
-    prs, slide = deck.probe()
-    ready = setup(prs, slide)
-    best = float("inf")
+def costs_ms(decks, setup):
+    """The fastest of CALLS calls on fresh targets in each of `decks`, or of two calls once each one takes over 50 ms.
+    The decks take turns, so that a change of the machine's load hits all of them."""
+    readies = [setup(*deck.probe()) for deck in decks]
+    best = [float("inf")] * len(decks)
     for k in range(CALLS):
-        action = ready(k)
-        start = time.perf_counter()
-        action()
-        best = min(best, time.perf_counter() - start)
-        if best > enough_s:
+        for i, ready in enumerate(readies):
+            action = ready(k)
+            start = time.perf_counter()
+            action()
+            best[i] = min(best[i], time.perf_counter() - start)
+        if k and min(best) > 0.05:
             break
-    return best * 1000
+    return [b * 1000 for b in best]
 
 
 @pytest.fixture(scope="module")
@@ -670,8 +673,9 @@ GROWING = {
 @pytest.mark.parametrize("name", [pytest.param(name, marks=pytest.mark.gap(GROWS)) if name in GROWING else name
                                   for name in TIMED])
 def test_call_cost_does_not_grow_with_the_deck(decks, name):
-    small, large = cost_ms(decks[0], TIMED[name]), cost_ms(decks[1], TIMED[name], enough_s=0.05)
-    assert large < RATIO * small + FLOOR_MS, f"{name}: {large:.1f} ms at {4 * N} slides, {small:.1f} ms at {N}"
+    small, large = costs_ms(decks, TIMED[name])
+    bound = (FIXED if name in GROWING else RATIO) * small + FLOOR_MS
+    assert large < bound, f"{name}: {large:.1f} ms at {4 * N} slides, {small:.1f} ms at {N}"
 
 
 def test_every_mutating_call_is_timed():
