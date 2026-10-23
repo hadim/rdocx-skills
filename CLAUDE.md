@@ -50,9 +50,9 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   rdocx's behaviour is upstream's to test: the behaviour files (`test_docx_*.py`, `test_pptx*.py`) only hold what the
   pinned build has and upstream `main` does not yet (a fix or a feature carried on an integration branch, or a gap
   as a strict xfail in `tests/gaps.py`, with `# upstream: owner/repo#N` when reported). When the pin moves to an
-  upstream release, run them against it and delete those that pass, but `test_pptx_scaling.py`: it times every
-  public mutating call of rpptx, and its passing calls guard against a regression. A regression that hits the skills
-  gets a test then, and an upstream issue.
+  upstream release, run them against it and delete those that pass, but `test_pptx_scaling.py` and
+  `test_docx_scaling.py`: they time every public mutating call of rpptx and rdocx, and their passing calls guard
+  against a regression. A regression that hits the skills gets a test then, and an upstream issue.
 - A behaviour change of rdocx is either a fix (remove the gap marker) or a regression (keep the test red and the
   previous pin, or narrow the skills); never weaken a test to make it pass.
 - Only the plugin's releases publish builds: `main`'s lock names an upstream commit (`bump REF`), `ci.yml` builds it
@@ -69,7 +69,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   the new build adds that an agent would use (a SKILL.md table row or a references entry, a recipe when it helps). The
   coverage check only asks a pointer per public class and CLI command, so a new method or flag gets no line unless
   this pass writes it. Onto an upstream release, also delete the behaviour tests that pass on it (not the scaling
-  test's). Stop before the merge: a short brief, and the merge asked as a question.
+  tests'). Stop before the merge: a short brief, and the merge asked as a question.
 - No release is asked of upstream: the pin takes any upstream commit or tag, or a commit carried on an integration
   branch, and this repository builds it (above).
 - Git on a clone reached through a shell on another machine (a remote or sandboxed shell over a synced folder):
@@ -92,15 +92,22 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its `main` or
   its tags again once a sprint carries them. Its adaptations differ in names: `remove_content_range(start, end)`
   (`RdocxError` out of range), `part_names()` a method, `part_xml` `RdocxError` for a missing part.
-- Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-default-line-spacing-multiple
-  (`set_default_paragraph_format` takes lengths only; the carried #395 took a float multiple; reported as tensorbee/rdocx#402).
+- Open gaps: 8 (`tests/gaps.py`, both `references/gaps.md`): docx-default-line-spacing-multiple
+  (`set_default_paragraph_format` takes lengths only; the carried #395 took a float multiple; reported as tensorbee/rdocx#402);
+  pptx-edit-cost-grows-with-deck (#403, `test_pptx_scaling.py`); five findings of real use filed as #404 to #408:
+  docx-insert-document-reused-picture-swapped, docx-comments-range-across-cells, docx-part-xml-without-relationships,
+  docx-edit-cost-grows-with-body (`test_docx_scaling.py`) and docx-insert-document-duplicate-style-ids; and
+  docx-insert-document-new-document-refused, met writing the scaling test, fixed in tensorbee/rdocx#410.
   docx-custom-properties-not-listed (tensorbee/rdocx#387) closed with `a57be365`. Every gap of `d44a69af` closed
   with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx and python-pptx names it does not take raise an
   error naming the rdocx or rpptx way, the contract #379 asked for.
-- Suite against `a57be365` (the release's own macOS arm64 files, locally): 178 passed, 1 xfailed. No behaviour test
-  of a carried pull request is left (`test_docx_carried.py` and `test_pptx_carried.py` deleted). New in the docs:
-  content-control authoring (`insert_content_control`, `set_content_control_type` with `ContentControlTypePayload`,
-  locks, binding to a custom XML part; recipe "Form fields").
+- Suite against `a57be365` (the release's own macOS arm64 files, locally): 178 passed, 1 xfailed; with the two
+  scaling tests, 358 passed, 18 skipped, 309 xfailed. Both scaling tests bound with a hysteresis (a call of GROWING
+  counts as fixed under 1.5 times, any other one as grown over 2.5) and time their two inputs in turn: a single bound
+  at 2 times flipped calls on loaded runners (hadim/rdocx-skills#61, #62). No behaviour test of a carried pull
+  request is left (`test_docx_carried.py` and `test_pptx_carried.py` deleted). New in the docs: content-control
+  authoring (`insert_content_control`, `set_content_control_type` with `ContentControlTypePayload`, locks, binding
+  to a custom XML part; recipe "Form fields").
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).
