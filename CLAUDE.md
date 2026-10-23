@@ -85,7 +85,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
-  `v2026.10.21` (pin `3af55af1`, hadim/rdocx `integration/open-prs-2026-10-21`).
+  `v2026.10.23` (pin `a57be365`, the upstream release v0.16.3 / rpptx-v0.14.3).
 - Pinned: the upstream release `v0.16.3` / `rpptx-v0.14.3`, tensorbee/rdocx `a57be365` (S95.3), which adapted every
   pull request the integration branches carried (tensorbee/rdocx#393 to #397, #399, #401) and closed their issues.
   Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its `main` or
