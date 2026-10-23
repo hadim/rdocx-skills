@@ -3,8 +3,8 @@ another tool.
 
 A test marked `@pytest.mark.gap("key")` asserts the behaviour we want. It is collected as a strict xfail:
 while the gap is open the test "xfails"; the day a new pin closes it, the test XPASSes, which fails the run
-on purpose. Then: remove the marker (the test becomes a regression guard), delete the entry below, and
-update the skills' `references/gaps.md` and tables.
+on purpose. Then: remove the marker (the test becomes a regression guard), delete the entry below once no test
+carries its key, and update the skills' `references/gaps.md` and tables.
 
 A gap about a missing API calls the name we expect it to get. When the API lands under another name, the
 test keeps failing with AttributeError: adapt it to the real name, and it then reports the gap as closed.
@@ -63,7 +63,8 @@ GAPS = {
     "docx-default-line-spacing-multiple": "set_default_paragraph_format(line_spacing=) takes a length (an exact "
     "pitch) and raises TypeError for a float multiple, the rule of Word's own default; set the multiple on the "
     "Normal style",
-    # test_pptx_scaling.py: 159 of the 248 public mutating calls of rpptx 0.14.3; tensorbee/rdocx#389 fixed five
+    # test_pptx_scaling.py: 159 of the 248 public mutating calls of rpptx 0.14.3, its GROWING set; an XPASS removes
+    # that call from GROWING, and this entry goes when GROWING is empty
     "pptx-edit-cost-grows-with-deck": "the call costs a time that grows with the rest of the deck: it copies the "
     "deck and rebuilds the inventory of every shape, and many calls also rewrite and reparse the whole package "
     "(about 22 ms a MB); build or update a large deck with python-pptx, add pictures last",

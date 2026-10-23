@@ -24,7 +24,7 @@ from rpptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE, PP_ALIGN
 from builders import edit_cost_pptx, noise_png
 
 N = 5
-CALLS = 3  # fresh targets a call is timed on; the fastest counts, and one call over 50 ms is enough
+CALLS = 3  # fresh targets a call is timed on, the fastest counting; in the larger deck one call over 50 ms is enough
 RATIO, FLOOR_MS = 2, 5  # a cost independent of the deck measures about 1; one that grows with it about 4
 REOPEN = 16  # timed calls between two openings of a deck, so that the probe slides stay small next to N slides
 GROWS = "pptx-edit-cost-grows-with-deck"
@@ -596,7 +596,9 @@ class Deck:
         return self.prs, self.slide
 
 
-def cost_ms(deck, setup):
+def cost_ms(deck, setup, enough_s=float("inf")):
+    """The fastest of CALLS calls on fresh targets, or of fewer once one takes over `enough_s`. A slow sample can only
+    hide a gap in the smaller deck, so that one always takes all CALLS."""
     prs, slide = deck.probe()
     ready = setup(prs, slide)
     best = float("inf")
@@ -605,7 +607,7 @@ def cost_ms(deck, setup):
         start = time.perf_counter()
         action()
         best = min(best, time.perf_counter() - start)
-        if best > 0.05:
+        if best > enough_s:
             break
     return best * 1000
 
@@ -618,7 +620,8 @@ def decks(tmp_path_factory):
 
 
 # Calls whose cost grows with the deck on the pin (rpptx 0.14.3), in the order of TIMED; `--runxfail` shows the
-# numbers. An XPASS means a build fixed the call: remove it from here.
+# numbers. An XPASS means a build fixed that call: remove it from here, and the gap's entry once this set is empty.
+# The passing calls are regression guards: keep them when the pin moves to an upstream release.
 GROWING = {
     "Presentation.embed_true_type_fonts", "Presentation.save_subset_fonts", "Presentation.slide_number_start",
     "Presentation.add_comment_author", "Presentation.embed_font", "Presentation.remove_embedded_font",
@@ -667,7 +670,7 @@ GROWING = {
 @pytest.mark.parametrize("name", [pytest.param(name, marks=pytest.mark.gap(GROWS)) if name in GROWING else name
                                   for name in TIMED])
 def test_call_cost_does_not_grow_with_the_deck(decks, name):
-    small, large = (cost_ms(deck, TIMED[name]) for deck in decks)
+    small, large = cost_ms(decks[0], TIMED[name]), cost_ms(decks[1], TIMED[name], enough_s=0.05)
     assert large < RATIO * small + FLOOR_MS, f"{name}: {large:.1f} ms at {4 * N} slides, {small:.1f} ms at {N}"
 
 
