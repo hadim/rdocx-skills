@@ -38,7 +38,7 @@ Everything else (setters, `run.text`, appends: `add_slide`, `add_textbox`, `add_
 
 | Member | Notes |
 |---|---|
-| `Presentation(path=None)` (a path), `Presentation.from_bytes(b)` (bytes, a stream's content for example), `save(path)` (a path), `to_bytes()` | `save` does not refuse the input (use `pptx_ops.save_atomic`); a new presentation is 16:9 with the eleven default layouts, and `save` writes the package class its extension names: a .potx saved as .pptx becomes a presentation; `save` to another format's extension (`"x.pdf"`) raises `ValueError`: write the bytes of `to_pdf()` |
+| `Presentation(path=None)` (a path), `Presentation.from_bytes(b)` (bytes, a stream's content for example), `save(path)` (a path), `to_bytes()` | `save` does not refuse the input (use `pptx_ops.save_atomic`); a new presentation is 16:9 with the eleven default layouts, and `save` writes the package class its extension names: a .potx saved as .pptx becomes a presentation; `save` to another format's extension (`"x.pdf"`) raises `ValueError`: write the bytes of `to_pdf()`. The slides, notes and other parts that no edit touched keep their source bytes in the saved file, whatever the calls made on other slides |
 | `slides`, `slide_layouts`, `slide_width`, `slide_height` (from 1 to 56 inches, `ValueError` otherwise), `slide_number_start` (the number of the first slide, None for 1), `comment_authors` (each a `CommentAuthor`: `id`, `name`, `initials`, `user_id`, `provider_id`) | |
 | `slides.add_slide(layout)`, `slides.add_slide_at(layout, position)`, `slides.duplicate(slide)` → the copy, `slides.move(from_, to)`, `slides.remove(slide)`, `slide_layouts.index(layout)` | |
 | `slides.import_slide(slide, layout=None, index=None, *, keep_source_formatting=False)` → the copy; `import_slide_with_diagnostics(...)` → (copy, diagnostics) | copies a slide of another presentation (at the end, or at `index`) with its charts, embedded objects, comments (authors merged) and notes; without `layout` it takes the destination layout of the same name and raises `RpptxError` ("no layout named ...") when there is none: pass `layout=prs.slide_layouts[k]`, or `keep_source_formatting=True` to bring the source layout, master and theme (each such import adds the source master, even an equal one; with `layout=` too it raises). Both presentations are read as they are in memory: a layout renamed or a theme colour changed before the import, in either, counts without saving first. A slide jump to a slide that is not copied is dropped and reported in the diagnostics: read them |
@@ -93,6 +93,10 @@ by section).
   `"zoom"` or None), `direction` (checked per type: `"left"`, `"up"`, `"in"`...; another raises `RpptxError`),
   `duration` (seconds), `advance_on_click` (None until set), `advance_after` (seconds or None), `apply_to_all()`
   copies it to every slide.
+- The `transition` and `header_footer` setters check only the parts they change: two owners of one identity on
+  another slide (two `mc:AlternateContent` shapes, for example) no longer make them fail. A `header_footer` edit
+  adds or removes placeholder shapes, so like `add_shape` it still raises `RpptxError` ("ambiguous shape id")
+  when a slide of the deck repeats a shape id.
 - Media: `shapes.add_movie(file, left, top, width, height, poster_frame_image=None, mime_type=None)` (`mime_type`
   required when the file has no known extension), `slide.media` → tuple of `MediaInfo` (`shape_id`, `kind`
   `"video"` or `"audio"`, `content_type`, `part_name` for embedded media, `target` for a linked one, `volume`,
@@ -218,7 +222,9 @@ then writes what PowerPoint stores: the `fontScale` and `lnSpcReduction` of each
 each resizing shape; call it after the last text change and before `save`, in either order of `auto_size` and text.
 `text_frame.fit_text(font_family=None, max_size=18)` writes the largest whole point size up to `max_size` that fits
 on every run (python-pptx's call; `font_family=None` keeps each run's font), turns autofit off and wrap on; it
-raises `RpptxError` when the text does not fit even at 1 pt.
+raises `RpptxError` when the text does not fit even at 1 pt. It lays out its own slide only, so another slide
+that cannot render (no layout relationship, a notes master without its theme) does not make it fail, where
+`fit_report` and `refresh_autofit` still raise: on such a deck, fit the frames one by one with `fit_text`.
 
 `AutofitUpdate` (from `fit_text`, in `refresh_autofit().updates` and `FitFrameReport.update`): `owner_kind`
 (`"slide"`, `"layout"`, `"master"`, `"notes-master"`...), `slide_index`, `shape_id`, `name`, `cell`, `mode`
