@@ -69,16 +69,15 @@ gaps closed.
 # docx-comments-range-across-cells (#412); their tests moved to test_docx_carried.py until upstream main has them.
 # integration/open-prs-2026-10-23-2 (plus tensorbee/rdocx#414 and #415) closed docx-default-line-spacing-multiple
 # (#414: set_default_paragraph_format, add_style and set_style take a number of lines).
+# integration/open-prs-2026-10-23-5 (-2 with #415 at its final head, plus #416 and the docx edit cost series #417 to
+# #420) made 69 more calls of test_docx_scaling.py flat on the four CI platforms (75 of the 252 still grow), and the
+# last nine of test_pptx_scaling.py, slide transitions and header and footer setters: pptx-edit-cost-grows-with-deck
+# closed (#413, #416).
 GAPS = {
     # test_docx_scaling.py: the calls of its GROWING set; an XPASS removes that call from GROWING, and this entry goes
     # when GROWING is empty
     # upstream: tensorbee/rdocx#407
-    "docx-edit-cost-grows-with-body": "the call costs a time that grows with the body's XML, whatever the element "
-    "read or edited; edit the structure in few calls (remove_content_range, insert_document of a document built "
-    "aside)",
-    # test_pptx_scaling.py: 9 of the 248 public mutating calls (159 on rpptx 0.14.3, 52 fixed by tensorbee/rdocx#413
-    # and 98 by #416), its GROWING set, non-strict (see there); this entry goes when GROWING is empty
-    # upstream: tensorbee/rdocx#403
-    "pptx-edit-cost-grows-with-deck": "a slide's transition and header_footer setters cost about 1 ms more per slide "
-    "of the deck",
+    "docx-edit-cost-grows-with-body": "the call costs a time that grows with the body's XML (content controls, notes, "
+    "sections, pictures, moved or copied content, run and cell text, table rows); make many such edits in a document "
+    "built aside, then one insert_document",
 }

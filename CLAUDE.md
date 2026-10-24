@@ -81,27 +81,29 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 23/10/2026
+## State on 24/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
   `v2026.10.23` (pin `a57be365`, the upstream release v0.16.3 / rpptx-v0.14.3).
-- Pinned: `integration/open-prs-2026-10-23-3` on hadim/rdocx (`b6196403`): the upstream release v0.16.3 /
-  rpptx-v0.14.3 (tensorbee/rdocx `a57be365`) plus the open pull requests tensorbee/rdocx#409 to #416, fixes of the
-  findings #402 to #408 and of #403's edit costs (#413, then #416 stacked on it). Upstream does not merge pull requests
-  from here: it adapts them in a sprint and closes them, so pin its `main` or its tags again once a sprint carries
-  them, and delete `tests/test_docx_carried.py` then (its tests name their pull requests).
-- Open gaps: 2 (`tests/gaps.py`, both `references/gaps.md`): docx-edit-cost-grows-with-body (tensorbee/rdocx#407,
-  144 of the 252 calls of `test_docx_scaling.py`; #415 made `Paragraph.xml` constant, but its faster edits do not
-  reach the test's documents) and pptx-edit-cost-grows-with-deck (#403: 9 of 248 calls left, slide transitions and
-  header and footer setters, about 1 ms more per slide, non-strict xfails since their growth is within the noise of
-  the bound). Closed by this pin: docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships
-  (#409), docx-insert-document-duplicate-style-ids and docx-insert-document-new-document-refused (#410),
+- Pinned: `integration/open-prs-2026-10-23-5` on hadim/rdocx (`9e11b3ec`): the upstream release v0.16.3 /
+  rpptx-v0.14.3 (tensorbee/rdocx `a57be365`) plus the open pull requests tensorbee/rdocx#409 to #420, fixes of the
+  findings #402 to #408 and of the edit costs of #403 (rpptx: #413, then #416 stacked on it) and #407 (rdocx: #415,
+  then the series #417 to #420 stacked on it). Upstream does not merge pull requests from here: it adapts them in a
+  sprint and closes them, so pin its `main` or its tags again once a sprint carries them, and delete
+  `tests/test_docx_carried.py` then (its tests name their pull requests).
+- Open gaps: 1 (`tests/gaps.py`, `references/gaps.md` of docx): docx-edit-cost-grows-with-body (tensorbee/rdocx#407,
+  75 of the 252 calls of `test_docx_scaling.py`: content controls, notes, sections, pictures, moved or copied content,
+  run and cell text, table rows and columns; 0.4 to 1.1 s a call at 1000 paragraphs). Closed by this pin:
+  pptx-edit-cost-grows-with-deck (#413, #416: none of the 248 rpptx calls grows with the deck),
+  docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships (#409),
+  docx-insert-document-duplicate-style-ids and docx-insert-document-new-document-refused (#410),
   docx-insert-document-reused-picture-swapped (#411), docx-comments-range-across-cells (#412, which adds
-  `Comment.anchor_issue`); 150 of the 159 rpptx calls that grew with the deck (#413, #416).
-- Suite against `b6196403` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included
-  (144 docx calls xfail, 9 pptx calls xfail or XPASS non-strict). The docx SKILL.md is 4 bytes under its 16,000-byte
+  `Comment.anchor_issue`); 70 of the 145 rdocx calls that grew with the body (#415, #417 to #420).
+- Suite against `9e11b3ec` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included
+  (75 docx calls xfail). The gap marker is strict again: the nine rpptx calls whose growth sat within the noise of
+  the bound, non-strict on the -3 pin, are flat everywhere. The docx SKILL.md is 4 bytes under its 16,000-byte
   budget.
 - `rdocx_env.py build` exports the source with the commit's time only over a build folder whose last build was that
   commit (`target/<platform>/built-commit`): a folder restored from another commit's cache, built after this commit was

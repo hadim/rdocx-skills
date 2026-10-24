@@ -23,8 +23,7 @@ BASH = shutil.which("bash") or "bash"
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", "gap(key, strict=True): known gap of the pinned build, see tests/gaps.py "
-                            "(strict xfail; strict=False for a measure within the noise of its bound)")
+    config.addinivalue_line("markers", "gap(key): known gap of the pinned build, see tests/gaps.py (strict xfail)")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -33,7 +32,7 @@ def pytest_collection_modifyitems(config, items):
             key = mark.args[0]
             if key not in GAPS:
                 raise pytest.UsageError(f"{item.nodeid}: unknown gap key {key!r}")
-            item.add_marker(pytest.mark.xfail(strict=mark.kwargs.get("strict", True), reason=f"gap {key}: {GAPS[key]}"))
+            item.add_marker(pytest.mark.xfail(strict=True, reason=f"gap {key}: {GAPS[key]}"))
 
 
 def tool(name):

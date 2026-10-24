@@ -1,7 +1,7 @@
 """pptx: every public mutating call of rpptx costs about the same in a deck of N slides and in one of 4N, as in
-python-pptx, where an edit touches its element and, for a picture or a slide, its own part. A call whose cost grows
-with the deck is a strict xfail (tests/gaps.py, pptx-edit-cost-grows-with-deck), so a fix of some calls of the family
-shows up as XPASSes at the next build. `test_every_mutating_call_is_timed` keeps the list complete as the API grows.
+python-pptx, where an edit touches its element and, for a picture or a slide, its own part. No call grows with the
+deck on the pin (tensorbee/rdocx#413 and #416 fixed the 159 that grew on rpptx 0.14.3), so each one guards against
+a regression. `test_every_mutating_call_is_timed` keeps the list complete as the API grows.
 
 Each slide of the two decks holds 25 text boxes, 12 rectangles, a 4x4 table, a picture of about 1 MB that does not
 compress, and speaker notes: both the shapes and the bytes of the package grow fourfold."""
@@ -622,20 +622,14 @@ def decks(tmp_path_factory):
             Deck(edit_cost_pptx(folder / "4n.pptx", 4 * N, picture_side=600)))
 
 
-# Calls whose cost grows with the deck on the pin (159 on rpptx 0.14.3, of which tensorbee/rdocx#413 and #416 fixed
-# 150), in the order of TIMED; `--runxfail` shows the numbers. These nine grow by about 1 ms a slide (macOS, 2026-10-23:
-# SlideTransition.duration 3.5 ms at 5 slides, 19.5 ms at 20), within the noise of the bound on CI runners: in two
-# runs six of them came under it on one platform and over it on another, so all nine are non-strict xfails (an XPASS
-# is reported, not failed). Remove a call once --runxfail shows it flat on every platform, and the gap's entry once this
-# set is empty. The passing calls are regression guards: keep them when the pin moves to an upstream release.
-GROWING = {
-    "SlideTransition.type", "SlideTransition.direction", "SlideTransition.duration",
-    "SlideTransition.advance_on_click", "SlideTransition.advance_after", "HeaderFooter.slide_number",
-    "HeaderFooter.footer", "HeaderFooter.date", "HeaderFooter.date_format",
-}
+# Calls whose cost grows with the deck on the pin, in the order of TIMED: none since tensorbee/rdocx#413 and #416
+# fixed the 159 of rpptx 0.14.3 (the last nine, slide transitions and header and footer setters, flat on every CI
+# platform with integration/open-prs-2026-10-23-5). A call that grows again is a regression: it comes back here only
+# with an entry for GROWS in tests/gaps.py and an upstream issue.
+GROWING = set()
 
 
-@pytest.mark.parametrize("name", [pytest.param(name, marks=pytest.mark.gap(GROWS, strict=False))
+@pytest.mark.parametrize("name", [pytest.param(name, marks=pytest.mark.gap(GROWS))
                                   if name in GROWING else name for name in TIMED])
 def test_call_cost_does_not_grow_with_the_deck(decks, name):
     small, large = costs_ms(decks, TIMED[name])
