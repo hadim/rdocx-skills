@@ -1,8 +1,8 @@
 """docx: every public mutating call of rdocx costs about the same in a document of N paragraphs and in one of 4N, as
-in python-docx, where an edit touches its element and, for a picture or a note, its own part. A call whose cost grows
-with the document is a strict xfail (tests/gaps.py, docx-edit-cost-grows-with-body), so a fix of some calls of the
-family shows up as XPASSes at the next build. `test_every_mutating_call_is_timed` keeps the list complete as the API
-grows; the reads tensorbee/rdocx#407 names are timed the same way (READS_TIMED).
+in python-docx, where an edit touches its element and, for a picture or a note, its own part. No call grows with the
+document on the pin but the nine of ACCEPTED, whose cost linear in the body the maintainer accepted, so each one
+guards against a regression. `test_every_mutating_call_is_timed` keeps the list complete as the API grows; the reads
+tensorbee/rdocx#407 names are timed the same way (READS_TIMED).
 
 Each paragraph of the two documents holds 6 runs with the run properties Google Docs writes on every run; every 10th
 paragraph also holds a picture and is followed by a 2x2 table, and the documents have two sections, the first with a
@@ -709,16 +709,11 @@ def documents(tmp_path_factory):
             edit_cost_docx(folder / "4n.docx", 4 * N, picture_side=100))
 
 
-# Calls whose cost grows with the document on the pin, in the order of TIMED: 145 of the 252 on rdocx 0.16.3, of which
-# tensorbee/rdocx#415 and #417 to #421 fixed 131, Paragraph.xml included, and 9 are in ACCEPTED; `--runxfail` shows
-# the numbers. An XPASS means a build fixed that call: remove it from here, and the gap's entry once this set is
-# empty. A fixed call can sit near FIXED, so that a noisy runner makes it XPASS on some platforms and runs only:
-# remove it once it XPASSes somewhere and `--runxfail` shows it well under RATIO, since a call out of this set fails
-# only over RATIO. The passing calls are regression guards: keep them when the pin moves to an upstream release.
-GROWING = {
-    "Document.add_picture", "Document.replace_text_at", "Paragraph.replace_text", "Cell.add_picture",
-    "Cell.replace_text",
-}
+# Calls whose cost grows with the document on the pin, in the order of TIMED: none since tensorbee/rdocx#415 and #417
+# to #422 fixed 136 of the 145 of rdocx 0.16.3 and the maintainer accepted the linear cost of the nine others
+# (ACCEPTED). A call that grows again is a regression: it comes back here only with an entry for GROWS in
+# tests/gaps.py and an upstream issue.
+GROWING = set()
 
 # Calls whose cost is linear in the body on the pin, accepted by the maintainer (2026-10-24): an agent calls them once
 # or a few times per document, 0.2 to 1.4 s a call at 1000 paragraphs. They are not a gap; they must not grow faster

@@ -87,27 +87,25 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
   `v2026.10.23` (pin `a57be365`, the upstream release v0.16.3 / rpptx-v0.14.3).
-- Pinned: `integration/open-prs-2026-10-23-6` on hadim/rdocx (`6f4ced8e`): the upstream release v0.16.3 /
-  rpptx-v0.14.3 (tensorbee/rdocx `a57be365`) plus the open pull requests tensorbee/rdocx#409 to #421, fixes of the
+- Pinned: `integration/open-prs-2026-10-23-8` on hadim/rdocx (`c0feead6`): the upstream release v0.16.3 /
+  rpptx-v0.14.3 (tensorbee/rdocx `a57be365`) plus the open pull requests tensorbee/rdocx#409 to #422, fixes of the
   findings #402 to #408 and of the edit costs of #403 (rpptx: #413, then #416 stacked on it) and #407 (rdocx: #415,
-  then the series #417 to #421 stacked on it). Upstream does not merge pull requests from here: it adapts them in a
+  then the series #417 to #422 stacked on it). Upstream does not merge pull requests from here: it adapts them in a
   sprint and closes them, so pin its `main` or its tags again once a sprint carries them, and delete
   `tests/test_docx_carried.py` then (its tests name their pull requests).
-- Open gaps: 1 (`tests/gaps.py`, `references/gaps.md` of docx): docx-edit-cost-grows-with-body (tensorbee/rdocx#407,
-  5 of the 252 calls of `test_docx_scaling.py`, used in loops: replacements and pictures, 0.7 to 1 s a call at 1000
-  paragraphs. Nine more, called once or a few times per document, cost a time linear in the body that the
-  maintainer accepted (ACCEPTED, bounded against a faster growth). The other calls keep a smaller part that grows:
-  `run.text` about 75 ms there, `add_heading_hyperlink` 0.46 s). Closed by this pin:
-  pptx-edit-cost-grows-with-deck (#413, #416: none of the 248 rpptx calls grows with the deck),
-  docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships (#409),
+- Open gaps: none (`tests/gaps.py` is empty, both `references/gaps.md` say so). Closed by this pin:
+  docx-edit-cost-grows-with-body (#415, #417 to #422: 136 of the 145 rdocx calls that grew with the body; the
+  maintainer accepted the linear cost of the nine others, called once or a few times per document, `ACCEPTED` in
+  `test_docx_scaling.py`), pptx-edit-cost-grows-with-deck (#413, #416: none of the 248 rpptx calls grows with the
+  deck), docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships (#409),
   docx-insert-document-duplicate-style-ids and docx-insert-document-new-document-refused (#410),
   docx-insert-document-reused-picture-swapped (#411), docx-comments-range-across-cells (#412, which adds
-  `Comment.anchor_issue`); 131 of the 145 rdocx calls that grew with the body (#415, #417 to #421).
-- Suite against `6f4ced8e` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included
-  (5 docx calls xfail). 35 fixed calls sit near FIXED and XPASSed on some platforms only, so they left GROWING on
-  their `--runxfail` numbers (test_docx_scaling.py, above GROWING). The gap marker is strict again: the nine rpptx calls whose growth sat within the noise of
-  the bound, non-strict on the -3 pin, are flat everywhere. The docx SKILL.md is 4 bytes under its 16,000-byte
-  budget.
+  `Comment.anchor_issue`). An edit still costs a little more in a larger body, accepted: at 1000 paragraphs
+  `run.text` about 70 ms, a replacement 0.11 to 0.14 s (the docx gap page gives the costs).
+- Suite against `c0feead6` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included.
+  The calls that left GROWING of `test_docx_scaling.py` sit near FIXED for 35 of them, so that a noisy runner made
+  them XPASS on some platforms and runs only: they left all the same, being far under RATIO. The gap marker is
+  strict. The docx SKILL.md is 4 bytes under its 16,000-byte budget.
 - `rdocx_env.py build` exports the source with the commit's time only over a build folder whose last build was that
   commit (`target/<platform>/built-commit`): a folder restored from another commit's cache, built after this commit was
   made, linked that commit's crates on Windows (2026-10-23).
@@ -118,11 +116,6 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 
 ## Next steps
 
-1. The sixth and last pull request of the docx edit cost series (on #421: `Paragraph.replace_text`,
-   `Cell.replace_text`, `replace_text_at`, `add_picture`, `Cell.add_picture`, about 1 s a call at 1000 paragraphs on
-   this pin): a `-7` snapshot pinned on hadim/rdocx-skills#63, the same pass, then the merge and a release, both
-   asked. The series accepts a weak linear residual on the calls used in loops (`run.text` about 75 ms at 1000
-   paragraphs).
-2. When upstream `main` moves (S96 brings fillable PDF forms, tensorbee/rdocx#381) or tags a release: `bump <ref>` on
+1. When upstream `main` moves (S96 brings fillable PDF forms, tensorbee/rdocx#381) or tags a release: `bump <ref>` on
    a branch, `install --build` and `test` (or let ci.yml build it on the pull request), as docs/setup.md (Moving the
    pin) describes; delete the gap tests that pass; release the plugin when the maintainer asks.

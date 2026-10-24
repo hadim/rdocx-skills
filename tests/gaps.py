@@ -80,11 +80,6 @@ gaps closed.
 # and footers, revisions by id, moved content and comments, story text and hyperlinks, internal hyperlinks): they
 # went to ACCEPTED in test_docx_scaling.py, bounded against a faster growth. The gap keeps the five used in loops,
 # replacements and pictures, which the sixth pull request of the series targets.
-GAPS = {
-    # test_docx_scaling.py: the calls of its GROWING set; an XPASS removes that call from GROWING, and this entry goes
-    # when GROWING is empty
-    # upstream: tensorbee/rdocx#407
-    "docx-edit-cost-grows-with-body": "the call, used in loops, costs a time that grows with the body's XML "
-    "(replacements in a paragraph, a cell or a story item, pictures); replace in one batch (docx_ops.replace_batch), "
-    "add many pictures in a document built aside, then one insert_document",
-}
+# integration/open-prs-2026-10-23-8 (-6 plus #422, the sixth and last pull request of the series) made the five
+# flat: docx-edit-cost-grows-with-body closed (#415, #417 to #422). No gap is open.
+GAPS = {}
