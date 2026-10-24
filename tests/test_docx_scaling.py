@@ -707,17 +707,17 @@ def documents(tmp_path_factory):
 
 
 # Calls whose cost grows with the document on the pin, in the order of TIMED: 145 of the 252 on rdocx 0.16.3, of which
-# tensorbee/rdocx#415 and #417 to #421 fixed 127, Paragraph.xml included; `--runxfail` shows the numbers. An XPASS
+# tensorbee/rdocx#415 and #417 to #421 fixed 129, Paragraph.xml included; `--runxfail` shows the numbers. An XPASS
 # means a build fixed that call: remove it from here, and the gap's entry once this set is empty. A fixed call can sit
 # near FIXED, so that a noisy runner makes it XPASS on some platforms and runs only: remove it once it XPASSes
 # somewhere and `--runxfail` shows it well under RATIO, since a call out of this set fails only over RATIO. The
 # passing calls are regression guards: keep them when the pin moves to an upstream release.
 GROWING = {
     "Document.set_header", "Document.set_footer", "Document.clone_content", "Document.move_content",
-    "Document.insert_html", "Document.add_picture", "Document.move_comment", "Document.remove_comment",
-    "Document.accept_revision_id", "Document.reject_revision_id", "Document.replace_text_at", "Document.set_story_text",
-    "Document.add_hyperlink_to_story", "Document.move_content_control", "Paragraph.replace_text",
-    "Paragraph.add_internal_hyperlink", "Cell.add_picture", "Cell.replace_text",
+    "Document.add_picture", "Document.move_comment", "Document.remove_comment", "Document.accept_revision_id",
+    "Document.reject_revision_id", "Document.replace_text_at", "Document.set_story_text",
+    "Document.add_hyperlink_to_story", "Paragraph.replace_text", "Paragraph.add_internal_hyperlink", "Cell.add_picture",
+    "Cell.replace_text",
 }
 
 

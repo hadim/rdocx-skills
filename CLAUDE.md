@@ -94,16 +94,16 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   sprint and closes them, so pin its `main` or its tags again once a sprint carries them, and delete
   `tests/test_docx_carried.py` then (its tests name their pull requests).
 - Open gaps: 1 (`tests/gaps.py`, `references/gaps.md` of docx): docx-edit-cost-grows-with-body (tensorbee/rdocx#407,
-  18 of the 252 calls of `test_docx_scaling.py`: replacements, pictures, moved or copied content, headers and
+  16 of the 252 calls of `test_docx_scaling.py`: replacements, pictures, moved or copied content, headers and
   footers, revisions by id, comments moved or removed, story hyperlinks; 0.15 to 1.4 s a call at 1000 paragraphs.
   The other calls keep a smaller part that grows: `run.text` about 75 ms there, `add_heading_hyperlink` 0.46 s). Closed by this pin:
   pptx-edit-cost-grows-with-deck (#413, #416: none of the 248 rpptx calls grows with the deck),
   docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships (#409),
   docx-insert-document-duplicate-style-ids and docx-insert-document-new-document-refused (#410),
   docx-insert-document-reused-picture-swapped (#411), docx-comments-range-across-cells (#412, which adds
-  `Comment.anchor_issue`); 127 of the 145 rdocx calls that grew with the body (#415, #417 to #421).
+  `Comment.anchor_issue`); 129 of the 145 rdocx calls that grew with the body (#415, #417 to #421).
 - Suite against `6f4ced8e` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included
-  (18 docx calls xfail). 31 fixed calls sit near FIXED and XPASSed on some platforms only, so they left GROWING on
+  (16 docx calls xfail). 33 fixed calls sit near FIXED and XPASSed on some platforms only, so they left GROWING on
   their `--runxfail` numbers (test_docx_scaling.py, above GROWING). The gap marker is strict again: the nine rpptx calls whose growth sat within the noise of
   the bound, non-strict on the -3 pin, are flat everywhere. The docx SKILL.md is 4 bytes under its 16,000-byte
   budget.
@@ -117,9 +117,10 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 
 ## Next steps
 
-1. The sixth pull request of the docx edit cost series (on #421: `Paragraph.replace_text`, `Cell.replace_text`,
-   `replace_text_at`, `add_picture`, `Cell.add_picture`): a `-7` snapshot, the same pass, then the merge of #63
-   and a release, both asked.
+1. The sixth and last pull request of the docx edit cost series (on #421: `Paragraph.replace_text`,
+   `Cell.replace_text`, `replace_text_at`, `add_picture`, `Cell.add_picture`, about 1 s a call at 1000 paragraphs on
+   this pin): a `-7` snapshot in a pull request of its own, the same pass, then a release. The series accepts a weak
+   linear residual on the calls used in loops (`run.text` about 75 ms at 1000 paragraphs).
 2. Make `test_docx_scaling.py` and `test_pptx_scaling.py` judge complexity rather than time, in a pull request
    of their own: three or four sizes and the log-log slope instead of one ratio between 25 and 100, CPU time
    (`time.process_time`) instead of wall time, which other work on the machine skews. Two sizes close together

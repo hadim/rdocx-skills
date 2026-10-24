@@ -73,8 +73,8 @@ gaps closed.
 # #420) made 69 more calls of test_docx_scaling.py flat on the four CI platforms (75 of the 252 still grow), and the
 # last nine of test_pptx_scaling.py, slide transitions and header and footer setters: pptx-edit-cost-grows-with-deck
 # closed (#413, #416).
-# integration/open-prs-2026-10-23-6 (-5 plus #421, the fifth pull request of the series) made 57 more calls flat (18
-# of the 252 still grow). 31 of them sit near FIXED, so that a noisy runner makes them XPASS on some platforms and
+# integration/open-prs-2026-10-23-6 (-5 plus #421, the fifth pull request of the series) made 59 more calls flat (16
+# of the 252 still grow). 33 of them sit near FIXED, so that a noisy runner makes them XPASS on some platforms and
 # runs only: they left GROWING all the same, being far under RATIO (at most 1.62 times on Linux, --runxfail).
 GAPS = {
     # test_docx_scaling.py: the calls of its GROWING set; an XPASS removes that call from GROWING, and this entry goes
