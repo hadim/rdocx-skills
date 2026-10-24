@@ -73,11 +73,14 @@ gaps closed.
 # #420) made 69 more calls of test_docx_scaling.py flat on the four CI platforms (75 of the 252 still grow), and the
 # last nine of test_pptx_scaling.py, slide transitions and header and footer setters: pptx-edit-cost-grows-with-deck
 # closed (#413, #416).
+# integration/open-prs-2026-10-23-6 (-5 plus #421, the fifth pull request of the series) made 57 more calls flat (18
+# of the 252 still grow). 31 of them sit near FIXED, so that a noisy runner makes them XPASS on some platforms and
+# runs only: they left GROWING all the same, being far under RATIO (at most 1.62 times on Linux, --runxfail).
 GAPS = {
     # test_docx_scaling.py: the calls of its GROWING set; an XPASS removes that call from GROWING, and this entry goes
     # when GROWING is empty
     # upstream: tensorbee/rdocx#407
-    "docx-edit-cost-grows-with-body": "the call costs a time that grows with the body's XML (content controls, notes, "
-    "sections, pictures, moved or copied content, run and cell text, table rows); make many such edits in a document "
-    "built aside, then one insert_document",
+    "docx-edit-cost-grows-with-body": "the call costs a time that grows with the body's XML (replacements, pictures, "
+    "moved or copied content, headers and footers, revisions by id, comments moved or removed, story hyperlinks); make "
+    "many such edits in a document built aside, then one insert_document",
 }

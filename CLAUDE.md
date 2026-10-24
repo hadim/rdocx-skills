@@ -87,22 +87,24 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
   `v2026.10.23` (pin `a57be365`, the upstream release v0.16.3 / rpptx-v0.14.3).
-- Pinned: `integration/open-prs-2026-10-23-5` on hadim/rdocx (`9e11b3ec`): the upstream release v0.16.3 /
-  rpptx-v0.14.3 (tensorbee/rdocx `a57be365`) plus the open pull requests tensorbee/rdocx#409 to #420, fixes of the
+- Pinned: `integration/open-prs-2026-10-23-6` on hadim/rdocx (`6f4ced8e`): the upstream release v0.16.3 /
+  rpptx-v0.14.3 (tensorbee/rdocx `a57be365`) plus the open pull requests tensorbee/rdocx#409 to #421, fixes of the
   findings #402 to #408 and of the edit costs of #403 (rpptx: #413, then #416 stacked on it) and #407 (rdocx: #415,
-  then the series #417 to #420 stacked on it). Upstream does not merge pull requests from here: it adapts them in a
+  then the series #417 to #421 stacked on it). Upstream does not merge pull requests from here: it adapts them in a
   sprint and closes them, so pin its `main` or its tags again once a sprint carries them, and delete
   `tests/test_docx_carried.py` then (its tests name their pull requests).
 - Open gaps: 1 (`tests/gaps.py`, `references/gaps.md` of docx): docx-edit-cost-grows-with-body (tensorbee/rdocx#407,
-  75 of the 252 calls of `test_docx_scaling.py`: content controls, notes, sections, pictures, moved or copied content,
-  run and cell text, table rows and columns; 0.4 to 1.1 s a call at 1000 paragraphs). Closed by this pin:
+  18 of the 252 calls of `test_docx_scaling.py`: replacements, pictures, moved or copied content, headers and
+  footers, revisions by id, comments moved or removed, story hyperlinks; 0.15 to 1.4 s a call at 1000 paragraphs.
+  The other calls keep a smaller part that grows: `run.text` about 75 ms there, `add_heading_hyperlink` 0.46 s). Closed by this pin:
   pptx-edit-cost-grows-with-deck (#413, #416: none of the 248 rpptx calls grows with the deck),
   docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships (#409),
   docx-insert-document-duplicate-style-ids and docx-insert-document-new-document-refused (#410),
   docx-insert-document-reused-picture-swapped (#411), docx-comments-range-across-cells (#412, which adds
-  `Comment.anchor_issue`); 70 of the 145 rdocx calls that grew with the body (#415, #417 to #420).
-- Suite against `9e11b3ec` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included
-  (75 docx calls xfail). The gap marker is strict again: the nine rpptx calls whose growth sat within the noise of
+  `Comment.anchor_issue`); 127 of the 145 rdocx calls that grew with the body (#415, #417 to #421).
+- Suite against `6f4ced8e` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included
+  (18 docx calls xfail). 31 fixed calls sit near FIXED and XPASSed on some platforms only, so they left GROWING on
+  their `--runxfail` numbers (test_docx_scaling.py, above GROWING). The gap marker is strict again: the nine rpptx calls whose growth sat within the noise of
   the bound, non-strict on the -3 pin, are flat everywhere. The docx SKILL.md is 4 bytes under its 16,000-byte
   budget.
 - `rdocx_env.py build` exports the source with the commit's time only over a build folder whose last build was that
@@ -115,6 +117,14 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 
 ## Next steps
 
-1. When upstream `main` moves (S96 brings fillable PDF forms, tensorbee/rdocx#381) or tags a release: `bump <ref>` on
+1. The sixth pull request of the docx edit cost series (on #421: `Paragraph.replace_text`, `Cell.replace_text`,
+   `replace_text_at`, `add_picture`, `Cell.add_picture`): a `-7` snapshot, the same pass, then the merge of #63
+   and a release, both asked.
+2. Make `test_docx_scaling.py` and `test_pptx_scaling.py` judge complexity rather than time, in a pull request
+   of their own: three or four sizes and the log-log slope instead of one ratio between 25 and 100, CPU time
+   (`time.process_time`) instead of wall time, which other work on the machine skews. Two sizes close together
+   hide a slope behind a fixed cost: `run.text` passes between 25 and 100 paragraphs and still costs 11 times
+   more at 1000.
+3. When upstream `main` moves (S96 brings fillable PDF forms, tensorbee/rdocx#381) or tags a release: `bump <ref>` on
    a branch, `install --build` and `test` (or let ci.yml build it on the pull request), as docs/setup.md (Moving the
    pin) describes; delete the gap tests that pass; release the plugin when the maintainer asks.

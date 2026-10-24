@@ -707,32 +707,17 @@ def documents(tmp_path_factory):
 
 
 # Calls whose cost grows with the document on the pin, in the order of TIMED: 145 of the 252 on rdocx 0.16.3, of which
-# tensorbee/rdocx#415 and #417 to #420 fixed 70, Paragraph.xml included; `--runxfail` shows the numbers. An XPASS
-# means a build fixed that call: remove it from here once it XPASSes on every CI platform, and the gap's entry once
-# this set is empty. The passing calls are regression guards: keep them when the pin moves to an upstream release.
+# tensorbee/rdocx#415 and #417 to #421 fixed 127, Paragraph.xml included; `--runxfail` shows the numbers. An XPASS
+# means a build fixed that call: remove it from here, and the gap's entry once this set is empty. A fixed call can sit
+# near FIXED, so that a noisy runner makes it XPASS on some platforms and runs only: remove it once it XPASSes
+# somewhere and `--runxfail` shows it well under RATIO, since a call out of this set fails only over RATIO. The
+# passing calls are regression guards: keep them when the pin moves to an upstream release.
 GROWING = {
-    "Document.set_page_color", "Document.set_header", "Document.set_footer", "Document.add_bullet_list_item",
-    "Document.add_numbered_list_item", "Document.restart_numbering", "Document.insert_section",
-    "Document.remove_section", "Document.create_section_story", "Document.unlink_section_story",
-    "Document.link_section_story", "SectionHandle.replace_xml", "SectionHandle.set_page_border",
-    "SectionHandle.set_note_policy", "HeaderFooter.is_linked_to_previous", "Document.add_footnote",
-    "Document.add_endnote", "Document.remove_footnote", "Document.remove_endnote", "FootnoteEndnote.add_paragraph",
-    "FootnoteEndnote.add_table", "FootnoteEndnote.delete", "Document.pop_content", "Document.insert_content",
-    "Document.clone_content", "Document.move_content", "Document.insert_document", "Document.import_fragment",
-    "Document.insert_html", "Document.add_picture", "Document.set_picture_size",
-    "Document.set_picture_sizes_for_relationship", "Document.set_chart_legend", "Document.add_heading_hyperlink",
-    "Document.move_comment", "Document.remove_comment", "Document.accept_revision_id", "Document.reject_revision_id",
-    "Document.replace_text_at", "Document.set_story_text", "Document.add_hyperlink_to_story",
-    "Document.set_hyperlink_url", "Document.remove_hyperlink", "Document.insert_content_control",
-    "Document.set_content_control_tag", "Document.set_content_control_alias", "Document.set_content_control_lock",
-    "Document.set_content_control_appearance", "Document.set_content_control_placeholder",
-    "Document.set_content_control_type", "Document.remove_content_control", "Document.unwrap_content_control",
-    "Document.move_content_control", "Document.clone_content_control", "Document.repeat_content_control",
-    "Document.add_custom_xml_store", "Document.set_content_control_binding", "Paragraph.replace_xml",
-    "Paragraph.replace_text", "Paragraph.add_internal_hyperlink", "Run.replace_xml", "Run.text", "Run.add_picture",
-    "Table.replace_xml", "Table.add_row", "Table.insert_column", "Table.delete_column", "Table.clone_row",
-    "Table.remove_row", "Cell.replace_xml", "Cell.add_picture", "Cell.replace_text", "Cell.text", "Cell.merge",
-    "Cell.split",
+    "Document.set_header", "Document.set_footer", "Document.clone_content", "Document.move_content",
+    "Document.insert_html", "Document.add_picture", "Document.move_comment", "Document.remove_comment",
+    "Document.accept_revision_id", "Document.reject_revision_id", "Document.replace_text_at", "Document.set_story_text",
+    "Document.add_hyperlink_to_story", "Document.move_content_control", "Paragraph.replace_text",
+    "Paragraph.add_internal_hyperlink", "Cell.add_picture", "Cell.replace_text",
 }
 
 
