@@ -32,6 +32,9 @@ CALLS = 3  # fresh targets a call is timed on in each document, the fastest coun
 # bounds, the result stays: a call of GROWING counts as fixed under FIXED times, any other one as grown over RATIO
 # times, so that the noise of a loaded machine does not turn a call near 2 times into an XPASS or a failure.
 RATIO, FIXED, FLOOR_MS = 2.5, 1.5, 5
+# A call of ACCEPTED may cost a time linear in the body, about 4 times at most from N to 4N; it fails over LINEAR
+# times, which a cost that grows faster, about 16 times for a quadratic one, exceeds.
+LINEAR = 6
 GROWS = "docx-edit-cost-grows-with-body"
 STAMP = "2026-10-01T12:00:00Z"
 LICENSE = rdocx.FontEmbeddingLicense(authorized=True, identity="CC0-1.0: Aileron")
@@ -707,16 +710,23 @@ def documents(tmp_path_factory):
 
 
 # Calls whose cost grows with the document on the pin, in the order of TIMED: 145 of the 252 on rdocx 0.16.3, of which
-# tensorbee/rdocx#415 and #417 to #421 fixed 131, Paragraph.xml included; `--runxfail` shows the numbers. An XPASS
-# means a build fixed that call: remove it from here, and the gap's entry once this set is empty. A fixed call can sit
-# near FIXED, so that a noisy runner makes it XPASS on some platforms and runs only: remove it once it XPASSes
-# somewhere and `--runxfail` shows it well under RATIO, since a call out of this set fails only over RATIO. The
-# passing calls are regression guards: keep them when the pin moves to an upstream release.
+# tensorbee/rdocx#415 and #417 to #421 fixed 131, Paragraph.xml included, and 9 are in ACCEPTED; `--runxfail` shows
+# the numbers. An XPASS means a build fixed that call: remove it from here, and the gap's entry once this set is
+# empty. A fixed call can sit near FIXED, so that a noisy runner makes it XPASS on some platforms and runs only:
+# remove it once it XPASSes somewhere and `--runxfail` shows it well under RATIO, since a call out of this set fails
+# only over RATIO. The passing calls are regression guards: keep them when the pin moves to an upstream release.
 GROWING = {
-    "Document.set_header", "Document.set_footer", "Document.move_content", "Document.add_picture",
-    "Document.move_comment", "Document.accept_revision_id", "Document.reject_revision_id", "Document.replace_text_at",
-    "Document.set_story_text", "Document.add_hyperlink_to_story", "Paragraph.replace_text",
-    "Paragraph.add_internal_hyperlink", "Cell.add_picture", "Cell.replace_text",
+    "Document.add_picture", "Document.replace_text_at", "Paragraph.replace_text", "Cell.add_picture",
+    "Cell.replace_text",
+}
+
+# Calls whose cost is linear in the body on the pin, accepted by the maintainer (2026-10-24): an agent calls them once
+# or a few times per document, 0.2 to 1.4 s a call at 1000 paragraphs. They are not a gap; they must not grow faster
+# than the body (LINEAR).
+ACCEPTED = {
+    "Document.set_header", "Document.set_footer", "Document.move_content", "Document.move_comment",
+    "Document.accept_revision_id", "Document.reject_revision_id", "Document.set_story_text",
+    "Document.add_hyperlink_to_story", "Paragraph.add_internal_hyperlink",
 }
 
 
@@ -724,12 +734,13 @@ GROWING = {
                                   for name in TIMED | READS_TIMED])
 def test_call_cost_does_not_grow_with_the_document(documents, name):
     small, large = costs_ms(documents, (TIMED | READS_TIMED)[name])
-    bound = (FIXED if name in GROWING else RATIO) * small + FLOOR_MS
+    bound = (FIXED if name in GROWING else LINEAR if name in ACCEPTED else RATIO) * small + FLOOR_MS
     assert large < bound, f"{name}: {large:.1f} ms at {4 * N} paragraphs, {small:.1f} ms at {N}"
 
 
 def test_every_mutating_call_is_timed():
-    assert sorted(GROWING - set(TIMED) - set(READS_TIMED)) == []
+    assert sorted((GROWING | ACCEPTED) - set(TIMED) - set(READS_TIMED)) == []
+    assert sorted(GROWING & ACCEPTED) == []
     timed = {name.split(" (")[0] for name in TIMED}
     assert sorted(mutating_surface() - timed - set(WHOLE_DOCUMENT)) == []
     assert sorted((timed | set(WHOLE_DOCUMENT)) - mutating_surface()) == []

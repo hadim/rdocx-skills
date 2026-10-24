@@ -76,11 +76,15 @@ gaps closed.
 # integration/open-prs-2026-10-23-6 (-5 plus #421, the fifth pull request of the series) made 61 more calls flat (14
 # of the 252 still grow). 35 of them sit near FIXED, so that a noisy runner makes them XPASS on some platforms and
 # runs only: they left GROWING all the same, being far under RATIO (at most 1.62 times on Linux, --runxfail).
+# The maintainer accepted the linear cost of nine of the 14 left, called once or a few times per document (headers
+# and footers, revisions by id, moved content and comments, story text and hyperlinks, internal hyperlinks): they
+# went to ACCEPTED in test_docx_scaling.py, bounded against a faster growth. The gap keeps the five used in loops,
+# replacements and pictures, which the sixth pull request of the series targets.
 GAPS = {
     # test_docx_scaling.py: the calls of its GROWING set; an XPASS removes that call from GROWING, and this entry goes
     # when GROWING is empty
     # upstream: tensorbee/rdocx#407
-    "docx-edit-cost-grows-with-body": "the call costs a time that grows with the body's XML (replacements, pictures, "
-    "moved content, headers and footers, revisions by id, comments moved, story text and hyperlinks); make "
-    "many such edits in a document built aside, then one insert_document",
+    "docx-edit-cost-grows-with-body": "the call, used in loops, costs a time that grows with the body's XML "
+    "(replacements in a paragraph, a cell or a story item, pictures); replace in one batch (docx_ops.replace_batch), "
+    "add many pictures in a document built aside, then one insert_document",
 }
