@@ -1,8 +1,8 @@
 """docx: every public mutating call of rdocx costs about the same in a document of N paragraphs and in one of 4N, as
-in python-docx, where an edit touches its element and, for a picture or a note, its own part. A call whose cost grows
-with the document is a strict xfail (tests/gaps.py, docx-edit-cost-grows-with-body), so a fix of some calls of the
-family shows up as XPASSes at the next build. `test_every_mutating_call_is_timed` keeps the list complete as the API
-grows; the reads tensorbee/rdocx#407 names are timed the same way (READS_TIMED).
+in python-docx, where an edit touches its element and, for a picture or a note, its own part. No call grows with the
+document on the pin but the nine of ACCEPTED, whose cost linear in the body the maintainer accepted, so each one
+guards against a regression. `test_every_mutating_call_is_timed` keeps the list complete as the API grows; the reads
+tensorbee/rdocx#407 names are timed the same way (READS_TIMED).
 
 Each paragraph of the two documents holds 6 runs with the run properties Google Docs writes on every run; every 10th
 paragraph also holds a picture and is followed by a 2x2 table, and the documents have two sections, the first with a
@@ -32,6 +32,9 @@ CALLS = 3  # fresh targets a call is timed on in each document, the fastest coun
 # bounds, the result stays: a call of GROWING counts as fixed under FIXED times, any other one as grown over RATIO
 # times, so that the noise of a loaded machine does not turn a call near 2 times into an XPASS or a failure.
 RATIO, FIXED, FLOOR_MS = 2.5, 1.5, 5
+# A call of ACCEPTED may cost a time linear in the body, about 4 times at most from N to 4N; it fails over LINEAR
+# times, which a cost that grows faster, about 16 times for a quadratic one, exceeds.
+LINEAR = 6
 GROWS = "docx-edit-cost-grows-with-body"
 STAMP = "2026-10-01T12:00:00Z"
 LICENSE = rdocx.FontEmbeddingLicense(authorized=True, identity="CC0-1.0: Aileron")
@@ -706,48 +709,19 @@ def documents(tmp_path_factory):
             edit_cost_docx(folder / "4n.docx", 4 * N, picture_side=100))
 
 
-# Calls whose cost grows with the document on the pin (rdocx 0.16.3), 145 of the 252, in the order of TIMED;
-# `--runxfail` shows the numbers. An XPASS means a build fixed that call: remove it from here, and the gap's entry
-# once this set is empty. The passing calls are regression guards: keep them when the pin moves to an upstream release.
-GROWING = {
-    "Document.set_font", "Document.embed_font", "Document.remove_embedded_font", "Document.remove_font",
-    "Document.embed_true_type_fonts", "Document.save_subset_fonts", "Document.embed_system_fonts",
-    "Document.set_page_color", "Document.set_text_watermark", "Document.set_image_watermark",
-    "Document.set_note_policy", "Document.set_header", "Document.set_footer",
-    "Settings.odd_and_even_pages_header_footer", "Document.add_numbering_definition", "Document.add_numbering_instance",
-    "Document.link_style_to_numbering", "Document.add_bullet_list_item", "Document.add_numbered_list_item",
-    "Document.restart_numbering", "Document.insert_section", "Document.remove_section", "Document.create_section_story",
-    "Document.unlink_section_story", "Document.link_section_story", "SectionHandle.replace_xml",
-    "SectionHandle.set_text_watermark", "SectionHandle.set_image_watermark", "SectionHandle.remove_watermark",
-    "SectionHandle.set_page_border", "SectionHandle.set_note_policy", "HeaderFooter.is_linked_to_previous",
-    "HeaderFooter.add_paragraph", "HeaderFooter.add_table", "Document.add_footnote", "Document.add_endnote",
-    "Document.remove_footnote", "Document.remove_endnote", "FootnoteEndnote.add_paragraph", "FootnoteEndnote.add_table",
-    "FootnoteEndnote.delete", "Document.add_paragraph", "Document.add_heading", "Document.add_page_break",
-    "Document.add_table", "Document.insert_paragraph", "Document.insert_table", "Document.remove_content",
-    "Document.remove_content_range", "Document.pop_content", "Document.insert_content", "Document.clone_content",
-    "Document.move_content", "Document.insert_document", "Document.import_fragment", "Document.insert_html",
-    "Document.split_run", "Document.add_picture", "Document.replace_image", "Document.replace_image_for_story",
-    "Document.set_picture_size", "Document.set_picture_sizes_for_relationship", "Document.add_chart",
-    "Document.set_chart_legend", "Document.add_heading_hyperlink", "Document.add_comment", "Document.move_comment",
-    "Document.reply_to", "Document.resolve_comment", "Document.remove_comment", "Document.accept_revision_id",
-    "Document.reject_revision_id", "Document.replace_text_at", "Document.set_story_text",
-    "Document.add_hyperlink_to_story", "Document.set_hyperlink_url", "Document.remove_hyperlink",
-    "Document.insert_content_control", "Document.set_content_control_tag", "Document.set_content_control_alias",
-    "Document.set_content_control_lock", "Document.set_content_control_appearance",
-    "Document.set_content_control_placeholder", "Document.set_content_control_type", "Document.remove_content_control",
-    "Document.unwrap_content_control", "Document.move_content_control", "Document.clone_content_control",
-    "Document.repeat_content_control", "Document.add_custom_xml_store", "Document.set_content_control_binding",
-    "Paragraph.insert_paragraph_before", "Paragraph.replace_xml", "Paragraph.add_equation", "Paragraph.replace_text",
-    "Paragraph.text", "Paragraph.add_run", "Paragraph.add_hyperlink", "Paragraph.add_internal_hyperlink",
-    "Run.replace_xml", "Run.text", "Run.remove", "Run.add_picture", "Run.add_field", "Table.replace_xml",
-    "Table.indent", "Table.alignment", "Table.width", "Table.set_borders", "Table.set_border", "Table.set_cell_margins",
-    "Table.grid_widths", "Table.set_column_width", "Table.set_cell_grid_span", "Table.set_cell_vertical_merge",
-    "Table.add_row", "Table.insert_column", "Table.delete_column", "Table.autofit", "Table.first_row", "Table.last_row",
-    "Table.first_column", "Table.last_column", "Table.banded_rows", "Table.banded_columns", "Table.clone_row",
-    "Table.remove_row", "Row.height", "Row.height_rule", "Row.cant_split", "Row.is_header", "Cell.replace_xml",
-    "Cell.add_picture", "Cell.replace_text", "Cell.text", "Cell.add_table", "Cell.merge", "Cell.split",
-    "Cell.add_paragraph", "Cell.width", "Cell.vertical_alignment", "Cell.shading", "Cell.set_border",
-    "Cell.set_margins", "Paragraph.xml",
+# Calls whose cost grows with the document on the pin, in the order of TIMED: none since tensorbee/rdocx#415 and #417
+# to #422 fixed 136 of the 145 of rdocx 0.16.3 and the maintainer accepted the linear cost of the nine others
+# (ACCEPTED). A call that grows again is a regression: it comes back here only with an entry for GROWS in
+# tests/gaps.py and an upstream issue.
+GROWING = set()
+
+# Calls whose cost is linear in the body on the pin, accepted by the maintainer (2026-10-24): an agent calls them once
+# or a few times per document, 0.2 to 1.4 s a call at 1000 paragraphs. They are not a gap; they must not grow faster
+# than the body (LINEAR).
+ACCEPTED = {
+    "Document.set_header", "Document.set_footer", "Document.move_content", "Document.move_comment",
+    "Document.accept_revision_id", "Document.reject_revision_id", "Document.set_story_text",
+    "Document.add_hyperlink_to_story", "Paragraph.add_internal_hyperlink",
 }
 
 
@@ -755,12 +729,13 @@ GROWING = {
                                   for name in TIMED | READS_TIMED])
 def test_call_cost_does_not_grow_with_the_document(documents, name):
     small, large = costs_ms(documents, (TIMED | READS_TIMED)[name])
-    bound = (FIXED if name in GROWING else RATIO) * small + FLOOR_MS
+    bound = (FIXED if name in GROWING else LINEAR if name in ACCEPTED else RATIO) * small + FLOOR_MS
     assert large < bound, f"{name}: {large:.1f} ms at {4 * N} paragraphs, {small:.1f} ms at {N}"
 
 
 def test_every_mutating_call_is_timed():
-    assert sorted(GROWING - set(TIMED) - set(READS_TIMED)) == []
+    assert sorted((GROWING | ACCEPTED) - set(TIMED) - set(READS_TIMED)) == []
+    assert sorted(GROWING & ACCEPTED) == []
     timed = {name.split(" (")[0] for name in TIMED}
     assert sorted(mutating_surface() - timed - set(WHOLE_DOCUMENT)) == []
     assert sorted((timed | set(WHOLE_DOCUMENT)) - mutating_surface()) == []

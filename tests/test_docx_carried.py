@@ -1,5 +1,6 @@
-"""docx: what the pinned build lacks of the everyday surface the skills cite, each as a strict xfail
-(tests/gaps.py). Each test builds its own input."""
+"""docx: fixes the pinned integration build (integration/open-prs-2026-10-23-8) carries and upstream `main` does not
+have yet, which the skills rely on. Each test names the pull request that carries it: delete the test once upstream
+main has it. Each test builds its own input."""
 import io
 import re
 import zipfile
@@ -11,10 +12,10 @@ from builders import W, noise_png
 from conftest import digest
 
 
-@pytest.mark.gap("docx-default-line-spacing-multiple")
+# carried by tensorbee/rdocx#414 (#402), delete once upstream main has it
 def test_default_line_spacing_takes_a_multiple():
-    """set_default_paragraph_format takes a length (an exact pitch) but no multiple, the rule of Word's own default
-    (1.08 lines); reading a multiple works."""
+    """set_default_paragraph_format takes a number of lines, the rule of Word's own default (python-api.md, document
+    defaults). It used to take lengths only and raise TypeError for 1.15 (tensorbee/rdocx#402)."""
     doc = rdocx.Document()
     doc.set_default_paragraph_format(line_spacing=1.15)
     assert doc.default_paragraph_format.line_spacing == pytest.approx(1.15)
@@ -29,10 +30,11 @@ def with_pictures(*pictures):
     return rdocx.Document.from_bytes(doc.to_bytes())
 
 
-@pytest.mark.gap("docx-insert-document-reused-picture-swapped")
+# carried by tensorbee/rdocx#411 (#404), delete once upstream main has it
 def test_insert_document_keeps_each_inserted_picture():
-    """insert_document reuses the target's picture parts that hold the bytes of the inserted pictures, but pairs them
-    in the wrong order: inserted red then blue, into a target that holds blue then red, show blue then red."""
+    """insert_document into a target that holds the same pictures: each inserted picture keeps its own bytes
+    (python-api.md, insert_document). Inserted red then blue, into a target that holds blue then red, used to show
+    blue then red (tensorbee/rdocx#404)."""
     red, blue = noise_png(8, 1), noise_png(8, 2)
     target = with_pictures(blue, red)
     target.insert_document(with_pictures(red, blue), at=2)
@@ -55,12 +57,12 @@ GOOG_START = ('<w:sdt><w:sdtPr><w:id w:val="-346012225"/><w:tag w:val="goog_rdk_
               '<w:commentRangeStart w:id="0"/></w:sdtContent></w:sdt>')
 
 
-@pytest.mark.gap("docx-comments-range-across-cells")
+# carried by tensorbee/rdocx#412 (#405), delete once upstream main has it
 @pytest.mark.parametrize("start", ['<w:commentRangeStart w:id="0"/>', GOOG_START], ids=["plain", "goog_rdk"])
 def test_comments_lists_a_range_across_two_cells(start):
     """A comment whose range starts in one cell and ends in the next one, as Google Docs writes a comment on a
-    selection across cells (its start in a goog_rdk content control or not): Document.comments raises RdocxError
-    ("cannot be projected faithfully"), remove_comment works."""
+    selection across cells (its start in a goog_rdk content control or not): Document.comments lists it with its
+    anchor text across the cells (SKILL.md, comments). It used to raise RdocxError (tensorbee/rdocx#405)."""
     doc = rdocx.Document()
     t = doc.add_table(1, 2)
     t.cell(0, 0).paragraphs[0].add_run("first cell")
@@ -83,13 +85,14 @@ def test_comments_lists_a_range_across_two_cells(start):
             'comments" Target="comments.xml"/></Relationships>').encode())
 
     doc = rewritten(doc, edit)
-    assert [(c.id, c.text) for c in doc.comments] == [(0, "a remark")]
+    assert [(c.id, c.text, c.anchor_text, c.anchor_issue) for c in doc.comments] == [
+        (0, "a remark", "first cell\nsecond cell", None)]
 
 
-@pytest.mark.gap("docx-part-xml-without-relationships")
+# carried by tensorbee/rdocx#409 (#406), delete once upstream main has it
 def test_part_xml_reads_relationships_and_content_types():
-    """part_names() and part_xml() leave out the relationship parts and [Content_Types].xml (RdocxError "part ... is
-    missing"): a tool that resolves a relationship id or checks a content type still unzips to_bytes()."""
+    """part_names() and part_xml() list and read the relationship parts and [Content_Types].xml as to_bytes() writes
+    them (python-api.md, Raw XML). They used to leave them out (tensorbee/rdocx#406)."""
     doc = rdocx.Document()
     doc.add_paragraph("x")
     saved = zipfile.ZipFile(io.BytesIO(doc.to_bytes()))
@@ -119,10 +122,11 @@ def style_ids(doc):
     return re.findall(r'w:styleId="([^"]+)"', doc.part_xml("word/styles.xml"))
 
 
-@pytest.mark.gap("docx-insert-document-duplicate-style-ids")
+# carried by tensorbee/rdocx#410 (#408), delete once upstream main has it
 def test_insert_document_maps_a_style_id_defined_twice():
     """The target and the inserted document carry the same styles part, which defines Heading1 and Title twice:
-    insert_document adds Heading1Merge1 and TitleMerge1 and gives them to the inserted paragraphs."""
+    insert_document adds no style and the inserted paragraphs keep Heading1 and Title. It used to add Heading1Merge1
+    and TitleMerge1 (tensorbee/rdocx#408)."""
     target = heading_and_title("target")
     before = style_ids(target)
     target.insert_document(heading_and_title("inserted"), at=len(target.paragraphs))
@@ -130,11 +134,11 @@ def test_insert_document_maps_a_style_id_defined_twice():
     assert [p.style for p in target.paragraphs] == ["Heading1", "Title", "Heading1", "Title"]
 
 
-@pytest.mark.gap("docx-insert-document-new-document-refused")
+# carried by tensorbee/rdocx#410, delete once upstream main has it
 def test_insert_document_takes_a_new_document():
     """A target whose Normal style differs from rdocx's own, as in every document Word, Google Docs or python-docx
-    writes: insert_document of a new Document() raises RdocxError ("invalid style graph: style type 'paragraph' has
-    more than one default"), whatever the policy."""
+    writes, takes a new Document() through insert_document (python-api.md, insert_document). It used to raise
+    RdocxError ("invalid style graph: style type 'paragraph' has more than one default")."""
     doc = rdocx.Document()
     doc.add_paragraph("target")
 
