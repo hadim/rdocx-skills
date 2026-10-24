@@ -94,16 +94,16 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   sprint and closes them, so pin its `main` or its tags again once a sprint carries them, and delete
   `tests/test_docx_carried.py` then (its tests name their pull requests).
 - Open gaps: 1 (`tests/gaps.py`, `references/gaps.md` of docx): docx-edit-cost-grows-with-body (tensorbee/rdocx#407,
-  16 of the 252 calls of `test_docx_scaling.py`: replacements, pictures, moved or copied content, headers and
-  footers, revisions by id, comments moved or removed, story hyperlinks; 0.15 to 1.4 s a call at 1000 paragraphs.
+  14 of the 252 calls of `test_docx_scaling.py`: replacements, pictures, moved content, headers and footers,
+  revisions by id, comments moved, story text and hyperlinks; 0.15 to 1.4 s a call at 1000 paragraphs.
   The other calls keep a smaller part that grows: `run.text` about 75 ms there, `add_heading_hyperlink` 0.46 s). Closed by this pin:
   pptx-edit-cost-grows-with-deck (#413, #416: none of the 248 rpptx calls grows with the deck),
   docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships (#409),
   docx-insert-document-duplicate-style-ids and docx-insert-document-new-document-refused (#410),
   docx-insert-document-reused-picture-swapped (#411), docx-comments-range-across-cells (#412, which adds
-  `Comment.anchor_issue`); 129 of the 145 rdocx calls that grew with the body (#415, #417 to #421).
+  `Comment.anchor_issue`); 131 of the 145 rdocx calls that grew with the body (#415, #417 to #421).
 - Suite against `6f4ced8e` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included
-  (16 docx calls xfail). 33 fixed calls sit near FIXED and XPASSed on some platforms only, so they left GROWING on
+  (14 docx calls xfail). 35 fixed calls sit near FIXED and XPASSed on some platforms only, so they left GROWING on
   their `--runxfail` numbers (test_docx_scaling.py, above GROWING). The gap marker is strict again: the nine rpptx calls whose growth sat within the noise of
   the bound, non-strict on the -3 pin, are flat everywhere. The docx SKILL.md is 4 bytes under its 16,000-byte
   budget.
