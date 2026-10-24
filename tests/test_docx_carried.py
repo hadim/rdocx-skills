@@ -1,4 +1,4 @@
-"""docx: fixes the pinned integration build (integration/open-prs-2026-10-23-7) carries and upstream `main` does not
+"""docx: fixes the pinned integration build (integration/open-prs-2026-10-23-8) carries and upstream `main` does not
 have yet, which the skills rely on. Each test names the pull request that carries it: delete the test once upstream
 main has it. Each test builds its own input."""
 import io
