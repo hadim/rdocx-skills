@@ -146,7 +146,7 @@ python3 plugin/scripts/rdocx_env.py bump v0.16.1 # move the pin to an upstream t
 
 ### 💻 Platforms
 
-- 🐧 Linux x86_64 and arm64, glibc 2.35 or later
+- 🐧 Linux x86_64 and arm64, glibc 2.28 or later
 - 🍎 macOS on Apple silicon (Intel Macs: `install --build`)
 - 🪟 Windows x86_64, from Git Bash
 

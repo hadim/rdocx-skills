@@ -99,8 +99,10 @@ pinned commit. Without one, the pinned commit alone is fetched (`--depth 1`) fro
 
 The build needs the Rust toolchain named in rdocx's `rust-toolchain.toml` (install rustup from rustup.rs or
 your package manager; the script never installs a toolchain). It takes 10 to 30 minutes on two cores; set
-`CARGO_BUILD_JOBS` on small machines. Cross-building the other Linux architecture uses zig:
-`cargo install --locked cargo-zigbuild --version 0.20.1`, then `build --target linux-aarch64`.
+`CARGO_BUILD_JOBS` on small machines. On Linux, the build links glibc 2.28 through zig, whatever the machine's
+glibc, when cargo-zigbuild is installed (`cargo install --locked cargo-zigbuild --version 0.20.1`; zig itself comes
+from `plugin/scripts/cross-requirements.txt`): the releases are built so. Without it, the files need the build
+machine's glibc. Cross-building the other Linux architecture needs it: `build --target linux-aarch64`.
 
 ## Environments
 
@@ -124,7 +126,7 @@ your package manager; the script never installs a toolchain). It takes 10 to 30 
   runtime (`vcruntime140.dll`), as Rust programs built with MSVC do. A build needs the MSVC build tools
   (Visual Studio Build Tools, C++ workload) besides rustup.
 
-The Linux CLIs need glibc 2.35 or later (the wheels 2.28). The Windows files are built with MSVC.
+The Linux CLIs and modules need glibc 2.28 or later (`release.yml` checks it). The Windows files are built with MSVC.
 Intel Macs (`macos-x86_64`) are neither built nor tested here: `install` exits 2 there and the skills hand over to
 the built-in ones, or `install --build` compiles the pinned commit on the machine.
 
@@ -135,7 +137,7 @@ https://prefix.dev/hadim/rdocx-skills (subdirs `linux-64`, `linux-aarch64`, `osx
 two CLIs in `bin` (`Library/bin` on Windows) and its two wheels installed into `site-packages`, the abi3 modules
 for CPython 3.10 or later, with upstream's license files at the pinned commit. Nothing is built for it:
 `conda/recipe.yaml` repackages the files the release published, downloaded and checked against the lock of the
-release tag by `.github/scripts/conda_package.py stage`. It depends on `__glibc >=2.35` (the CLIs' floor) or
+release tag by `.github/scripts/conda_package.py stage`. It depends on `__glibc >=2.28` (the Linux files' floor) or
 `__osx >=11.0`, and its `run_constraints` refuse conda-forge's `rdocx`, `rdocx-cli`, `rpptx` and `rpptx-cli`,
 which package upstream's releases (feedstocks rdocx-split and rpptx-split) and install the same modules and
 commands. How to install it, and how to point the skills at it: the README, Also as a conda package. The plugin's
@@ -156,7 +158,7 @@ file system after the build and failed.
 ## Continuous integration
 
 - `.github/workflows/ci.yml`, on every push to `main` and every pull request: `install --build` of the pinned
-  commit on linux-x86_64 and linux-aarch64 (ubuntu-22.04 and ubuntu-22.04-arm, the CLIs' glibc 2.35 floor), macos-arm64
+  commit on linux-x86_64 and linux-aarch64 (ubuntu-22.04 and ubuntu-22.04-arm; zig links glibc 2.28), macos-arm64
   and windows-x86_64, on `release.yml`'s runners (the cache key names the runner: a reused build keeps its links), with ThinLTO and 16 codegen units (`release.yml`'s profile) and a build cache per platform and
   commit (a commit built before compiles nothing again: its export gives every file the commit's time, so
   cargo finds the restored build fresh and only packages it, in seconds; a new commit takes 10 to 30 minutes). `lock --write` then
