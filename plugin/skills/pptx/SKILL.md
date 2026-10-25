@@ -24,7 +24,8 @@ $R/python my_script.py                     # the Python that has rpptx and rdocx
 
 `install` downloads the pinned build when it is not already here, checks the SHA-256 of every file against
 `rdocx.lock.json` and exits 0 once it is installed and verified. Repeat the `R=` and `export` lines in each new
-shell. Never `pip install rpptx` from PyPI or download a binary without its hash in the lock. **Windows**: Git
+shell. Never `pip install rpptx` from PyPI or download a binary without its hash in the lock (the
+conda package of the same build, on request: `../../README.md`, conda). **Windows**: Git
 Bash, with `python` (or `py -3`) for `python3`; `$R/rpptx` reaches `rpptx.exe` (`../../docs/setup.md`).
 
 **If `install` exits 2** (no verified build for this machine, for example no network access): tell the user in

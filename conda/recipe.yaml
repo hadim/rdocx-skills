@@ -1,0 +1,76 @@
+# The conda package of a plugin release: its own files for one platform, the rdocx and rpptx CLIs and wheels the
+# acceptance suite tested, repackaged as they are (no build). release.yml (job `conda`) stages them into conda/dist
+# with .github/scripts/conda_package.py, which also prints the environment read here, and publishes the package to
+# https://prefix.dev/hadim/rdocx-skills with `pixi publish --path conda/recipe.yaml`.
+schema_version: 1
+
+context:
+  version: ${{ env.get("RDOCX_SKILLS_VERSION") }}
+  rdocx_version: ${{ env.get("RDOCX_VERSION") }}
+  rpptx_version: ${{ env.get("RPPTX_VERSION") }}
+  python_min: "3.10"
+
+package:
+  name: rdocx-skills
+  version: ${{ version }}
+
+source:
+  # relative to this folder: an absolute path made pixi's build walk the whole file system
+  path: dist
+
+build:
+  number: 0
+  python:
+    version_independent: true
+  script:
+    - if: win
+      then: '"%PYTHON%" "%RECIPE_DIR%\build.py"'
+      else: '"$PYTHON" "$RECIPE_DIR/build.py"'
+
+requirements:
+  host:
+    - python ${{ python_min }}.*
+    - python-abi3
+    - pip
+  run:
+    - python >=${{ python_min }}
+    - if: linux
+      then: __glibc >=2.28  # the floor zig links the Linux files against (rdocx_env.py build)
+    - if: osx
+      then: __osx >=11.0
+  run_constraints:
+    # conda-forge's packages of the same CLIs and modules (rdocx-split, rpptx-split feedstocks): one or the other
+    - rdocx <0a0
+    - rdocx-cli <0a0
+    - rpptx <0a0
+    - rpptx-cli <0a0
+  ignore_run_exports:
+    by_name:
+      - python_abi  # the host's 3.10: abi3 modules run on any later CPython (python-abi3's run exports)
+
+tests:
+  - python:
+      imports:
+        - rdocx
+        - rpptx
+      pip_check: false
+  - script:
+      - rdocx --version
+      - rpptx --version
+
+about:
+  summary: The rdocx and rpptx build of a rdocx-skills plugin release (CLIs and Python modules)
+  description: |
+    The rdocx ${{ rdocx_version }} and rpptx ${{ rpptx_version }} build that the rdocx-skills plugin release
+    ${{ version }} pins (${{ env.get("RDOCX_UPSTREAM") }}, ${{ env.get("RDOCX_REF") }},
+    commit ${{ env.get("RDOCX_COMMIT") }}): the `rdocx` and `rpptx` command line tools and the `rdocx` and
+    `rpptx` Python modules, the very files the plugin's acceptance suite tested. It may carry fixes that no
+    rdocx release has yet; for the official releases, use conda-forge's rdocx, rdocx-cli, rpptx and rpptx-cli
+    (the two cannot be installed together).
+  homepage: https://github.com/hadim/rdocx-skills
+  repository: https://github.com/hadim/rdocx-skills
+  # The code is dual licensed MIT OR Apache-2.0 upstream, the bundled fonts Apache-2.0 and OFL-1.1, the embedded
+  # ICC profile has its own permissive license (as conda-forge's rdocx-split feedstock ships them).
+  license: MIT AND Apache-2.0 AND OFL-1.1 AND LicenseRef-sRGB2014
+  license_file:
+    - licenses/

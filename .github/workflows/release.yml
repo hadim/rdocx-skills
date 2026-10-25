@@ -18,9 +18,15 @@
 # previous release. The version, the title and the head of the notes come from .github/scripts/plugin_release.py
 # (tested in tests/test_ci_scripts.py).
 #
+# Then the conda package `rdocx-skills` of the release (job `conda`): its files for each platform, as published,
+# repackaged by conda/recipe.yaml, tested, and uploaded to https://prefix.dev/hadim/rdocx-skills by the channel's
+# trusted publisher (this workflow, through OIDC); the channel keeps the 10 latest versions (job `conda-prune`).
+# `conda_only: vVERSION` does only that, for a release made before.
+#
 # `dry_run`: everything but the release itself, on the branch the workflow runs from (to try a change of this
 # workflow on a pull request branch): build, suite, release files and lock kept as the workflow artifact
-# `release-files`; no attestation, no branch, no tag, no release.
+# `release-files`; no attestation, no branch, no tag, no release; the conda packages of the latest release (or of
+# `conda_only`) built, tested and kept as the artifacts `conda-<platform>`, nothing uploaded or deleted.
 name: release
 
 on:
@@ -30,6 +36,10 @@ on:
         description: "Build and test the branch this runs from, and publish nothing"
         type: boolean
         default: false
+      conda_only:
+        description: "Only the conda packages of this existing release (vYYYY.M.D), not a new release"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -40,6 +50,7 @@ concurrency:
 
 jobs:
   plan:
+    if: inputs.conda_only == ''
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -195,9 +206,18 @@ jobs:
             ~/.cargo/registry/index
             ~/.cargo/registry/cache
             ~/.cargo/git/db
+            ~/.cargo/bin/cargo-zigbuild
             ~/.local/share/rdocx-skills/target
           key: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-${{ needs.plan.outputs.commit }}
           restore-keys: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-
+
+      # the Linux files link glibc 2.28 through zig, whatever the runner's glibc (rdocx_env.py build); kept in the cache
+      - name: cargo-zigbuild
+        if: runner.os == 'Linux' && steps.reuse.outputs.reused != 'true'
+        run: |
+          if ! cargo-zigbuild --version 2> /dev/null | grep -q '^cargo-zigbuild 0\.20\.1$'; then
+            cargo install --locked --force cargo-zigbuild --version 0.20.1
+          fi
 
       # main's lock names no build: `install --build` installs the files above, or compiles the commit
       - name: Build and install
@@ -217,17 +237,20 @@ jobs:
             ~/.cargo/registry/index
             ~/.cargo/registry/cache
             ~/.cargo/git/db
+            ~/.cargo/bin/cargo-zigbuild
             ~/.local/share/rdocx-skills/target
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
-      # a binary needs the glibc it was linked against: one reused from a newer image would raise the floor
-      - name: The Linux CLIs need glibc 2.35 at most
+      # a binary needs the glibc it was linked against: zig links 2.28 (rdocx_env.py build), a plain cargo build the
+      # runner's own, which would raise the floor
+      - name: The Linux CLIs and modules need glibc 2.28 at most
         if: runner.os == 'Linux'
         run: |
-          for cli in rdocx rpptx; do
-            need=$(objdump -T ~/.local/share/rdocx-skills/current/bin/$cli | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)
-            echo "$cli needs $need"
-            test "$(printf '%s\nGLIBC_2.35\n' "$need" | sort -V | tail -n 1)" = GLIBC_2.35
+          home=~/.local/share/rdocx-skills/current
+          for f in "$home"/bin/rdocx "$home"/bin/rpptx "$home"/venv/lib/python3*/site-packages/{rdocx/_rdocx,rpptx/_rpptx}.abi3.so; do
+            need=$(objdump -T "$f" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)
+            echo "$(basename "$f") needs $need"
+            test "$(printf '%s\nGLIBC_2.28\n' "$need" | sort -V | tail -n 1)" = GLIBC_2.28
           done
 
       - name: The installed CLIs and modules run
@@ -397,3 +420,112 @@ jobs:
           gh release create "v$VERSION" assets/* -R "$GITHUB_REPOSITORY" --verify-tag --title "$TITLE" \
             --notes-file "$RUNNER_TEMP/notes.md" "${changes[@]}" --latest
           echo "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+
+  # The release's own files, as published and checked against its lock, repackaged on each platform's own runner
+  # (the package's Python modules and CLIs are run there before the upload), then uploaded as they were tested.
+  conda:
+    needs: [plan, publish]
+    if: ${{ !cancelled() && (inputs.conda_only != '' || needs.publish.result == 'success') }}
+    permissions:
+      contents: read
+      id-token: write  # the channel's trusted publisher
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux-x86_64, subdir: linux-64, runner: ubuntu-22.04 }
+          - { platform: linux-aarch64, subdir: linux-aarch64, runner: ubuntu-22.04-arm }
+          - { platform: macos-arm64, subdir: osx-arm64, runner: macos-14 }
+          - { platform: windows-x86_64, subdir: win-64, runner: windows-2025 }
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PLATFORM: ${{ matrix.platform }}
+      SUBDIR: ${{ matrix.subdir }}
+    steps:
+      - name: Check out with LF line endings
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94 # v0.11.2
+        with:
+          pixi-version: v0.83.0
+          run-install: false
+          cache: false
+
+      - name: Release
+        env:
+          CONDA_ONLY: ${{ inputs.conda_only }}
+          VERSION: ${{ needs.plan.outputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ -n "$CONDA_ONLY" ]; then tag=$CONDA_ONLY
+          elif [ "$DRY_RUN" = true ]; then tag=$(gh release view -R "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+          else tag=v$VERSION; fi
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+          echo "$PLATFORM: conda package of $tag" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stage the release's files
+        run: python .github/scripts/conda_package.py stage --release "$TAG" --platform "$PLATFORM" --out conda/dist >> "$GITHUB_ENV"
+
+      # into a local channel: built, indexed, then tested from there before anything is uploaded
+      - name: Package
+        run: |
+          channel="$(cd "$RUNNER_TEMP" && { pwd -W 2>/dev/null || pwd; })/conda-channel"
+          echo "CHANNEL=$channel" >> "$GITHUB_ENV"
+          pixi publish --path conda/recipe.yaml --target-channel "$channel"
+          ls -l "$channel/$SUBDIR"/*.conda
+
+      # solved as on a machine with the Linux files' glibc floor, the default of pixi workspaces
+      - name: The package's modules and CLIs run, on the oldest and the newest Python
+        env:
+          CONDA_OVERRIDE_GLIBC: "2.28"
+        run: |
+          for py in 3.10 3.13; do
+            pixi exec -c "$CHANNEL" -c conda-forge -s "rdocx-skills==${TAG#v}" -s "python=$py" \
+              python -c "import rdocx, rpptx, sys; print(sys.version.split()[0], rdocx.Document, rpptx.Presentation)"
+          done
+          pixi exec -c "$CHANNEL" -c conda-forge -s "rdocx-skills==${TAG#v}" rdocx --version
+          pixi exec -c "$CHANNEL" -c conda-forge -s "rdocx-skills==${TAG#v}" rpptx --version
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: conda-${{ matrix.platform }}
+          path: ${{ env.CHANNEL }}/${{ matrix.subdir }}/*.conda
+          if-no-files-found: error
+          overwrite: true
+
+      # a package already there (a re-run) is skipped
+      - name: Upload to prefix.dev
+        if: ${{ !inputs.dry_run }}
+        run: |
+          pixi upload prefix --channel hadim/rdocx-skills --skip-existing "$CHANNEL/$SUBDIR"/*.conda
+          echo "$PLATFORM: uploaded to https://prefix.dev/channels/hadim/rdocx-skills" >> "$GITHUB_STEP_SUMMARY"
+
+  # The free plan holds 3 GB, about 15 releases: the channel keeps the 10 latest versions (the GitHub releases keep
+  # all their files).
+  conda-prune:
+    needs: conda
+    if: ${{ !cancelled() && needs.conda.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write  # the channel's trusted publisher, which may delete
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Keep the 10 latest versions
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          python3 .github/scripts/conda_package.py prune --channel https://prefix.dev/hadim/rdocx-skills --keep 10 \
+            $([ "$DRY_RUN" = true ] && echo --dry-run) | tee -a "$GITHUB_STEP_SUMMARY"
