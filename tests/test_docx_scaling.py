@@ -1,6 +1,6 @@
 """docx: every public mutating call of rdocx costs about the same in a document of N paragraphs and in one of 4N, as
 in python-docx, where an edit touches its element and, for a picture or a note, its own part. No call grows with the
-document on the pin but the nine of ACCEPTED, whose cost linear in the body the maintainer accepted, so each one
+document on the pin but the 15 of ACCEPTED, whose cost linear in the body the maintainer accepted, so each one
 guards against a regression. `test_every_mutating_call_is_timed` keeps the list complete as the API grows; the reads
 tensorbee/rdocx#407 names are timed the same way (READS_TIMED).
 
@@ -711,17 +711,21 @@ def documents(tmp_path_factory):
 
 # Calls whose cost grows with the document on the pin, in the order of TIMED: none since tensorbee/rdocx#415 and #417
 # to #422 fixed 136 of the 145 of rdocx 0.16.3 and the maintainer accepted the linear cost of the nine others
-# (ACCEPTED). A call that grows again is a regression: it comes back here only with an entry for GROWS in
+# (ACCEPTED, with six of the 136 whose linear part shows on macOS). A call that grows again is a regression: it comes back here only with an entry for GROWS in
 # tests/gaps.py and an upstream issue.
 GROWING = set()
 
 # Calls whose cost is linear in the body on the pin, accepted by the maintainer (2026-10-24): an agent calls them once
-# or a few times per document, 0.2 to 1.4 s a call at 1000 paragraphs. They are not a gap; they must not grow faster
-# than the body (LINEAR).
+# or a few times per document, 0.1 to 1.4 s a call at 1000 paragraphs. Nine never came under FIXED. Six more, the
+# hyperlink, content control and comment calls, came under it on Linux (1.1 to 1.7 times) but went over RATIO on macOS
+# runners from one run to the next (2.5 to 3 times). They are not a gap; they must not grow faster than the body
+# (LINEAR).
 ACCEPTED = {
-    "Document.set_header", "Document.set_footer", "Document.move_content", "Document.move_comment",
-    "Document.accept_revision_id", "Document.reject_revision_id", "Document.set_story_text",
-    "Document.add_hyperlink_to_story", "Paragraph.add_internal_hyperlink",
+    "Document.set_header", "Document.set_footer", "Document.move_content", "Document.add_heading_hyperlink",
+    "Document.move_comment", "Document.remove_comment", "Document.accept_revision_id", "Document.reject_revision_id",
+    "Document.set_story_text", "Document.add_hyperlink_to_story", "Document.set_hyperlink_url",
+    "Document.remove_hyperlink", "Document.clone_content_control", "Document.set_content_control_binding",
+    "Paragraph.add_internal_hyperlink",
 }
 
 

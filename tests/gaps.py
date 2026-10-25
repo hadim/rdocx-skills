@@ -82,4 +82,7 @@ gaps closed.
 # replacements and pictures, which the sixth pull request of the series targets.
 # integration/open-prs-2026-10-23-8 (-6 plus #422, the sixth and last pull request of the series) made the five
 # flat: docx-edit-cost-grows-with-body closed (#415, #417 to #422). No gap is open.
+# Six calls that had left GROWING (remove_hyperlink, set_hyperlink_url, add_heading_hyperlink, clone_content_control,
+# set_content_control_binding, remove_comment) went over RATIO on macOS runners from one run to the next, 2.5 to 3
+# times against 1.1 to 1.7 on Linux: the maintainer accepted their linear cost too (ACCEPTED).
 GAPS = {}

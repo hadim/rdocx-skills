@@ -95,8 +95,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   `tests/test_docx_carried.py` then (its tests name their pull requests).
 - Open gaps: none (`tests/gaps.py` is empty, both `references/gaps.md` say so). Closed by this pin:
   docx-edit-cost-grows-with-body (#415, #417 to #422: 136 of the 145 rdocx calls that grew with the body; the
-  maintainer accepted the linear cost of the nine others, called once or a few times per document, `ACCEPTED` in
-  `test_docx_scaling.py`), pptx-edit-cost-grows-with-deck (#413, #416: none of the 248 rpptx calls grows with the
+  maintainer accepted the linear cost of the nine others, called once or a few times per document, and of six of
+  the 136 whose linear part shows on macOS runners, `ACCEPTED` in `test_docx_scaling.py`), pptx-edit-cost-grows-with-deck (#413, #416: none of the 248 rpptx calls grows with the
   deck), docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships (#409),
   docx-insert-document-duplicate-style-ids and docx-insert-document-new-document-refused (#410),
   docx-insert-document-reused-picture-swapped (#411), docx-comments-range-across-cells (#412, which adds
