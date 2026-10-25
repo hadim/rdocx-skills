@@ -64,6 +64,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -403,7 +404,7 @@ def export_tree(reader, oid, dest, mtime):
             die(f"unknown mode {mode} for {name}")
 
 
-def export_source(lock, dest):
+def export_source(lock, dest, mtime=None):
     commit = lock["commit"]
     for src in source_candidates():
         if subprocess.run(["git", "-C", str(src), "cat-file", "-e", f"{commit}^{{commit}}"], capture_output=True,
@@ -423,13 +424,13 @@ def export_source(lock, dest):
     kind, data = reader.read(commit)
     if kind != "commit" or not data.startswith(b"tree "):
         die(f"{commit} is not a commit")
-    # every file gets the commit's time, as `git archive` gives it: cargo finds a file changed when it is newer than
-    # the build that read it, so a fresh export of the commit built before, over the restored build folder, compiles
-    # nothing again instead of every workspace crate
+    # every file gets `mtime`, else the commit's time, as `git archive` gives it: cargo finds a file changed when it
+    # is newer than the build that read it, so a fresh export of the commit built before, over the restored build
+    # folder, compiles nothing again instead of every workspace crate
     committer = re.search(rb"^committer .* (\d+) [+-]\d{4}$", data, re.M)
     if not committer:
         die(f"{commit} has no committer time")
-    export_tree(reader, data[5:45].decode(), dest, int(committer.group(1)))
+    export_tree(reader, data[5:45].decode(), dest, int(committer.group(1)) if mtime is None else int(mtime))
     reader.close()
     say(f"source: commit {commit[:12]} exported, every object verified")
     return dest
@@ -466,7 +467,11 @@ def build(lock, plat, target=None):
     work = HOME / "build" / commit[:12]
     if work.exists():
         shutil.rmtree(work)
-    src = export_source(lock, work / "src")
+    # the commit's time only over a build folder that last built this commit: one restored from another commit can
+    # be newer than this commit (built after it was made), and cargo would then link that commit's crates
+    built = HOME / "target" / plat / "built-commit"
+    same = built.exists() and built.read_text().strip() == commit
+    src = export_source(lock, work / "src", None if same else time.time())
     env = child_env(CARGO_TARGET_DIR=str(HOME / "target" / plat))
     benv = pip_env(HOME / "buildenv", PLUGIN / "scripts" / "build-requirements.txt")
     wheels = work / "wheels"
@@ -486,6 +491,7 @@ def build(lock, plat, target=None):
     for crate in ("rdocx-py", "rpptx-py"):
         run([venv_python(benv).with_name("maturin"), "build", "--release", "--locked", "-m",
              f"crates/{crate}/Cargo.toml", "-o", wheels, *extra], cwd=src, env=env)
+    built.write_text(commit + "\n")
     out_root = PLUGIN / "dist" if os.access(PLUGIN, os.W_OK) else HOME / "dist"
     out = out_root / commit / plat
     if out.exists():

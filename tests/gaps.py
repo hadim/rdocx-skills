@@ -3,8 +3,8 @@ another tool.
 
 A test marked `@pytest.mark.gap("key")` asserts the behaviour we want. It is collected as a strict xfail:
 while the gap is open the test "xfails"; the day a new pin closes it, the test XPASSes, which fails the run
-on purpose. Then: remove the marker (the test becomes a regression guard), delete the entry below, and
-update the skills' `references/gaps.md` and tables.
+on purpose. Then: remove the marker (the test becomes a regression guard), delete the entry below once no test
+carries its key, and update the skills' `references/gaps.md` and tables.
 
 A gap about a missing API calls the name we expect it to get. When the API lands under another name, the
 test keeps failing with AttributeError: adapt it to the real name, and it then reports the gap as closed.
@@ -58,8 +58,31 @@ gaps closed.
 # in names. docx-custom-properties-not-listed (#387) closed: custom_properties lists (items(), iteration, len,
 # [name] gives the CustomProperty). New gap docx-default-line-spacing-multiple: the carried #395 took a float multiple
 # in set_default_paragraph_format, upstream's version takes lengths only.
-GAPS = {
-    "docx-default-line-spacing-multiple": "set_default_paragraph_format(line_spacing=) takes a length (an exact "
-    "pitch) and raises TypeError for a float multiple, the rule of Word's own default; set the multiple on the "
-    "Normal style",
-}
+# 2026-10-23: five findings of real use on the same pin, reported as tensorbee/rdocx#404 to #408, became the gaps
+# docx-insert-document-reused-picture-swapped, docx-comments-range-across-cells, docx-part-xml-without-relationships,
+# docx-edit-cost-grows-with-body (test_docx_scaling.py, the docx counterpart of test_pptx_scaling.py) and
+# docx-insert-document-duplicate-style-ids. Writing the scaling test met docx-insert-document-new-document-refused,
+# fixed in the pull request of #408 without an issue of its own.
+# 2026-10-23: integration/open-prs-2026-10-23 (v0.16.3 plus tensorbee/rdocx#409 to #413) closed
+# docx-part-xml-without-relationships (#409), docx-insert-document-duplicate-style-ids and
+# docx-insert-document-new-document-refused (#410), docx-insert-document-reused-picture-swapped (#411) and
+# docx-comments-range-across-cells (#412); their tests moved to test_docx_carried.py until upstream main has them.
+# integration/open-prs-2026-10-23-2 (plus tensorbee/rdocx#414 and #415) closed docx-default-line-spacing-multiple
+# (#414: set_default_paragraph_format, add_style and set_style take a number of lines).
+# integration/open-prs-2026-10-23-5 (-2 with #415 at its final head, plus #416 and the docx edit cost series #417 to
+# #420) made 69 more calls of test_docx_scaling.py flat on the four CI platforms (75 of the 252 still grow), and the
+# last nine of test_pptx_scaling.py, slide transitions and header and footer setters: pptx-edit-cost-grows-with-deck
+# closed (#413, #416).
+# integration/open-prs-2026-10-23-6 (-5 plus #421, the fifth pull request of the series) made 61 more calls flat (14
+# of the 252 still grow). 35 of them sit near FIXED, so that a noisy runner makes them XPASS on some platforms and
+# runs only: they left GROWING all the same, being far under RATIO (at most 1.62 times on Linux, --runxfail).
+# The maintainer accepted the linear cost of nine of the 14 left, called once or a few times per document (headers
+# and footers, revisions by id, moved content and comments, story text and hyperlinks, internal hyperlinks): they
+# went to ACCEPTED in test_docx_scaling.py, bounded against a faster growth. The gap keeps the five used in loops,
+# replacements and pictures, which the sixth pull request of the series targets.
+# integration/open-prs-2026-10-23-8 (-6 plus #422, the sixth and last pull request of the series) made the five
+# flat: docx-edit-cost-grows-with-body closed (#415, #417 to #422). No gap is open.
+# Six calls that had left GROWING (remove_hyperlink, set_hyperlink_url, add_heading_hyperlink, clone_content_control,
+# set_content_control_binding, remove_comment) went over RATIO on macOS runners from one run to the next, 2.5 to 3
+# times against 1.1 to 1.7 on Linux: the maintainer accepted their linear cost too (ACCEPTED).
+GAPS = {}

@@ -1,13 +1,21 @@
-"""Small synthetic inputs for the tests, built with python-docx plus targeted XML where python-docx has no API.
-Each builder writes a file and returns its path."""
+"""Small synthetic inputs for the tests, built with python-docx (python-pptx for decks) plus targeted XML where
+they have no API. Each builder writes a file and returns its path."""
+import io
+import random
 import re
 import zipfile
 
 import docx
+import pptx
 import rdocx
-from docx.oxml.ns import qn
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls, qn
+from PIL import Image
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.util import Inches
 
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+W15 = "http://schemas.microsoft.com/office/word/2012/wordml"
 FOOTNOTES_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes"
 FOOTNOTES_CT = "application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml"
 ENDNOTES_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes"
@@ -274,3 +282,104 @@ def google_wrapped(src, dst):
         return re.sub(r"<w:p\b(?:(?!<w:p\b).)*?goog_rdk_0.*?</w:p>", lambda m: GOOG_SDT % (2, m.group(0)), xml,
                       count=1, flags=re.S)
     return rewrite_body(src, dst, edit)
+
+
+def edit_cost_pptx(path, slides, picture_side=0):
+    """`slides` slides of 25 text boxes, 12 filled rectangles and a 4x4 table (the tensorbee/rdocx#389 build);
+    with `picture_side`, each slide also holds a random-noise PNG of that side in pixels (it does not compress,
+    about 3 bytes a pixel) and speaker notes."""
+    prs = pptx.Presentation()
+    for k in range(slides):
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
+        for i in range(25):
+            box = slide.shapes.add_textbox(Inches(0.2 + 0.5 * (i % 5)), Inches(0.2 + 0.5 * (i // 5)), Inches(2), Inches(0.4))
+            box.text_frame.text = f"text {i}"
+        for i in range(12):
+            slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(4 + 0.4 * i), Inches(4), Inches(0.3), Inches(0.3)).fill.solid()
+        table = slide.shapes.add_table(4, 4, Inches(0.5), Inches(5), Inches(6), Inches(1.5)).table
+        for r in range(4):
+            for c in range(4):
+                table.cell(r, c).text = f"{r}.{c}"
+        if picture_side:
+            slide.shapes.add_picture(io.BytesIO(noise_png(picture_side, k)), Inches(7), Inches(0.5), Inches(2.5))
+            slide.notes_slide.notes_text_frame.text = f"notes {k}"
+    prs.save(path)
+    return path
+
+
+def noise_png(side, seed):
+    """A PNG of random pixels, which does not compress: about 3 * side * side bytes."""
+    noise = random.Random(seed).randbytes(side * side * 3)
+    buffer = io.BytesIO()
+    Image.frombytes("RGB", (side, side), noise).save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def edit_cost_docx(path, paragraphs, picture_side=0, probes=3):
+    """`paragraphs` body paragraphs of 6 runs, each run with the run properties Google Docs writes on every run
+    (the tensorbee/rdocx#407 build), and a 2x2 table after every 10th; with `picture_side`, every 10th paragraph also
+    holds a random-noise PNG of that side in pixels (about 3 bytes a pixel), so that the package grows with the
+    body. Two sections: the first one has a header, which the second one follows. The second one ends with the
+    targets of tests/test_docx_scaling.py, `probes` of each, since making one costs about as much as a timed call:
+    paragraphs "alpha beta k" of two runs (twice as many), paragraphs holding a picture, paragraphs "commented k"
+    with comment k, paragraphs with a tracked insertion of id 901 + k, block content controls tagged probe_k each
+    followed by a paragraph "spot k", a repeating section tagged rows, 2x2 tables with "alpha k" in their first
+    cell, and a last paragraph."""
+    d = docx.Document()
+    for i in range(paragraphs):
+        p = d.add_paragraph()
+        for k in range(6):
+            font = p.add_run(f"run {k} of paragraph {i} ").font
+            font.name, font.size, font.color.rgb = "Arial", docx.shared.Pt(10), docx.shared.RGBColor(0, 0, 0)
+            font.bold = font.italic = font.small_caps = font.strike = font.underline = False
+        if i % 10 == 9:
+            if picture_side:
+                p.add_run().add_picture(io.BytesIO(noise_png(picture_side, i)), width=docx.shared.Inches(1))
+            table = d.add_table(rows=2, cols=2)
+            for c, cell in enumerate(table._cells):
+                cell.text = f"cell {c} of table {i // 10}"
+    d.sections[0].header.is_linked_to_previous = False
+    d.sections[0].header.paragraphs[0].text = "header"
+    d.add_section()  # the second section follows the first one's header
+    d.add_paragraph("the second section")
+    for k in range(2 * probes):
+        d.add_paragraph("alpha ").add_run(f"beta {k}")
+    for k in range(probes):
+        d.add_paragraph().add_run().add_picture(io.BytesIO(noise_png(8, 50 + k)), width=docx.shared.Inches(1))
+    for k in range(probes):
+        p = d.add_paragraph(f"commented {k}")
+        d.add_comment(p.runs, text=f"comment {k}", author="Reviewer", initials="RV")
+    for k in range(probes):
+        d.add_paragraph(f"tracked {k} ")._p.append(parse_xml(
+            f'<w:ins {nsdecls("w")} w:id="{901 + k}" w:author="Editor" w:date="2026-01-01T00:00:00Z"><w:r>'
+            f'<w:t>inserted {k}</w:t></w:r></w:ins>'))
+    for k in range(probes):
+        d.add_paragraph(f"spot {k}")._p.addprevious(parse_xml(
+            f'<w:sdt {nsdecls("w")}><w:sdtPr><w:tag w:val="probe{k}"/></w:sdtPr><w:sdtContent><w:p><w:r>'
+            f'<w:t>control {k}</w:t></w:r></w:p></w:sdtContent></w:sdt>'))
+    d.add_paragraph("after the rows")._p.addprevious(parse_xml(
+        f'<w:sdt {nsdecls("w")} xmlns:w15="{W15}"><w:sdtPr><w:tag w:val="rows"/><w15:repeatingSection/></w:sdtPr>'
+        '<w:sdtContent><w:sdt><w:sdtPr><w15:repeatingSectionItem/></w:sdtPr><w:sdtContent><w:p><w:r><w:t>row</w:t>'
+        '</w:r></w:p></w:sdtContent></w:sdt></w:sdtContent></w:sdt>'))
+    for k in range(probes):
+        d.add_table(rows=2, cols=2).cell(0, 0).text = f"alpha {k}"
+    d.add_paragraph("end")
+    d.save(path)
+    return lean_template(path)
+
+
+def lean_template(path):
+    """Drop from a python-docx document the 98 table styles of its template but Table Normal and Table Grid, and its
+    stylesWithEffects part: 750 kB that would weigh more than the body."""
+    with zipfile.ZipFile(path) as z:
+        parts = {name: z.read(name) for name in z.namelist() if name != "word/stylesWithEffects.xml"}
+    parts["word/styles.xml"] = re.sub(
+        r'<w:style w:type="table"(?:(?!</w:style>).)*?w:styleId="(?!TableNormal"|TableGrid")[^"]*".*?</w:style>', "",
+        parts["word/styles.xml"].decode(), flags=re.S).encode()
+    for name, pattern in (("word/_rels/document.xml.rels", r"<Relationship [^>]*stylesWithEffects[^>]*/>"),
+                          ("[Content_Types].xml", r"<Override [^>]*stylesWithEffects[^>]*/>")):
+        parts[name] = re.sub(pattern, "", parts[name].decode()).encode()
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        for name, data in parts.items():
+            z.writestr(name, data)
+    return path

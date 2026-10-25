@@ -16,7 +16,7 @@ failed=$(grep -E '^(FAILED|ERROR) ' "$log" | grep -vF '[XPASS(strict)]' || true)
 docs=$(printf '%s\n' "$failed" | grep -E '^(FAILED|ERROR) tests/test_skill_docs\.py' || true)
 other=$(printf '%s\n' "$failed" | grep -vE '^(FAILED|ERROR) tests/test_skill_docs\.py' | grep . || true)
 if [ -n "$closed" ]; then
-  printf '\nGaps closed (remove the marker and the entry in tests/gaps.py, then update the skills):\n\n```\n%s\n```\n' "$closed"
+  printf '\nGaps closed (remove the marker, and the entry in tests/gaps.py once no test carries it, then update the skills):\n\n```\n%s\n```\n' "$closed"
 fi
 if [ -n "$docs" ]; then
   printf '\nDocs not yet updated for the new build (tests/test_skill_docs.py):\n\n```\n%s\n```\n' "$docs"

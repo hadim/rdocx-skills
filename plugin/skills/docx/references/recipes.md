@@ -150,8 +150,7 @@ doc.paragraphs[i].paragraph_format.space_after = rdocx.Pt(12)
 doc.paragraphs[i].paragraph_format.keep_with_next = True
 j = next(k for k, p in enumerate(doc.paragraphs) if p.numbering)
 doc.paragraphs[j].numbering = (doc.paragraphs[j].numbering[0], 1)   # one level deeper
-doc.set_default_paragraph_format(space_after=rdocx.Pt(6))   # what paragraphs inherit (w:pPrDefault), lengths only
-doc.set_style("Normal", line_spacing=1.15)                  # a multiple goes on the style
+doc.set_default_paragraph_format(space_after=rdocx.Pt(6), line_spacing=1.15)   # what paragraphs inherit (w:pPrDefault)
 assert doc.default_paragraph_format.space_after == rdocx.Pt(6)
 assert "w:pPrDefault" in doc.part_xml("word/styles.xml")   # any part's XML as a save would write it, read-only
 docx_ops.save_atomic(doc, "styled.docx", "report.docx")

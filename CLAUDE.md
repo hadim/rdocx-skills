@@ -50,8 +50,9 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   rdocx's behaviour is upstream's to test: the behaviour files (`test_docx_*.py`, `test_pptx*.py`) only hold what the
   pinned build has and upstream `main` does not yet (a fix or a feature carried on an integration branch, or a gap
   as a strict xfail in `tests/gaps.py`, with `# upstream: owner/repo#N` when reported). When the pin moves to an
-  upstream release, run them against it and delete those that pass. A regression that hits the skills gets a test
-  then, and an upstream issue.
+  upstream release, run them against it and delete those that pass, but `test_pptx_scaling.py` and
+  `test_docx_scaling.py`: they time every public mutating call of rpptx and rdocx, and their passing calls guard
+  against a regression. A regression that hits the skills gets a test then, and an upstream issue.
 - A behaviour change of rdocx is either a fix (remove the gap marker) or a regression (keep the test red and the
   previous pin, or narrow the skills); never weaken a test to make it pass.
 - Only the plugin's releases publish builds: `main`'s lock names an upstream commit (`bump REF`), `ci.yml` builds it
@@ -67,8 +68,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   asked: fix every cited name that moved, keep the recipes running, make the behaviour tests pass, and document what
   the new build adds that an agent would use (a SKILL.md table row or a references entry, a recipe when it helps). The
   coverage check only asks a pointer per public class and CLI command, so a new method or flag gets no line unless
-  this pass writes it. Onto an upstream release, also delete the behaviour tests that pass on it. Stop before the
-  merge: a short brief, and the merge asked as a question.
+  this pass writes it. Onto an upstream release, also delete the behaviour tests that pass on it (not the scaling
+  tests'). Stop before the merge: a short brief, and the merge asked as a question.
 - No release is asked of upstream: the pin takes any upstream commit or tag, or a commit carried on an integration
   branch, and this repository builds it (above).
 - Git on a clone reached through a shell on another machine (a remote or sandboxed shell over a synced folder):
@@ -80,26 +81,34 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 23/10/2026
+## State on 24/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
-  `v2026.10.21` (pin `3af55af1`, hadim/rdocx `integration/open-prs-2026-10-21`).
-- Pinned: the upstream release `v0.16.3` / `rpptx-v0.14.3`, tensorbee/rdocx `a57be365` (S95.3), which adapted every
-  pull request the integration branches carried (tensorbee/rdocx#393 to #397, #399, #401) and closed their issues.
-  Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its `main` or
-  its tags again once a sprint carries them. Its adaptations differ in names: `remove_content_range(start, end)`
-  (`RdocxError` out of range), `part_names()` a method, `part_xml` `RdocxError` for a missing part.
-- Open gaps: 1 (`tests/gaps.py`, both `references/gaps.md`): docx-default-line-spacing-multiple
-  (`set_default_paragraph_format` takes lengths only; the carried #395 took a float multiple; not reported yet).
-  docx-custom-properties-not-listed (tensorbee/rdocx#387) closed with `a57be365`. Every gap of `d44a69af` closed
-  with `7496a81c` (tensorbee/rdocx#384, #385, #386); the python-docx and python-pptx names it does not take raise an
-  error naming the rdocx or rpptx way, the contract #379 asked for.
-- Suite against `a57be365` (the release's own macOS arm64 files, locally): 178 passed, 1 xfailed. No behaviour test
-  of a carried pull request is left (`test_docx_carried.py` and `test_pptx_carried.py` deleted). New in the docs:
-  content-control authoring (`insert_content_control`, `set_content_control_type` with `ContentControlTypePayload`,
-  locks, binding to a custom XML part; recipe "Form fields").
+  `v2026.10.23` (pin `a57be365`, the upstream release v0.16.3 / rpptx-v0.14.3).
+- Pinned: `integration/open-prs-2026-10-23-8` on hadim/rdocx (`c0feead6`): the upstream release v0.16.3 /
+  rpptx-v0.14.3 (tensorbee/rdocx `a57be365`) plus the open pull requests tensorbee/rdocx#409 to #422, fixes of the
+  findings #402 to #408 and of the edit costs of #403 (rpptx: #413, then #416 stacked on it) and #407 (rdocx: #415,
+  then the series #417 to #422 stacked on it). Upstream does not merge pull requests from here: it adapts them in a
+  sprint and closes them, so pin its `main` or its tags again once a sprint carries them, and delete
+  `tests/test_docx_carried.py` then (its tests name their pull requests).
+- Open gaps: none (`tests/gaps.py` is empty, both `references/gaps.md` say so). Closed by this pin:
+  docx-edit-cost-grows-with-body (#415, #417 to #422: 136 of the 145 rdocx calls that grew with the body; the
+  maintainer accepted the linear cost of the nine others, called once or a few times per document, and of six of
+  the 136 whose linear part shows on macOS runners, `ACCEPTED` in `test_docx_scaling.py`), pptx-edit-cost-grows-with-deck (#413, #416: none of the 248 rpptx calls grows with the
+  deck), docx-default-line-spacing-multiple (#414), docx-part-xml-without-relationships (#409),
+  docx-insert-document-duplicate-style-ids and docx-insert-document-new-document-refused (#410),
+  docx-insert-document-reused-picture-swapped (#411), docx-comments-range-across-cells (#412, which adds
+  `Comment.anchor_issue`). An edit still costs a little more in a larger body, accepted: at 1000 paragraphs
+  `run.text` about 70 ms, a replacement 0.11 to 0.14 s (the docx gap page gives the costs).
+- Suite against `c0feead6` on the four CI platforms (hadim/rdocx-skills#63): no failure, the scaling tests included.
+  The calls that left GROWING of `test_docx_scaling.py` sit near FIXED for 35 of them, so that a noisy runner made
+  them XPASS on some platforms and runs only: they left all the same, being far under RATIO. The gap marker is
+  strict. The docx SKILL.md is 4 bytes under its 16,000-byte budget.
+- `rdocx_env.py build` exports the source with the commit's time only over a build folder whose last build was that
+  commit (`target/<platform>/built-commit`): a folder restored from another commit's cache, built after this commit was
+  made, linked that commit's crates on Windows (2026-10-23).
 - The skills load ahead of the built-in docx and pptx skills: 8 of 8 headless sessions (4 Word, 4 PowerPoint tasks)
   called `rdocx:docx` / `rdocx:pptx` first with the shortened descriptions, the built-in skills' descriptions loaded
   alongside (2026-10-12).
