@@ -1,9 +1,11 @@
 """.github/scripts: suite-summary.sh groups a suite log for the job summaries and the release notes,
 plugin_release.py names the plugin's releases, writes their version and the head of their notes, tested-tree.sh tells
-whether ci.yml passed on a tree. Synthetic logs, locks and API answers only; no network, no release touched."""
+whether ci.yml passed on a tree, conda_package.py stages a release for its conda package and prunes the channel.
+Synthetic logs, locks and API answers only; no network, no release touched."""
 import datetime
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -16,6 +18,7 @@ from conftest import BASH
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / ".github" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
+import conda_package  # noqa: E402
 import plugin_release  # noqa: E402
 
 REPO = "hadim/rdocx-skills"
@@ -154,3 +157,44 @@ def test_a_tree_passed_only_on_a_live_mark_from_this_repository(tmp_path, artifa
     res = subprocess.run([BASH, SCRIPTS / "tested-tree.sh"], cwd=repo, env=env, capture_output=True, text=True)
     assert res.returncode == 0, res.stderr
     assert res.stdout.splitlines() == [f"tree={tree}", f"run={7 if passed == 'true' else ''}", f"passed={passed}"]
+
+
+def test_the_conda_package_names_the_release_and_the_build_it_holds():
+    lock = {"upstream": "https://github.com/hadim/rdocx", "commit": COMMIT, "ref": "integration/x",
+            "versions": {"rdocx": "0.16.3", "rpptx": "0.14.3"}}
+    assert conda_package.recipe_env(lock, "v2026.10.25.2") == {
+        "RDOCX_SKILLS_VERSION": "2026.10.25.2", "RDOCX_VERSION": "0.16.3", "RPPTX_VERSION": "0.14.3",
+        "RDOCX_COMMIT": COMMIT, "RDOCX_REF": "integration/x", "RDOCX_UPSTREAM": "https://github.com/hadim/rdocx"}
+    with pytest.raises(SystemExit):
+        conda_package.recipe_env({**lock, "versions": {}}, "v2026.10.25")
+
+
+def test_the_conda_packages_cover_the_released_platforms_on_their_runners():
+    """One conda subdir per platform of the releases, each packaged on that platform's runner in release.yml."""
+    release = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+
+    def matrix(job, until):  # the flow mappings of a job's matrix: `- { platform: P, runner: R }`
+        section = release.split(f"\n  {job}:\n")[1].split(f"\n  {until}:\n")[0]
+        return [dict(kv.split(": ") for kv in m.split(", ")) for m in re.findall(r"- \{ (.+?) \}", section)]
+    built = {e["platform"]: e["runner"] for e in matrix("build", "publish")}
+    conda = matrix("conda", "conda-prune")
+    assert {e["platform"]: e["subdir"] for e in conda} == conda_package.SUBDIRS
+    assert {e["platform"]: e["runner"] for e in conda} == built
+
+
+def test_staging_refuses_a_folder_that_holds_files(tmp_path, monkeypatch):
+    lock = {"release": "https://example.invalid/v1", "artifacts": {"macos-arm64": {"rdocx": "0" * 64}}}
+    monkeypatch.setattr(conda_package, "release_lock", lambda repo, tag: lock)
+    (tmp_path / "stale.whl").write_text("x")
+    with pytest.raises(SystemExit, match="not empty"):
+        conda_package.stage(REPO, "v1", "macos-arm64", tmp_path)
+
+
+def test_the_channel_keeps_the_latest_versions_on_every_subdir():
+    packages = [(subdir, f"rdocx-skills-{v}-h0_0.conda", v)
+                for v in ("2026.10.9", "2026.10.16", "2026.10.16.2", "2026.10.25")
+                for subdir in ("linux-64", "osx-arm64")]
+    assert conda_package.to_delete(packages, keep=2) == [
+        ("linux-64", "rdocx-skills-2026.10.16-h0_0.conda"), ("linux-64", "rdocx-skills-2026.10.9-h0_0.conda"),
+        ("osx-arm64", "rdocx-skills-2026.10.16-h0_0.conda"), ("osx-arm64", "rdocx-skills-2026.10.9-h0_0.conda")]
+    assert conda_package.to_delete(packages, keep=10) == []

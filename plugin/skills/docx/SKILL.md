@@ -23,14 +23,14 @@ $R/rdocx text --json report.docx
 $R/python my_script.py                     # the Python that has rdocx and rpptx; `import docx_ops` works
 ```
 
-`install` downloads the pinned build when missing, checks every file's SHA-256 against `rdocx.lock.json`
-and exits 0 once verified. Shell variables do not persist between
-commands in most agent shells: repeat the `R=` and `export` lines. Never `pip install rdocx` from PyPI or
-download a binary without its hash in the lock. **Windows**: Git Bash, with `python` (or `py -3`) for
-`python3`; `$R/rdocx` reaches `rdocx.exe` (`../../docs/setup.md`).
+`install` downloads the pinned build when missing and exits 0 once each file matches its SHA-256 in
+`rdocx.lock.json`. Shell variables do not persist between commands in most agent shells: repeat the `R=` and
+`export` lines. Never `pip install rdocx` from PyPI or download a binary without its hash in the lock (the
+conda package of the same build, on request: `../../README.md`, conda). **Windows**: Git Bash, with `python`
+(or `py -3`) for `python3`; `$R/rdocx` reaches `rdocx.exe` (`../../docs/setup.md`).
 
 **If `install` exits 2** (no verified build for this machine, for example no network access): tell the user in
-one line that the pinned rdocx build is not available here, do the task with the built-in `docx` skill, and
+one line that no pinned rdocx build is available here, do the task with the built-in `docx` skill, and
 offer to build it for next time (`install --build`, 10 to 30 minutes with a Rust toolchain, in the
 background).
 
@@ -117,11 +117,10 @@ background).
 | New document | | `rdocx.Document()`, or a template .docx or .dotx emptied | Word's usual styles; save a .dotx as .docx |
 | Combine documents, equations, a missing feature | | `doc.insert_document(other, at=bi)`, `doc.import_fragment(location, fragment)`; `p.add_equation(latex, format="latex", display=False)`; `p.xml` / `p.replace_xml(xml)`, `doc.part_xml(name)` (read-only) | raw XML instead of lxml; an unknown element raises |
 
-Commands and full signatures: `references/cli.md`, `references/python-api.md` (and the `.pyi` stubs it
-points to). Worked, tested examples for each row: `references/recipes.md`. Ready-made commands:
-`scripts/docx_ops.py` (`text`, `count`, `replace`, `comment`, `toc`, `pages`). Look a name up
+Commands and full signatures: `references/cli.md`, `references/python-api.md`. Tested examples per row:
+`references/recipes.md`. Ready-made commands: `scripts/docx_ops.py` (`text`, `count`, `replace`, `comment`, `toc`, `pages`). Look a name up
 (`grep -n NAME references/python-api.md`) rather than reading a reference. The skill does not list every method
-or flag: before concluding that rdocx cannot do something, search the build itself, `grep -n -i WORD` in its type
+or flag: before concluding that rdocx cannot do it, search the build itself, `grep -n -i WORD` in its type
 stubs (`_rdocx.pyi`, in the folder `$R/python -c "import rdocx, os; print(os.path.dirname(rdocx.__file__))"`
 prints) and `$R/rdocx --help`, `$R/rdocx COMMAND --help`.
 

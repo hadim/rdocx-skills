@@ -152,6 +152,40 @@ python3 plugin/scripts/rdocx_env.py bump v0.16.1 # move the pin to an upstream t
 
 See [docs/setup.md](https://github.com/hadim/rdocx-skills/blob/main/docs/setup.md) for the details.
 
+## 📦 Also as a conda package
+
+Each release of the plugin also publishes its build, the very files the suite tested, as the conda package
+`rdocx-skills` on the prefix.dev channel [`hadim/rdocx-skills`](https://prefix.dev/channels/hadim/rdocx-skills):
+both CLIs and both Python modules (`import rdocx`, `import rpptx`, Python 3.10 or later), for the platforms above.
+Its version is the plugin's (`2026.10.25`), and the channel keeps the 10 latest. Use it with pixi, conda or mamba,
+inside or outside an agent:
+
+```bash
+# the CLIs on your PATH, in an environment of their own (~/.pixi/envs/rdocx-skills)
+pixi global install -c https://prefix.dev/hadim/rdocx-skills -c conda-forge rdocx-skills
+# one command, nothing installed
+pixi exec -c https://prefix.dev/hadim/rdocx-skills -c conda-forge -s rdocx-skills rdocx text report.docx
+# in a pixi workspace
+pixi workspace channel add https://prefix.dev/hadim/rdocx-skills
+pixi add rdocx-skills
+# conda or mamba
+conda install -c https://prefix.dev/hadim/rdocx-skills -c conda-forge rdocx-skills
+```
+
+To have the skills use it rather than their own install (on Linux and macOS), set `R` to the environment's `bin`
+folder where their setup sets it, and `RDOCX_BIN_DIR` for their helper scripts; `$R/rdocx`, `$R/rpptx` and
+`$R/python` then work as after `rdocx_env.py install`:
+
+```bash
+R=~/.pixi/envs/rdocx-skills/bin   # pixi global; in a workspace: .pixi/envs/default/bin; conda: $CONDA_PREFIX/bin
+export RDOCX_BIN_DIR=$R
+```
+
+On Windows the CLIs sit in the environment's `Library/bin` and Python at its root. conda-forge's `rdocx`,
+`rdocx-cli`, `rpptx` and `rpptx-cli` package upstream's releases instead; `rdocx-skills` follows the plugin's pin,
+which may carry fixes that no release has yet, and is the build the skills are tested with. Both hold the same
+modules and commands, so an environment takes one or the other (the solver refuses both).
+
 ## 🧪 Acceptance suite
 
 `tests/` checks, on every push and pull request, on Linux x86_64 and arm64, macOS arm64 and Windows x86_64:
