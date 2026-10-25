@@ -128,6 +128,31 @@ The Linux CLIs need glibc 2.35 or later (the wheels 2.28). The Windows files are
 Intel Macs (`macos-x86_64`) are neither built nor tested here: `install` exits 2 there and the skills hand over to
 the built-in ones, or `install --build` compiles the pinned commit on the machine.
 
+## The conda package
+
+Each plugin release is also the conda package `rdocx-skills`, version the plugin's, on
+https://prefix.dev/hadim/rdocx-skills (subdirs `linux-64`, `linux-aarch64`, `osx-arm64`, `win-64`): the release's
+two CLIs in `bin` (`Library/bin` on Windows) and its two wheels installed into `site-packages`, the abi3 modules
+for CPython 3.10 or later, with upstream's license files at the pinned commit. Nothing is built for it:
+`conda/recipe.yaml` repackages the files the release published, downloaded and checked against the lock of the
+release tag by `.github/scripts/conda_package.py stage`. It depends on `__glibc >=2.35` (the CLIs' floor) or
+`__osx >=11.0`, and its `run_constraints` refuse conda-forge's `rdocx`, `rdocx-cli`, `rpptx` and `rpptx-cli`,
+which package upstream's releases (feedstocks rdocx-split and rpptx-split) and install the same modules and
+commands. How to install it, and how to point the skills at it: the README, Also as a conda package. The plugin's
+own install (`rdocx_env.py`) does not use it.
+
+A local package, from the repository's root (the recipe reads `conda/dist`, an empty folder):
+
+```bash
+python3 .github/scripts/conda_package.py stage --release v2026.10.25 --platform macos-arm64 --out conda/dist > conda.env
+set -a; . ./conda.env; set +a
+pixi publish --path conda/recipe.yaml --target-channel /tmp/rdocx-channel   # a local channel, indexed
+pixi exec -c /tmp/rdocx-channel -c conda-forge -s rdocx-skills rdocx --version
+```
+
+The recipe's source must stay the relative `dist`: with an absolute path, `pixi publish` (0.83) walked the whole
+file system after the build and failed.
+
 ## Continuous integration
 
 - `.github/workflows/ci.yml`, on every push to `main` and every pull request: `install --build` of the pinned
@@ -203,10 +228,19 @@ follow it, and get a new version only from `.github/workflows/release.yml`: Acti
    the run that built them), titled with the rdocx and rpptx versions
    (`rdocx 0.16.1 · rpptx 0.14.1`, or `... + <ref>`), marked latest, whose notes describe the files, give the
    suite of the four platforms and list the pull requests merged since the previous release;
+6. publishes the conda package of that release on each platform's runner (job `conda`): its files staged from the
+   published release, packaged by `pixi publish` into a local channel, its modules imported on Python 3.10 and 3.13
+   and its CLIs run from there, then that very file uploaded by `pixi upload prefix` through the channel's trusted
+   publisher (prefix.dev, repository `hadim/rdocx-skills`, workflow `release.yml`, OIDC: no secret); then
+   `conda_package.py prune` deletes the versions older than the 10 latest from the channel (3 GB on the free plan,
+   about 200 MB per release); the GitHub releases keep all their files. Input `conda_only: v<version>`: only this
+   step, for a release made before (nothing else runs); a re-run skips the packages already there;
 So a plugin release never depends on another release, and older releases stay: an install of an older plugin
 version still downloads its own files (users following `release` get the newest). Clean-ups are done by hand. Input `dry_run`: everything but the release, on the branch the workflow
 runs from (to try a change of the workflow on a pull request branch): the files, the lock and the notes are kept
-as the workflow artifact `release-files`, and nothing is attested, pushed, tagged or published.
+as the workflow artifact `release-files`, and nothing is attested, pushed, tagged or published; the conda packages of
+the latest release (or of `conda_only`) are built and tested and kept as the artifacts `conda-<platform>`, and the
+prune only lists what it would delete.
 
 `main` carries no `version`: whoever adds the marketplace as `hadim/rdocx-skills#main` gets every push, the
 development channel (its lock names no build: `install` there needs `--build`). Pull requests target `main`, not
