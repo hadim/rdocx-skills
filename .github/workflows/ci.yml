@@ -58,8 +58,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # release.yml's runners: the build folder they cache is reused as it is, links included, so the release
-          # files keep the glibc 2.35 floor of ubuntu-22.04
+          # release.yml's runners: the build folder they cache is reused as it is, links included (the Linux files
+          # link glibc 2.28 through zig)
           - { platform: linux-x86_64, runner: ubuntu-22.04 }
           - { platform: linux-aarch64, runner: ubuntu-22.04-arm }
           - { platform: macos-arm64, runner: macos-14 }
@@ -105,9 +105,18 @@ jobs:
             ~/.cargo/registry/index
             ~/.cargo/registry/cache
             ~/.cargo/git/db
+            ~/.cargo/bin/cargo-zigbuild
             ~/.local/share/rdocx-skills/target
           key: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-${{ steps.pin.outputs.commit }}
           restore-keys: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-
+
+      # the Linux files link glibc 2.28 through zig, whatever the runner's glibc (rdocx_env.py build); kept in the cache
+      - name: cargo-zigbuild
+        if: runner.os == 'Linux'
+        run: |
+          if ! cargo zigbuild --version 2> /dev/null | grep -q '^cargo-zigbuild 0\.20\.1$'; then
+            cargo install --locked --force cargo-zigbuild --version 0.20.1
+          fi
 
       - name: Build and install the pinned commit
         run: python plugin/scripts/rdocx_env.py install --build
@@ -121,6 +130,7 @@ jobs:
             ~/.cargo/registry/index
             ~/.cargo/registry/cache
             ~/.cargo/git/db
+            ~/.cargo/bin/cargo-zigbuild
             ~/.local/share/rdocx-skills/target
           key: ${{ steps.cache.outputs.cache-primary-key }}
 

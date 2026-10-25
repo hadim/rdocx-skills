@@ -206,9 +206,18 @@ jobs:
             ~/.cargo/registry/index
             ~/.cargo/registry/cache
             ~/.cargo/git/db
+            ~/.cargo/bin/cargo-zigbuild
             ~/.local/share/rdocx-skills/target
           key: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-${{ needs.plan.outputs.commit }}
           restore-keys: rdocx-build-thin-${{ matrix.platform }}-${{ matrix.runner }}-
+
+      # the Linux files link glibc 2.28 through zig, whatever the runner's glibc (rdocx_env.py build); kept in the cache
+      - name: cargo-zigbuild
+        if: runner.os == 'Linux' && steps.reuse.outputs.reused != 'true'
+        run: |
+          if ! cargo zigbuild --version 2> /dev/null | grep -q '^cargo-zigbuild 0\.20\.1$'; then
+            cargo install --locked --force cargo-zigbuild --version 0.20.1
+          fi
 
       # main's lock names no build: `install --build` installs the files above, or compiles the commit
       - name: Build and install
@@ -228,17 +237,20 @@ jobs:
             ~/.cargo/registry/index
             ~/.cargo/registry/cache
             ~/.cargo/git/db
+            ~/.cargo/bin/cargo-zigbuild
             ~/.local/share/rdocx-skills/target
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
-      # a binary needs the glibc it was linked against: one reused from a newer image would raise the floor
-      - name: The Linux CLIs need glibc 2.35 at most
+      # a binary needs the glibc it was linked against: zig links 2.28 (rdocx_env.py build), a plain cargo build the
+      # runner's own, which would raise the floor
+      - name: The Linux CLIs and modules need glibc 2.28 at most
         if: runner.os == 'Linux'
         run: |
-          for cli in rdocx rpptx; do
-            need=$(objdump -T ~/.local/share/rdocx-skills/current/bin/$cli | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)
-            echo "$cli needs $need"
-            test "$(printf '%s\nGLIBC_2.35\n' "$need" | sort -V | tail -n 1)" = GLIBC_2.35
+          home=~/.local/share/rdocx-skills/current
+          for f in "$home"/bin/rdocx "$home"/bin/rpptx "$home"/venv/lib/python3*/site-packages/{rdocx/_rdocx,rpptx/_rpptx}.abi3.so; do
+            need=$(objdump -T "$f" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)
+            echo "$(basename "$f") needs $need"
+            test "$(printf '%s\nGLIBC_2.28\n' "$need" | sort -V | tail -n 1)" = GLIBC_2.28
           done
 
       - name: The installed CLIs and modules run
@@ -473,7 +485,10 @@ jobs:
           pixi publish --path conda/recipe.yaml --target-channel "$channel"
           ls -l "$channel/$SUBDIR"/*.conda
 
+      # solved as on a machine with the Linux files' glibc floor, the default of pixi workspaces
       - name: The package's modules and CLIs run, on the oldest and the newest Python
+        env:
+          CONDA_OVERRIDE_GLIBC: "2.28"
         run: |
           for py in 3.10 3.13; do
             pixi exec -c "$CHANNEL" -c conda-forge -s "rdocx-skills==${TAG#v}" -s "python=$py" \

@@ -90,6 +90,7 @@ RELEASES_REPO = "hadim/rdocx-skills"  # the releases that carry the builds of th
 WINDOWS = os.name == "nt"
 TRIPLES = {"linux-x86_64": "x86_64-unknown-linux-gnu", "linux-aarch64": "aarch64-unknown-linux-gnu"}
 ZIGBUILD_VERSION = "0.20.1"
+GLIBC = "2.28"  # the Linux builds link this glibc through zig, whatever the build machine has (pixi's default floor)
 
 
 def say(msg):
@@ -451,18 +452,31 @@ def pip_env(venv, requirements):
     return venv
 
 
+def zigbuild_ready():
+    """Whether `cargo zigbuild` at the pinned version is installed."""
+    try:
+        out = subprocess.run(["cargo", "zigbuild", "--version"], capture_output=True, text=True)
+    except OSError:
+        return False
+    return out.returncode == 0 and ZIGBUILD_VERSION in out.stdout
+
+
 def build(lock, plat, target=None):
     if not shutil.which("cargo"):
         die("cargo not found: install the Rust toolchain (rustup) first; rust-toolchain.toml in rdocx pins the version")
     cross = bool(target) and target != plat
     if cross and (target not in TRIPLES or not plat.startswith("linux")):
         die(f"cross-building is supported between Linux platforms only ({', '.join(TRIPLES)})")
-    if cross:
-        out = subprocess.run(["cargo", "zigbuild", "--version"], capture_output=True, text=True)
-        if out.returncode or ZIGBUILD_VERSION not in out.stdout:
-            die(f"cross-building needs cargo-zigbuild {ZIGBUILD_VERSION}: "
-                f"cargo install --locked cargo-zigbuild --version {ZIGBUILD_VERSION}")
     plat = target or plat
+    # On Linux, zig links glibc GLIBC, as the plugin's releases need; without cargo-zigbuild a native build links
+    # the machine's own glibc, which is fine for that machine only. A cross-build needs zig.
+    zig = plat in TRIPLES and zigbuild_ready()
+    if cross and not zig:
+        die(f"cross-building needs cargo-zigbuild {ZIGBUILD_VERSION}: "
+            f"cargo install --locked cargo-zigbuild --version {ZIGBUILD_VERSION}")
+    if plat in TRIPLES and not zig:
+        say(f"note: no cargo-zigbuild {ZIGBUILD_VERSION}: the files will need this machine's glibc, not {GLIBC} "
+            f"(cargo install --locked cargo-zigbuild --version {ZIGBUILD_VERSION})")
     commit = lock["commit"]
     work = HOME / "build" / commit[:12]
     if work.exists():
@@ -475,15 +489,15 @@ def build(lock, plat, target=None):
     env = child_env(CARGO_TARGET_DIR=str(HOME / "target" / plat))
     benv = pip_env(HOME / "buildenv", PLUGIN / "scripts" / "build-requirements.txt")
     wheels = work / "wheels"
-    if cross:
+    if zig:
         triple = TRIPLES[plat]
         zenv = pip_env(HOME / "crossenv", PLUGIN / "scripts" / "cross-requirements.txt")
         env["PATH"] = f"{zenv / 'bin'}:{benv / 'bin'}:{env['PATH']}"
         run(["rustup", "target", "add", triple], cwd=src, env=env)
-        run(["cargo", "zigbuild", "--release", "--locked", "--target", f"{triple}.2.17", "-p", "rdocx-cli", "-p",
+        run(["cargo", "zigbuild", "--release", "--locked", "--target", f"{triple}.{GLIBC}", "-p", "rdocx-cli", "-p",
              "rpptx-cli"], cwd=src, env=env)
         bins = Path(env["CARGO_TARGET_DIR"]) / triple / "release"
-        extra = ["--zig", "--target", triple, "--compatibility", "manylinux2014"]
+        extra = ["--zig", "--target", triple, "--compatibility", f"manylinux_{GLIBC.replace('.', '_')}"]
     else:
         run(["cargo", "build", "--release", "--locked", "-p", "rdocx-cli", "-p", "rpptx-cli"], cwd=src, env=env)
         bins = Path(env["CARGO_TARGET_DIR"]) / "release"
