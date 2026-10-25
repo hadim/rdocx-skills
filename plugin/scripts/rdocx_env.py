@@ -453,9 +453,9 @@ def pip_env(venv, requirements):
 
 
 def zigbuild_ready():
-    """Whether `cargo zigbuild` at the pinned version is installed."""
+    """Whether cargo-zigbuild at the pinned version is installed (`cargo zigbuild --version` prints cargo's)."""
     try:
-        out = subprocess.run(["cargo", "zigbuild", "--version"], capture_output=True, text=True)
+        out = subprocess.run(["cargo-zigbuild", "--version"], capture_output=True, text=True)
     except OSError:
         return False
     return out.returncode == 0 and ZIGBUILD_VERSION in out.stdout
