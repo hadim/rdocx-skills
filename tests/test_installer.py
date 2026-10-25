@@ -143,3 +143,6 @@ def test_a_source_export_carries_the_commit_time(tmp_path, monkeypatch):
     files = [p for p in out.rglob("*") if p.is_file()]
     stamp = int(datetime.datetime.fromisoformat(when).timestamp())
     assert len(files) == 2 and {int(p.stat().st_mtime) for p in files} == {stamp}
+    # a build folder restored from another commit can be newer than this one: build() then gives the export's time
+    out = rdocx_env.export_source({"commit": commit, "upstream": "unused"}, tmp_path / "src2", mtime=stamp + 99)
+    assert {int(p.stat().st_mtime) for p in out.rglob("*") if p.is_file()} == {stamp + 99}

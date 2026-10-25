@@ -63,40 +63,26 @@ gaps closed.
 # docx-edit-cost-grows-with-body (test_docx_scaling.py, the docx counterpart of test_pptx_scaling.py) and
 # docx-insert-document-duplicate-style-ids. Writing the scaling test met docx-insert-document-new-document-refused,
 # fixed in the pull request of #408 without an issue of its own.
-GAPS = {
-    # upstream: tensorbee/rdocx#402
-    "docx-default-line-spacing-multiple": "set_default_paragraph_format(line_spacing=) takes a length (an exact "
-    "pitch) and raises TypeError for a float multiple, the rule of Word's own default; set the multiple on the "
-    "Normal style",
-    # upstream: tensorbee/rdocx#404
-    "docx-insert-document-reused-picture-swapped": "insert_document reuses the target's picture parts that hold the "
-    "inserted pictures' bytes, paired in the wrong order: an inserted picture shows another one; pass "
-    "policy=FragmentConflictPolicy.reuse_equivalent().with_related_part_reuse(False)",
-    # upstream: tensorbee/rdocx#405
-    "docx-comments-range-across-cells": "Document.comments raises RdocxError when one comment's range runs from a "
-    "table cell into the next one, as Google Docs writes a comment across cells; remove_comment works, part_xml reads "
-    "word/comments.xml",
-    # upstream: tensorbee/rdocx#406
-    "docx-part-xml-without-relationships": "part_names() and part_xml() leave out the .rels parts and "
-    "[Content_Types].xml; unzip to_bytes() to read them",
-    # test_docx_scaling.py: the calls of its GROWING set; an XPASS removes that call from GROWING, and this entry goes
-    # when GROWING is empty
-    # upstream: tensorbee/rdocx#407
-    "docx-edit-cost-grows-with-body": "the call costs a time that grows with the body's XML, whatever the element "
-    "read or edited; edit the structure in few calls (remove_content_range, insert_document of a document built "
-    "aside)",
-    # upstream: tensorbee/rdocx#408
-    "docx-insert-document-duplicate-style-ids": "insert_document adds <id>Merge1 copies of the styles that the "
-    "styles part defines twice, though both documents carry the same part; keep the first definition of each id in "
-    "the inserted document",
-    # upstream: tensorbee/rdocx#410 (the pull request of #408)
-    "docx-insert-document-new-document-refused": "insert_document and import_fragment of a new Document() raise "
-    "RdocxError (more than one default) when the target's Normal style differs from rdocx's own, as in documents "
-    "from Word, Google Docs or python-docx; build the content in a copy of the target emptied by remove_content_range",
-    # test_pptx_scaling.py: 159 of the 248 public mutating calls of rpptx 0.14.3, its GROWING set; an XPASS removes
-    # that call from GROWING, and this entry goes when GROWING is empty
-    # upstream: tensorbee/rdocx#403
-    "pptx-edit-cost-grows-with-deck": "the call costs a time that grows with the rest of the deck: it copies the "
-    "deck and rebuilds the inventory of every shape, and many calls also rewrite and reparse the whole package "
-    "(about 22 ms a MB); build or update a large deck with python-pptx, add pictures last",
-}
+# 2026-10-23: integration/open-prs-2026-10-23 (v0.16.3 plus tensorbee/rdocx#409 to #413) closed
+# docx-part-xml-without-relationships (#409), docx-insert-document-duplicate-style-ids and
+# docx-insert-document-new-document-refused (#410), docx-insert-document-reused-picture-swapped (#411) and
+# docx-comments-range-across-cells (#412); their tests moved to test_docx_carried.py until upstream main has them.
+# integration/open-prs-2026-10-23-2 (plus tensorbee/rdocx#414 and #415) closed docx-default-line-spacing-multiple
+# (#414: set_default_paragraph_format, add_style and set_style take a number of lines).
+# integration/open-prs-2026-10-23-5 (-2 with #415 at its final head, plus #416 and the docx edit cost series #417 to
+# #420) made 69 more calls of test_docx_scaling.py flat on the four CI platforms (75 of the 252 still grow), and the
+# last nine of test_pptx_scaling.py, slide transitions and header and footer setters: pptx-edit-cost-grows-with-deck
+# closed (#413, #416).
+# integration/open-prs-2026-10-23-6 (-5 plus #421, the fifth pull request of the series) made 61 more calls flat (14
+# of the 252 still grow). 35 of them sit near FIXED, so that a noisy runner makes them XPASS on some platforms and
+# runs only: they left GROWING all the same, being far under RATIO (at most 1.62 times on Linux, --runxfail).
+# The maintainer accepted the linear cost of nine of the 14 left, called once or a few times per document (headers
+# and footers, revisions by id, moved content and comments, story text and hyperlinks, internal hyperlinks): they
+# went to ACCEPTED in test_docx_scaling.py, bounded against a faster growth. The gap keeps the five used in loops,
+# replacements and pictures, which the sixth pull request of the series targets.
+# integration/open-prs-2026-10-23-8 (-6 plus #422, the sixth and last pull request of the series) made the five
+# flat: docx-edit-cost-grows-with-body closed (#415, #417 to #422). No gap is open.
+# Six calls that had left GROWING (remove_hyperlink, set_hyperlink_url, add_heading_hyperlink, clone_content_control,
+# set_content_control_binding, remove_comment) went over RATIO on macOS runners from one run to the next, 2.5 to 3
+# times against 1.1 to 1.7 on Linux: the maintainer accepted their linear cost too (ACCEPTED).
+GAPS = {}
