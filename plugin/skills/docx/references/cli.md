@@ -113,6 +113,10 @@ its TOC rebuilt compares, and the rebuilt TOC entries show as revisions next to 
 and read the redline before presenting it. A chart whose data changed shows as the old chart deleted and the
 new one inserted; accepting gives the edited chart, rejecting the original. `--ignore-story KIND` (repeatable:
 `header`, `footer`, `comment`, `text_box`, `footnote`, `endnote`) keeps that story of ORIGINAL.
+ORIGINAL may already hold tracked changes, such as a first reviewer's redline: a paragraph, table or
+content control holding a revision stays as it is when EDITED has it unchanged, and an edit that touches one
+exits 1 naming it (`body/paragraph[0]`): track a second reviewer's edits on a copy of the redline. The count
+and `main_story_revisions` give the revisions this comparison created only.
 
 ```bash
 rdocx toc rebuild F -o OUT [--json]
