@@ -84,16 +84,18 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 24/10/2026
+## State on 27/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
-  `v2026.10.23` (pin `a57be365`, the upstream release v0.16.3 / rpptx-v0.14.3).
-- Pinned: `integration/open-prs-2026-10-23-8` on hadim/rdocx (`c0feead6`): the upstream release v0.16.3 /
+  `v2026.10.25.2` (pin `c0feead6`, `integration/open-prs-2026-10-23-8`).
+- Pinned: `integration/open-prs-2026-10-27` on hadim/rdocx (`3b25072d`): the upstream release v0.16.3 /
   rpptx-v0.14.3 (tensorbee/rdocx `a57be365`) plus the open pull requests tensorbee/rdocx#409 to #422, fixes of the
   findings #402 to #408 and of the edit costs of #403 (rpptx: #413, then #416 stacked on it) and #407 (rdocx: #415,
-  then the series #417 to #422 stacked on it). Upstream does not merge pull requests from here: it adapts them in a
+  then the series #417 to #422 stacked on it), and #427 (compare keeps the revisions of a redline, #425) and #428
+  (the body starts below a header taller than the top margin, #424, and a TOC with `\u` rebuilds past vertically
+  merged cells, #426). Upstream does not merge pull requests from here: it adapts them in a
   sprint and closes them, so pin its `main` or its tags again once a sprint carries them, and delete
   `tests/test_docx_carried.py` then (its tests name their pull requests).
 - Open gaps: none (`tests/gaps.py` is empty, both `references/gaps.md` say so). Closed by this pin:
