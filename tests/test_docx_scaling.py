@@ -1,6 +1,6 @@
 """docx: every public mutating call of rdocx costs about the same in a document of N paragraphs and in one of 4N, as
 in python-docx, where an edit touches its element and, for a picture or a note, its own part. No call grows with the
-document on the pin but the 15 of ACCEPTED, whose cost linear in the body the maintainer accepted, so each one
+document on the pin but the 22 of ACCEPTED, whose cost linear in the body the maintainer accepted, so each one
 guards against a regression. `test_every_mutating_call_is_timed` keeps the list complete as the API grows; the reads
 tensorbee/rdocx#407 names are timed the same way (READS_TIMED).
 
@@ -42,6 +42,7 @@ FONT = ImageFont.load_default(12).font_bytes
 KINDS = ["regular", "bold", "italic"]
 RGB = RGBColor(0x7B, 0x1E, 0x3A)
 URL = "https://example.com/a"
+LEGACY = rdocx.LegacyFormFieldDefinition.text_input(value="x")
 IDS = itertools.count(1)
 
 
@@ -315,6 +316,15 @@ def section_xml(xml, k):
     return re.sub(r'w:top="\d+"', f'w:top="{1500 + 10 * k}"', xml, count=1)
 
 
+def protection(k=0):
+    """A read-only protection that differs from the one of k - 1, so that no call is a no-op."""
+    return rdocx.DocumentProtection(mode="readOnly", enforcement=k % 2 == 0)
+
+
+def merge_package(k):
+    return rdocx.MailMergePackageOptions(rdocx.MailMergePackageSource.embedded(["name"], [[f"record {k}"]]))
+
+
 VARIANTS = ["first", "even", "default"]
 VARIANT_PARTS = ["header", "footer", "even_page_header"]
 TIMED = {
@@ -477,6 +487,20 @@ TIMED = {
     "Document.set_content_control_binding": on_made(
         lambda doc, k: (lambda store: (control(doc, k), store))(doc.add_custom_xml_store(b"<data><v>x</v></data>")),
         lambda doc, made: doc.set_content_control_binding(made[0], made[1], "/data/v")),
+    # Protection, permission ranges, legacy form fields, mail merge (the form operations: WHOLE_DOCUMENT)
+    "Document.set_document_protection": on_made(lambda doc, k: protection(k),
+                                                lambda doc, p: doc.set_document_protection(p)),
+    "Document.remove_document_protection": on_made(lambda doc, k: doc.set_document_protection(protection()),
+                                                   lambda doc, _: doc.remove_document_protection()),
+    "Document.add_story_permission_range": on_made(story_range, lambda doc, r: doc.add_story_permission_range(
+        r, editor="Clerk")),
+    "Document.insert_legacy_form_field": on_made(
+        lambda doc, k: rdocx.StoryRunPosition(item=item_of(doc, para(doc, k)), run_index=1),
+        lambda doc, position: doc.insert_legacy_form_field(position, LEGACY)),
+    "Document.set_mail_merge_package": on_made(lambda doc, k: merge_package(k),
+                                               lambda doc, options: doc.set_mail_merge_package(options)),
+    "Document.remove_mail_merge_package": on_made(lambda doc, k: doc.set_mail_merge_package(merge_package(k)),
+                                                  lambda doc, _: doc.remove_mail_merge_package()),
     # Paragraphs
     "Paragraph.insert_paragraph_before": method(para, "insert_paragraph_before", "x"),
     "Paragraph.replace_xml": on_made(with_xml(para, lambda xml, k: xml.replace("alpha", "omega")),
@@ -505,6 +529,7 @@ TIMED = {
     "Run.add_picture": method(run, "add_picture", lambda doc, k: noise_png(8, 1100 + k), "probe.png", Inches(1),
                               Inches(1)),
     "Run.add_field": method(run, "add_field", "PAGE", "1"),
+    "Run.add_legacy_form_field": method(run, "add_legacy_form_field", LEGACY),
     "ColorFormat.rgb": setter(path(run, "font", "color"), "rgb", RGB),
     "ColorFormat.theme_color": setter(path(run, "font", "color"), "theme_color", "accent2"),
     "Font.highlight_color": setter(path(run, "font"), "highlight_color", rdocx.enum.text.WD_COLOR_INDEX.YELLOW),
@@ -647,6 +672,10 @@ WHOLE_DOCUMENT = {
     "Document.set_content_control_value_by_tag": "searches every content control by tag",
     "Document.set_content_control_value_by_alias": "searches every content control by alias",
     "Document.set_legacy_form_field_value": "searches every story for the field's name",
+    # The form operations of v0.16.4 validate the whole candidate document before they publish, a rule or none:
+    # fill_form([], []) took 6.9 s at 1000 paragraphs, 13 times its cost at 250 (Linux, 2026-10-28).
+    "Document.fill_form": "validates the whole document", "Document.reset_form": "validates the whole document",
+    "Document.protect_form": "validates the whole document",
     "Document.update_fields": "every field", "Document.update_all_fields": "every field",
     "Document.update_page_fields": "lays out every page",
     "Document.update_layout_backed_fields": "lays out every page",
@@ -663,7 +692,8 @@ READS = {"Document.verify_signatures", "Document.chart_legend", "Document.text",
          "Document.layout_page", "Document.find_content_index", "Document.find_content_indices", "Paragraph.equations",
          "ParagraphFormat.border", "Table.cell", "Table.border", "Cell.border", "CustomProperties.items",
          "CustomProperties.get", "FragmentConflictPolicy.with_style_reuse",
-         "FragmentConflictPolicy.with_numbering_reuse", "FragmentConflictPolicy.with_related_part_reuse"}
+         "FragmentConflictPolicy.with_numbering_reuse", "FragmentConflictPolicy.with_related_part_reuse",
+         "Document.validate_form", "Document.mail_merge_package", "Document.prepare_mail_merge_data"}
 
 
 def mutating_surface():
@@ -719,8 +749,10 @@ GROWING = set()
 # or a few times per document, 0.1 to 1.4 s a call at 1000 paragraphs. Nine never came under FIXED. Six more, the
 # hyperlink, content control and comment calls, came under it on Linux (1.1 to 1.7 times) but went over RATIO on macOS
 # runners from one run to the next (2.5 to 3 times), and Document.move_content_control on a Windows runner (3.1 times,
-# 2026-10-25, the same build green on the two runs before). They are not a gap; they must not grow faster than the
-# body (LINEAR).
+# 2026-10-25, the same build green on the two runs before). Six section and page calls, called once per document,
+# became linear with v0.16.4, which re-implemented them (accepted 2026-10-28): 68 to 74 ms a call at 100 paragraphs,
+# 2.3 to 2.4 times their cost at 25, 0.48 to 0.66 s at 1000 (4.0 times their cost at 250), about 6 times their cost
+# on integration/open-prs-2026-10-27 (Linux). They are not a gap; they must not grow faster than the body (LINEAR).
 ACCEPTED = {
     "Document.set_header", "Document.set_footer", "Document.move_content", "Document.add_heading_hyperlink",
     "Document.move_comment", "Document.remove_comment", "Document.accept_revision_id", "Document.reject_revision_id",
@@ -728,6 +760,8 @@ ACCEPTED = {
     "Document.remove_hyperlink", "Document.clone_content_control", "Document.set_content_control_binding",
     "Document.move_content_control",
     "Paragraph.add_internal_hyperlink",
+    "Document.remove_section", "Document.set_page_color", "Document.unlink_section_story",
+    "Document.link_section_story", "Document.create_section_story", "HeaderFooter.is_linked_to_previous",
 }
 
 
