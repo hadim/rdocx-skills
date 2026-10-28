@@ -1,6 +1,6 @@
 """docx: every public mutating call of rdocx costs about the same in a document of N paragraphs and in one of 4N, as
 in python-docx, where an edit touches its element and, for a picture or a note, its own part. No call grows with the
-document on the pin but the 22 of ACCEPTED, whose cost linear in the body the maintainer accepted, so each one
+document on the pin but the 26 of ACCEPTED, whose cost linear in the body the maintainer accepted, so each one
 guards against a regression. `test_every_mutating_call_is_timed` keeps the list complete as the API grows; the reads
 tensorbee/rdocx#407 names are timed the same way (READS_TIMED).
 
@@ -752,7 +752,11 @@ GROWING = set()
 # 2026-10-25, the same build green on the two runs before). Six section and page calls, called once per document,
 # became linear with v0.16.4, which re-implemented them (accepted 2026-10-28): 68 to 74 ms a call at 100 paragraphs,
 # 2.3 to 2.4 times their cost at 25, 0.48 to 0.66 s at 1000 (4.0 times their cost at 250), about 6 times their cost
-# on integration/open-prs-2026-10-27 (Linux). They are not a gap; they must not grow faster than the body (LINEAR).
+# on integration/open-prs-2026-10-27 (Linux). Four calls new in v0.16.4, linear in the body as well and called once
+# or a few times per document, went over RATIO on the first CI run (accepted 2026-10-28): set_document_protection,
+# insert_legacy_form_field and add_story_permission_range on macOS (2.6 to 2.7 times), add_story_permission_range
+# on Windows (2.8 times), remove_document_protection at 2.3 times on Linux. They are not a gap; they must not grow
+# faster than the body (LINEAR).
 ACCEPTED = {
     "Document.set_header", "Document.set_footer", "Document.move_content", "Document.add_heading_hyperlink",
     "Document.move_comment", "Document.remove_comment", "Document.accept_revision_id", "Document.reject_revision_id",
@@ -762,6 +766,8 @@ ACCEPTED = {
     "Paragraph.add_internal_hyperlink",
     "Document.remove_section", "Document.set_page_color", "Document.unlink_section_story",
     "Document.link_section_story", "Document.create_section_story", "HeaderFooter.is_linked_to_previous",
+    "Document.set_document_protection", "Document.remove_document_protection", "Document.insert_legacy_form_field",
+    "Document.add_story_permission_range",
 }
 
 

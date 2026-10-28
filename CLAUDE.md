@@ -99,7 +99,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   here: it adapts them in a sprint and closes them, so pin its `main` or its tags again once a sprint carries them,
   and delete `tests/test_docx_carried.py` then (its tests name their pull requests).
 - Open gaps: none (`tests/gaps.py` is empty, both `references/gaps.md` say so). No call grows with the body or the
-  deck from 25 to 100 paragraphs (10 to 40 slides) but the 22 of `ACCEPTED` in `test_docx_scaling.py`, linear and
+  deck from 25 to 100 paragraphs (10 to 40 slides) but the 26 of `ACCEPTED` in `test_docx_scaling.py`, linear and
   called once or a few times per document. v0.16.4 re-implemented the edit-cost series its own way: six section and
   page calls became linear (about 0.6 s at 1000 paragraphs, 6 times the previous pin, accepted 2026-10-28), and an
   edit costs more in a large body than on the previous pin (at 1000 paragraphs `run.text` 0.14 s against 0.07, a
