@@ -85,4 +85,7 @@ gaps closed.
 # Six calls that had left GROWING (remove_hyperlink, set_hyperlink_url, add_heading_hyperlink, clone_content_control,
 # set_content_control_binding, remove_comment) went over RATIO on macOS runners from one run to the next, 2.5 to 3
 # times against 1.1 to 1.7 on Linux: the maintainer accepted their linear cost too (ACCEPTED).
+# 2026-10-28: the pin moved to the upstream release v0.16.4 (tensorbee/rdocx 24af95d3, S95.4) plus #427 and #428,
+# which adapted #409 to #412 and #414: their tests in test_docx_carried.py were deleted, passing there. Six section
+# and page calls became linear in the body there; the maintainer accepted it (ACCEPTED in test_docx_scaling.py).
 GAPS = {}
