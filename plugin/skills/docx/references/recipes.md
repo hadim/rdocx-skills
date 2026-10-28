@@ -488,6 +488,34 @@ a drop-down list, a picture, a group or a repeating section. `unwrap_content_con
 `remove_content_control` drops it. `add_custom_xml_store` and `set_content_control_binding` bind a control to a
 custom XML part, as Word's data binding does.
 
+## Fill a form, check it, protect it
+
+```python
+import docx_ops, rdocx
+from rdocx import FormFieldAssignment, FormFieldRule, FormFieldTarget, FormFieldValue, FormResetValue
+doc = rdocx.Document.open("form.docx")                    # the drop-down "status" of the block above
+anchor = next(p for p in doc.paragraphs if p.text.startswith("The overall condition index"))
+anchor.add_run(" Inspector: ").add_legacy_form_field(rdocx.LegacyFormFieldDefinition.text_input(name="Inspector"))
+field = next(f for f in doc.legacy_form_fields() if f.name == "Inspector")
+
+# the rules are yours, the file keeps none: what each field is, whether it is required, what a reset writes
+status = FormFieldTarget.content_control_tag("status")
+inspector = FormFieldTarget.legacy(field.source_part, field.ordinal)
+rules = [FormFieldRule(target=status, reset=FormResetValue.value(FormFieldValue.text("Draft")), required=True),
+         FormFieldRule(target=inspector, reset=FormResetValue.value(FormFieldValue.text("")), required=True)]
+assert [i.message for i in doc.validate_form(rules)] == ["required value is empty"]     # no inspector yet
+
+counts = doc.fill_form(rules, [FormFieldAssignment(target=status, value=FormFieldValue.text("Final")),
+                               FormFieldAssignment(target=inspector, value=FormFieldValue.text("Inspector A"))])
+assert counts == (1, 1) and doc.validate_form(rules) == ()
+doc.protect_form(rules, rdocx.DocumentProtection(mode="forms", enforcement=True))   # Word lets users fill fields only
+docx_ops.save_atomic(doc, "filled-form.docx", "form.docx")
+```
+
+One `fill_form` call takes every value, checked together: an unknown target or a value its field does not accept
+raises and changes nothing. It does not check `required`; `validate_form` does, and `protect_form` refuses a form
+that does not pass it. `reset_form(rules)` writes each rule's reset value back.
+
 ## A document from Markdown or HTML
 
 ```bash

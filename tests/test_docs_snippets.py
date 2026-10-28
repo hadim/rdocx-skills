@@ -104,6 +104,10 @@ def test_recipe_outputs(workdirs):
         assert b'TOC \\o "1-2" \\h' in z.read("word/document.xml")
     visit = rdocx.Document.open(d / "visit.docx")
     assert [p.style for p in visit.paragraphs][:1] == ["Heading1"] and visit.tables[0].cell(1, 0).text == "Pier 2"
+    form = rdocx.Document.open(d / "filled-form.docx")
+    assert [(c.tag, c.text) for c in form.content_controls() if c.tag == "status"] == [("status", "Final")]
+    assert [(f.name, f.value) for f in form.legacy_form_fields()] == [("Inspector", "Inspector A")]
+    assert (form.document_protection.mode, form.document_protection.enforcement) == ("forms", True)
     findings = [p.text for p in rdocx.Document.open(d / "findings.docx").paragraphs]
     assert findings[:2] == ["Findings", "Inserted after the heading."]
     with zipfile.ZipFile(d / "chart.docx") as z:
