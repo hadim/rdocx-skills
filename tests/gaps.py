@@ -95,6 +95,9 @@ GAPS = {
     # upstream: tensorbee/rdocx#435 (case 5; #439 makes validate report it)
     "pptx-control-character-round-trip": "a part holding a control character XML 1.0 forbids (U+0001) opens, and "
                                          "save() writes it back unchanged",
+    # upstream: tensorbee/rdocx#434 (case 1; #444 adds the reply's initials)
+    "docx-reply-without-range": "a reply added by reply_to or `rdocx comment reply` gets no comment range and no "
+                                "reference mark in the body, where Word gives each reply its parent's range",
     # upstream: tensorbee/rdocx#433 (case 7)
     "docx-font-fallback-by-entry-point": "for a font rdocx does not bundle, `rdocx convert`, to_pdf() and page_count() "
                                          "/ layout() pick different fonts, and the substitution is not reported",

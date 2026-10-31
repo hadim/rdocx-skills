@@ -1,11 +1,13 @@
-"""docx: fixes the pinned integration build (upstream v0.16.4 plus tensorbee/rdocx#427, #428, #438, #439, #440,
-#441 and #442) carries and upstream `main` does not have yet, which the skills rely on, and the cases of those issues
-that stay open as known gaps (strict xfails, tests/gaps.py). Each test names the pull request that carries it, or the
-issue of its gap: delete the test once upstream main has it. Each test builds its own input."""
+"""docx: fixes the pinned integration build (upstream v0.16.4 plus tensorbee/rdocx#427, #428 and #438 to #444)
+carries and upstream `main` does not have yet, which the skills rely on, and the cases of those issues that stay open
+as known gaps (strict xfails, tests/gaps.py). Each test names the pull request that carries it, or the issue of its
+gap: delete the test once upstream main has it. Each test builds its own input."""
 import functools
 import io
+import json
 import re
 import struct
+import time
 import warnings
 import xml.etree.ElementTree as ET
 import zipfile
@@ -16,6 +18,7 @@ import pytest
 import rdocx
 from rdocx.enum.table import WD_ALIGN_VERTICAL
 from rdocx.enum.text import WD_ALIGN_PARAGRAPH
+from rdocx.shared import Pt
 
 from conftest import pdf_uses_font, run
 
@@ -984,3 +987,362 @@ def test_markdown_and_html_exports_hold_a_chart_as_a_table(export):
                   rdocx.Inches(5), rdocx.Inches(3))
     text = getattr(doc, export)()
     assert [s for s in ("Q1", "Zeta region", "1150") if s not in text] == []
+
+
+# ---- tensorbee/rdocx#444 (#434) --------------------------------------------------------------------------------------
+
+
+C_STAMP = "2026-10-30T12:00:00Z"
+C_SPLIT_TAIL = "ce is paid within thirty days."  # completes "Each invoi" into the original sentence
+
+
+def commented_thirty():
+    """A paragraph whose word "thirty" holds a comment by Ann, and the comment's id."""
+    doc = rdocx.Document()
+    doc.add_paragraph("Pay within thirty days.")
+    root = doc.add_comment_on_text("thirty", author="Ann", initials="A", text="Why thirty?",
+                                   date="2026-10-30T09:00:00Z")
+    return doc, root
+
+
+def mark_position(body, mark, cid):
+    """Offset of <w:mark w:id="cid"/> in body, or None."""
+    found = re.search(rf'<w:{mark} w:id="{cid}"/>', body)
+    return found.start() if found else None
+
+
+# carried by tensorbee/rdocx#444 (#434), delete once upstream main has it
+def test_reply_to_writes_the_initials_of_the_reply():
+    """reply_to takes initials, as add_comment does, and the reply in comments.xml carries them (python-api.md,
+    reply_to). It used to raise TypeError on initials=, so a reply had no w:initials (tensorbee/rdocx#434)."""
+    doc, root = commented_thirty()
+    doc.reply_to(root, author="Bob", initials="B", text="Agreed")
+    assert 'w:initials="B"' in doc.part_xml("word/comments.xml")
+
+
+# carried by tensorbee/rdocx#444 (#434), delete once upstream main has it
+def test_comment_reply_cli_takes_initials(tmp_path, rdocx_cli):
+    """`rdocx comment reply` takes --initials (cli.md, comment reply). It used to fail with "unexpected argument
+    '--initials' found" (tensorbee/rdocx#434)."""
+    doc, root = commented_thirty()
+    src = tmp_path / "comment.docx"
+    doc.save(str(src))
+    res = run([rdocx_cli, "comment", "reply", src, "--id", root, "--author", "Bob", "--initials", "B",
+               "--text", "Agreed", "-o", tmp_path / "reply.docx"])
+    assert res.returncode == 0, res.stderr
+
+
+# upstream: tensorbee/rdocx#434
+@pytest.mark.gap("docx-reply-without-range")
+def test_reply_has_a_range_over_its_parent_text_and_a_reference_after_its_parent(tmp_path):
+    """A reply added by reply_to gets its own w:commentRangeStart and w:commentRangeEnd covering its parent's text,
+    and a w:commentReference after its parent's, as Word writes (python-api.md, reply_to). It gets none of the three
+    in document.xml, so LibreOffice drops the reply on import (tensorbee/rdocx#434)."""
+    doc, root = commented_thirty()
+    reply = doc.reply_to(root, author="Bob", text="Agreed", date="2026-10-30T10:00:00Z")
+    out = tmp_path / "reply.docx"
+    doc.save(str(out))
+    body = zipfile.ZipFile(out).read("word/document.xml").decode()
+    marks = ("commentRangeStart", "commentRangeEnd", "commentReference")
+    assert all(mark_position(body, m, root) is not None for m in marks)
+    assert [m for m in marks if mark_position(body, m, reply) is not None] == list(marks)
+    covered = re.sub(r"<[^>]+>", "", body[mark_position(body, "commentRangeStart", reply):
+                                          mark_position(body, "commentRangeEnd", reply)])
+    assert "thirty" in covered
+    assert mark_position(body, "commentReference", reply) > mark_position(body, "commentReference", root)
+
+
+# carried by tensorbee/rdocx#444 (#434), delete once upstream main has it
+def test_comments_part_written_by_rdocx_holds_word_comment_markup():
+    """comments.xml as rdocx creates it declares mc and lists w14 (used by w14:paraId) in mc:Ignorable, and each
+    comment's first paragraph is in CommentText and opens with a CommentReference w:annotationRef run, both styles
+    defined (python-api.md, comments). The root declared w14 without mc:Ignorable, and the comments had no
+    annotationRef run and no comment styles (tensorbee/rdocx#434)."""
+    doc, root = commented_thirty()
+    doc.reply_to(root, author="Bob", text="Agreed")
+    package = zipfile.ZipFile(io.BytesIO(doc.to_bytes()))
+    xml = package.read("word/comments.xml").decode()
+    styles = package.read("word/styles.xml").decode()
+    start = re.search(r"<w:comments\b[^>]*>", xml).group(0)
+    first_paras = [re.search(r"<w:p\b.*?</w:p>", c, re.S).group(0)
+                   for c in re.findall(r"<w:comment\b.*?</w:comment>", xml, re.S)]
+    assert "xmlns:mc=" in start
+    ignorable = re.search(r'mc:Ignorable="([^"]*)"', start)
+    assert ignorable is not None and "w14" in ignorable.group(1).split()
+    annotation = re.compile(r'<w:pPr>.*?</w:pPr>\s*<w:r><w:rPr><w:rStyle w:val="CommentReference"/></w:rPr>'
+                            r'<w:annotationRef/></w:r>|<w:p\b[^>]*><w:r><w:rPr><w:rStyle w:val="CommentReference"/>'
+                            r"</w:rPr><w:annotationRef/></w:r>", re.S)
+    assert len(first_paras) == 2
+    assert all(annotation.search(p) for p in first_paras)
+    assert all('<w:pStyle w:val="CommentText"/>' in p for p in first_paras)
+    assert 'w:styleId="CommentText"' in styles and 'w:styleId="CommentReference"' in styles
+
+
+def split_invoice_redline(tail, granularity):
+    """The redline of "Each invoice is paid within thirty days." against "Each invoi" + tail, the edited paragraph
+    split inside "invoice" over two runs of one formatting: (revision count, deleted texts, inserted texts)."""
+    original = rdocx.Document()
+    original.add_paragraph("Each invoice is paid within thirty days.")
+    edited = rdocx.Document()
+    edited.add_paragraph("Each invoi").add_run(tail)
+    out = rdocx.Document.from_bytes(original.to_bytes())
+    out.compare(edited, "Reviewer", C_STAMP, granularity=granularity)
+    xml = out.part_xml("word/document.xml")
+    deleted = re.findall(r"<w:delText[^>]*>([^<]*)</w:delText>", xml)
+    inserted = [re.sub(r"<[^>]+>", "", m) for m in re.findall(r"<w:ins\b.*?</w:ins>", xml, re.S)]
+    return len(out.revisions), deleted, inserted
+
+
+# carried by tensorbee/rdocx#444 (#434), delete once upstream main has it
+@pytest.mark.parametrize("granularity", ["run", "word", "character"])
+def test_compare_ignores_run_boundaries_inside_unchanged_text(granularity):
+    """Two paragraphs with the same text and formatting compare equal whatever their run boundaries: no revision at
+    any granularity (python-api.md, compare). At run and word granularity a word split over two runs used to be
+    deleted and inserted again, 3 revisions (tensorbee/rdocx#434)."""
+    assert split_invoice_redline(C_SPLIT_TAIL, granularity) == (0, [], [])
+
+
+# carried by tensorbee/rdocx#444 (#434), delete once upstream main has it
+def test_compare_by_word_over_split_runs_marks_only_the_edited_word():
+    """thirty -> sixty in a paragraph split over runs of one formatting gives, at word granularity, one deletion
+    ("thirty") and one insertion ("sixty") (python-api.md, compare). The split word "invoice" used to be deleted and
+    inserted again as well (tensorbee/rdocx#434)."""
+    _, deleted, inserted = split_invoice_redline("ce is paid within sixty days.", "word")
+    assert (deleted, inserted) == (["thirty"], ["sixty"])
+
+
+def late_fees_redline(path):
+    """A word redline saved to path: "thirty" deleted, "sixty" inserted and "Late fees apply." made bold."""
+    original = rdocx.Document()
+    original.add_paragraph("Pay within thirty days.")
+    original.add_paragraph("Late fees apply.")
+    edited = rdocx.Document()
+    edited.add_paragraph("Pay within sixty days.")
+    edited.add_paragraph("Late fees apply.").runs[0].font.bold = True
+    original.compare(edited, "Reviewer", C_STAMP, granularity="word")
+    original.save(str(path))
+    return original
+
+
+C_REVISION_TEXT = {"deletion": "thirty", "insertion": "sixty"}  # any other kind: the property change
+
+
+# carried by tensorbee/rdocx#444 (#434), delete once upstream main has it
+def test_revisions_carry_their_text_in_python_and_in_the_cli_json(tmp_path, rdocx_cli):
+    """Each revision, in Document.revisions and in `rdocx revision list --json`, has the text it inserts or deletes,
+    or the text its property change covers (python-api.md, revisions; cli.md, revision list). Neither surface gave
+    any text, so listing tracked changes with their content needed part_xml (tensorbee/rdocx#434)."""
+    src = tmp_path / "redline.docx"
+    doc = late_fees_redline(src)
+    res = run([rdocx_cli, "revision", "list", src, "--json"])
+    assert res.returncode == 0, res.stderr
+    surfaces = {"python": [(r.kind, getattr(r, "text", None)) for r in doc.revisions],
+                "cli": [(r["kind"], r.get("text")) for r in json.loads(res.stdout)["revisions"]]}
+    for records in surfaces.values():
+        assert len(records) == 3
+        assert all(text == C_REVISION_TEXT.get(kind, "Late fees apply.") for kind, text in records)
+
+
+def resolved_look(doc, text, prop):
+    """Value of prop (font: w:rFonts/@w:ascii, size: w:sz/@w:val in half-points) for the paragraph holding text: its
+    run, then its style chain through w:basedOn (the default paragraph style when it names none), then
+    w:docDefaults."""
+    attr = {"font": r'<w:rFonts [^>]*w:ascii="([^"]+)"', "size": r'<w:sz w:val="(\d+)"'}[prop]
+    styles = doc.part_xml("word/styles.xml")
+    para = re.search(rf"<w:p\b(?:(?!</w:p>).)*{re.escape(text)}.*?</w:p>", doc.part_xml("word/document.xml"),
+                     re.S).group(0)
+    first_run = re.search(r"<w:r\b[^>]*>\s*<w:rPr\b.*?</w:rPr>", para, re.S)
+    if first_run and re.search(attr, first_run.group(0)):
+        return re.search(attr, first_run.group(0)).group(1)
+    named = re.search(r'<w:pStyle w:val="([^"]+)"/>', para)
+    style_id = named.group(1) if named else next(
+        re.search(r'w:styleId="([^"]+)"', t).group(1) for t in re.findall(r"<w:style [^>]*>", styles)
+        if 'w:type="paragraph"' in t and 'w:default="1"' in t)
+    while style_id:
+        style = re.search(rf'<w:style [^>]*w:styleId="{style_id}".*?</w:style>', styles, re.S).group(0)
+        rpr = re.search(r"<w:rPr\b.*?</w:rPr>", style, re.S)
+        if rpr and re.search(attr, rpr.group(0)):
+            return re.search(attr, rpr.group(0)).group(1)
+        based = re.search(r'<w:basedOn w:val="([^"]+)"/>', style)
+        style_id = based.group(1) if based else None
+    found = re.search(r"<w:rPrDefault\b(?:(?!</w:rPrDefault>).)*?" + attr, styles, re.S)
+    return found.group(1) if found else None
+
+
+# carried by tensorbee/rdocx#444 (#434), delete once upstream main has it
+@pytest.mark.parametrize("source", ["docDefaults", "Normal, no w:pStyle", "Normal named by w:pStyle"])
+def test_insert_document_keeps_the_font_and_size_of_the_inserted_document(source):
+    """After insert_document, the inserted paragraph resolves to the font and size it has in the inserted document,
+    Georgia set in its docDefaults or in its Normal style, named by the paragraph or not (python-api.md,
+    insert_document). The docDefaults were dropped, and a paragraph naming no style fell on the target's Normal: the
+    text took the target's Calibri 11 pt (tensorbee/rdocx#434)."""
+    inserted = rdocx.Document()
+    if source == "docDefaults":
+        inserted.default_font_name = "Georgia"
+        inserted.default_font_size = Pt(14)
+    else:
+        inserted.set_style("Normal", font_name="Georgia")
+    inserted.add_paragraph("B body text.")
+    if source == "Normal named by w:pStyle":
+        inserted.paragraphs[0].style = "Normal"
+    target = rdocx.Document()
+    target.add_paragraph("A body text.")
+    out = rdocx.Document.from_bytes(target.to_bytes())
+    out.insert_document(inserted, at=1)
+    for prop in ("font", "size"):
+        assert resolved_look(out, "B body text.", prop) == resolved_look(inserted, "B body text.", prop)
+
+
+def numbered_chapter(title):
+    """A document holding a Heading 1 title and a numbered list of two steps."""
+    doc = rdocx.Document()
+    doc.add_heading(title, 1)
+    for j in range(2):
+        doc.add_numbered_list_item(f"{title}, step {j + 1}")
+    return doc
+
+
+# carried by tensorbee/rdocx#444 (#434), delete once upstream main has it
+def test_insert_document_numbers_each_inserted_list_on_its_own():
+    """With the default policy, each document inserted by insert_document keeps its list numbered on its own: three
+    chapters numbered 1, 2 draw 1, 2, 1, 2, 1, 2, as with rename_all() (python-api.md, insert_document). An inserted
+    list continued the target's equal list, drawn 1 to 6 (tensorbee/rdocx#434)."""
+    doc = numbered_chapter("Chapter A")
+    for title in ("Chapter B", "Chapter C"):
+        doc.insert_document(numbered_chapter(title), at=len(doc.paragraphs) + len(doc.tables))
+    assert re.findall(r">(\d+\.)<", doc.render_page_to_svg(0).svg) == ["1.", "2."] * 3
+
+
+# ---- tensorbee/rdocx#443 (#437) --------------------------------------------------------------------------------------
+# Timed as test_docx_scaling.py times its calls: the fastest of a few calls on each side, a generous ratio between the
+# two sides and a floor, so that a loaded machine does not fail a flat call, where the cost the issue measured grew 9 to
+# 56 times.
+G_RATIO, G_FLOOR_MS = 3.0, 5
+
+
+def fastest_ms(fn, n):
+    """The fastest of n calls fn(i), in milliseconds."""
+    best = float("inf")
+    for i in range(n):
+        t0 = time.perf_counter()
+        fn(i)
+        best = min(best, time.perf_counter() - t0)
+    return 1000 * best
+
+
+def with_styles(data, n):
+    """The package `data` with n unused paragraph styles added to its styles part."""
+    extra = "".join(
+        f'<w:style w:type="paragraph" w:customStyle="1" w:styleId="Extra{i}"><w:name w:val="Extra {i}"/>'
+        f'<w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="{i}"/></w:pPr>'
+        f'<w:rPr><w:sz w:val="{20 + i % 10}"/></w:rPr></w:style>' for i in range(n)).encode()
+    zin, out = zipfile.ZipFile(io.BytesIO(data)), io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for item in zin.infolist():
+            x = zin.read(item.filename)
+            if item.filename == "word/styles.xml":
+                x = x.replace(b"</w:styles>", extra + b"</w:styles>")
+            z.writestr(item, x)
+    return out.getvalue()
+
+
+def styles_document(styles):
+    """A paragraph and a 3 x 6 table, with `styles` unused paragraph styles added (2000 make a 419 KB part)."""
+    doc = rdocx.Document()
+    doc.add_paragraph("Intro text")
+    table = doc.add_table(3, 6)
+    for r in range(3):
+        for c in range(6):
+            table.cell(r, c).text = f"r{r}c{c}"
+    return rdocx.Document.from_bytes(with_styles(doc.to_bytes(), styles))
+
+
+G_STYLE_EDITS = {
+    "run.text": lambda d, i: setattr(d.paragraphs[0].runs[0], "text", f"Intro {i}"),
+    "try_replace_text": lambda d, i: d.try_replace_text(f"r0c{i % 3}", f"r0c{i % 3}"),
+    "add_row": lambda d, i: d.tables[0].add_row(),
+    "clone_row": lambda d, i: d.tables[0].clone_row(1),
+    "cell paragraph alignment": lambda d, i: setattr(d.tables[0].cell(0, 5).paragraphs[0], "alignment", i % 2),
+}
+
+
+# carried by tensorbee/rdocx#443 (#437), delete once upstream main has it
+@pytest.mark.parametrize("edit", G_STYLE_EDITS)
+def test_edit_cost_does_not_grow_with_the_styles_part(edit):
+    """An edit costs about the same with rdocx's own 6 KB styles.xml and with 2000 unused styles (419 KB), as large
+    as the styles part of python-docx's default template (gaps.md, edit costs). It used to cost 13 to 56 times more
+    there, 30 to 125 ms a call (tensorbee/rdocx#437)."""
+    op = G_STYLE_EDITS[edit]
+    small, large = (fastest_ms(lambda i: op(d, i), 6) for d in (styles_document(0), styles_document(2000)))
+    assert large < G_RATIO * small + G_FLOOR_MS, f"{edit}: {small:.1f} ms, then {large:.1f} ms with 2000 styles"
+
+
+def cell_document(body):
+    """A paragraph, a 40 x 6 table and `body` paragraphs after it, and a paragraph style TT."""
+    doc = rdocx.Document()
+    doc.add_paragraph("Intro text")
+    table = doc.add_table(40, 6)
+    for r in range(40):
+        for c in range(6):
+            table.cell(r, c).text = f"r{r}c{c}"
+    for i in range(body):
+        doc.add_paragraph(f"Body paragraph {i} with a few words.")
+    doc.add_style("TT", based_on="Normal", font_size=rdocx.Pt(9))
+    return doc
+
+
+G_CELL_SETTERS = {
+    "alignment": lambda p, i: setattr(p, "alignment", i % 2),
+    "style": lambda p, i: setattr(p, "style", "TT" if i % 2 else "Normal"),
+    "font.size": lambda p, i: setattr(p.runs[0].font, "size", rdocx.Pt(9 + i % 2)),
+}
+
+
+# carried by tensorbee/rdocx#443 (#437), delete once upstream main has it
+@pytest.mark.parametrize("setter", G_CELL_SETTERS)
+def test_cell_paragraph_setter_cost_does_not_grow_with_the_cell_place(setter):
+    """A setter reached through a cell's paragraph or run costs about the same in the last row of a 40 x 6 table as in
+    the first (python-api.md, Handles). It used to cost 10 to 17 times more there, 135 to 260 ms
+    (tensorbee/rdocx#437)."""
+    doc, op = cell_document(0), G_CELL_SETTERS[setter]
+    first = fastest_ms(lambda i: op(doc.tables[0].cell(0, 5).paragraphs[0], i), 4)
+    last = fastest_ms(lambda i: op(doc.tables[0].cell(39, 5).paragraphs[0], i), 4)
+    assert last < G_RATIO * first + G_FLOOR_MS, f"{setter}: {first:.1f} ms in row 1, {last:.1f} ms in row 40"
+
+
+# carried by tensorbee/rdocx#443 (#437), delete once upstream main has it
+def test_cell_paragraph_setter_cost_does_not_grow_with_the_body():
+    """A cell paragraph's setter costs about the same with 2000 body paragraphs after the table as with none, each
+    timed after one untimed call on its document. It used to cost 8.6 times more (tensorbee/rdocx#437)."""
+    def align(doc, i):
+        doc.tables[0].cell(0, 5).paragraphs[0].alignment = i % 2
+
+    costs = []
+    for doc in (cell_document(0), cell_document(2000)):
+        align(doc, 1)
+        costs.append(fastest_ms(lambda i: align(doc, i), 4))
+    alone, around = costs
+    assert around < G_RATIO * alone + G_FLOOR_MS, f"{alone:.1f} ms alone, {around:.1f} ms with 2000 paragraphs"
+
+
+def fill_per_call_ms(rows):
+    """Milliseconds per call of setting a style on every cell paragraph of a fresh rows x 6 table, one call a cell."""
+    doc = rdocx.Document()
+    doc.add_paragraph("Intro text")
+    doc.add_table(rows, 6)
+    doc.add_style("TT", based_on="Normal", font_size=rdocx.Pt(9))
+    cells = [(r, c) for r in range(rows) for c in range(6)]
+    t0 = time.perf_counter()
+    for r, c in cells:
+        doc.tables[0].cell(r, c).paragraphs[0].style = "TT"
+    return 1000 * (time.perf_counter() - t0) / len(cells)
+
+
+# carried by tensorbee/rdocx#443 (#437), delete once upstream main has it
+def test_filling_a_table_cell_by_cell_costs_the_same_per_cell():
+    """Styling each cell paragraph of a 120-cell table costs about as much per call as in a 30-cell one, so a table
+    fills in a time linear in its cells. It used to grow 4.5 times per call, the square of the cells for the table
+    (tensorbee/rdocx#437)."""
+    small = min(fill_per_call_ms(5) for _ in range(2))
+    large = min(fill_per_call_ms(20) for _ in range(2))
+    assert large < 2.5 * small + 2, f"{small:.1f} ms a call at 30 cells, {large:.1f} ms at 120"
