@@ -1,0 +1,1 @@
+Report which text frames of a deck overflow their box (text boxes, a placeholder with inherited size, a table cell), as JSON `{"overflowing": [{"slide", "shape"}]}`; scored by precision and recall against the known truth.

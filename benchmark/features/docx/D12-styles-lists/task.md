@@ -1,0 +1,1 @@
+D12 styles-lists: create the paragraph style 'Body Note' based on Normal (Arial 10 pt, 6 pt before, 12 pt after), apply it to the two 'Note:' paragraphs, and restart the second numbered list (which continues the first through the same Word list) at 1; args: `input.docx OUT.docx`.

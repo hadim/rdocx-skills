@@ -31,8 +31,8 @@ LibreOffice round trips, python-docx, python-pptx or hand-written XML.
   suite to install.
 - 🎯 **Loads by itself**: the skills step in as soon as a `.docx` or `.pptx` shows up, even when you don't
   name a tool.
-- 🖨️ **Faithful rendering**: PDF and PNG from rdocx's own layout engine, built to match what Word and
-  PowerPoint draw.
+- 🖨️ **Its own renderer**: PDF and PNG from rdocx's own layout engine, several times faster than a LibreOffice
+  round trip; its fidelity to what Word draws is still catching up (see the benchmark below).
 - ⚛️ **Atomic edits**: every edit declares how many places it changes and applies all of them or none; a file
   is saved through a temporary copy, renamed only once complete, and never over its input.
 - 🔒 **Verified supply chain**: every binary is pinned by SHA-256 and checked before it runs.
@@ -101,6 +101,35 @@ call for each task.
   replacement is checked first, and a bad one changes nothing.
 - 🩹 **Honest about gaps**: each skill lists the tool's known gaps with a workaround, or a hand-off to the
   built-in skills, and asks the agent to report any new one as a neutral reproduction.
+
+## 📊 How it compares
+
+<!-- bench:date:start -->
+Run of 2026-10-31: rdocx 0.16.4 and rpptx 0.14.4 (pin `401e3f4218e6`) against the built-in skills (docx-js 9.15.0, pptxgenjs 4.0.1, LibreOffice 26.2.6.3, pandoc 3.13) and python-docx 1.2.0 / python-pptx 1.0.2.
+<!-- bench:date:end -->
+
+<!-- bench:scoreboard:start -->
+|  | rdocx-skills | Built-in skill | python-docx / python-pptx |
+| --- | :---: | :---: | :---: |
+| 🧰 Tasks done, out of 44 | 38 | **41** | 37 |
+| ✍️ Lines of code an agent writes (31 tasks all three do) | **369** | 1393 | 1017 |
+| 🧬 Tasks that need hand-written OOXML | **1** | 29 | 29 |
+| 🛑 Known mistakes refused before a file is written | **77 %** | 3 % | 39 % |
+| 🔎 Corrupt or invalid docx caught by the stack's checks | 45 % | **89 %** | 36 % |
+| 🔎 Corrupt or invalid pptx caught by the stack's checks | **73 %** | **73 %** | 39 % |
+| ⚡ Every page of a 52-page Word report to PNG | **2.02 s** | 7.27 s | ➖ |
+| ⚡ Every slide of a 60-slide deck to PNG | **1.28 s** | 5.70 s | ➖ |
+| ✏️ Counted replacement in a 52-page Word report | 5.62 s | 0.42 s | **0.18 s** |
+| 🏗️ Build a 52-page Word report from scratch | 32 s | **0.28 s** | 0.47 s |
+| 🖨️ Word files with the same page count as Word's own PDF | 2 / 8 | **7 / 8** | ➖ |
+<!-- bench:scoreboard:end -->
+
+<sub>Best value of each row in bold; ➖: the stack has no way to do it. Where rdocx-skills is behind, the cause is
+reported upstream and the benchmark is rerun on each new pin.</sub>
+
+👉 [The full benchmark](https://github.com/hadim/rdocx-skills/tree/main/benchmark): the method, all 44 tasks
+with the code of each stack, broken-file detection, speed on realistic files and pages compared with Office's own
+PDFs.
 
 ## 🔒 What the plugin downloads and runs
 
@@ -226,6 +255,7 @@ modules and commands, so an environment takes one or the other (the solver refus
 | `.github/` | CI on every push (it builds the pinned commit), the release workflow of the plugin |
 | `tests/` | acceptance suite, fixture generators, gap registry |
 | `findings/` | gaps met in real use, as neutral reproductions, before they become tests and gap entries |
+| `benchmark/` | the comparison with Claude's built-in skills and python-docx / python-pptx, rerun by hand |
 | `docs/` | setup, releases and maintenance |
 
 </details>

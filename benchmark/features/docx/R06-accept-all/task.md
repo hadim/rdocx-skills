@@ -1,0 +1,1 @@
+Accept every tracked change (inline, inserted and deleted paragraphs, a deleted paragraph before an empty spacer, a formatting change, a table cell, a footnote): no revision left, no empty paragraph left where a whole paragraph was deleted.

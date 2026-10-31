@@ -1,0 +1,1 @@
+# bench: {"tools": [], "processes": 0, "raw_xml": false, "unsupported": "python-docx has no layout engine: it cannot tell on which page a paragraph lands (Paragraph.rendered_page_breaks only reads the page breaks Word cached at its last save, and this file was not last saved by Word)."}

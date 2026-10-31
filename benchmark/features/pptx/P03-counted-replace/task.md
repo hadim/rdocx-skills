@@ -1,0 +1,1 @@
+Replace "Project Falcon" with "Project Osprey" exactly 7 times across slides and notes (some occurrences split across differently formatted runs) keeping formatting, and refuse when the expected count is wrong.
