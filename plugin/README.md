@@ -27,14 +27,39 @@ LibreOffice round trips, python-docx, python-pptx or hand-written XML.
 
 ## ✨ Why rdocx-skills
 
-- ⚡ **Native and fast**: one CLI call for whole-file work, the Python binding for anything finer. No office
-  suite to install.
+Claude's built-in Word and PowerPoint skills create files with docx-js and pptxgenjs and change them by unzipping
+the package and editing its XML by hand; python-docx and python-pptx stop where their API stops; and all of them
+call LibreOffice to see a page. rdocx-skills gives your agent one native tool that reads, edits, reviews, renders
+and checks Office files, so an everyday task is a call, not an XML project:
+
+<!-- bench:value:start -->
+| Your agent needs to... | rdocx-skills | Built-in skill | python-docx / python-pptx |
+| --- | :--- | :--- | :--- |
+| 🔀 Redline two versions of a Word file | `rdocx compare --granularity word`<br><sub>2 lines · ❌ wrong result</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>86 lines · 🧬 raw XML</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>80 lines · 🧬 raw XML</sub> |
+| ✅ Reject one reviewer's tracked changes | `rdocx revision reject --author`<br><sub>2 lines</sub> | the XML edited by hand<br><sub>42 lines · 🧬 raw XML</sub> | the XML edited by hand<br><sub>35 lines · 🧬 raw XML</sub> |
+| 📑 Rebuild a stale table of contents | `rdocx toc rebuild`<br><sub>2 lines</sub> | LibreOffice for the page numbers, then the TOC rewritten in XML<br><sub>56 lines · 🧬 raw XML</sub> | ➖ no pagination |
+| 💬 Comment on an exact phrase | `docx_ops.py comment`<br><sub>3 lines</sub> | `merge_runs.py`, `comment.py`, markers placed in the XML<br><sub>29 lines · 🧬 raw XML</sub> | `add_comment` on whole runs, runs split in XML<br><sub>30 lines · 🧬 raw XML</sub> |
+| ✏️ Counted find and replace that keeps the formatting | `docx_ops.replace_batch`<br><sub>4 lines</sub> | `merge_runs.py`, an XML edit, zip<br><sub>41 lines · 🧬 raw XML</sub> | runs walked by hand<br><sub>38 lines</sub> |
+| 📊 Insert a native chart in a Word file | `doc.add_chart(...)`<br><sub>13 lines</sub> | chart XML and its workbook written by hand<br><sub>83 lines · 🧬 raw XML</sub> | python-pptx's chart XML grafted with lxml<br><sub>36 lines · 🧬 raw XML</sub> |
+| 🗂️ Bring slides over from another deck | `rpptx slide import`<br><sub>2 lines</sub> | every part, layout and relationship copied in XML<br><sub>113 lines · 🧬 raw XML</sub> | OPC parts and lxml<br><sub>48 lines · 🧬 raw XML</sub> |
+| 🔁 Duplicate, move, delete and hide slides | `rpptx slide duplicate / move / remove / hide`<br><sub>13 lines</sub> | `add_slide.py`, `sldIdLst` edited, `clean.py`<br><sub>67 lines · 🧬 raw XML</sub> | deep copies and lxml (no API)<br><sub>30 lines · 🧬 raw XML</sub> |
+| 🔢 Slide numbers and a footer on every slide | `rpptx footer`<br><sub>2 lines</sub> | placeholders copied in XML<br><sub>46 lines · 🧬 raw XML</sub> | placeholders cloned, the field in lxml<br><sub>22 lines · 🧬 raw XML</sub> |
+| 📏 Find text that overflows its box | `rpptx fit`<br><sub>9 lines · ⚠️ partly</sub> | render the deck and look<br><sub>80 lines · 🧬 raw XML · ⚠️ partly</sub> | an estimator written by hand<br><sub>71 lines · 🧬 raw XML · ⚠️ partly</sub> |
+| 🖼️ See a page as a picture | `rdocx render --pages 1`<br><sub>3 lines</sub> | LibreOffice to PDF, then pdftoppm<br><sub>8 lines</sub> | ➖ no renderer |
+<!-- bench:value:end -->
+
+<sub>From the [benchmark](https://github.com/hadim/rdocx-skills/tree/main/benchmark): the code an agent writes for
+each task with each stack, checked by the same neutral oracle. 🧬: OOXML written or edited by hand.</sub>
+
+- 🛡️ **Hard to break a file**: every edit declares how many places it changes and applies all of them or none,
+  most known mistakes are refused before anything is written, and a file is saved through a temporary copy,
+  renamed only once complete, never over its input.
+- ⚡ **Native and fast**: one CLI call for whole-file work, the Python binding for anything finer, no office suite
+  to install.
+- 🖨️ **Its own renderer**: PDF and PNG from rdocx's own layout engine, several times faster than a LibreOffice
+  round trip; its fidelity to what Word draws is still catching up (see [How it compares](#-how-it-compares)).
 - 🎯 **Loads by itself**: the skills step in as soon as a `.docx` or `.pptx` shows up, even when you don't
   name a tool.
-- 🖨️ **Its own renderer**: PDF and PNG from rdocx's own layout engine, several times faster than a LibreOffice
-  round trip; its fidelity to what Word draws is still catching up (see the benchmark below).
-- ⚛️ **Atomic edits**: every edit declares how many places it changes and applies all of them or none; a file
-  is saved through a temporary copy, renamed only once complete, and never over its input.
 - 🔒 **Verified supply chain**: every binary is pinned by SHA-256 and checked before it runs.
 - 🧪 **Tested on four platforms**: an acceptance suite runs every recipe of the skills on each change.
 

@@ -466,6 +466,54 @@ def block_visual_figures():
     return "\n\n".join(out)
 
 
+# --- the value proposition: how each stack does a few everyday tasks ----------------------
+VALUE_ROWS = [
+    ("R08", "\U0001f500 Redline two versions of a Word file", "`rdocx compare --granularity word`",
+     "a diff written by hand, emitted as `w:ins` / `w:del`", "a diff written by hand, emitted as `w:ins` / `w:del`"),
+    ("R07", "\u2705 Reject one reviewer's tracked changes", "`rdocx revision reject --author`",
+     "the XML edited by hand", "the XML edited by hand"),
+    ("R09", "\U0001f4d1 Rebuild a stale table of contents", "`rdocx toc rebuild`",
+     "LibreOffice for the page numbers, then the TOC rewritten in XML", "no pagination"),
+    ("R01", "\U0001f4ac Comment on an exact phrase", "`docx_ops.py comment`",
+     "`merge_runs.py`, `comment.py`, markers placed in the XML", "`add_comment` on whole runs, runs split in XML"),
+    ("D03", "\u270f\ufe0f Counted find and replace that keeps the formatting", "`docx_ops.replace_batch`",
+     "`merge_runs.py`, an XML edit, zip", "runs walked by hand"),
+    ("D08", "\U0001f4ca Insert a native chart in a Word file", "`doc.add_chart(...)`",
+     "chart XML and its workbook written by hand", "python-pptx's chart XML grafted with lxml"),
+    ("P05", "\U0001f5c2\ufe0f Bring slides over from another deck", "`rpptx slide import`",
+     "every part, layout and relationship copied in XML", "OPC parts and lxml"),
+    ("P04", "\U0001f501 Duplicate, move, delete and hide slides", "`rpptx slide duplicate / move / remove / hide`",
+     "`add_slide.py`, `sldIdLst` edited, `clean.py`", "deep copies and lxml (no API)"),
+    ("P14", "\U0001f522 Slide numbers and a footer on every slide", "`rpptx footer`",
+     "placeholders copied in XML", "placeholders cloned, the field in lxml"),
+    ("P06", "\U0001f4cf Find text that overflows its box", "`rpptx fit`",
+     "render the deck and look", "an estimator written by hand"),
+    ("R11", "\U0001f5bc\ufe0f See a page as a picture", "`rdocx render --pages 1`",
+     "LibreOffice to PDF, then pdftoppm", "no renderer"),
+]
+
+
+def value_cell(d, how):
+    st = task_status(d)
+    if st == "unsupported":
+        return f"{ICON['unsupported']} {how}"
+    meta = f"{d.get('loc', '?')} lines" + (f" \u00b7 {XML} raw XML" if d.get("raw_xml") else "")
+    flag = {"fail": f" \u00b7 {ICON['fail']} wrong result", "partial": f" \u00b7 {ICON['partial']} partly"}.get(st, "")
+    return f"{how}<br><sub>{meta}{flag}</sub>"
+
+
+def block_value():
+    tasks = {t["id"]: t for _, t in feature_tasks()}
+    rows = []
+    for tid, need, *hows in VALUE_ROWS:
+        t = tasks.get(tid)
+        if not t:
+            continue
+        rows.append([need] + [value_cell(t["stacks"][s], h) for s, h in zip(STACKS, hows)])
+    return table(["Your agent needs to...", "rdocx-skills", "Built-in skill", "python-docx / python-pptx"], rows,
+                 ["---", ":---", ":---", ":---"])
+
+
 # --- the scoreboard -----------------------------------------------------------------------
 def block_scoreboard():
     n, ncommon, st = feature_stats()
@@ -528,6 +576,7 @@ def block_date():
 BLOCKS = {
     "date": block_date,
     "scoreboard": block_scoreboard,
+    "value": block_value,
     "features-summary": block_features_summary,
     "features-matrix": block_features_matrix,
     "validity-detection": block_validity_detection,
