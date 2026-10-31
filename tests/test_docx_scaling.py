@@ -759,8 +759,13 @@ GROWING = set()
 # integration/open-prs-2026-10-31 (accepted 2026-10-31): SectionHandle.replace_xml, remove_endnote and
 # set_picture_size on macOS (2.8 to 3.3 times), set_content_control_lock on Windows (3.0 times). They were linear
 # on v0.16.4 as well (Linux: 1.6 to 1.9 times, 23 to 29 ms at 100 paragraphs) and are cheaper on this pin (15 to
-# 25 ms); tensorbee/rdocx#443 cut their fixed part, so the same growth reads as a larger ratio. They are not a gap;
-# they must not grow faster than the body (LINEAR).
+# 25 ms); tensorbee/rdocx#443 cut their fixed part, so the same growth reads as a larger ratio. The release run of
+# that pin then went over RATIO on macOS with three to five other calls on each of three attempts, never the same
+# ones (2.9 to 3.3 times): #443 dropped the fixed part of every edit (the styles part is no longer parsed again,
+# 0.68 times the cost at 25 paragraphs, median on Linux), while the growth from 25 to 100 paragraphs stayed that of
+# v0.16.4 (median difference 0.0 ms). The maintainer accepted (2026-10-31) every call over 2 times on Linux on that
+# pin, 59, and the 11 that went over on macOS, 64 new in all. They are not a gap; they must not grow faster than the
+# body (LINEAR).
 ACCEPTED = {
     "Document.set_header", "Document.set_footer", "Document.move_content", "Document.add_heading_hyperlink",
     "Document.move_comment", "Document.remove_comment", "Document.accept_revision_id", "Document.reject_revision_id",
@@ -774,6 +779,22 @@ ACCEPTED = {
     "Document.add_story_permission_range",
     "SectionHandle.replace_xml", "Document.remove_endnote", "Document.set_picture_size",
     "Document.set_content_control_lock",
+    "AppProperties.application", "AppProperties.company", "AppProperties.manager", "AppProperties.presentation_format",
+    "AppProperties.template", "Cell.add_table", "Cell.replace_text", "Cell.replace_xml", "Cell.split", "Cell.text",
+    "CoreProperties.author", "CoreProperties.category", "CoreProperties.content_status", "CoreProperties.created",
+    "CoreProperties.identifier", "CoreProperties.keywords", "CoreProperties.language",
+    "CoreProperties.last_modified_by", "CoreProperties.modified", "CoreProperties.revision", "CoreProperties.title",
+    "CustomProperties.delete", "CustomProperties.set", "Document.add_bullet_list_item", "Document.add_chart",
+    "Document.add_numbered_list_item", "Document.add_numbering_definition", "Document.add_numbering_instance",
+    "Document.clone_content", "Document.insert_html", "Document.pop_content", "Document.remove_content_control",
+    "Document.remove_font", "Document.remove_footnote", "Document.remove_mail_merge_package", "Document.remove_style",
+    "Document.replace_text_at", "Document.reply_to", "Document.restart_numbering", "Document.set_chart_legend",
+    "Document.set_content_control_alias", "Document.set_content_control_appearance", "Document.set_mail_merge_package",
+    "Document.set_note_policy", "Document.unwrap_content_control", "Document.update_fields_on_open",
+    "FootnoteEndnote.add_paragraph", "FootnoteEndnote.add_table", "Paragraph.add_equation", "Paragraph.add_hyperlink",
+    "Paragraph.add_run", "Paragraph.replace_text", "Paragraph.replace_xml", "Paragraph.text", "Run.add_break",
+    "Run.add_picture", "Run.add_tab", "Run.replace_xml", "Run.text", "SectionHandle.set_note_policy",
+    "Settings.odd_and_even_pages_header_footer", "Settings.track_revisions", "Table.remove_row", "Table.style",
 }
 
 
