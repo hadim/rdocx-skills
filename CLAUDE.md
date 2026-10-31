@@ -109,7 +109,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   it since #439) and docx-font-fallback-by-entry-point (#433 case 7: `rdocx convert`, `to_pdf()` and `page_count()`
   pick different fonts for a font rdocx does not bundle; a `--font-dir` / `font_dir=` folder holding the font makes
   them agree). Edit costs: no call grows with the body or the deck from 25 to 100 paragraphs (10 to 40 slides) but
-  the 26 of `ACCEPTED` in `test_docx_scaling.py`; the edit cost series of v0.16.4 and the form operations as on
+  the 30 of `ACCEPTED` in `test_docx_scaling.py`; the edit cost series of v0.16.4 and the form operations as on
   28/10/2026 (the docx gap page gives the costs). #443 made cell paragraph setters and edits with a large
   `styles.xml` flat (its cases are timed in test_docx_carried.py), but in a cell inside a content control; `cell.text`,
   `cell.vertical_alignment` and `cell.shading` still grow with the body.

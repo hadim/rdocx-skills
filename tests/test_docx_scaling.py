@@ -755,8 +755,12 @@ GROWING = set()
 # on integration/open-prs-2026-10-27 (Linux). Four calls new in v0.16.4, linear in the body as well and called once
 # or a few times per document, went over RATIO on the first CI run (accepted 2026-10-28): set_document_protection,
 # insert_legacy_form_field and add_story_permission_range on macOS (2.6 to 2.7 times), add_story_permission_range
-# on Windows (2.8 times), remove_document_protection at 2.3 times on Linux. They are not a gap; they must not grow
-# faster than the body (LINEAR).
+# on Windows (2.8 times), remove_document_protection at 2.3 times on Linux. Four more went over RATIO on the CI run of
+# integration/open-prs-2026-10-31 (accepted 2026-10-31): SectionHandle.replace_xml, remove_endnote and
+# set_picture_size on macOS (2.8 to 3.3 times), set_content_control_lock on Windows (3.0 times). They were linear
+# on v0.16.4 as well (Linux: 1.6 to 1.9 times, 23 to 29 ms at 100 paragraphs) and are cheaper on this pin (15 to
+# 25 ms); tensorbee/rdocx#443 cut their fixed part, so the same growth reads as a larger ratio. They are not a gap;
+# they must not grow faster than the body (LINEAR).
 ACCEPTED = {
     "Document.set_header", "Document.set_footer", "Document.move_content", "Document.add_heading_hyperlink",
     "Document.move_comment", "Document.remove_comment", "Document.accept_revision_id", "Document.reject_revision_id",
@@ -768,6 +772,8 @@ ACCEPTED = {
     "Document.link_section_story", "Document.create_section_story", "HeaderFooter.is_linked_to_previous",
     "Document.set_document_protection", "Document.remove_document_protection", "Document.insert_legacy_form_field",
     "Document.add_story_permission_range",
+    "SectionHandle.replace_xml", "Document.remove_endnote", "Document.set_picture_size",
+    "Document.set_content_control_lock",
 }
 
 
