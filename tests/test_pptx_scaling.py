@@ -561,7 +561,8 @@ WHOLE_DECK = {
 READS = {"Presentation.export_html", "Presentation.export_markdown", "Presentation.fit_report", "Presentation.save",
          "Presentation.save_html", "Presentation.save_markdown", "Presentation.save_odp", "Presentation.text_layout",
          "Presentation.validate", "Presentation.verify_signatures", "Slide.extract_media", "Shape.effective_geometry",
-         "Table.cell", "ThemeColors.keys", "TextStyleList.level", "CustomProperties.get", "SlideLayoutCollection.index"}
+         "Table.cell", "ThemeColors.keys", "TextStyleList.level", "CustomProperties.get", "SlideLayoutCollection.index",
+         "SlideCollection.index"}
 
 
 def mutating_surface():

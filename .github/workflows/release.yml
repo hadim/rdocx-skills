@@ -117,7 +117,7 @@ jobs:
         include:
           - { platform: linux-x86_64, runner: ubuntu-22.04 }
           - { platform: linux-aarch64, runner: ubuntu-22.04-arm }
-          - { platform: macos-arm64, runner: macos-14 }
+          - { platform: macos-arm64, runner: macos-15 }
           - { platform: windows-x86_64, runner: windows-2025 }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 150
@@ -435,7 +435,7 @@ jobs:
         include:
           - { platform: linux-x86_64, subdir: linux-64, runner: ubuntu-22.04 }
           - { platform: linux-aarch64, subdir: linux-aarch64, runner: ubuntu-22.04-arm }
-          - { platform: macos-arm64, subdir: osx-arm64, runner: macos-14 }
+          - { platform: macos-arm64, subdir: osx-arm64, runner: macos-15 }
           - { platform: windows-x86_64, subdir: win-64, runner: windows-2025 }
     runs-on: ${{ matrix.runner }}
     defaults:
