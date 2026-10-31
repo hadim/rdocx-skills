@@ -9,8 +9,7 @@ rdocx reads and writes the OOXML package natively, keeps every part it does not 
 renders pages itself (no LibreOffice). One pinned build: the `rdocx` CLI for whole-file operations, the `rdocx`
 Python module for anything finer. Use them for every .docx task. Most python-docx code runs as is; the rest raises
 an error that names the rdocx way (`references/python-api.md`, "python-docx names"). The tool is young: the gaps
-that force another tool for one step are in `references/gaps.md`, and every new one you meet is reported (last
-section).
+that force another tool for one step are in `references/gaps.md`; report any new one (last section).
 
 ## Setup, once per session
 
@@ -29,7 +28,7 @@ $R/python my_script.py       # the Python that has rdocx and rpptx; `import docx
 conda package of the same build, on request: `../../README.md`, conda). **Windows**: Git Bash, with `python`
 (or `py -3`) for `python3`; `$R/rdocx` reaches `rdocx.exe` (`../../docs/setup.md`).
 
-**If `install` exits 2** (no verified build for this machine, for example offline): tell the user in
+**If `install` exits 2** (no verified build here, for example offline): tell the user in
 one line that no pinned rdocx build is available here, do the task with the built-in `docx` skill, and
 offer to build it for next time (`install --build`, 10 to 30 minutes with a Rust toolchain, in the
 background).
@@ -40,7 +39,7 @@ background).
    commands, `render` and `convert` refuse an existing output (`--force` for `render` and `convert`, never
    for their input); `Document.save()` does not refuse the input: use `docx_ops.save_atomic(doc, out,
    src)`, which does. Render into a new folder each time.
-2. **Every edit declares its expected count**, dry-run first, all or nothing:
+2. **Every edit declares its expected count**, all or nothing:
    `docx_ops.replace_batch(src, out, [(old, new, n), ...])`, which also refuses when the text is still
    there afterwards, or `rdocx replace ... --expect N`, which does not check that (what each one reaches:
    `references/cli.md`, Editing).
@@ -104,7 +103,7 @@ background).
 | What each comment points at, moving a thread | `rdocx comment list --json F` (`anchor_text`, `anchor`), `rdocx comment move F ID --text TEXT -o OUT` | `c.anchor_text`, `c.anchor` for `c in doc.comments`; `doc.move_comment(id, range)` | move a thread off a paragraph before deleting it |
 | Tracked changes | `rdocx revision list/accept/reject --id/--author/--start-date/--end-date` | `doc.revisions`, `accept_all()`, `reject_all()`, by id, author or dates | every story: `r.story.kind` |
 | Redline of two versions | `rdocx compare A B --author N --timestamp T --granularity word [--ignore-comments] -o OUT` | `a.compare(b, author, timestamp, granularity="word", ignore_comments=True)` | default: whole runs; a rebuilt TOC, a changed picture or chart shows as revisions: check |
-| Table of contents | `rdocx toc rebuild F -o OUT`, `docx_ops.py toc IN OUT` | `doc.rebuild_toc()`; a new one: `insert_toc(bi, max_level=3)`, then `rebuild_toc()` | |
+| Table of contents | `rdocx toc rebuild F -o OUT`, `docx_ops.py toc IN OUT` | `doc.rebuild_toc()`; a new one: `insert_toc(bi, max_level=3)`, then `rebuild_toc()` | `insert_toc` may come before the headings |
 | Fields | `rdocx fields update F -o OUT [--now 2026-10-10T09:00:00]` | `doc.update_fields()`, `update_page_fields()` | header and footer page numbers keep their cached text, as in Word |
 | PDF | `rdocx convert F --to pdf [--revision-view tracked [--revision-style legal]] -o NEW.pdf` | `doc.to_pdf(revision_view="tracked", revision_style="legal")` | accepted view by default; `tracked` shows the revisions, `legal` in colour |
 | PNG pages | `rdocx render F -o NEW_DIR --pages 1-3 --dpi 100 [--font-dir DIR]` | `doc.render_pages(dpi=, pages=[0, 1], font_dir=)` | CLI pages one-based, Python zero-based; `font_dir`: fonts not installed |
@@ -112,7 +111,7 @@ background).
 | New document from Markdown or HTML | `rdocx convert notes.md -o NEW.docx [--template brand.dotx]`, `rdocx convert page.html -o NEW.docx` | `rdocx.Document.from_markdown(text, template=, images=)`, `Document.from_html(html)`, `doc.insert_html(html, after=p)` | each returns what it dropped: read it |
 | Charts | | `doc.add_chart(rdocx.XL_CHART_TYPE.COLUMN_CLUSTERED, data, w, h, after=p)`, `set_chart_legend(p, visible=True, position="b")` | data as in python-pptx (`rdocx.CategoryChartData`); `doc.charts` reads them back |
 | Embedded fonts | `rdocx font list/embed/remove/settings` | `doc.fonts`, `embed_font(name, file, "regular", license=...)`, `remove_embedded_font(name, kind)` | rule 10 |
-| Validity | `rdocx validate F` | `doc.validate()` | every related part and every style id (rule 7) |
+| Validity | `rdocx validate F` | `doc.validate()` | XML 1.0, a schema subset, references, style ids (rule 7) |
 | Sign, check signatures | `rdocx sign F --key K.pem --cert C.pem -o OUT`, `rdocx verify-signatures --json F` | `doc.sign(key, cert)`, `verify_signatures()` | sign last: an edit breaks it; no chain trust |
 | What changed between two files | `rdocx diff A B` | | by paragraph, in every story |
 | New document | | `rdocx.Document()`, or a template .docx or .dotx emptied | Word's usual styles; save a .dotx as .docx |

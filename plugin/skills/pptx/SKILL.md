@@ -51,7 +51,7 @@ background).
 4. **Walk groups**: `slide.shapes` lists top-level shapes; a group's children are in `shape.shapes`
    (`shape_type == MSO_SHAPE_TYPE.GROUP`, value 6). `pptx_ops.walk(slide.shapes)` yields all of them.
 5. **Check the fit after any text change**: `rpptx fit F` (exit 1 when a frame overflows, with the font scale
-   it needs; table cells, layouts and notes too) or `prs.text_layout()` (the slides' text frames) reports every
+   it needs, or cannot be assessed: `cannot-assess`; table cells, layouts and notes too, the whole deck always) or `prs.text_layout()` (the slides' text frames) reports every
    frame whose text overflows, with rpptx's own line breaks; then render the slide and look at it.
 6. **The deck will be opened elsewhere** (PowerPoint, Google Slides, Keynote, LibreOffice): edit in place,
    keep placeholders and layouts, never rebuild a deck to change it.
@@ -87,7 +87,7 @@ background).
 | Glued connector | | `connector.begin_connect(shape, site)`, `end_connect(shape, site)` | sites of a rectangle: 0 top, 1 left, 2 bottom, 3 right |
 | Picture into a placeholder | | `slide.placeholders[idx].insert_picture(file)` | cropped to fill; `shape.is_placeholder`, `placeholder_format.type` |
 | Pictures | | `shape.replace_image(file)`, `shape.image.blob` | keeps position, size and crop |
-| Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)`, `table.first_row`, `style_id` | re-fetch the cells and rows after adding or removing a row or column |
+| Tables | | `shape.table.cell(r, c).text`, `.merge(other)`, `table.rows.add_row(i)`, `rows.remove(row)`, `table.columns.add_column(i)`, `columns.remove(col)`, `table.first_row`, `style_id` | re-fetch the cells and rows after adding or removing a row or column; an empty cell (from `add_row()` too) has no run: set `cell.text` |
 | Slides | `rpptx slide add/duplicate/remove/move/hide/show F ... -o OUT` | `slides.add_slide(layout)`, `slides.add_slide_at(layout, i)`, `slides.duplicate(slide)`, `slides.move(i, j)`, `slides.remove(slide)`, `slide.hidden`, `slide.transition.type = "fade"` | |
 | Slide numbers, footer, date | `rpptx footer F --slide-number --footer T --skip-title -o OUT` | `prs.set_header_footer(footer=T)`, `slide.header_footer` | as PowerPoint's Header and Footer dialog; `add_field("slidenum")` in a text box |
 | Theme, master, layouts | | `prs.slide_master.theme.colors["accent1"] = ...`, `prs.apply_theme(path)`, `prs.slide_master.shapes.add_picture(logo, ...)`, `next(lay for lay in prs.slide_layouts if lay.name == n)` | a logo on the master shows on every slide |

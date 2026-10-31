@@ -176,6 +176,26 @@ def test_comment_on_text_in_tables_counts_nested_cells_and_refuses_past_the_last
     assert docx_ops.comment_landings(doc.to_bytes())[cid] is False
 
 
+def test_commented_returns_the_checked_copy_and_leaves_the_document(report_docx, tmp_path):
+    """commented anchors the comment once, on a copy it checks and returns; the document passed is never changed,
+    on success or on refusal; the copy is the document comment_on_text makes in place."""
+    doc = rdocx.Document.open(report_docx)
+    before = doc.to_bytes()
+    copy, cid = docx_ops.commented(doc, "three-span steel and timber", "x", "Reviewer", date="2026-09-27T12:00:00Z")
+    assert digest(doc.to_bytes()) == digest(before) and not doc.comments
+    assert anchored(copy.to_bytes(), cid) == "three-span steel and timber"
+    assert docx_ops.comment_on_text(doc, "three-span steel and timber", "x", "Reviewer",
+                                    date="2026-09-27T12:00:00Z") == cid
+    assert digest(doc.to_bytes()) == digest(copy.to_bytes())
+    cells = rdocx.Document.open(cell_text_docx(tmp_path / "t.docx"))
+    before = cells.to_bytes()
+    with pytest.raises(docx_ops.EditError, match="not found in table cells"):
+        docx_ops.commented(cells, "beta", "x", "Reviewer", occurrence=3, in_tables=True)
+    copy, cid = docx_ops.commented(cells, "beta", "x", "Reviewer", occurrence=2, in_tables=True)
+    assert digest(cells.to_bytes()) == digest(before)
+    assert anchored(copy.to_bytes(), cid) == "beta" and docx_ops.comment_landings(copy.to_bytes())[cid] is True
+
+
 def test_command_line_entry_points(report_docx, tmp_path):
     py = runtime_python()  # the runtime Python an agent gets
     script = ROOT / "plugin" / "skills" / "docx" / "scripts" / "docx_ops.py"
@@ -187,6 +207,9 @@ def test_command_line_entry_points(report_docx, tmp_path):
     res = subprocess.run([*py, script, "comment", report_docx, tmp_path / "c.docx", "--anchor", "three-span steel and timber",
                           "--text", "x", "--author", "R", "--date", "2026-09-27T12:00:00Z"], capture_output=True, text=True, check=True)
     assert rdocx.Document.open(tmp_path / "c.docx").comments[0].date == "2026-09-27T12:00:00Z"
+    res = subprocess.run([*py, script, "comment", report_docx, tmp_path / "r.docx", "--anchor", "no such anchor text",
+                          "--text", "x", "--author", "R"], capture_output=True, text=True)
+    assert res.returncode == 1 and "refused" in res.stderr and not (tmp_path / "r.docx").exists()
     cells = cell_text_docx(tmp_path / "cells.docx")
     subprocess.run([*py, script, "comment", cells, tmp_path / "cc.docx", "--anchor", "beta", "--in-tables", "--text", "x",
                     "--author", "R"], capture_output=True, text=True, check=True)

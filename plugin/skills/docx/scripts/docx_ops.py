@@ -178,13 +178,12 @@ def count(source, text):
 
 
 def replace_batch(src, out, edits, allow_unreached=False):
-    """Apply [(old, new, expected_count), ...] in order, all or nothing. A dry run on an in-memory copy comes
-    first; nothing is written, and EditError names every problem, when a replacement count differs from its
-    expected count, or when `old` is still in the document after its replacement (a match across the edge of a
-    content control, a tracked insertion or a simple field), unless allow_unreached=True. Counts are rdocx's:
-    headers and footers once per variant part, a Word text box once."""
-    doc = rdocx.Document.open(src)
-    probe = rdocx.Document.from_bytes(doc.to_bytes())
+    """Apply [(old, new, expected_count), ...] in order, all or nothing. The edits run once, in memory, and are
+    checked there before anything is saved: nothing is written, and EditError names every problem, when a
+    replacement count differs from its expected count, or when `old` is still in the document after its
+    replacement (a match across the edge of a content control, a tracked insertion or a simple field), unless
+    allow_unreached=True. Counts are rdocx's: headers and footers once per variant part, a Word text box once."""
+    probe = rdocx.Document.open(src)
     wrong = []
     for old, new, expected in edits:
         seen = sum(count(probe, old).values())
@@ -206,9 +205,7 @@ def replace_batch(src, out, edits, allow_unreached=False):
             wrong.append(f"{old!r}: {seen} occurrence(s) seen, {got} replaced; pass allow_unreached=True once handled")
     if wrong:
         raise EditError("; ".join(wrong))
-    for old, new, _ in edits:
-        doc.try_replace_text(old, new)
-    return save_atomic(doc, out, src)
+    return save_atomic(probe, out, src)
 
 
 def _starts(text, anchor):
@@ -332,34 +329,50 @@ def _cell_occurrence(doc, anchor, occurrence):
     return in_cells[occurrence - 1]
 
 
-def comment_on_text(doc, anchor, text, author, initials=None, occurrence=1, date=None, in_tables=False):
-    """Anchor a comment on exactly `anchor`, dated `date` (RFC 3339; default: now, UTC). `occurrence` counts
-    from 1 in the body's own paragraphs, or, with `in_tables=True`, in the paragraphs of table cells (nested
-    tables included), in document order. The whole operation is first run on a copy and the anchored text
-    read back: if rdocx refuses the range or anchors it elsewhere, EditError is raised and `doc` is left
-    unchanged. Returns the comment id."""
-    date = date or now()
-    if in_tables:
+def _comment_checked(doc, anchor, text, author, initials, occurrence, date, in_tables, k=None):
+    """Anchor the comment on `doc` and read the anchored text back; EditError if rdocx refuses the range or
+    anchors it elsewhere, `doc` being then left half edited: callers pass a copy they drop on error. `k`: the
+    occurrence number _cell_occurrence gives, when known."""
+    if in_tables and k is None:
         k = _cell_occurrence(doc, anchor, occurrence)
-
-        def act(d):
-            return d.add_comment_on_text(anchor, author=author, text=text, occurrence=k, initials=initials, date=date)
-    else:
-        def act(d):
-            return _comment(d, anchor, text, author, initials, occurrence, date)
-    probe = rdocx.Document.from_bytes(doc.to_bytes())
     why = "nothing was written; report it as a new gap"
     try:
-        cid = act(probe)
+        if in_tables:
+            cid = doc.add_comment_on_text(anchor, author=author, text=text, occurrence=k, initials=initials, date=date)
+        else:
+            cid = _comment(doc, anchor, text, author, initials, occurrence, date)
     except rdocx.RdocxError as e:
         raise EditError(f"rdocx refused the range ({e}): {why}") from e
-    data = probe.to_bytes()
+    data = doc.to_bytes()
     got = anchored_text(data, cid)
     if got != anchor:
         raise EditError(f"the comment would be anchored on {got!r} instead of {anchor!r}: {why}")
     if in_tables and not comment_landings(data).get(cid):
         raise EditError(f"the comment would be anchored outside the table cells: {why}")
-    return act(doc)
+    return cid
+
+
+def commented(doc, anchor, text, author, initials=None, occurrence=1, date=None, in_tables=False):
+    """(a commented copy of `doc`, the comment id): the comment of comment_on_text (same arguments and checks),
+    anchored once, on a copy that is checked and returned; `doc` itself is never changed. comment_on_text
+    anchors the comment a second time, on `doc`: in a large document, prefer this one."""
+    copy = rdocx.Document.from_bytes(doc.to_bytes())
+    return copy, _comment_checked(copy, anchor, text, author, initials, occurrence, date or now(), in_tables)
+
+
+def comment_on_text(doc, anchor, text, author, initials=None, occurrence=1, date=None, in_tables=False):
+    """Anchor a comment on exactly `anchor`, dated `date` (RFC 3339; default: now, UTC). `occurrence` counts
+    from 1 in the body's own paragraphs, or, with `in_tables=True`, in the paragraphs of table cells (nested
+    tables included), in document order. The whole operation is first run on a copy and the anchored text
+    read back: if rdocx refuses the range or anchors it elsewhere, EditError is raised and `doc` is left
+    unchanged. Returns the comment id. `commented` does the same work once and returns the copy."""
+    date = date or now()
+    k = _cell_occurrence(doc, anchor, occurrence) if in_tables else None
+    _comment_checked(rdocx.Document.from_bytes(doc.to_bytes()), anchor, text, author, initials, occurrence, date,
+                     in_tables, k)
+    if in_tables:
+        return doc.add_comment_on_text(anchor, author=author, text=text, occurrence=k, initials=initials, date=date)
+    return _comment(doc, anchor, text, author, initials, occurrence, date)
 
 
 def rebuild_toc(doc):
@@ -473,7 +486,8 @@ def main():
             print(f"wrote {a.out}")
         elif a.cmd == "comment":
             doc = rdocx.Document.open(a.src)
-            cid = comment_on_text(doc, a.anchor, a.text, a.author, a.initials, a.occurrence, a.date, a.in_tables)
+            cid = _comment_checked(doc, a.anchor, a.text, a.author, a.initials, a.occurrence, a.date or now(),
+                                   a.in_tables)
             save_atomic(doc, a.out, a.src)
             print(f"comment {cid} written to {a.out}")
         elif a.cmd == "toc":

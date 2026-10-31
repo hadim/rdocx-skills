@@ -75,7 +75,9 @@ def _publish(write, out, src=None):
 
 
 def save_atomic(prs, out, src=None):
-    """Save `prs` to `out` atomically (rpptx's own save() writes in place). Refuses `out == src`."""
+    """Save `prs` to `out` through a temporary file in the same folder, flushed to disk, then renamed, with the mode
+    of `src` when given. rpptx's own save() also writes a temporary file and renames it, but does not refuse its
+    input: this one refuses `out == src`."""
     return _publish(prs.save, out, src)
 
 
