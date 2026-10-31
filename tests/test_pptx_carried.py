@@ -141,6 +141,26 @@ def test_validate_reports_stored_presentationml_faults(rpptx_cli, tmp_path):
     assert not missed
 
 
+# carried by tensorbee/rdocx#439 (#435), delete once upstream main has it
+def test_validate_counts_the_grid_span_of_a_table_row(rpptx_cli, tmp_path):
+    """`rpptx validate` counts each a:tc's gridSpan against the a:gridCol count: a row whose first cell spans both
+    columns, with no hMerge cell after it, as LibreOffice writes one, passes; a row of one plain cell for two columns
+    is still refused, naming what it covers (cli.md, validate). The first version of #439 refused the spanned row."""
+    prs = rpptx.Presentation()
+    slide = prs.slides.add_slide(prs.slide_layouts[5])
+    slide.shapes.title.text = "Hello"
+    slide.shapes.add_table(2, 2, Inches(1), Inches(2), Inches(4), Inches(1))
+    base = prs.to_bytes()
+    path = tmp_path / "case.pptx"
+    spanned = text_edit(lambda x: re.sub(r"(<a:tr [^>]*>)<a:tc>(.*?</a:tc>)<a:tc>.*?</a:tc>(</a:tr>)",
+                                         r'\1<a:tc gridSpan="2">\2\3', x, count=1, flags=re.S))
+    code, out = validate(rpptx_cli, path, rezip(base, {SLIDE: spanned}))
+    assert code == 0, out
+    short = text_edit(STORED_FAULTS["table row with 1 a:tc for 2 a:gridCol"][1])
+    code, out = validate(rpptx_cli, path, rezip(base, {SLIDE: short}))
+    assert code != 0 and "covers 1 of its 2 a:gridCol" in out, out
+
+
 def control_character_pptx(path):
     """A deck whose ppt/slides/slide1.xml holds U+0001 inside its title, written to path."""
     prs = rpptx.Presentation()
