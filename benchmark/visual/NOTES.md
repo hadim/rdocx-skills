@@ -17,7 +17,7 @@ compared with what Word and PowerPoint print?
 | `findings.py` | the rdocx / rpptx faults found here, each as a neutral reproduction, re-run on the pin |
 | `figures.py` | part 3: labelled side-by-side PNGs in `figures/` |
 
-Versions: rdocx 0.16.4 / rpptx 0.14.4 (pin 401e3f42), LibreOffice 26.2.6.3, Poppler 26.01, Linux x86_64.
+Versions: in `results/visual.json` (`versions`).
 
 ## Part 1: fidelity against Office's own PDF
 
@@ -52,57 +52,9 @@ Metrics (per document, then median and mean over documents; each document counts
   a renderer when its PDF (`pdffonts`) has neither the family nor a metric-compatible clone (Carlito, Caladea,
   Liberation / Arimo / Tinos / Cousine).
 
-### Per document
+### Results
 
-SSIM, ink F1 and words: rdocx / LibreOffice. Pages: Office / rdocx / LibreOffice.
-
-| document | PDF | pages | SSIM (blank) | ink F1 | words same page | within 5 pt | pages aligned |
-|---|---|---|---|---|---|---|---|
-| charity-commission examiner template | Word | 2 / 2 / 2 | 0.69 / 0.74 (0.72) | 0.62 / 0.83 | 0.95 / 1.00 | 0.04 / 0.17 | 2/2, 2/2 |
-| dbt flexible-working form | Word | 3 / 3 / 3 | 0.96 / 0.97 (0.78) | 0.99 / 1.00 | 1.00 / 1.00 | 0.93 / 1.00 | 3/3, 3/3 |
-| pins local-plan Q&A (Aptos) | Word | 11 / 12 / 11 | 0.58 / 0.54 (0.63) | 0.65 / 0.73 | 0.52 / 0.81 | 0.06 / 0.07 | 0/11, 5/11 |
-| dcms creative-industries consultation | Word | 22 / 21 / 22 | 0.59 / 0.60 (0.68) | 0.60 / 0.55 | 0.97 / 0.15 | 0.16 / 0.12 | 19/21, 5/21 |
-| dcms taylor past schemes | Word | 47 / 48 / 47 | 0.51 / 0.86 (0.62) | 0.56 / 0.98 | 0.39 / 0.94 | 0.06 / 0.60 | 9/47, 37/47 |
-| dcms taylor interim evaluation | Word | 66 / 67 / 66 | 0.52 / 0.90 (0.65) | 0.43 / 1.00 | 0.10 / 0.99 | 0.01 / 0.95 | 3/66, 65/66 |
-| dcms social impacts | Word | 136 / refused / 137 | - / 0.45 (0.57) | - / 0.53 | - / 0.15 | - / 0.08 | -, 14/136 |
-| dcms social impacts appendices | Word | 153 / refused / 153 | - / 0.85 (0.61) | - / 0.93 | - / 0.85 | - / 0.51 | -, 100/151 |
-| ofqual regulator view (deck) | Mac Quartz | 13 / 13 / 13 | 0.95 / 0.95 (0.74) | 0.99 / 1.00 | 0.89 / 1.00 | 0.85 / 0.95 | 12/13, 13/13 |
-| ofqual reform teachers (deck) | Mac Quartz | 28 / 28 / 28 | 0.92 / 0.88 (0.68) | 1.00 / 1.00 | 0.99 / 0.99 | 0.52 / 0.64 | 22/24, 22/24 |
-| ofsted childminder (deck, Tahoma) | PDFMaker | 41 / 41 / 41 | 0.79 / 0.79 (0.72) | 0.96 / 0.92 | 0.95 / 0.99 | 0.68 / 0.24 | 33/34, 33/34 |
-| dcms taylor technical annex (deck) | PowerPoint | 52 / 52 / 52 | 0.68 / 0.82 (0.50) | 0.93 / 1.00 | 0.93 / 0.95 | 0.77 / 0.89 | 41/52, 46/52 |
-| ukces skills survey (deck, 64 charts) | PDFMaker | 69 / 69 / 69 | 0.63 / 0.84 (0.64) | 0.42 / 0.99 | 0.61 / 0.89 | 0.25 / 0.54 | 19/67, 43/67 |
-
-### Aggregated (median / mean over documents)
-
-| group | renderer | docs | exact page count | SSIM | ink F1 | words same page | within 5 pt | pages aligned |
-|---|---|---|---|---|---|---|---|---|
-| docx, Word-exported | rdocx | 6 (2 refused) | 2 of 6 | 0.59 / 0.64 | 0.61 / 0.64 | 0.74 / 0.66 | 0.06 / 0.21 | 0.55 / 0.52 |
-| | LibreOffice, same 6 | 6 | 6 of 6 | 0.80 / 0.77 | 0.91 / 0.85 | 0.97 / 0.82 | 0.39 / 0.48 | 0.89 / 0.74 |
-| | LibreOffice, all 8 | 8 | 7 of 8 | 0.80 / 0.74 | 0.88 / 0.82 | 0.90 / 0.74 | 0.34 / 0.44 | 0.72 / 0.65 |
-| pptx, PowerPoint-exported | rpptx | 1 | 1 of 1 | 0.68 | 0.93 | 0.93 | 0.77 | 0.79 |
-| | LibreOffice | 1 | 1 of 1 | 0.82 | 1.00 | 0.95 | 0.89 | 0.88 |
-| pptx, other producer | rpptx | 4 | 4 of 4 | 0.86 / 0.82 | 0.98 / 0.84 | 0.92 / 0.86 | 0.60 / 0.57 | 0.92 / 0.77 |
-| | LibreOffice | 4 | 4 of 4 | 0.86 / 0.86 | 0.99 / 0.98 | 0.99 / 0.97 | 0.59 / 0.59 | 0.94 / 0.88 |
-| all 5 pptx | rpptx | 5 | 5 of 5 | 0.79 / 0.79 | 0.96 / 0.86 | 0.93 / 0.87 | 0.68 / 0.61 | 0.92 / 0.78 |
-| | LibreOffice | 5 | 5 of 5 | 0.84 / 0.86 | 1.00 / 0.98 | 0.99 / 0.96 | 0.64 / 0.65 | 0.92 / 0.88 |
-
-Reading:
-
-- On Word documents LibreOffice is closer to Word than rdocx: same page count on 7 of 8 (rdocx 2 of 6), and on
-  the two Taylor reports it keeps 94-99% of the words on Word's page where rdocx keeps 10-39%. rdocx refuses two
-  of the eight files outright (duplicate bookmark ids, F11). rdocx wins one document clearly: the creative
-  industries consultation, where LibreOffice runs a page ahead from page 6 (15% of words on Word's page, rdocx 97%;
-  figure 4).
-- rdocx's drift comes from a few layout differences that add up (F4 to F7 below, a header-to-body gap 7 pt larger
-  than Word's on the Taylor reports, rows not split, frames placed differently), not from line spacing: on Taylor
-  interim page 7 rdocx, LibreOffice and Word all set the body at a 13.9 pt pitch.
-- On decks the page count is never in question (one slide, one page) and both renderers keep text on its slide;
-  LibreOffice is closer on ink (pictures and charts: F2, F3, F8, F9 cost rpptx most on the UKCES and Taylor decks)
-  and on text position for four of the five decks; rpptx is closer on the Ofsted deck (0.68 against 0.24 of the
-  words within 5 pt: LibreOffice sets Tahoma's substitute 13 pt to the right).
-- PDF producer: LibreOffice reaches an ink F1 of 0.99 to 1.00 against the PowerPoint-exported deck and against
-  three of the four decks another program wrote (Quartz, PDFMaker), so the PDF writer does not seem to limit the
-  comparison; the deck groups are too small to say more.
+The tables of `benchmark/README.md`, generated from `results/visual.json` by `report.py`. This file does not repeat the numbers: they change with each run.
 
 ### Fonts
 
@@ -192,6 +144,8 @@ past schemes and technical annex
   rdocx's Python binding falls back to system fonts too (F12), so CLI and Python can paginate differently.
 
 ## rdocx findings
+
+Met on the first run (2026-10-31, pin `401e3f42`). They were reported upstream as tensorbee/rdocx#431 to #437, and the pin the benchmark now runs on carries the fixes of all but the open gaps of `tests/gaps.py`. Kept as the record of what the benchmark found; the README has the current results.
 
 Each is a function of `findings.py` that builds its own input (python-docx, python-pptx, pptxgenjs, zlib) and
 records `reproduced` in `results/visual.json` (`rdocx_findings`); all 12 reproduce on pin 401e3f42. Shortest form:

@@ -1,7 +1,7 @@
 # Word review, collaboration, layout and rendering tasks (R01-R15)
 
 Can each stack do the task, with how much code, how many tools and processes, and how much hand-written OOXML?
-Three stacks, as `README.md` defines them: `rdocx` (pinned rdocx 0.16.4, `401e3f42`, CLI, Python and
+Three stacks, as `README.md` defines them: `rdocx` (the pinned build, CLI, Python and
 `docx_ops.py`), `builtin` (Claude's built-in docx skill: unzip / edit XML / zip with its helper scripts, pandoc to
 read, LibreOffice through `soffice.py` and pdftoppm to render), `pylib` (python-docx 1.2.0, lxml where it has no
 API). The authoring tasks D01-D14 are another section's (`NOTES.md` of this folder, if any).
@@ -50,37 +50,7 @@ It writes `results/features_docx_review.json`. Scratch files go to `.cache/work/
 
 ## Results
 
-Status / LOC / raw XML / processes / median seconds (Linux x86_64, 32 CPUs; LibreOffice 26.2.6, pandoc 3.13).
-
-| Task | rdocx | builtin | pylib |
-|---|---|---|---|
-| R01 comment on a phrase | pass / 3 / 1 / 0.06 s | pass / 29 / raw / 5 / 0.09 s | pass / 30 / raw / 1 / 0.04 s |
-| R02 reply and resolve | **fail** / 8 / 1 / 0.04 s | pass / 33 / raw / 4 / 0.06 s | pass / 34 / raw / 1 / 0.04 s |
-| R03 list comments | pass / 7 / 1 / 0.03 s | pass / 58 / 2 / 0.02 s | pass / 22 / raw / 1 / 0.04 s |
-| R04 tracked replace | pass / 5 / 2 / 0.05 s | pass / 20 / raw / 4 / 0.06 s | pass / 42 / raw / 1 / 0.04 s |
-| R05 list revisions | pass / 19 / raw / 1 / 0.03 s | **fail** / 30 / 2 / 0.02 s | pass / 22 / raw / 1 / 0.04 s |
-| R06 accept all | pass / 2 / 1 / 0.02 s | pass / 2 / 2 / 0.34 s | pass / 41 / raw / 1 / 0.04 s |
-| R07 reject one author | pass / 2 / 1 / 0.02 s | pass / 42 / raw / 3 / 0.03 s | pass / 35 / raw / 1 / 0.04 s |
-| R08 word redline | **fail** / 2 / 1 / 0.05 s | pass / 86 / raw / 4 / 0.03 s | pass / 80 / raw / 1 / 0.05 s |
-| R09 stale TOC | pass / 2 / 1 / 0.08 s | pass / 56 / raw / 6 / 0.40 s | unsupported (12 / raw) |
-| R10 PAGE, NUMPAGES, DATE | pass / 2 / 1 / 0.04 s | pass / 42 / raw / 6 / 0.39 s | unsupported (16 / raw) |
-| R11 PNG pages 1-3, two views | pass / 3 / 2 / 0.12 s | pass / 8 / 6 / 1.08 s | unsupported |
-| R12 page of each heading | pass / 11 / 1 / 0.10 s | pass / 21 / 5 / 0.42 s | unsupported |
-| R13 PDF, two views | pass / 4 / 2 / 0.05 s | pass / 6 / 4 / 0.74 s | unsupported |
-| R14 text diff | pass / 9 / 2 / 0.02 s | pass / 20 / 3 / 0.03 s | pass / 25 / 1 / 0.04 s |
-| R15 combine A + B | **fail** / 6 / 1 / 0.06 s | pass / 101 / raw / 4 / 0.04 s | pass / 78 / raw / 1 / 0.05 s |
-
-Totals: rdocx 12 pass, 3 fail, 85 LOC, raw XML in 1 task; builtin 14 pass, 1 fail, 554 LOC, raw XML in 8;
-pylib 10 pass, 5 unsupported, 437 LOC (the two fallbacks included), raw XML in 11. Every docx output of every
-stack passed the three validity checks, the failing ones included: none of the validators sees what the oracles
-caught.
-
-Reading the table: rdocx does every task in 2 to 19 lines and one or two processes, with raw XML only to get
-the text of a revision; its three failures are bugs in single calls (findings 1 to 3). The built-in skill gets
-nearly everything right but writes the OOXML by hand for 8 tasks (20 to 101 lines), and every page-aware task
-goes through LibreOffice (0.3 to 1.1 s here, against 0.02 to 0.12 s for rdocx). python-docx needs lxml for all
-but R14 and cannot paginate or render. Times are small for everyone: the differences are process starts and
-LibreOffice, not the work.
+The tables of `benchmark/README.md`, generated from `results/features_docx_review.json` by `report.py`. This file does not repeat the numbers: they change with each run.
 
 ## Judgement calls
 
@@ -142,6 +112,8 @@ LibreOffice, not the work.
 - Timings are sub-second for every non-LibreOffice implementation and mostly measure interpreter starts.
 
 ## rdocx findings
+
+Met on the first run (2026-10-31, pin `401e3f42`). They were reported upstream as tensorbee/rdocx#431 to #437, and the pin the benchmark now runs on carries the fixes of all but the open gaps of `tests/gaps.py`. Kept as the record of what the benchmark found; the README has the current results.
 
 Each reproduction builds its own input with python-docx 1.2 and runs the pinned build
 (`~/.local/share/rdocx-skills/current/bin`, pin `401e3f42`, rdocx 0.16.4).

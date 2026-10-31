@@ -172,7 +172,8 @@ Judgement calls:
 
 Checks on the real files (manifest `checks_failed`):
 
-- rdocx refuses to open both Social Impacts files (`duplicate bookmark id`, see rdocx findings); python-docx,
+- On the first run, rdocx refused to open both Social Impacts files (`duplicate bookmark id`, see rdocx findings;
+  fixed since); python-docx,
   LibreOffice and the built-in `validate.py` (main report) open them.
 - The built-in `validate.py` (without `--original`) fails four untouched Office files: Word charts with
   `c:showDLblsOverMax` / an empty `c:ext` (Taylor interim evaluation, Social Impacts appendices) and PowerPoint's
@@ -183,6 +184,8 @@ Checks on the real files (manifest `checks_failed`):
   Aptos, which neither renderer has: rdocx reports `Font 'Aptos' is approximate: selected 'Carlito'`).
 
 ## rdocx findings
+
+Met on the first run (2026-10-31, pin `401e3f42`). They were reported upstream as tensorbee/rdocx#431 to #437, and the pin the benchmark now runs on carries the fixes of all but the open gaps of `tests/gaps.py`. Kept as the record of what the benchmark found; the README has the current results.
 
 1. **rdocx refuses a document whose bookmarks share a `w:id`** (Word 2013 saved two GOV.UK reports that way:
    `_GoBack` reuses the id of a `_Toc` bookmark in the body, or of a bookmark in a header). `rdocx text`,

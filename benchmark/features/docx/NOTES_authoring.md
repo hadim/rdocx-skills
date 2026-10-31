@@ -34,32 +34,9 @@ Runner: `.cache/venv/bin/python features/docx/run_authoring.py` (all tasks, abou
   hand. For JSON/Markdown outputs, parsing parts by hand is noted (`parses the OOXML parts by hand`) but not counted.
 - **tools.** Detected from the files (imports, commands).
 
-## Results (pin 401e3f42, rdocx 0.16.4)
+## Results
 
-| Task | rdocx | builtin | pylib |
-|---|---|---|---|
-| D01 create-report | pass, 37 | pass, 53 | pass, 60, xml |
-| D02 read-all-text | pass, 14 | pass, 51 | pass, 38 |
-| D03 counted-replace | pass, 4 | pass, 41, xml | pass, 38 |
-| D04 fill-template | pass, 15 | pass, 27, xml | pass, 34, xml |
-| D05 table-edit | pass, 14 | pass, 46, xml | pass, 25, xml |
-| D06 page-setup | pass, 13 | pass, 46, xml | pass, 34, xml |
-| D07 pictures | pass, 11 | pass, 40, xml | pass, 12, xml |
-| D08 chart | pass, 13 | pass, 83, xml | pass, 36, xml |
-| D09 equation | **fail**, 11 | pass, 20, xml | pass, 15, xml |
-| D10 hyperlinks | pass, 15 | pass, 32, xml | pass, 32, xml |
-| D11 footnote | pass, 10 (invalid XSD) | pass, 35, xml | pass, 37, xml |
-| D12 styles-lists | pass, 15 | pass, 33, xml | pass, 23, xml |
-| D13 markdown-to-docx | pass, 14 | pass, 2 | pass, 64, xml |
-| D14 docx-to-markdown | pass, 2 | pass, 2 | pass, 47 |
-| total LOC | 188 | 511 | 495 |
-
-(status, LOC, `xml` = raw_xml.) Pass: rdocx 13/14, builtin 14/14, pylib 14/14. Raw XML: rdocx 0, builtin 10, pylib 11.
-All three validators pass: rdocx 10/12 .docx outputs (D09, D11 fail the built-in XSD check), builtin 12/12, pylib
-9/12 (D01 and D13: python-docx's template lacks `w:zoom/@w:percent`; D01 also appends `w:updateFields` at the end of
-the settings; D08: python-pptx's chart writer emits negative `c:axId` values). LibreOffice opens every output.
-Times: reads, conversions and creation 0.02 to 0.2 s for all stacks; rdocx edits 0.09 to 1.1 s against 0.04 to 0.26 s
-(see finding 7).
+The tables of `benchmark/README.md`, generated from `results/features_docx_authoring.json` by `report.py`. This file does not repeat the numbers: they change with each run.
 
 ## Judgement calls
 
@@ -110,6 +87,8 @@ Times: reads, conversions and creation 0.02 to 0.2 s for all stacks; rdocx edits
   grid width, which restart method).
 
 ## rdocx findings
+
+Met on the first run (2026-10-31, pin `401e3f42`). They were reported upstream as tensorbee/rdocx#431 to #437, and the pin the benchmark now runs on carries the fixes of all but the open gaps of `tests/gaps.py`. Kept as the record of what the benchmark found; the README has the current results.
 
 1. **`add_equation` writes `m:rad` without `m:deg`** for a square root (LaTeX `\sqrt{...}` and MathML `<msqrt>`).
    ECMA-376 requires `m:deg` (empty, with `m:degHide`). LibreOffice then shows empty boxes; `rdocx validate` passes,

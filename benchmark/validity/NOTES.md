@@ -1,8 +1,7 @@
 # Validity: which checks catch a broken .docx/.pptx, which generators refuse to write one
 
 Results: `results/validity.json` (regenerate with `.cache/venv/bin/python validity/run.py`, about 40 s on
-32 CPUs). Versions are in the JSON (`versions`): rdocx 0.16.4 / rpptx 0.14.4 (pin 401e3f42), python-docx
-1.2.0, python-pptx 1.0.2, docx-js 9.15.0, pptxgenjs 4.0.1, pandoc 3.13, LibreOffice 26.2.6.
+32 CPUs). Versions are in the JSON (`versions`).
 
 ## Method
 
@@ -97,123 +96,7 @@ open 60 to 90 ms, LibreOffice 0.5 to 0.6 s, pandoc 11 ms).
 
 ## Results
 
-### Bases (Part 0)
-
-| Base | Spec oracle | Flagged by |
-|---|---|---|
-| docx, rdocx | invalid: `w14:paraId` on comment paragraphs without `mc:Ignorable="w14"` (Part 3) | none |
-| docx, docx-js | valid | none |
-| docx, python-docx | invalid: `w:zoom` without the required `w:percent` (python-docx's default template) | validate.py (zoom); rdocx validate (for another reason: `CommentReference`/`CommentText` styles that python-docx 1.2's `add_comment` uses but does not define) |
-| pptx, rpptx | valid | none |
-| pptx, pptxgenjs | invalid: `notesMasterIdLst` after `sldIdLst`; three `c:axId` in `c:barChart` (max 2) | rpptx open (`read chart data failed: ChartML contains duplicate c:axId`) |
-| pptx, python-pptx | invalid: negative `c:axId` values (xs:unsignedInt) | none |
-
-No validator flags the four pptx/docx schema defects of the pptxgenjs and python-pptx charts or of the rdocx
-comments: validate.py does not schema-check pptx chart parts at all and reorders `p:presentation` before
-validating; rpptx validate does not check either.
-
-### Detection (Part 1), (mutation, base) pairs on bases the checker passes
-
-docx (31 invalid mutations, 12 controls):
-
-| Checker | All invalid | zip | package | xml | schema | reference | semantic | FP on controls |
-|---|---|---|---|---|---|---|---|---|
-| rdocx validate | 26/62 (42 %) | 4/6 | 14/14 | 4/8 | **0/20** | 4/12 | 0/2 | 2/24 |
-| rdocx open | 30/93 (32 %) | 6/9 | 12/21 | 6/12 | 0/30 | 6/18 | 0/3 | 0/36 |
-| validate.py | 52/62 (84 %) | 4/6 | 12/14 | 8/8 | 18/20 | 8/12 | 2/2 | 0/24 |
-| validate.py --original | 78/93 (84 %) | 6/9 | 18/21 | 12/12 | 27/30 | 12/18 | 3/3 | 0/36 |
-| python-docx open | 33/93 (36 %) | 6/9 | 15/21 | 9/12 | 0/30 | 3/18 | 0/3 | 3/36 |
-| LibreOffice | 32/93 (34 %) | 9/9 | 9/21 | 9/12 | 0/30 | 5/18 | 0/3 | 0/36 |
-| pandoc | 12/93 (13 %) | 6/9 | 3/21 | 3/12 | 0/30 | 0/18 | 0/3 | 0/36 |
-| stack rdocx (validate + open) | 28/62 (45 %) | 4/6 | 14/14 | 4/8 | 0/20 | 6/12 | 0/2 | 2/24 |
-| stack builtin (validate.py + LO + pandoc) | 55/62 (89 %) | 6/6 | 12/14 | 8/8 | 18/20 | 9/12 | 2/2 | 0/24 |
-
-pptx (32 invalid mutations, 11 controls, 1 office-only):
-
-| Checker | All invalid | zip | package | xml | schema | reference | semantic | FP on controls |
-|---|---|---|---|---|---|---|---|---|
-| rpptx validate | 63/94 (67 %) | 6/9 | 15/21 | 6/12 | 21/31 | 15/18 | 0/3 | 0/33 |
-| rpptx open | 34/63 (54 %) | 4/6 | 6/14 | 4/8 | 12/21 | 6/12 | 2/2 | 0/22 |
-| validate.py | 66/94 (70 %) | 6/9 | 18/21 | 12/12 | 15/31 | 15/18 | 0/3 | 0/33 |
-| python-pptx open | 37/94 (39 %) | 6/9 | 13/21 | 9/12 | 0/31 | 9/18 | 0/3 | 3/33 |
-| LibreOffice | 15/94 (16 %) | 6/9 | 6/21 | 3/12 | 0/31 | 0/18 | 0/3 | 0/33 |
-| stack rdocx (validate + open) | 46/63 (73 %) | 4/6 | 10/14 | 4/8 | 14/21 | 12/12 | 2/2 | 0/22 |
-| stack builtin (validate.py + LO) | 69/94 (73 %) | 9/9 | 18/21 | 12/12 | 15/31 | 15/18 | 0/3 | 0/33 |
-
-Caught by no checker: docx `schema_tc_no_p` (a cell without a paragraph) and `ref_dup_revision_id`; pptx
-`opc_bad_target_mode` (TargetMode="Sideways" in presentation.xml.rels), `schema_notes_master_after_slides`,
-`schema_unknown_element` (`<p:bogus/>` in a slide's shape tree) and `schema_cnvpr_no_name`.
-
-Readings:
-
-- **docx: validate.py catches 18 of 20 schema-layer pairs, rdocx validate none.** rdocx validate checks the
-  package (content types, relationships: 14/14), part well-formedness of the parts the main document relates to,
-  style ids and comment ownership, and no WordprocessingML schema rule.
-- **pptx: the two validators are complementary.** rpptx validate catches the slide-level value faults
-  validate.py lets through (negative shadow `dist`, `algn="middle"`, negative `a:ext`), because validate.py
-  reports a slide XSD error only when it is on its 7-item denylist; validate.py catches what rpptx validate
-  misses (presentation.xml reordered, a slide without its content-type Override, undeclared chart axes,
-  well-formedness of docProps/app.xml).
-- **Opening is not checking.** python-docx and python-pptx caught 0 schema faults; LibreOffice converted
-  every schema-invalid file to PDF (it repairs silently), refused 9/9 broken ZIPs in docx but rendered a pptx
-  whose first slide was truncated.
-- **No false positive on the controls** for any validator but rdocx validate's undefined-style judgement
-  (2/24). MCE AlternateContent, ignorable unknown namespaces, extension lists, custom XML parts, stored ZIP
-  items, `[Content_Types].xml` last, a 200,000-character paragraph, empty cell paragraphs, the largest legal
-  slide id and .dotx/.potx content types passed everywhere (python libraries aside on templates).
-
-### Prevention (Part 2)
-
-Outcomes per generator (`prevention_summary`): refused at the call / written invalid / written valid.
-
-| Generator | Refused at call | Written invalid | Written valid (same as the correct call) | Written valid (different) |
-|---|---|---|---|---|
-| docx-js (12 cases) | 1 | 3 | 2 | 6 |
-| pptxgenjs (18) | 0 | 10 | 2 | 6 |
-| rdocx (15) | 13 | 0 | 2 | 0 |
-| rpptx (15) | 10 | 1 | 1 | 3 |
-| python-docx (10) | 5 | 2 | 0 | 3 |
-| python-pptx (8) | 2 | 3 | 0 | 3 |
-
-- **pptxgenjs writes 10 invalid files and refuses none**: '#' or 8-digit colours on shadows and chart
-  gridlines, a negative shadow offset, a shared shadow object (second shape gets `dir`/`alpha` converted twice:
-  `dir="162000000000"`, out of range), a scheme colour in a hex-only option (`srgbClr val="bg2"`), '&' in
-  `pres.company` or a layout title (not well-formed), secondary axes without `valAxes`/`catAxes` (undeclared
-  axis ids), U+0001 in text. Caught by: validate.py 7 of 10, rpptx validate 6, rpptx open 6, python-pptx 2,
-  LibreOffice 1; **the '#' gridline colour in a chart is caught by nothing** (no checker schema-validates chart
-  parts; rpptx open fails on that deck, but equally on the correct one, for pptxgenjs' third `c:axId`). On fills
-  pptxgenjs fixes '#' and 8 digits silently (the 8-digit fill loses its alpha; text, line, table and background
-  colours behaved the same in a side probe, not recorded in the JSON). `stacked outEnd` is spec-valid
-  and flagged by validate.py only; letterSpacing, rectRadius on RECTANGLE, a misspelt placeholder and an
-  off-slide box are silently ignored or written as asked.
-- **docx-js** refuses an 8-digit colour, strips '#', drops U+0001 silently, and writes three invalid files: a
-  `PageBreak` outside a paragraph (a `w:r` in `w:body`), a comment reference to a missing comment, a negative
-  picture width; validate.py catches all three, rdocx validate the comment one.
-- **rdocx refuses 13 of 15** with an error naming the fix: 8-digit colour, negative picture size, bare int font
-  size, malformed / misordered / unknown-element / bad-enum XML through `replace_xml`, unknown style, stale run
-  handle (`StaleElementError`), comment on missing text, wrong replacement count, U+0001 in text, CLI output
-  over its input. It accepts '#' colours and normalises them.
-- **rpptx refuses 10 of 15** the same way (8-digit colour, negative shadow distance, bare int size, the four
-  `replace_xml` faults, stale paragraph handle, wrong count, CLI output over input), escapes '&' in the company
-  and a layout name and writes U+0001 as `_x0001_`, but **accepts a negative text box width and writes it**
-  (`a:ext cx="-2743200"`; rpptx validate flags the saved file).
-- **python-docx / python-pptx** refuse '#' only by accident (`int('#F', 16)`), turn 8 digits into a wrong
-  colour (`FF000080` -> `FF0080`, `00000020` -> `000020`), python-docx writes `w:sz="0"` for `font.size = 12`
-  (python-pptx refuses its `sz=0`), python-pptx accepts a negative width, and both lose an edit made through a
-  stale run handle without a word. Raw lxml writes whatever it is given (pPr after r, `w:bogus`, `p:bogus`):
-  no checker tells those python-docx files from the correct call (validate.py flags both, for the template's
-  `w:zoom`; rdocx validate passes both), and nothing flags the python-pptx `p:bogus`.
-
-Atomic save (`atomic_save`; the process may write at most 4 KiB, so the save fails midway):
-
-| Save | Input after the failure |
-|---|---|
-| rdocx `Document.save(input)`, rpptx `Presentation.save(input)` | intact (both write a temporary file and rename it) |
-| `docx_ops.save_atomic` / `pptx_ops.save_atomic` over an existing output | intact, no temporary file left |
-| python-docx `Document.save(input)` | **replaced by a valid-looking 4 KiB ZIP that lacks styles, settings, theme, comments and the picture** (zipfile writes the central directory of what it had written) |
-| python-pptx `Presentation.save(input)` | truncated to 4 KiB, not a ZIP |
-| docx-js `writeFileSync` / pptxgenjs `writeFile` over an existing output | truncated to 4 KiB, not a ZIP (the input is never written) |
-| built-in edit flow `rm -f ../out.docx && zip -Xr ../out.docx .` | input intact (never written); the previous output is gone, nothing replaces it |
+The tables of `benchmark/README.md`, generated from `results/validity.json` by `report.py`. This file does not repeat the numbers: they change with each run.
 
 ## Caveats
 
@@ -226,6 +109,8 @@ Atomic save (`atomic_save`; the process may write at most 4 KiB, so the save fai
 - Parallel timing (16 jobs) inflates every `seconds` value somewhat.
 
 ## rdocx findings
+
+Met on the first run (2026-10-31, pin `401e3f42`). They were reported upstream as tensorbee/rdocx#431 to #437, and the pin the benchmark now runs on carries the fixes of all but the open gaps of `tests/gaps.py`. Kept as the record of what the benchmark found; the README has the current results.
 
 Each with a reproduction that builds its own input (run with `$R/python`, R the rdocx `bin` folder).
 

@@ -1,6 +1,6 @@
 # features/pptx: method, judgement calls, caveats, rdocx findings
 
-Fifteen PowerPoint tasks, each done three ways (`rdocx` = rpptx 0.14.4 at pin 401e3f42, `builtin` = the built-in
+Fifteen PowerPoint tasks, each done three ways (`rdocx` = the pinned rpptx, `builtin` = the built-in
 pptx skill's documented workflow, `pylib` = python-pptx 1.0.2 with lxml where it has no API), checked by one
 neutral oracle. `run.py` regenerates `results/features_pptx.json` from scratch (about one minute; it can be run by
 task groups with `--tasks P01,P02 --merge`).
@@ -106,6 +106,8 @@ task groups with `--tasks P01,P02 --merge`).
 - Builtin LOC includes the unzip and zip boilerplate (about 7 lines per script), as the skill's workflow requires.
 
 ## rdocx findings (pin 401e3f42, rpptx 0.14.4)
+
+Met on the first run (2026-10-31, pin `401e3f42`). They were reported upstream as tensorbee/rdocx#431 to #437, and the pin the benchmark now runs on carries the fixes of all but the open gaps of `tests/gaps.py`. Kept as the record of what the benchmark found; the README has the current results.
 
 1. **A chart whose data labels have a thousands-separator number format renders as an "Unsupported chart"
    placeholder** (P12 fails on it; P02/P12/P13 deck, slide 6). `render`, `convert --to png/pdf` and the Python

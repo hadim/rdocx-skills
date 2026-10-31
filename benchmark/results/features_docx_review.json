@@ -3,7 +3,7 @@
   "versions": {
     "date": "2026-10-31",
     "machine": "Linux x86_64, 32 CPUs",
-    "rdocx_pin": "401e3f4218e6",
+    "rdocx_pin": "b3be9b6db132",
     "rdocx": "rdocx 0.16.4",
     "rpptx": "rpptx 0.14.4",
     "python-docx": "1.2.0",
@@ -35,7 +35,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.059,
+          "seconds": 0.052,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -72,15 +72,15 @@
             "builtin": "Paragraphs: 6 → 6 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.059,
-            "min": 0.058,
-            "max": 0.061,
+            "median": 0.052,
+            "min": 0.05,
+            "max": 0.055,
             "samples": [
-              0.059,
-              0.059,
-              0.058,
-              0.059,
-              0.061
+              0.054,
+              0.05,
+              0.055,
+              0.05,
+              0.052
             ]
           }
         },
@@ -100,7 +100,7 @@
           ],
           "processes": 5,
           "raw_xml": true,
-          "seconds": 0.087,
+          "seconds": 0.094,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -126,7 +126,7 @@
                 "initials": "DR",
                 "text": "Should this be 45 days?",
                 "para_ids": [
-                  "44C2E796"
+                  "731D9B9D"
                 ]
               },
               "anchor": "thirty days after delivery"
@@ -137,15 +137,15 @@
             "builtin": "Paragraphs: 6 → 6 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.087,
-            "min": 0.086,
-            "max": 0.089,
+            "median": 0.094,
+            "min": 0.093,
+            "max": 0.096,
             "samples": [
-              0.086,
-              0.087,
-              0.087,
-              0.087,
-              0.089
+              0.094,
+              0.093,
+              0.094,
+              0.096,
+              0.094
             ]
           }
         },
@@ -161,7 +161,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.044,
+          "seconds": 0.046,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -198,15 +198,15 @@
             "builtin": "Paragraphs: 6 → 6 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.044,
+            "median": 0.046,
             "min": 0.043,
-            "max": 0.045,
+            "max": 0.047,
             "samples": [
-              0.044,
+              0.047,
               0.043,
-              0.045,
-              0.044,
-              0.043
+              0.046,
+              0.047,
+              0.044
             ]
           }
         }
@@ -230,7 +230,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.044,
+          "seconds": 0.045,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -281,15 +281,15 @@
             "builtin": "Paragraphs: 4 → 4 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.044,
+            "median": 0.045,
             "min": 0.043,
-            "max": 0.055,
+            "max": 0.047,
             "samples": [
               0.043,
+              0.046,
+              0.047,
               0.045,
-              0.044,
-              0.043,
-              0.055
+              0.045
             ]
           }
         },
@@ -308,7 +308,7 @@
           ],
           "processes": 4,
           "raw_xml": true,
-          "seconds": 0.057,
+          "seconds": 0.059,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -335,7 +335,7 @@
                 "initials": "DR",
                 "text": "Agreed, changed to 45 days.",
                 "para_ids": [
-                  "54385122"
+                  "242405D4"
                 ]
               },
               "commentsExtended": {
@@ -347,7 +347,7 @@
                   null,
                   "0"
                 ],
-                "54385122": [
+                "242405D4": [
                   "1A2B0555",
                   "0"
                 ]
@@ -359,15 +359,15 @@
             "builtin": "Paragraphs: 4 → 4 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.057,
-            "min": 0.056,
-            "max": 0.058,
+            "median": 0.059,
+            "min": 0.058,
+            "max": 0.062,
             "samples": [
+              0.061,
+              0.059,
+              0.062,
               0.058,
-              0.058,
-              0.057,
-              0.057,
-              0.056
+              0.059
             ]
           }
         },
@@ -383,7 +383,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.044,
+          "seconds": 0.047,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -434,15 +434,15 @@
             "builtin": "Paragraphs: 4 → 4 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.044,
-            "min": 0.042,
-            "max": 0.045,
+            "median": 0.047,
+            "min": 0.044,
+            "max": 0.049,
             "samples": [
-              0.043,
+              0.049,
+              0.047,
               0.044,
-              0.042,
-              0.045,
-              0.044
+              0.047,
+              0.049
             ]
           }
         }
@@ -528,14 +528,14 @@
           },
           "timing": {
             "median": 0.028,
-            "min": 0.027,
-            "max": 0.028,
+            "min": 0.026,
+            "max": 0.029,
             "samples": [
-              0.027,
-              0.027,
+              0.026,
+              0.029,
+              0.026,
               0.028,
-              0.028,
-              0.028
+              0.029
             ]
           }
         },
@@ -550,7 +550,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.022,
+          "seconds": 0.024,
           "notes": "pandoc's comment-start / comment-end spans carry id, author, date and text; the anchor is rebuilt by walking the AST (tables included)",
           "check": {
             "ok": true,
@@ -607,15 +607,15 @@
             }
           },
           "timing": {
-            "median": 0.022,
+            "median": 0.024,
             "min": 0.022,
-            "max": 0.023,
+            "max": 0.026,
             "samples": [
               0.023,
               0.022,
-              0.022,
-              0.022,
-              0.022
+              0.024,
+              0.026,
+              0.024
             ]
           }
         },
@@ -631,7 +631,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.045,
+          "seconds": 0.047,
           "notes": "python-docx gives author, date and text; the anchored text needs the range markers in the body XML",
           "check": {
             "ok": true,
@@ -688,15 +688,15 @@
             }
           },
           "timing": {
-            "median": 0.045,
-            "min": 0.044,
-            "max": 0.046,
+            "median": 0.047,
+            "min": 0.046,
+            "max": 0.05,
             "samples": [
-              0.045,
-              0.045,
+              0.047,
+              0.049,
               0.046,
-              0.044,
-              0.044
+              0.05,
+              0.046
             ]
           }
         }
@@ -721,7 +721,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.048,
+          "seconds": 0.04,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -753,15 +753,15 @@
             "builtin": "Paragraphs: 11 → 11 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.048,
-            "min": 0.047,
-            "max": 0.049,
+            "median": 0.04,
+            "min": 0.039,
+            "max": 0.04,
             "samples": [
-              0.049,
-              0.048,
-              0.049,
-              0.047,
-              0.048
+              0.04,
+              0.039,
+              0.04,
+              0.04,
+              0.04
             ]
           }
         },
@@ -780,7 +780,7 @@
           ],
           "processes": 4,
           "raw_xml": true,
-          "seconds": 0.053,
+          "seconds": 0.057,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -811,15 +811,15 @@
             "builtin": "Paragraphs: 11 → 11 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.053,
-            "min": 0.052,
-            "max": 0.054,
+            "median": 0.057,
+            "min": 0.056,
+            "max": 0.06,
             "samples": [
-              0.054,
-              0.054,
-              0.052,
-              0.053,
-              0.053
+              0.057,
+              0.057,
+              0.06,
+              0.056,
+              0.058
             ]
           }
         },
@@ -835,7 +835,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.042,
+          "seconds": 0.044,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -866,15 +866,15 @@
             "builtin": "Paragraphs: 11 → 11 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.042,
-            "min": 0.041,
-            "max": 0.042,
+            "median": 0.044,
+            "min": 0.043,
+            "max": 0.048,
             "samples": [
-              0.042,
-              0.041,
-              0.042,
-              0.042,
-              0.041
+              0.044,
+              0.048,
+              0.043,
+              0.047,
+              0.043
             ]
           }
         }
@@ -948,14 +948,14 @@
           },
           "timing": {
             "median": 0.027,
-            "min": 0.027,
-            "max": 0.027,
+            "min": 0.026,
+            "max": 0.029,
             "samples": [
+              0.029,
+              0.029,
               0.027,
-              0.027,
-              0.027,
-              0.027,
-              0.027
+              0.026,
+              0.026
             ]
           }
         },
@@ -970,7 +970,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.021,
+          "seconds": 0.023,
           "notes": "pandoc --track-changes=all reports insertions and deletions (body, cells, notes) but not formatting changes (w:rPrChange): the format change is missing; oracle checks failed: format:Notices are binding, nothing_else",
           "check": {
             "ok": false,
@@ -1012,15 +1012,15 @@
             }
           },
           "timing": {
-            "median": 0.021,
+            "median": 0.023,
             "min": 0.021,
-            "max": 0.021,
+            "max": 0.025,
             "samples": [
+              0.025,
+              0.023,
               0.021,
-              0.021,
-              0.021,
-              0.021,
-              0.021
+              0.024,
+              0.023
             ]
           }
         },
@@ -1036,7 +1036,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.041,
+          "seconds": 0.047,
           "notes": "",
           "check": {
             "ok": true,
@@ -1084,15 +1084,15 @@
             }
           },
           "timing": {
-            "median": 0.041,
-            "min": 0.041,
-            "max": 0.042,
+            "median": 0.047,
+            "min": 0.043,
+            "max": 0.048,
             "samples": [
-              0.041,
-              0.041,
-              0.041,
-              0.042,
-              0.041
+              0.048,
+              0.047,
+              0.043,
+              0.045,
+              0.047
             ]
           }
         }
@@ -1116,7 +1116,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.018,
+          "seconds": 0.015,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1211,15 +1211,15 @@
             "builtin": "Paragraphs: 19 → 16 (-3)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.018,
-            "min": 0.018,
-            "max": 0.019,
+            "median": 0.015,
+            "min": 0.014,
+            "max": 0.015,
             "samples": [
-              0.019,
-              0.018,
-              0.018,
-              0.018,
-              0.018
+              0.015,
+              0.015,
+              0.014,
+              0.015,
+              0.014
             ]
           }
         },
@@ -1234,7 +1234,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.339,
+          "seconds": 0.34,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1329,13 +1329,13 @@
             "builtin": "Paragraphs: 19 → 16 (-3)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.339,
-            "min": 0.335,
-            "max": 0.341,
+            "median": 0.34,
+            "min": 0.333,
+            "max": 0.348,
             "samples": [
-              0.341,
-              0.335,
-              0.339
+              0.34,
+              0.333,
+              0.348
             ]
           }
         },
@@ -1351,7 +1351,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.042,
+          "seconds": 0.046,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1446,15 +1446,15 @@
             "builtin": "Paragraphs: 19 → 16 (-3)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.042,
-            "min": 0.041,
-            "max": 0.042,
+            "median": 0.046,
+            "min": 0.044,
+            "max": 0.046,
             "samples": [
-              0.042,
-              0.042,
-              0.042,
-              0.042,
-              0.041
+              0.044,
+              0.046,
+              0.044,
+              0.046,
+              0.046
             ]
           }
         }
@@ -1478,7 +1478,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.016,
+          "seconds": 0.013,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1571,15 +1571,15 @@
             "builtin": "Note: this document has tracked changes; they were not checked against the original (pass --author to check).\n\nParagraphs: 13 → 12 (-1)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.016,
-            "min": 0.015,
-            "max": 0.017,
+            "median": 0.013,
+            "min": 0.012,
+            "max": 0.013,
             "samples": [
-              0.015,
-              0.015,
-              0.017,
-              0.016,
-              0.016
+              0.012,
+              0.013,
+              0.013,
+              0.013,
+              0.013
             ]
           }
         },
@@ -1597,7 +1597,7 @@
           ],
           "processes": 3,
           "raw_xml": true,
-          "seconds": 0.029,
+          "seconds": 0.03,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1690,15 +1690,15 @@
             "builtin": "Note: this document has tracked changes; they were not checked against the original (pass --author to check).\n\nParagraphs: 13 → 12 (-1)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.029,
-            "min": 0.029,
-            "max": 0.03,
+            "median": 0.03,
+            "min": 0.03,
+            "max": 0.031,
             "samples": [
-              0.029,
+              0.031,
               0.03,
-              0.029,
-              0.029,
-              0.029
+              0.03,
+              0.031,
+              0.03
             ]
           }
         },
@@ -1714,7 +1714,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.041,
+          "seconds": 0.045,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1807,15 +1807,15 @@
             "builtin": "Note: this document has tracked changes; they were not checked against the original (pass --author to check).\n\nParagraphs: 13 → 12 (-1)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.041,
-            "min": 0.041,
-            "max": 0.041,
+            "median": 0.045,
+            "min": 0.044,
+            "max": 0.047,
             "samples": [
-              0.041,
-              0.041,
-              0.041,
-              0.041,
-              0.041
+              0.045,
+              0.047,
+              0.046,
+              0.044,
+              0.045
             ]
           }
         }
@@ -1829,7 +1829,7 @@
       "spec": "Produce a word-level tracked-changes redline of v1 against v2 by Dana Reviewer: accepting it gives v2, rejecting it gives v1, unchanged words stay outside the revisions.",
       "stacks": {
         "rdocx": {
-          "status": "fail",
+          "status": "pass",
           "loc": 2,
           "files": [
             "rdocx.sh"
@@ -1839,28 +1839,24 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.048,
+          "seconds": 0.039,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
             "libreoffice_opens": true
           },
-          "notes": "accepted and rejected views are right, but words that v2 merely splits into other runs (an unchanged paragraph included) come out deleted and inserted again (NOTES_review.md, finding 2); oracle checks failed: word_level",
+          "notes": "accepted and rejected views are right, but words that v2 merely splits into other runs (an unchanged paragraph included) come out deleted and inserted again (NOTES_review.md, finding 2)",
           "check": {
-            "ok": false,
+            "ok": true,
             "checks": {
               "accepted_is_v2": true,
               "rejected_is_v1": true,
               "has_revisions": true,
               "author_and_date": true,
-              "word_level": false
+              "word_level": true
             },
             "details": {
-              "unchanged_words_in_revisions": [
-                "invoice",
-                "accrues",
-                "letter"
-              ],
+              "unchanged_words_in_revisions": [],
               "accepted": [
                 [
                   "Title",
@@ -1968,15 +1964,15 @@
             "builtin": "Paragraphs: 12 → 12 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.048,
-            "min": 0.047,
-            "max": 0.051,
+            "median": 0.039,
+            "min": 0.038,
+            "max": 0.04,
             "samples": [
-              0.048,
-              0.049,
-              0.051,
-              0.047,
-              0.048
+              0.04,
+              0.039,
+              0.039,
+              0.038,
+              0.04
             ]
           }
         },
@@ -1994,7 +1990,7 @@
           ],
           "processes": 4,
           "raw_xml": true,
-          "seconds": 0.031,
+          "seconds": 0.033,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2119,15 +2115,15 @@
             "builtin": "Paragraphs: 12 → 12 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.031,
-            "min": 0.031,
+            "median": 0.033,
+            "min": 0.032,
             "max": 0.033,
             "samples": [
               0.033,
-              0.031,
-              0.031,
-              0.031,
-              0.031
+              0.033,
+              0.033,
+              0.032,
+              0.033
             ]
           }
         },
@@ -2143,7 +2139,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.046,
+          "seconds": 0.047,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2268,15 +2264,15 @@
             "builtin": "Paragraphs: 12 → 12 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.046,
-            "min": 0.044,
-            "max": 0.047,
+            "median": 0.047,
+            "min": 0.046,
+            "max": 0.051,
             "samples": [
-              0.044,
               0.047,
+              0.048,
               0.046,
-              0.046,
-              0.045
+              0.051,
+              0.046
             ]
           }
         }
@@ -2300,7 +2296,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.077,
+          "seconds": 0.08,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2359,15 +2355,15 @@
             "builtin": "Paragraphs: 37 → 41 (+4)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.077,
-            "min": 0.076,
-            "max": 0.079,
+            "median": 0.08,
+            "min": 0.079,
+            "max": 0.083,
             "samples": [
-              0.077,
-              0.077,
-              0.076,
-              0.076,
-              0.079
+              0.08,
+              0.079,
+              0.08,
+              0.079,
+              0.083
             ]
           }
         },
@@ -2387,7 +2383,7 @@
           ],
           "processes": 6,
           "raw_xml": true,
-          "seconds": 0.407,
+          "seconds": 0.408,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2446,13 +2442,13 @@
             "builtin": "Paragraphs: 37 → 41 (+4)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.407,
+            "median": 0.408,
             "min": 0.406,
-            "max": 0.41,
+            "max": 0.478,
             "samples": [
               0.406,
-              0.407,
-              0.41
+              0.408,
+              0.478
             ]
           }
         },
@@ -2468,7 +2464,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.044,
+          "seconds": 0.046,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2507,15 +2503,15 @@
             "builtin": "Paragraphs: 37 → 37 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.044,
-            "min": 0.043,
-            "max": 0.045,
+            "median": 0.046,
+            "min": 0.046,
+            "max": 0.065,
             "samples": [
-              0.045,
-              0.043,
-              0.044,
-              0.044,
-              0.043
+              0.065,
+              0.046,
+              0.046,
+              0.046,
+              0.064
             ]
           }
         }
@@ -2539,7 +2535,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.043,
+          "seconds": 0.047,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2577,15 +2573,15 @@
             "builtin": "Paragraphs: 9 → 9 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.043,
-            "min": 0.041,
-            "max": 0.043,
+            "median": 0.047,
+            "min": 0.044,
+            "max": 0.052,
             "samples": [
-              0.043,
-              0.041,
-              0.041,
-              0.043,
-              0.043
+              0.044,
+              0.051,
+              0.052,
+              0.046,
+              0.047
             ]
           }
         },
@@ -2605,7 +2601,7 @@
           ],
           "processes": 6,
           "raw_xml": true,
-          "seconds": 0.398,
+          "seconds": 0.426,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2643,13 +2639,13 @@
             "builtin": "Paragraphs: 9 → 9 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.398,
-            "min": 0.395,
-            "max": 0.399,
+            "median": 0.426,
+            "min": 0.421,
+            "max": 0.429,
             "samples": [
-              0.398,
-              0.395,
-              0.399
+              0.429,
+              0.426,
+              0.421
             ]
           }
         },
@@ -2665,7 +2661,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.044,
+          "seconds": 0.051,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2703,15 +2699,15 @@
             "builtin": "Paragraphs: 9 → 9 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.044,
-            "min": 0.042,
-            "max": 0.044,
+            "median": 0.051,
+            "min": 0.044,
+            "max": 0.053,
             "samples": [
+              0.052,
+              0.053,
               0.044,
-              0.044,
-              0.042,
-              0.044,
-              0.042
+              0.051,
+              0.051
             ]
           }
         }
@@ -2736,7 +2732,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.117,
+          "seconds": 0.132,
           "notes": "",
           "check": {
             "ok": true,
@@ -2788,15 +2784,15 @@
             }
           },
           "timing": {
-            "median": 0.117,
-            "min": 0.115,
-            "max": 0.122,
+            "median": 0.132,
+            "min": 0.124,
+            "max": 0.136,
             "samples": [
-              0.122,
-              0.122,
-              0.115,
-              0.117,
-              0.116
+              0.131,
+              0.136,
+              0.133,
+              0.132,
+              0.124
             ]
           }
         },
@@ -2813,7 +2809,7 @@
           ],
           "processes": 6,
           "raw_xml": false,
-          "seconds": 1.07,
+          "seconds": 1.095,
           "notes": "LibreOffice's PDF shows tracked changes (coloured, underlined, struck through) by default: the accepted view needs accept_changes.py first",
           "check": {
             "ok": true,
@@ -2865,13 +2861,13 @@
             }
           },
           "timing": {
-            "median": 1.07,
-            "min": 1.068,
-            "max": 1.07,
+            "median": 1.095,
+            "min": 1.092,
+            "max": 1.099,
             "samples": [
-              1.07,
-              1.068,
-              1.07
+              1.092,
+              1.099,
+              1.095
             ]
           }
         },
@@ -2907,7 +2903,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.094,
+          "seconds": 0.1,
           "notes": "",
           "check": {
             "ok": true,
@@ -2968,15 +2964,15 @@
             }
           },
           "timing": {
-            "median": 0.094,
-            "min": 0.093,
-            "max": 0.096,
+            "median": 0.1,
+            "min": 0.098,
+            "max": 0.107,
             "samples": [
-              0.096,
-              0.094,
-              0.093,
-              0.095,
-              0.094
+              0.101,
+              0.1,
+              0.1,
+              0.098,
+              0.107
             ]
           }
         },
@@ -2995,7 +2991,7 @@
           ],
           "processes": 5,
           "raw_xml": false,
-          "seconds": 0.418,
+          "seconds": 0.42,
           "notes": "",
           "check": {
             "ok": true,
@@ -3056,13 +3052,13 @@
             }
           },
           "timing": {
-            "median": 0.418,
-            "min": 0.416,
-            "max": 0.422,
+            "median": 0.42,
+            "min": 0.417,
+            "max": 0.431,
             "samples": [
-              0.416,
-              0.422,
-              0.418
+              0.42,
+              0.417,
+              0.431
             ]
           }
         },
@@ -3099,7 +3095,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.056,
+          "seconds": 0.057,
           "notes": "",
           "check": {
             "ok": true,
@@ -3122,15 +3118,15 @@
             }
           },
           "timing": {
-            "median": 0.056,
+            "median": 0.057,
             "min": 0.054,
-            "max": 0.057,
+            "max": 0.058,
             "samples": [
-              0.056,
-              0.054,
+              0.058,
               0.057,
-              0.056,
-              0.057
+              0.057,
+              0.054,
+              0.056
             ]
           }
         },
@@ -3146,7 +3142,7 @@
           ],
           "processes": 4,
           "raw_xml": false,
-          "seconds": 0.746,
+          "seconds": 0.742,
           "notes": "LibreOffice's PDF shows tracked changes by default: the accepted view needs accept_changes.py first",
           "check": {
             "ok": true,
@@ -3169,13 +3165,13 @@
             }
           },
           "timing": {
-            "median": 0.746,
-            "min": 0.739,
-            "max": 0.748,
+            "median": 0.742,
+            "min": 0.742,
+            "max": 0.747,
             "samples": [
-              0.739,
-              0.746,
-              0.748
+              0.742,
+              0.747,
+              0.742
             ]
           }
         },
@@ -3211,7 +3207,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.024,
+          "seconds": 0.023,
           "notes": "",
           "check": {
             "ok": true,
@@ -3249,14 +3245,14 @@
             }
           },
           "timing": {
-            "median": 0.024,
-            "min": 0.023,
+            "median": 0.023,
+            "min": 0.022,
             "max": 0.024,
             "samples": [
+              0.022,
+              0.024,
               0.024,
               0.023,
-              0.024,
-              0.024,
               0.023
             ]
           }
@@ -3273,7 +3269,7 @@
           ],
           "processes": 3,
           "raw_xml": false,
-          "seconds": 0.028,
+          "seconds": 0.031,
           "notes": "pandoc's plain text puts a table row on one line, so the changed cell is reported with its row",
           "check": {
             "ok": true,
@@ -3311,15 +3307,15 @@
             }
           },
           "timing": {
-            "median": 0.028,
-            "min": 0.027,
-            "max": 0.029,
+            "median": 0.031,
+            "min": 0.03,
+            "max": 0.032,
             "samples": [
-              0.029,
-              0.027,
-              0.028,
-              0.027,
-              0.028
+              0.031,
+              0.03,
+              0.03,
+              0.031,
+              0.032
             ]
           }
         },
@@ -3377,11 +3373,11 @@
             "min": 0.044,
             "max": 0.047,
             "samples": [
-              0.047,
+              0.045,
               0.045,
               0.044,
-              0.045,
-              0.045
+              0.044,
+              0.047
             ]
           }
         }
@@ -3395,7 +3391,7 @@
       "spec": "Append document B (its own styles, docDefaults, a list numbered with the same numId as A's, a picture with the same part name as A's) to the end of A, keeping B's formatting and A's.",
       "stacks": {
         "rdocx": {
-          "status": "fail",
+          "status": "pass",
           "loc": 6,
           "files": [
             "rdocx.py"
@@ -3405,21 +3401,21 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.059,
+          "seconds": 0.06,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
             "libreoffice_opens": true
           },
-          "notes": "insert_document renames B's conflicting styles (Heading1Merge1), renumbers its list and copies its picture, but drops B's w:docDefaults: B's body text falls back to A's Calibri instead of Georgia (NOTES_review.md, finding 3); oracle checks failed: b_body_font_kept",
+          "notes": "insert_document renames B's conflicting styles (Heading1Merge1), renumbers its list and copies its picture, but drops B's w:docDefaults: B's body text falls back to A's Calibri instead of Georgia (NOTES_review.md, finding 3)",
           "check": {
-            "ok": false,
+            "ok": true,
             "checks": {
               "a_then_b": true,
               "a_headings_kept": true,
               "a_body_font_kept": true,
               "b_headings_kept": true,
-              "b_body_font_kept": false,
+              "b_body_font_kept": true,
               "b_own_style_kept": true,
               "a_numbering_kept": true,
               "b_numbering_kept": true,
@@ -3534,17 +3530,17 @@
                 "Each site was visited twice during the year.": [
                   [
                     {
-                      "font": "Calibri",
+                      "font": "Georgia",
                       "size": "22"
                     }
                   ],
                   null,
-                  null
+                  "NormalMerge1"
                 ],
                 "Visits in December were postponed because of snow.": [
                   [
                     {
-                      "font": "Calibri",
+                      "font": "Georgia",
                       "size": "22",
                       "color": "00B050",
                       "i": true
@@ -3582,12 +3578,12 @@
                 "Figure B1. South site after works.": [
                   [
                     {
-                      "font": "Calibri",
+                      "font": "Georgia",
                       "size": "22"
                     }
                   ],
                   null,
-                  null
+                  "NormalMerge1"
                 ]
               },
               "pictures": [
@@ -3601,15 +3597,15 @@
             "builtin": "Paragraphs: 8 → 15 (+7)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.059,
-            "min": 0.058,
-            "max": 0.063,
+            "median": 0.06,
+            "min": 0.057,
+            "max": 0.06,
             "samples": [
+              0.06,
+              0.057,
+              0.06,
               0.059,
-              0.059,
-              0.058,
-              0.062,
-              0.063
+              0.06
             ]
           }
         },
@@ -3627,7 +3623,7 @@
           ],
           "processes": 4,
           "raw_xml": true,
-          "seconds": 0.034,
+          "seconds": 0.036,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -3823,15 +3819,15 @@
             "builtin": "Paragraphs: 8 → 15 (+7)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.034,
-            "min": 0.034,
-            "max": 0.035,
+            "median": 0.036,
+            "min": 0.035,
+            "max": 0.037,
             "samples": [
-              0.035,
-              0.034,
-              0.034,
-              0.034,
-              0.034
+              0.037,
+              0.037,
+              0.036,
+              0.036,
+              0.035
             ]
           }
         },
@@ -3847,7 +3843,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.045,
+          "seconds": 0.046,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -4043,15 +4039,15 @@
             "builtin": "Paragraphs: 8 → 15 (+7)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.045,
-            "min": 0.044,
-            "max": 0.046,
+            "median": 0.046,
+            "min": 0.045,
+            "max": 0.049,
             "samples": [
               0.045,
-              0.044,
+              0.049,
               0.046,
-              0.045,
-              0.044
+              0.048,
+              0.045
             ]
           }
         }

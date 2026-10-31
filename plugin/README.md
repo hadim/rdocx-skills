@@ -35,7 +35,7 @@ and checks Office files, so an everyday task is a call, not an XML project:
 <!-- bench:value:start -->
 | Your agent needs to... | rdocx-skills | Built-in skill | python-docx / python-pptx |
 | --- | :--- | :--- | :--- |
-| 🔀 Redline two versions of a Word file | `rdocx compare --granularity word`<br><sub>2 lines · ❌ wrong result</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>86 lines · 🧬 raw XML</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>80 lines · 🧬 raw XML</sub> |
+| 🔀 Redline two versions of a Word file | `rdocx compare --granularity word`<br><sub>2 lines</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>86 lines · 🧬 raw XML</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>80 lines · 🧬 raw XML</sub> |
 | ✅ Reject one reviewer's tracked changes | `rdocx revision reject --author`<br><sub>2 lines</sub> | the XML edited by hand<br><sub>42 lines · 🧬 raw XML</sub> | the XML edited by hand<br><sub>35 lines · 🧬 raw XML</sub> |
 | 📑 Rebuild a stale table of contents | `rdocx toc rebuild`<br><sub>2 lines</sub> | LibreOffice for the page numbers, then the TOC rewritten in XML<br><sub>56 lines · 🧬 raw XML</sub> | ➖ no pagination |
 | 💬 Comment on an exact phrase | `docx_ops.py comment`<br><sub>3 lines</sub> | `merge_runs.py`, `comment.py`, markers placed in the XML<br><sub>29 lines · 🧬 raw XML</sub> | `add_comment` on whole runs, runs split in XML<br><sub>30 lines · 🧬 raw XML</sub> |
@@ -44,7 +44,7 @@ and checks Office files, so an everyday task is a call, not an XML project:
 | 🗂️ Bring slides over from another deck | `rpptx slide import`<br><sub>2 lines</sub> | every part, layout and relationship copied in XML<br><sub>113 lines · 🧬 raw XML</sub> | OPC parts and lxml<br><sub>48 lines · 🧬 raw XML</sub> |
 | 🔁 Duplicate, move, delete and hide slides | `rpptx slide duplicate / move / remove / hide`<br><sub>13 lines</sub> | `add_slide.py`, `sldIdLst` edited, `clean.py`<br><sub>67 lines · 🧬 raw XML</sub> | deep copies and lxml (no API)<br><sub>30 lines · 🧬 raw XML</sub> |
 | 🔢 Slide numbers and a footer on every slide | `rpptx footer`<br><sub>2 lines</sub> | placeholders copied in XML<br><sub>46 lines · 🧬 raw XML</sub> | placeholders cloned, the field in lxml<br><sub>22 lines · 🧬 raw XML</sub> |
-| 📏 Find text that overflows its box | `rpptx fit`<br><sub>9 lines · ⚠️ partly</sub> | render the deck and look<br><sub>80 lines · 🧬 raw XML · ⚠️ partly</sub> | an estimator written by hand<br><sub>71 lines · 🧬 raw XML · ⚠️ partly</sub> |
+| 📏 Find text that overflows its box | `rpptx fit`<br><sub>9 lines</sub> | render the deck and look<br><sub>80 lines · 🧬 raw XML · ⚠️ partly</sub> | an estimator written by hand<br><sub>71 lines · 🧬 raw XML · ⚠️ partly</sub> |
 | 🖼️ See a page as a picture | `rdocx render --pages 1`<br><sub>3 lines</sub> | LibreOffice to PDF, then pdftoppm<br><sub>8 lines</sub> | ➖ no renderer |
 <!-- bench:value:end -->
 
@@ -130,23 +130,23 @@ call for each task.
 ## 📊 How it compares
 
 <!-- bench:date:start -->
-Run of 2026-10-31: rdocx 0.16.4 and rpptx 0.14.4 (pin `401e3f4218e6`) against the built-in skills (docx-js 9.15.0, pptxgenjs 4.0.1, LibreOffice 26.2.6.3, pandoc 3.13) and python-docx 1.2.0 / python-pptx 1.0.2.
+Run of 2026-10-31: rdocx 0.16.4 and rpptx 0.14.4 (pin `b3be9b6db132`) against the built-in skills (docx-js 9.15.0, pptxgenjs 4.0.1, LibreOffice 26.2.6.3, pandoc 3.13) and python-docx 1.2.0 / python-pptx 1.0.2.
 <!-- bench:date:end -->
 
 <!-- bench:scoreboard:start -->
 |  | rdocx-skills | Built-in skill | python-docx / python-pptx |
 | --- | :---: | :---: | :---: |
-| 🧰 Tasks done, out of 44 | 38 | **41** | 37 |
-| ✍️ Lines of code an agent writes (31 tasks all three do) | **369** | 1393 | 1017 |
+| 🧰 Tasks done, out of 44 | **43** | 41 | 37 |
+| ✍️ Lines of code an agent writes (34 tasks all three do) | **388** | 1600 | 1190 |
 | 🧬 Tasks that need hand-written OOXML | **1** | 29 | 29 |
-| 🛑 Known mistakes refused before a file is written | **77 %** | 3 % | 39 % |
-| 🔎 Corrupt or invalid docx caught by the stack's checks | 45 % | **89 %** | 36 % |
-| 🔎 Corrupt or invalid pptx caught by the stack's checks | **73 %** | **73 %** | 39 % |
-| ⚡ Every page of a 52-page Word report to PNG | **2.02 s** | 7.27 s | ➖ |
-| ⚡ Every slide of a 60-slide deck to PNG | **1.28 s** | 5.70 s | ➖ |
-| ✏️ Counted replacement in a 52-page Word report | 5.62 s | 0.42 s | **0.18 s** |
-| 🏗️ Build a 52-page Word report from scratch | 32 s | **0.28 s** | 0.47 s |
-| 🖨️ Word files with the same page count as Word's own PDF | 2 / 8 | **7 / 8** | ➖ |
+| 🛑 Known mistakes refused before a file is written | **80 %** | 3 % | 39 % |
+| 🔎 Corrupt or invalid docx caught by the stack's checks | 87 % | **89 %** | 36 % |
+| 🔎 Corrupt or invalid pptx caught by the stack's checks | **97 %** | 73 % | 39 % |
+| ⚡ Every page of a 52-page Word report to PNG | **2.13 s** | 7.38 s | ➖ |
+| ⚡ Every slide of a 60-slide deck to PNG | **1.34 s** | 5.81 s | ➖ |
+| ✏️ Counted replacement in a 52-page Word report | 3.08 s | 0.44 s | **0.19 s** |
+| 🏗️ Build a 52-page Word report from scratch | 34 s | **0.29 s** | 0.48 s |
+| 🖨️ Word files with the same page count as Word's own PDF | 4 / 8 | **7 / 8** | ➖ |
 <!-- bench:scoreboard:end -->
 
 <sub>Best value of each row in bold; ➖: the stack has no way to do it. Where rdocx-skills is behind, the cause is

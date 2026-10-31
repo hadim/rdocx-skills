@@ -2,7 +2,7 @@
   "about": "Benchmark corpus: synthetic files built by corpus/build.py (deterministic) and public files pinned in corpus/real.json (fetched into .cache/corpus/real/, never committed). Paths are relative to benchmark/. pages.libreoffice: pages of LibreOffice's PDF export (kept in .cache/corpus/lo_pdf/); pages.rdocx: rdocx page_count with the benchmark fonts; pages.app_xml: what the producing application stored (Word's own count for real files). Counts come from corpus/ooxml_stats.py (zipfile + lxml): docx paragraphs = every w:p of word/document.xml (table cells and TOC included), pictures = pic:pic + v:imagedata in the body, headers, footers and notes, revisions = w:ins + w:del + moves + property changes in those stories; pptx paragraphs = every a:p of the slides. checks: rdocx/rpptx inspect, rdocx page_count (font_dir), rdocx/rpptx validate, python-docx/python-pptx open, LibreOffice PDF export (soffice.py), the built-in skill's office/validate.py; checks_failed lists those that failed.",
   "versions": {
     "machine": "Linux x86_64, 32 CPUs",
-    "rdocx_pin": "401e3f4218e6",
+    "rdocx_pin": "b3be9b6db132",
     "rdocx": "rdocx 0.16.4",
     "rpptx": "rpptx 0.14.4",
     "python-docx": "1.2.0",
@@ -36,16 +36,8 @@
       "gov-uk-ukces-employer-skills-survey-2015-slide-pack": "acrobat-pdfmaker"
     },
     "with_failed_checks": {
-      "gov-uk-dcms-social-impacts-culture-sport": [
-        "rdocx_open",
-        "rdocx_pages",
-        "rdocx_validate"
-      ],
       "gov-uk-dcms-social-impacts-culture-sport-appendices": [
-        "builtin_validate",
-        "rdocx_open",
-        "rdocx_pages",
-        "rdocx_validate"
+        "builtin_validate"
       ],
       "gov-uk-dcms-taylor-review-interim-evaluation": [
         "builtin_validate"
@@ -60,6 +52,9 @@
         "rpptx_validate"
       ],
       "pptx-M": [
+        "rpptx_validate"
+      ],
+      "pptx-S": [
         "rpptx_validate"
       ]
     }
@@ -520,7 +515,7 @@
       "sha256": "31578705527ee9bde283a9a07b17b5f594c82dddd8ceda44a2a32e43874d5e9a",
       "pages": {
         "libreoffice": 137,
-        "rdocx": null,
+        "rdocx": 139,
         "app_xml": 1
       },
       "pages_office_pdf": 136,
@@ -591,11 +586,7 @@
           "Wingdings"
         ]
       },
-      "checks_failed": [
-        "rdocx_open",
-        "rdocx_pages",
-        "rdocx_validate"
-      ],
+      "checks_failed": [],
       "checks": {
         "builtin_validate": {
           "ok": true,
@@ -613,19 +604,25 @@
           "rc": 0
         },
         "rdocx_open": {
-          "ok": false,
-          "rc": 1,
-          "error": "Error: cannot scan identifiers in XML part /word/header2.xml: duplicate bookmark id 1 in imported or preserved XML"
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 139,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 1524,
+            "tables": 3,
+            "pictures": 16
+          }
         },
         "rdocx_pages": {
-          "ok": false,
-          "rc": 1,
-          "error": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import sys, rdocx; print(rdocx.Document(sys.argv[1]).page_count(font_dir=sys.argv[2]))\n                             ~~~~~~~~~~~~~~^^^^^^^^^^^^^\nrdocx.RdocxError: cannot scan identifiers in XML part /word/header2.xml: duplicate bookmark id 1 in imported or preserved XML"
+          "ok": true,
+          "rc": 0,
+          "pages": 139
         },
         "rdocx_validate": {
-          "ok": false,
-          "rc": 1,
-          "output": "Error: cannot scan identifiers in XML part /word/header2.xml: duplicate bookmark id 1 in imported or preserved XML"
+          "ok": true,
+          "rc": 0,
+          "output": "3 warning(s) in .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/office/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx:\n  1. bookmark id 1 is used by 2 bookmarks, in /word/document.xml, /word/header2.xml\n  2. 158 empty paragraph(s) found\n  3. Missing document title"
         }
       }
     },
@@ -641,7 +638,7 @@
       "sha256": "d073585a0277dd37120c4c443f4751dfa1305674e0134975e0de000294285ba7",
       "pages": {
         "libreoffice": 153,
-        "rdocx": null,
+        "rdocx": 163,
         "app_xml": 1
       },
       "pages_office_pdf": 153,
@@ -712,10 +709,7 @@
         ]
       },
       "checks_failed": [
-        "builtin_validate",
-        "rdocx_open",
-        "rdocx_pages",
-        "rdocx_validate"
+        "builtin_validate"
       ],
       "checks": {
         "builtin_validate": {
@@ -734,19 +728,25 @@
           "rc": 0
         },
         "rdocx_open": {
-          "ok": false,
-          "rc": 1,
-          "error": "Error: cannot scan identifiers in XML part /word/document.xml: duplicate bookmark id 2 in imported or preserved XML"
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 163,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 693,
+            "tables": 23,
+            "pictures": 30
+          }
         },
         "rdocx_pages": {
-          "ok": false,
-          "rc": 1,
-          "error": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import sys, rdocx; print(rdocx.Document(sys.argv[1]).page_count(font_dir=sys.argv[2]))\n                             ~~~~~~~~~~~~~~^^^^^^^^^^^^^\nrdocx.RdocxError: cannot scan identifiers in XML part /word/document.xml: duplicate bookmark id 2 in imported or preserved XML"
+          "ok": true,
+          "rc": 0,
+          "pages": 163
         },
         "rdocx_validate": {
-          "ok": false,
-          "rc": 1,
-          "output": "Error: cannot scan identifiers in XML part /word/document.xml: duplicate bookmark id 2 in imported or preserved XML"
+          "ok": true,
+          "rc": 0,
+          "output": "3 warning(s) in .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/office/Appendices.docx:\n  1. bookmark id 2 is used by 2 bookmarks, in /word/document.xml\n  2. 225 empty paragraph(s) found\n  3. Missing document title"
         }
       }
     },
@@ -762,7 +762,7 @@
       "sha256": "e6e71ef68d8f5aa53962273f3eb03324b51d563f37f00f544117254fffcbfb36",
       "pages": {
         "libreoffice": 66,
-        "rdocx": 67,
+        "rdocx": 69,
         "app_xml": 66
       },
       "pages_office_pdf": 66,
@@ -845,7 +845,7 @@
         "builtin_validate": {
           "ok": false,
           "rc": 1,
-          "output": "...006/chart}showDLblsOverMax': This element is not expected.\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n  word/charts/chart2.xml: 2 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}showDLblsOverMax': This element is not expected.\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n  word/charts/chart1.xml: 2 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}showDLblsOverMax': This element is not expected.\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n\nParagraphs: 4"
+          "output": "...006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}showDLblsOverMax': This element is not expected.\n  word/charts/chart2.xml: 2 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}showDLblsOverMax': This element is not expected.\n  word/charts/chart1.xml: 2 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}showDLblsOverMax': This element is not expected.\n\nParagraphs: 4"
         },
         "libreoffice_pdf": {
           "ok": true,
@@ -871,7 +871,7 @@
         "rdocx_pages": {
           "ok": true,
           "rc": 0,
-          "pages": 67
+          "pages": 69
         },
         "rdocx_validate": {
           "ok": true,
@@ -892,7 +892,7 @@
       "sha256": "77787e403c0669f4ec2bf57ec0118ac6313ec45f187013fff080f2848f4d15d0",
       "pages": {
         "libreoffice": 47,
-        "rdocx": 47,
+        "rdocx": 49,
         "app_xml": 47
       },
       "pages_office_pdf": 47,
@@ -920,7 +920,7 @@
         "pages_match": {
           "app_xml": true,
           "libreoffice": true,
-          "rdocx": true
+          "rdocx": false
         }
       },
       "counts": {
@@ -989,7 +989,7 @@
           "ok": true,
           "rc": 0,
           "summary": {
-            "page_count": 48,
+            "page_count": 47,
             "page_count_source": "deterministic-layout",
             "paragraphs": 332,
             "tables": 28,
@@ -999,7 +999,7 @@
         "rdocx_pages": {
           "ok": true,
           "rc": 0,
-          "pages": 47
+          "pages": 49
         },
         "rdocx_validate": {
           "ok": true,
@@ -1020,7 +1020,7 @@
       "sha256": "6553b31bbd2d55166ca71ea3ceef19e93e0217ccdc1108b83562cdfa189537ad",
       "pages": {
         "libreoffice": 11,
-        "rdocx": 12,
+        "rdocx": 11,
         "app_xml": 11
       },
       "pages_office_pdf": 11,
@@ -1048,7 +1048,7 @@
         "pages_match": {
           "app_xml": true,
           "libreoffice": true,
-          "rdocx": false
+          "rdocx": true
         }
       },
       "counts": {
@@ -1102,7 +1102,7 @@
           "ok": true,
           "rc": 0,
           "summary": {
-            "page_count": 12,
+            "page_count": 11,
             "page_count_source": "deterministic-layout",
             "paragraphs": 4,
             "tables": 1,
@@ -1115,7 +1115,7 @@
         "rdocx_pages": {
           "ok": true,
           "rc": 0,
-          "pages": 12
+          "pages": 11
         },
         "rdocx_validate": {
           "ok": true,
@@ -2084,7 +2084,7 @@
         "rpptx_validate": {
           "ok": false,
           "rc": 1,
-          "output": "DuplicateShapeId { slide: 23, id: 25 }\nValidation failed with 1 issue(s)"
+          "output": "/ppt/presentation.xml /p:presentation: p:notesMasterIdLst follows p:sldIdLst, out of the schema's order\nslide 24: duplicate shape ID 25, shared by more than one shape\nValidation failed with 2 issue(s)"
         }
       }
     },
@@ -2150,7 +2150,7 @@
         "rpptx_validate": {
           "ok": false,
           "rc": 1,
-          "output": "DuplicateShapeId { slide: 23, id: 25 }\nValidation failed with 1 issue(s)"
+          "output": "/ppt/presentation.xml /p:presentation: p:notesMasterIdLst follows p:sldIdLst, out of the schema's order\nslide 24: duplicate shape ID 25, shared by more than one shape\nValidation failed with 2 issue(s)"
         }
       }
     },
@@ -2250,7 +2250,9 @@
           "Cambria"
         ]
       },
-      "checks_failed": [],
+      "checks_failed": [
+        "rpptx_validate"
+      ],
       "checks": {
         "builtin_validate": {
           "ok": true,
@@ -2276,9 +2278,9 @@
           }
         },
         "rpptx_validate": {
-          "ok": true,
-          "rc": 0,
-          "output": "Validation passed: .cache/corpus/pptx/pptx-S.pptx"
+          "ok": false,
+          "rc": 1,
+          "output": "/ppt/presentation.xml /p:presentation: p:notesMasterIdLst follows p:sldIdLst, out of the schema's order\nValidation failed with 1 issue(s)"
         }
       }
     }
