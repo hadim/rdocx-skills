@@ -238,7 +238,7 @@ docx_ops.save_atomic(note, "picture-added.docx")
 ```python
 import docx_ops, rdocx
 doc = rdocx.Document.open("report.docx")
-cid = docx_ops.comment_on_text(doc, "about 12 mm", "Measured against which reference?", "Reviewer", "RV")
+doc, cid = docx_ops.commented(doc, "about 12 mm", "Measured against which reference?", "Reviewer", "RV")  # a checked copy
 rid = doc.reply_to(cid, author="Author", text="The 2019 survey marks.", date=docx_ops.now())
 doc.resolve_comment(cid)
 docx_ops.comment_on_text(doc, "spalled concrete", "Which face of the pier?", "Reviewer", in_tables=True)  # part of a cell
@@ -251,7 +251,9 @@ docx_ops.save_atomic(doc, "commented.docx", "report.docx")
 
 `comment_on_text` splits runs so that the comment covers exactly the anchor, also inside or after a content
 control or a tracked insertion, dates it, and refuses (nothing changed) if rdocx would anchor it anywhere
-else, or if the anchor sits inside a simple field, a smart tag or a custom XML element. `occurrence` counts
+else, or if the anchor sits inside a simple field, a smart tag or a custom XML element. It checks the comment on a
+copy, then anchors it again on `doc`; `commented` takes the same arguments, anchors it once and returns the checked
+copy with the id (`doc` unchanged): half the work in a large document, as `docx_ops.py comment`. `occurrence` counts
 the body's own paragraphs; with `in_tables=True` (`--in-tables`) it counts the paragraphs of table cells,
 nested tables included, and the comment covers exactly the anchor inside the cell. `add_comment` without
 `date=` writes an undated comment.
@@ -337,18 +339,19 @@ with zipfile.ZipFile("no-prompt.docx") as z:
     assert b'<w:updateFields w:val="false"/>' in z.read("word/settings.xml")
 ```
 
-A document without a table of contents gets one with `insert_toc`, then `rebuild_toc` fills it:
+A document without a table of contents gets one with `insert_toc`, before or after its headings, then
+`rebuild_toc` fills it:
 
 ```python
 import docx_ops, rdocx
 doc = rdocx.Document()
 doc.add_paragraph("Inspection report")
 doc.paragraphs[0].style = "Title"
+doc.insert_toc(1, max_level=2)                 # a TOC field at body index 1, after the title, before any heading
 for heading in ("Scope", "Findings", "Recommendations"):
     doc.add_paragraph(heading)
     doc.paragraphs[-1].style = "Heading 1"
     doc.add_paragraph("Body text. " * 300)
-doc.insert_toc(1, max_level=2)                 # a TOC field at body index 1, after the title
 rep = doc.rebuild_toc()                        # entries, links and page numbers from rdocx's pagination
 docx_ops.save_atomic(doc, "with-toc.docx")
 print(rep.entry_count)
@@ -365,7 +368,7 @@ $R/rdocx render checked.docx -o "$pages" --pages 1-3 --dpi 80
 ls "$pages"
 ```
 
-`validate` reads every part the document relates to and checks every style id. Look at
+`validate` reads every XML part, checks a subset of the schema, the references and every style id (`cli.md`). Look at
 the PNG of every page you touched. Page numbers come from rdocx's layout, which
 lays lines at Word's heights: still check in Word before quoting one as Word's.
 
