@@ -88,4 +88,14 @@ gaps closed.
 # 2026-10-28: the pin moved to the upstream release v0.16.4 (tensorbee/rdocx 24af95d3, S95.4) plus #427 and #428,
 # which adapted #409 to #412 and #414: their tests in test_docx_carried.py were deleted, passing there. Six section
 # and page calls became linear in the body there; the maintainer accepted it (ACCEPTED in test_docx_scaling.py).
-GAPS = {}
+GAPS = {
+    # upstream: tensorbee/rdocx#435 (case 5; #439 makes validate report it)
+    "docx-control-character-round-trip": "a part holding a control character XML 1.0 forbids (U+0001) opens, and "
+                                         "save() writes it back unchanged",
+    # upstream: tensorbee/rdocx#435 (case 5; #439 makes validate report it)
+    "pptx-control-character-round-trip": "a part holding a control character XML 1.0 forbids (U+0001) opens, and "
+                                         "save() writes it back unchanged",
+    # upstream: tensorbee/rdocx#433 (case 7)
+    "docx-font-fallback-by-entry-point": "for a font rdocx does not bundle, `rdocx convert`, to_pdf() and page_count() "
+                                         "/ layout() pick different fonts, and the substitution is not reported",
+}
