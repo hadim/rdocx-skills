@@ -90,7 +90,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
   `v2026.10.28` (pin `401e3f42`, `integration/open-prs-2026-10-28`).
-- Pinned: `integration/open-prs-2026-10-31` on hadim/rdocx (`e00c8f3c`): the upstream release v0.16.4 /
+- Pinned: `integration/open-prs-2026-10-31` on hadim/rdocx (`b3be9b6d`): the upstream release v0.16.4 /
   rpptx-v0.14.4 (tensorbee/rdocx `24af95d3`, sprint S95.4) plus tensorbee/rdocx#427 (#425) and #428 (#424, #426),
   and the fix pull requests of the 2026-10-31 findings (42 findings met comparing rdocx and rpptx with other Office
   libraries on synthetic tasks, grouped into tensorbee/rdocx#431 to #437): #438 (`rpptx fit` on the whole deck,
@@ -98,8 +98,8 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   bookmark ids open, negative shape sizes refused, #435), #440 (layout and render, #433), #441 (markup rdocx writes,
   #432), #442 (EMF, interlaced PNG, chart formats and exports, hidden shapes, #436), #443 (cell setters in place,
   the styles parse kept across edits, #437) and #444 (comment markup, compare over split runs, revision text,
-  `insert_document` defaults and lists, #434), with a merge fix of #444 on #443 and #439 counting `gridSpan` in
-  `rpptx validate`. Their tests are in
+  `insert_document` defaults and lists, #434), with a merge fix of #444 on #443, #439 counting `gridSpan` in
+  `rpptx validate`, and #441 merging an empty cell whose paragraph carries properties. Their tests are in
   `tests/test_docx_carried.py` and `tests/test_pptx_carried.py`, each naming its pull request. Upstream does not
   merge pull requests from here: it adapts them in a sprint and closes them, so pin its `main` or its tags again once
   a sprint carries them, and delete those tests then.
@@ -113,7 +113,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   28/10/2026 (the docx gap page gives the costs). #443 made cell paragraph setters and edits with a large
   `styles.xml` flat (its cases are timed in test_docx_carried.py), but in a cell inside a content control; `cell.text`,
   `cell.vertical_alignment` and `cell.shading` still grow with the body.
-- Suite against `e00c8f3c` on Linux (local): see the pin's pull request. Run `tests/test_docs_snippets.py`
+- Suite against `b3be9b6d` on Linux (local): see the pin's pull request. Run `tests/test_docs_snippets.py`
   without `-n`: its blocks chain files, and xdist spreads them over workers. The docx SKILL.md is a few bytes under its
   16,000-byte budget.
 - `rdocx_env.py build` exports the source with the commit's time only over a build folder whose last build was that
