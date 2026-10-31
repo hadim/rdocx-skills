@@ -283,6 +283,23 @@ def test_merge_drops_the_empty_paragraph_of_an_empty_cell(shape, first, second, 
 
 
 # carried by tensorbee/rdocx#441 (#432), delete once upstream main has it
+@pytest.mark.parametrize("how", ["grid_span", "merge"])
+def test_a_cell_holding_only_paragraph_properties_merges_as_an_empty_cell(how):
+    """An empty cell whose paragraph carries properties (a right-aligned totals column, or a cell made by
+    insert_column next to one) merges as an empty cell: set_cell_grid_span and Cell.merge used to raise "horizontal
+    merge cannot consume a nonempty cell" (python-api.md, Tables, merge)."""
+    doc = rdocx.Document()
+    table = doc.add_table(1, 3, style="Table Grid")
+    table.cell(0, 0).text = "Total"
+    table.cell(0, 1).paragraphs[0].alignment = rdocx.WD_ALIGN_PARAGRAPH.RIGHT
+    if how == "grid_span":
+        doc.tables[0].set_cell_grid_span(0, 0, 2)
+    else:
+        doc.tables[0].cell(0, 0).merge(doc.tables[0].cell(0, 1))
+    assert [p.text for p in doc.tables[0].cell(0, 0).paragraphs] == ["Total"]
+
+
+# carried by tensorbee/rdocx#441 (#432), delete once upstream main has it
 @pytest.mark.parametrize("edit, cell", [("insert_column", (0, 2)), ("add_row", (2, 1))])
 def test_new_cells_keep_the_paragraph_formatting_of_their_source(edit, cell):
     """A cell made by insert_column or add_row gets the source cell's paragraph properties and the run properties of

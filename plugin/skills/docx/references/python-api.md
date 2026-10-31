@@ -258,7 +258,7 @@ it), `autofit` (False writes a fixed layout), `first_row`, `last_row`, `first_co
 `Row.cells` (a merged cell appears once: use `cells[-1]` for the last column); `Cell`: `text` (settable),
 `replace_text(old, new, *, expect=None)` → int (as `Paragraph.replace_text`, over the cell), `paragraphs`,
 `add_paragraph(text)`, `add_table(rows, cols)` (a nested table sized to the cell) and `tables`,
-`add_picture(...)`, `merge(other)` → the merged `Cell` (an empty cell adds no blank paragraph), `split()` (undoes a horizontal merge), `width`
+`add_picture(...)`, `merge(other)` → the merged `Cell` (an empty cell adds no blank paragraph, also when its paragraph carries properties such as an alignment; `set_cell_grid_span` likewise), `split()` (undoes a horizontal merge), `width`
 (settable: writes the cell width, not the table grid), `vertical_alignment` (`WD_CELL_VERTICAL_ALIGNMENT`),
 `shading` (fill, settable, reads an `RGBColor`), `grid_span`, `vertical_merge`, `border(edge)` and
 `set_border(edge, style, *, size, color)` (this cell), `margins` and `set_margins(*, top, right, bottom,
