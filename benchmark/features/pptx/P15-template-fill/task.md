@@ -1,0 +1,1 @@
+From a .potx template, make a .pptx with 3 slides filled through placeholders: a title slide (title, subtitle), a bullet slide (title, body) and a picture slide (title, picture placeholder, caption); the template's instruction slide must not remain.

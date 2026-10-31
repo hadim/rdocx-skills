@@ -1,0 +1,1 @@
+D11 footnote: add the footnote 'Source: field survey 2026.' with its reference mark right after the sentence 'The survey covered 120 sites.', which ends inside a run in the middle of its paragraph; the document has no footnotes part yet; args: `input.docx OUT.docx`.

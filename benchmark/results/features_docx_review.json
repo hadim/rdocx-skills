@@ -1,0 +1,4061 @@
+{
+  "section": "features_docx_review",
+  "versions": {
+    "date": "2026-10-31",
+    "machine": "Linux x86_64, 32 CPUs",
+    "rdocx_pin": "401e3f4218e6",
+    "rdocx": "rdocx 0.16.4",
+    "rpptx": "rpptx 0.14.4",
+    "python-docx": "1.2.0",
+    "python-pptx": "1.0.2",
+    "docx-js": "9.15.0",
+    "pptxgenjs": "4.0.1",
+    "node": "v26.10.0",
+    "pandoc": "pandoc 3.13",
+    "libreoffice": "LibreOffice 26.2.6.3 620(Build:3)",
+    "pdftoppm": "pdftoppm version 26.01.0",
+    "builtin_skills_sha256": "5883fcb286af5337"
+  },
+  "tasks": [
+    {
+      "id": "R01",
+      "slug": "R01-comment-on-phrase",
+      "title": "Comment on a phrase split across runs",
+      "category": "review",
+      "spec": "Add a comment \"Should this be 45 days?\" by Dana Reviewer (DR), dated 2026-10-30T09:00:00Z, anchored exactly on \"thirty days after delivery\", which Word split over four runs.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 3,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "docx_ops.py comment"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.059,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "one_new_comment": true,
+              "text": true,
+              "initials": true,
+              "date": true,
+              "anchor_exact": true,
+              "reference_mark": true,
+              "old_comment_kept": true,
+              "body_unchanged": true
+            },
+            "details": {
+              "new": {
+                "author": "Dana Reviewer",
+                "date": "2026-10-30T09:00:00Z",
+                "initials": "DR",
+                "text": "Should this be 45 days?",
+                "para_ids": [
+                  "1A2B0778"
+                ]
+              },
+              "anchor": "thirty days after delivery"
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R01-comment-on-phrase/rdocx/out.docx",
+            "builtin": "Paragraphs: 6 → 6 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.059,
+            "min": 0.058,
+            "max": 0.061,
+            "samples": [
+              0.059,
+              0.059,
+              0.058,
+              0.059,
+              0.061
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 29,
+          "files": [
+            "builtin.sh",
+            "builtin_edit.py"
+          ],
+          "tools": [
+            "unzip",
+            "merge_runs.py",
+            "comment.py",
+            "python (XML edit)",
+            "zip"
+          ],
+          "processes": 5,
+          "raw_xml": true,
+          "seconds": 0.087,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "one_new_comment": true,
+              "text": true,
+              "initials": true,
+              "date": true,
+              "anchor_exact": true,
+              "reference_mark": true,
+              "old_comment_kept": true,
+              "body_unchanged": true
+            },
+            "details": {
+              "new": {
+                "author": "Dana Reviewer",
+                "date": "2026-10-30T09:00:00Z",
+                "initials": "DR",
+                "text": "Should this be 45 days?",
+                "para_ids": [
+                  "44C2E796"
+                ]
+              },
+              "anchor": "thirty days after delivery"
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R01-comment-on-phrase/builtin/out.docx",
+            "builtin": "Paragraphs: 6 → 6 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.087,
+            "min": 0.086,
+            "max": 0.089,
+            "samples": [
+              0.086,
+              0.087,
+              0.087,
+              0.087,
+              0.089
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 30,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (run split, comment date)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.044,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "python-docx anchors on whole runs only: the runs are split by copying their XML; the comment gets no w14:paraId and no commentsExtended entry; the date has no public setter",
+          "check": {
+            "ok": true,
+            "checks": {
+              "one_new_comment": true,
+              "text": true,
+              "initials": true,
+              "date": true,
+              "anchor_exact": true,
+              "reference_mark": true,
+              "old_comment_kept": true,
+              "body_unchanged": true
+            },
+            "details": {
+              "new": {
+                "author": "Dana Reviewer",
+                "date": "2026-10-30T09:00:00Z",
+                "initials": "DR",
+                "text": "Should this be 45 days?",
+                "para_ids": [
+                  null
+                ]
+              },
+              "anchor": "thirty days after delivery"
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R01-comment-on-phrase/pylib/out.docx",
+            "builtin": "Paragraphs: 6 → 6 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.044,
+            "min": 0.043,
+            "max": 0.045,
+            "samples": [
+              0.044,
+              0.043,
+              0.045,
+              0.044,
+              0.043
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R02",
+      "slug": "R02-reply-resolve",
+      "title": "Reply to a comment and resolve the thread",
+      "category": "review",
+      "spec": "Reply \"Agreed, changed to 45 days.\" as Dana Reviewer (dated 2026-10-30T10:00:00Z) to Alex Author's comment, and mark that thread resolved; the other thread stays open.",
+      "stacks": {
+        "rdocx": {
+          "status": "fail",
+          "loc": 8,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx Python"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.044,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "reply_to threads the reply in commentsExtended.xml and resolves the parent, but writes no range or reference mark for the reply in document.xml (nor a commentsIds entry, nor initials: reply_to has no initials argument); LibreOffice drops the reply on import, and Word writes a reference for every reply (NOTES_review.md, finding 1); oracle checks failed: reply_referenced",
+          "check": {
+            "ok": false,
+            "checks": {
+              "one_reply": true,
+              "text": true,
+              "date": true,
+              "threaded_under_parent": true,
+              "thread_resolved": true,
+              "other_thread_open": true,
+              "reply_referenced": false,
+              "parents_unchanged": true,
+              "body_unchanged": true
+            },
+            "details": {
+              "reply": {
+                "author": "Dana Reviewer",
+                "date": "2026-10-30T10:00:00Z",
+                "initials": null,
+                "text": "Agreed, changed to 45 days.",
+                "para_ids": [
+                  "1A2B0667"
+                ]
+              },
+              "commentsExtended": {
+                "1A2B0555": [
+                  null,
+                  "1"
+                ],
+                "1A2B0666": [
+                  null,
+                  "0"
+                ],
+                "1A2B0667": [
+                  "1A2B0555",
+                  null
+                ]
+              }
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R02-reply-resolve/rdocx/out.docx",
+            "builtin": "Paragraphs: 4 → 4 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.044,
+            "min": 0.043,
+            "max": 0.055,
+            "samples": [
+              0.043,
+              0.045,
+              0.044,
+              0.043,
+              0.055
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 33,
+          "files": [
+            "builtin.sh",
+            "builtin_edit.py"
+          ],
+          "tools": [
+            "unzip",
+            "comment.py",
+            "python (XML edit)",
+            "zip"
+          ],
+          "processes": 4,
+          "raw_xml": true,
+          "seconds": 0.057,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "one_reply": true,
+              "text": true,
+              "date": true,
+              "threaded_under_parent": true,
+              "thread_resolved": true,
+              "other_thread_open": true,
+              "reply_referenced": true,
+              "parents_unchanged": true,
+              "body_unchanged": true
+            },
+            "details": {
+              "reply": {
+                "author": "Dana Reviewer",
+                "date": "2026-10-30T10:00:00Z",
+                "initials": "DR",
+                "text": "Agreed, changed to 45 days.",
+                "para_ids": [
+                  "54385122"
+                ]
+              },
+              "commentsExtended": {
+                "1A2B0555": [
+                  null,
+                  "1"
+                ],
+                "1A2B0666": [
+                  null,
+                  "0"
+                ],
+                "54385122": [
+                  "1A2B0555",
+                  "0"
+                ]
+              }
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R02-reply-resolve/builtin/out.docx",
+            "builtin": "Paragraphs: 4 → 4 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.057,
+            "min": 0.056,
+            "max": 0.058,
+            "samples": [
+              0.058,
+              0.058,
+              0.057,
+              0.057,
+              0.056
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 34,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (markers, commentsExtended)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.044,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "one_reply": true,
+              "text": true,
+              "date": true,
+              "threaded_under_parent": true,
+              "thread_resolved": true,
+              "other_thread_open": true,
+              "reply_referenced": true,
+              "parents_unchanged": true,
+              "body_unchanged": true
+            },
+            "details": {
+              "reply": {
+                "author": "Dana Reviewer",
+                "date": "2026-10-30T10:00:00Z",
+                "initials": "DR",
+                "text": "Agreed, changed to 45 days.",
+                "para_ids": [
+                  "7E3A1C01"
+                ]
+              },
+              "commentsExtended": {
+                "1A2B0555": [
+                  null,
+                  "1"
+                ],
+                "1A2B0666": [
+                  null,
+                  "0"
+                ],
+                "7E3A1C01": [
+                  "1A2B0555",
+                  "0"
+                ]
+              }
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R02-reply-resolve/pylib/out.docx",
+            "builtin": "Paragraphs: 4 → 4 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.044,
+            "min": 0.042,
+            "max": 0.045,
+            "samples": [
+              0.043,
+              0.044,
+              0.042,
+              0.045,
+              0.044
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R03",
+      "slug": "R03-list-comments",
+      "title": "List comments with their anchored text",
+      "category": "review",
+      "spec": "List every comment as JSON: id, author, date, text and the exact text it is anchored on (replies included; a reply may give its parent's anchor or null).",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 7,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx Python"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.028,
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "all_listed": true,
+              "0_author": true,
+              "0_date": true,
+              "0_text": true,
+              "0_anchor": true,
+              "1_author": true,
+              "1_date": true,
+              "1_text": true,
+              "1_anchor": true,
+              "2_author": true,
+              "2_date": true,
+              "2_text": true,
+              "2_anchor": true,
+              "3_author": true,
+              "3_date": true,
+              "3_text": true,
+              "3_anchor": true
+            },
+            "details": {
+              "rows": {
+                "0": {
+                  "id": 0,
+                  "author": "Alex Author",
+                  "date": "2026-10-01T08:30:00Z",
+                  "text": "Customers asked for 45 days.\nSee the email of 28 September.",
+                  "anchor": "within thirty days",
+                  "parent": null
+                },
+                "1": {
+                  "id": 1,
+                  "author": "Dana Reviewer",
+                  "date": "2026-10-03T16:45:00Z",
+                  "text": "Agreed, let us discuss it on Monday.",
+                  "anchor": "within thirty days",
+                  "parent": 0
+                },
+                "2": {
+                  "id": 2,
+                  "author": "Sam Lee",
+                  "date": "2026-10-02T14:05:00Z",
+                  "text": "Does delay start before delivery?",
+                  "anchor": "from the first day of delay.\nDelivery takes place",
+                  "parent": null
+                },
+                "3": {
+                  "id": 3,
+                  "author": "Alex Author",
+                  "date": "2026-10-04T11:20:00Z",
+                  "text": "Net 30 contradicts clause 1.",
+                  "anchor": "net 30",
+                  "parent": null
+                }
+              }
+            }
+          },
+          "timing": {
+            "median": 0.028,
+            "min": 0.027,
+            "max": 0.028,
+            "samples": [
+              0.027,
+              0.027,
+              0.028,
+              0.028,
+              0.028
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 58,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "pandoc --track-changes=all -t json"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.022,
+          "notes": "pandoc's comment-start / comment-end spans carry id, author, date and text; the anchor is rebuilt by walking the AST (tables included)",
+          "check": {
+            "ok": true,
+            "checks": {
+              "all_listed": true,
+              "0_author": true,
+              "0_date": true,
+              "0_text": true,
+              "0_anchor": true,
+              "1_author": true,
+              "1_date": true,
+              "1_text": true,
+              "1_anchor": true,
+              "2_author": true,
+              "2_date": true,
+              "2_text": true,
+              "2_anchor": true,
+              "3_author": true,
+              "3_date": true,
+              "3_text": true,
+              "3_anchor": true
+            },
+            "details": {
+              "rows": {
+                "0": {
+                  "id": 0,
+                  "author": "Alex Author",
+                  "date": "2026-10-01T08:30:00Z",
+                  "text": "Customers asked for 45 days.\nSee the email of 28 September.",
+                  "anchor": "within thirty days"
+                },
+                "1": {
+                  "id": 1,
+                  "author": "Dana Reviewer",
+                  "date": "2026-10-03T16:45:00Z",
+                  "text": "Agreed, let us discuss it on Monday.",
+                  "anchor": "within thirty days"
+                },
+                "2": {
+                  "id": 2,
+                  "author": "Sam Lee",
+                  "date": "2026-10-02T14:05:00Z",
+                  "text": "Does delay start before delivery?",
+                  "anchor": "from the first day of delay.\nDelivery takes place"
+                },
+                "3": {
+                  "id": 3,
+                  "author": "Alex Author",
+                  "date": "2026-10-04T11:20:00Z",
+                  "text": "Net 30 contradicts clause 1.",
+                  "anchor": "net 30"
+                }
+              }
+            }
+          },
+          "timing": {
+            "median": 0.022,
+            "min": 0.022,
+            "max": 0.023,
+            "samples": [
+              0.023,
+              0.022,
+              0.022,
+              0.022,
+              0.022
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 22,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (anchored text)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.045,
+          "notes": "python-docx gives author, date and text; the anchored text needs the range markers in the body XML",
+          "check": {
+            "ok": true,
+            "checks": {
+              "all_listed": true,
+              "0_author": true,
+              "0_date": true,
+              "0_text": true,
+              "0_anchor": true,
+              "1_author": true,
+              "1_date": true,
+              "1_text": true,
+              "1_anchor": true,
+              "2_author": true,
+              "2_date": true,
+              "2_text": true,
+              "2_anchor": true,
+              "3_author": true,
+              "3_date": true,
+              "3_text": true,
+              "3_anchor": true
+            },
+            "details": {
+              "rows": {
+                "0": {
+                  "id": 0,
+                  "author": "Alex Author",
+                  "date": "2026-10-01T08:30:00Z",
+                  "text": "Customers asked for 45 days.\nSee the email of 28 September.",
+                  "anchor": "within thirty days"
+                },
+                "1": {
+                  "id": 1,
+                  "author": "Dana Reviewer",
+                  "date": "2026-10-03T16:45:00Z",
+                  "text": "Agreed, let us discuss it on Monday.",
+                  "anchor": "within thirty days"
+                },
+                "2": {
+                  "id": 2,
+                  "author": "Sam Lee",
+                  "date": "2026-10-02T14:05:00Z",
+                  "text": "Does delay start before delivery?",
+                  "anchor": "from the first day of delay.\nDelivery takes place"
+                },
+                "3": {
+                  "id": 3,
+                  "author": "Alex Author",
+                  "date": "2026-10-04T11:20:00Z",
+                  "text": "Net 30 contradicts clause 1.",
+                  "anchor": "net 30"
+                }
+              }
+            }
+          },
+          "timing": {
+            "median": 0.045,
+            "min": 0.044,
+            "max": 0.046,
+            "samples": [
+              0.045,
+              0.045,
+              0.046,
+              0.044,
+              0.044
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R04",
+      "slug": "R04-tracked-replace",
+      "title": "Replace a word as a tracked change",
+      "category": "review",
+      "spec": "Replace \"thirty\" with \"forty-five\" in the payment clause as a tracked change by Dana Reviewer dated 2026-10-30T11:00:00Z (a deletion and an insertion), changing nothing else.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 5,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rdocx replace",
+            "rdocx compare --granularity word"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.048,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "accepted_view": true,
+              "rejected_view": true,
+              "deleted_is_old_word": true,
+              "inserted_is_new_word": true,
+              "only_ins_del": true,
+              "author_and_date": true
+            },
+            "details": {
+              "deleted": "thirty",
+              "inserted": "forty-five",
+              "revisions": [
+                "del",
+                "del",
+                "ins"
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "1 warning(s) in $BENCH/.cache/work/features_docx_review/R04-tracked-replace/rdocx/out.docx:\n  1. 1 empty paragraph(s) found",
+            "builtin": "Paragraphs: 11 → 11 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.048,
+            "min": 0.047,
+            "max": 0.049,
+            "samples": [
+              0.049,
+              0.048,
+              0.049,
+              0.047,
+              0.048
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 20,
+          "files": [
+            "builtin.sh",
+            "builtin_edit.py"
+          ],
+          "tools": [
+            "unzip",
+            "merge_runs.py",
+            "python (XML edit)",
+            "zip"
+          ],
+          "processes": 4,
+          "raw_xml": true,
+          "seconds": 0.053,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "accepted_view": true,
+              "rejected_view": true,
+              "deleted_is_old_word": true,
+              "inserted_is_new_word": true,
+              "only_ins_del": true,
+              "author_and_date": true
+            },
+            "details": {
+              "deleted": "thirty",
+              "inserted": "forty-five",
+              "revisions": [
+                "del",
+                "ins"
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "1 warning(s) in $BENCH/.cache/work/features_docx_review/R04-tracked-replace/builtin/out.docx:\n  1. 1 empty paragraph(s) found",
+            "builtin": "Paragraphs: 11 → 11 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.053,
+            "min": 0.052,
+            "max": 0.054,
+            "samples": [
+              0.054,
+              0.054,
+              0.052,
+              0.053,
+              0.053
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 42,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (w:ins / w:del)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.042,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "accepted_view": true,
+              "rejected_view": true,
+              "deleted_is_old_word": true,
+              "inserted_is_new_word": true,
+              "only_ins_del": true,
+              "author_and_date": true
+            },
+            "details": {
+              "deleted": "thirty",
+              "inserted": "forty-five",
+              "revisions": [
+                "del",
+                "ins"
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "1 warning(s) in $BENCH/.cache/work/features_docx_review/R04-tracked-replace/pylib/out.docx:\n  1. 1 empty paragraph(s) found",
+            "builtin": "Paragraphs: 11 → 11 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.042,
+            "min": 0.041,
+            "max": 0.042,
+            "samples": [
+              0.042,
+              0.041,
+              0.042,
+              0.042,
+              0.041
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R05",
+      "slug": "R05-list-revisions",
+      "title": "List tracked changes",
+      "category": "review",
+      "spec": "List every tracked change as JSON (type insert/delete/format, author, date, text), in the body, a table cell and a footnote.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 19,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx Python",
+            "part_xml + ElementTree (revision text)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.027,
+          "notes": "rdocx lists each revision's id, kind, author, date and story but not its text: the text comes from part_xml, parsed with ElementTree (NOTES_review.md, finding 4)",
+          "check": {
+            "ok": true,
+            "checks": {
+              "insert:and on receipt of a valid invoice": true,
+              "delete:statutory": true,
+              "format:Notices are binding": true,
+              "insert:Unit 4,": true,
+              "delete:as amended": true,
+              "nothing_else": true
+            },
+            "details": {
+              "got": [
+                [
+                  "delete",
+                  "Alex Author",
+                  "2026-10-05T10:10:00",
+                  "as amended"
+                ],
+                [
+                  "delete",
+                  "Dana Reviewer",
+                  "2026-10-06T09:15:00",
+                  "statutory"
+                ],
+                [
+                  "format",
+                  "Alex Author",
+                  "2026-10-05T10:05:00",
+                  "Notices are binding"
+                ],
+                [
+                  "insert",
+                  "Alex Author",
+                  "2026-10-05T10:00:00",
+                  "and on receipt of a valid invoice"
+                ],
+                [
+                  "insert",
+                  "Dana Reviewer",
+                  "2026-10-06T09:20:00",
+                  "Unit 4,"
+                ]
+              ]
+            }
+          },
+          "timing": {
+            "median": 0.027,
+            "min": 0.027,
+            "max": 0.027,
+            "samples": [
+              0.027,
+              0.027,
+              0.027,
+              0.027,
+              0.027
+            ]
+          }
+        },
+        "builtin": {
+          "status": "fail",
+          "loc": 30,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "pandoc --track-changes=all -t json"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.021,
+          "notes": "pandoc --track-changes=all reports insertions and deletions (body, cells, notes) but not formatting changes (w:rPrChange): the format change is missing; oracle checks failed: format:Notices are binding, nothing_else",
+          "check": {
+            "ok": false,
+            "checks": {
+              "insert:and on receipt of a valid invoice": true,
+              "delete:statutory": true,
+              "format:Notices are binding": false,
+              "insert:Unit 4,": true,
+              "delete:as amended": true,
+              "nothing_else": false
+            },
+            "details": {
+              "got": [
+                [
+                  "delete",
+                  "Alex Author",
+                  "2026-10-05T10:10:00",
+                  "as amended"
+                ],
+                [
+                  "delete",
+                  "Dana Reviewer",
+                  "2026-10-06T09:15:00",
+                  "statutory"
+                ],
+                [
+                  "insert",
+                  "Alex Author",
+                  "2026-10-05T10:00:00",
+                  "and on receipt of a valid invoice"
+                ],
+                [
+                  "insert",
+                  "Dana Reviewer",
+                  "2026-10-06T09:20:00",
+                  "Unit 4,"
+                ]
+              ]
+            }
+          },
+          "timing": {
+            "median": 0.021,
+            "min": 0.021,
+            "max": 0.021,
+            "samples": [
+              0.021,
+              0.021,
+              0.021,
+              0.021,
+              0.021
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 22,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (w:ins, w:del, w:rPrChange)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.041,
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "insert:and on receipt of a valid invoice": true,
+              "delete:statutory": true,
+              "format:Notices are binding": true,
+              "insert:Unit 4,": true,
+              "delete:as amended": true,
+              "nothing_else": true
+            },
+            "details": {
+              "got": [
+                [
+                  "delete",
+                  "Alex Author",
+                  "2026-10-05T10:10:00",
+                  "as amended"
+                ],
+                [
+                  "delete",
+                  "Dana Reviewer",
+                  "2026-10-06T09:15:00",
+                  "statutory"
+                ],
+                [
+                  "format",
+                  "Alex Author",
+                  "2026-10-05T10:05:00",
+                  "Notices are binding"
+                ],
+                [
+                  "insert",
+                  "Alex Author",
+                  "2026-10-05T10:00:00",
+                  "and on receipt of a valid invoice"
+                ],
+                [
+                  "insert",
+                  "Dana Reviewer",
+                  "2026-10-06T09:20:00",
+                  "Unit 4,"
+                ]
+              ]
+            }
+          },
+          "timing": {
+            "median": 0.041,
+            "min": 0.041,
+            "max": 0.042,
+            "samples": [
+              0.041,
+              0.041,
+              0.041,
+              0.042,
+              0.041
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R06",
+      "slug": "R06-accept-all",
+      "title": "Accept all tracked changes",
+      "category": "review",
+      "spec": "Accept every tracked change (inline, inserted and deleted paragraphs, a deleted paragraph before an empty spacer, a formatting change, a table cell, a footnote): no revision left, no empty paragraph left where a whole paragraph was deleted.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rdocx revision accept"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.018,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "no_revisions_left": true,
+              "accepted_text": true,
+              "styles_kept": true,
+              "no_leftover_empty_paragraph": true,
+              "no_empty_list_item": true,
+              "format_change_kept": true,
+              "footnote_accepted": true
+            },
+            "details": {
+              "body": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within forty-five days after delivery."
+                ],
+                [
+                  "Normal",
+                  "Invoices are sent by email."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the statutory rate from the first day of delay."
+                ],
+                [
+                  "Normal",
+                  "Accepted payment methods:"
+                ],
+                [
+                  "ListParagraph",
+                  "Bank transfer"
+                ],
+                [
+                  "ListParagraph",
+                  "Card"
+                ],
+                [
+                  "Normal",
+                  ""
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are binding once received at the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "12 Harbour Road, Unit 4, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ],
+              "footnotes": [
+                "Late Payment of Commercial Debts Act 1998, as amended."
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "1 warning(s) in $BENCH/.cache/work/features_docx_review/R06-accept-all/rdocx/out.docx:\n  1. 1 empty paragraph(s) found",
+            "builtin": "Paragraphs: 19 → 16 (-3)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.018,
+            "min": 0.018,
+            "max": 0.019,
+            "samples": [
+              0.019,
+              0.018,
+              0.018,
+              0.018,
+              0.018
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 2,
+          "files": [
+            "builtin.sh"
+          ],
+          "tools": [
+            "accept_changes.py (LibreOffice)"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.339,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "the case the skill warns about (a deleted paragraph before an empty spacer paragraph, also as the last item of a bulleted list) came out right with LibreOffice 26.2",
+          "check": {
+            "ok": true,
+            "checks": {
+              "no_revisions_left": true,
+              "accepted_text": true,
+              "styles_kept": true,
+              "no_leftover_empty_paragraph": true,
+              "no_empty_list_item": true,
+              "format_change_kept": true,
+              "footnote_accepted": true
+            },
+            "details": {
+              "body": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within forty-five days after delivery."
+                ],
+                [
+                  "Normal",
+                  "Invoices are sent by email."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the statutory rate from the first day of delay."
+                ],
+                [
+                  "Normal",
+                  "Accepted payment methods:"
+                ],
+                [
+                  "ListParagraph",
+                  "Bank transfer"
+                ],
+                [
+                  "ListParagraph",
+                  "Card"
+                ],
+                [
+                  "Normal",
+                  ""
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are binding once received at the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "12 Harbour Road, Unit 4, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ],
+              "footnotes": [
+                "Late Payment of Commercial Debts Act 1998, as amended."
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "1 warning(s) in $BENCH/.cache/work/features_docx_review/R06-accept-all/builtin/out.docx:\n  1. 1 empty paragraph(s) found",
+            "builtin": "Paragraphs: 19 → 16 (-3)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.339,
+            "min": 0.335,
+            "max": 0.341,
+            "samples": [
+              0.341,
+              0.335,
+              0.339
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 41,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (accept revisions)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.042,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "no_revisions_left": true,
+              "accepted_text": true,
+              "styles_kept": true,
+              "no_leftover_empty_paragraph": true,
+              "no_empty_list_item": true,
+              "format_change_kept": true,
+              "footnote_accepted": true
+            },
+            "details": {
+              "body": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within forty-five days after delivery."
+                ],
+                [
+                  "Normal",
+                  "Invoices are sent by email."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the statutory rate from the first day of delay."
+                ],
+                [
+                  "Normal",
+                  "Accepted payment methods:"
+                ],
+                [
+                  "ListParagraph",
+                  "Bank transfer"
+                ],
+                [
+                  "ListParagraph",
+                  "Card"
+                ],
+                [
+                  "Normal",
+                  ""
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are binding once received at the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "12 Harbour Road, Unit 4, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ],
+              "footnotes": [
+                "Late Payment of Commercial Debts Act 1998, as amended."
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "1 warning(s) in $BENCH/.cache/work/features_docx_review/R06-accept-all/pylib/out.docx:\n  1. 1 empty paragraph(s) found",
+            "builtin": "Paragraphs: 19 → 16 (-3)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.042,
+            "min": 0.041,
+            "max": 0.042,
+            "samples": [
+              0.042,
+              0.042,
+              0.042,
+              0.042,
+              0.041
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R07",
+      "slug": "R07-reject-by-author",
+      "title": "Reject the changes of one author",
+      "category": "review",
+      "spec": "Reject every tracked change by Dana Reviewer (insertions, deletions, an inserted and a deleted paragraph, a formatting change, a table cell) and leave Alex Author's changes pending.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rdocx revision reject --author"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.016,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "no_revision_by_rejected_author": true,
+              "other_author_revisions_kept": true,
+              "accepted_view": true,
+              "rejected_view": true,
+              "rejected_bold_undone": true,
+              "kept_italic": true
+            },
+            "details": {
+              "alex": [
+                [
+                  "del",
+                  "Old Mill, "
+                ],
+                [
+                  "del",
+                  "statutory "
+                ],
+                [
+                  "ins",
+                  " and receipt of a valid invoice"
+                ],
+                [
+                  "rPrChange",
+                  " once received"
+                ]
+              ],
+              "accepted": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within thirty days after delivery and receipt of a valid invoice."
+                ],
+                [
+                  "Normal",
+                  "Paper invoices are no longer accepted."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the rate from the first day of delay."
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are binding once received at the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "12 Harbour Road, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R07-reject-by-author/rdocx/out.docx",
+            "builtin": "Note: this document has tracked changes; they were not checked against the original (pass --author to check).\n\nParagraphs: 13 → 12 (-1)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.016,
+            "min": 0.015,
+            "max": 0.017,
+            "samples": [
+              0.015,
+              0.015,
+              0.017,
+              0.016,
+              0.016
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 42,
+          "files": [
+            "builtin.sh",
+            "builtin_edit.py"
+          ],
+          "tools": [
+            "unzip",
+            "python + lxml (XML edit)",
+            "zip"
+          ],
+          "processes": 3,
+          "raw_xml": true,
+          "seconds": 0.029,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "no_revision_by_rejected_author": true,
+              "other_author_revisions_kept": true,
+              "accepted_view": true,
+              "rejected_view": true,
+              "rejected_bold_undone": true,
+              "kept_italic": true
+            },
+            "details": {
+              "alex": [
+                [
+                  "del",
+                  "Old Mill, "
+                ],
+                [
+                  "del",
+                  "statutory "
+                ],
+                [
+                  "ins",
+                  " and receipt of a valid invoice"
+                ],
+                [
+                  "rPrChange",
+                  " once received"
+                ]
+              ],
+              "accepted": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within thirty days after delivery and receipt of a valid invoice."
+                ],
+                [
+                  "Normal",
+                  "Paper invoices are no longer accepted."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the rate from the first day of delay."
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are binding once received at the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "12 Harbour Road, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R07-reject-by-author/builtin/out.docx",
+            "builtin": "Note: this document has tracked changes; they were not checked against the original (pass --author to check).\n\nParagraphs: 13 → 12 (-1)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.029,
+            "min": 0.029,
+            "max": 0.03,
+            "samples": [
+              0.029,
+              0.03,
+              0.029,
+              0.029,
+              0.029
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 35,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (reject revisions)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.041,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "no_revision_by_rejected_author": true,
+              "other_author_revisions_kept": true,
+              "accepted_view": true,
+              "rejected_view": true,
+              "rejected_bold_undone": true,
+              "kept_italic": true
+            },
+            "details": {
+              "alex": [
+                [
+                  "del",
+                  "Old Mill, "
+                ],
+                [
+                  "del",
+                  "statutory "
+                ],
+                [
+                  "ins",
+                  " and receipt of a valid invoice"
+                ],
+                [
+                  "rPrChange",
+                  " once received"
+                ]
+              ],
+              "accepted": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within thirty days after delivery and receipt of a valid invoice."
+                ],
+                [
+                  "Normal",
+                  "Paper invoices are no longer accepted."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the rate from the first day of delay."
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are binding once received at the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "12 Harbour Road, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R07-reject-by-author/pylib/out.docx",
+            "builtin": "Note: this document has tracked changes; they were not checked against the original (pass --author to check).\n\nParagraphs: 13 → 12 (-1)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.041,
+            "min": 0.041,
+            "max": 0.041,
+            "samples": [
+              0.041,
+              0.041,
+              0.041,
+              0.041,
+              0.041
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R08",
+      "slug": "R08-redline",
+      "title": "Word-level redline of two versions",
+      "category": "review",
+      "spec": "Produce a word-level tracked-changes redline of v1 against v2 by Dana Reviewer: accepting it gives v2, rejecting it gives v1, unchanged words stay outside the revisions.",
+      "stacks": {
+        "rdocx": {
+          "status": "fail",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rdocx compare --granularity word"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.048,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "accepted and rejected views are right, but words that v2 merely splits into other runs (an unchanged paragraph included) come out deleted and inserted again (NOTES_review.md, finding 2); oracle checks failed: word_level",
+          "check": {
+            "ok": false,
+            "checks": {
+              "accepted_is_v2": true,
+              "rejected_is_v1": true,
+              "has_revisions": true,
+              "author_and_date": true,
+              "word_level": false
+            },
+            "details": {
+              "unchanged_words_in_revisions": [
+                "invoice",
+                "accrues",
+                "letter"
+              ],
+              "accepted": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within forty-five days after receipt of a valid invoice."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the statutory rate from the first day of delay."
+                ],
+                [
+                  "Normal",
+                  "Invoices are sent by email to the address given by the Customer."
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are sent by email or by registered letter to the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "Unit 4, 12 Harbour Road, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ],
+              "rejected": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within thirty days after delivery of the goods."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the statutory rate from the first day of delay."
+                ],
+                [
+                  "Normal",
+                  "Paper invoices are accepted until the end of the year."
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are sent by registered letter to the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "12 Harbour Road, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R08-redline/rdocx/out.docx",
+            "builtin": "Paragraphs: 12 → 12 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.048,
+            "min": 0.047,
+            "max": 0.051,
+            "samples": [
+              0.048,
+              0.049,
+              0.051,
+              0.047,
+              0.048
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 86,
+          "files": [
+            "builtin.sh",
+            "builtin_edit.py"
+          ],
+          "tools": [
+            "unzip",
+            "python + lxml + difflib (redline by hand)",
+            "zip"
+          ],
+          "processes": 4,
+          "raw_xml": true,
+          "seconds": 0.031,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "accepted_is_v2": true,
+              "rejected_is_v1": true,
+              "has_revisions": true,
+              "author_and_date": true,
+              "word_level": true
+            },
+            "details": {
+              "unchanged_words_in_revisions": [],
+              "accepted": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within forty-five days after receipt of a valid invoice."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the statutory rate from the first day of delay."
+                ],
+                [
+                  "Normal",
+                  "Invoices are sent by email to the address given by the Customer."
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are sent by email or by registered letter to the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "Unit 4, 12 Harbour Road, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ],
+              "rejected": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within thirty days after delivery of the goods."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the statutory rate from the first day of delay."
+                ],
+                [
+                  "Normal",
+                  "Paper invoices are accepted until the end of the year."
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are sent by registered letter to the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "12 Harbour Road, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R08-redline/builtin/out.docx",
+            "builtin": "Paragraphs: 12 → 12 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.031,
+            "min": 0.031,
+            "max": 0.033,
+            "samples": [
+              0.033,
+              0.031,
+              0.031,
+              0.031,
+              0.031
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 80,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml + difflib (redline by hand)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.046,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "accepted_is_v2": true,
+              "rejected_is_v1": true,
+              "has_revisions": true,
+              "author_and_date": true,
+              "word_level": true
+            },
+            "details": {
+              "unchanged_words_in_revisions": [],
+              "accepted": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within forty-five days after receipt of a valid invoice."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the statutory rate from the first day of delay."
+                ],
+                [
+                  "Normal",
+                  "Invoices are sent by email to the address given by the Customer."
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are sent by email or by registered letter to the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "Unit 4, 12 Harbour Road, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ],
+              "rejected": [
+                [
+                  "Title",
+                  "Service agreement"
+                ],
+                [
+                  "Heading1",
+                  "Payment"
+                ],
+                [
+                  "Normal",
+                  "The Customer shall pay each invoice within thirty days after delivery of the goods."
+                ],
+                [
+                  "Normal",
+                  "Interest on late payment accrues at the statutory rate from the first day of delay."
+                ],
+                [
+                  "Normal",
+                  "Paper invoices are accepted until the end of the year."
+                ],
+                [
+                  "Heading1",
+                  "Notices"
+                ],
+                [
+                  "Normal",
+                  "Notices are sent by registered letter to the addresses below."
+                ],
+                [
+                  "Normal",
+                  "Party"
+                ],
+                [
+                  "Normal",
+                  "Address"
+                ],
+                [
+                  "Normal",
+                  "Customer"
+                ],
+                [
+                  "Normal",
+                  "12 Harbour Road, Portsmouth"
+                ],
+                [
+                  "Normal",
+                  "End of agreement."
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R08-redline/pylib/out.docx",
+            "builtin": "Paragraphs: 12 → 12 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.046,
+            "min": 0.044,
+            "max": 0.047,
+            "samples": [
+              0.044,
+              0.047,
+              0.046,
+              0.046,
+              0.045
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R09",
+      "slug": "R09-toc-update",
+      "title": "Update a stale table of contents",
+      "category": "layout",
+      "spec": "The table of contents is stale (two headings renamed, four added): make its entries match the headings (levels 1-3), each with the page number the heading lands on.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rdocx toc rebuild"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.077,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "entries_match_headings": true,
+              "page_numbers": true,
+              "headings_unchanged": true
+            },
+            "details": {
+              "toc": [
+                [
+                  1,
+                  "Introduction",
+                  "2"
+                ],
+                [
+                  1,
+                  "Scope of work",
+                  "3"
+                ],
+                [
+                  2,
+                  "Deliverables",
+                  "3"
+                ],
+                [
+                  1,
+                  "Payment terms",
+                  "4"
+                ],
+                [
+                  2,
+                  "Late payment",
+                  "5"
+                ],
+                [
+                  3,
+                  "Interest rate",
+                  "5"
+                ],
+                [
+                  1,
+                  "Termination",
+                  "6"
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "1 warning(s) in $BENCH/.cache/work/features_docx_review/R09-toc-update/rdocx/out.docx:\n  1. 1 empty paragraph(s) found",
+            "builtin": "Paragraphs: 37 → 41 (+4)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.077,
+            "min": 0.076,
+            "max": 0.079,
+            "samples": [
+              0.077,
+              0.077,
+              0.076,
+              0.076,
+              0.079
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 56,
+          "files": [
+            "builtin.sh",
+            "builtin_edit.py"
+          ],
+          "tools": [
+            "soffice.py (PDF)",
+            "pdftotext",
+            "unzip",
+            "python + lxml (TOC by hand)",
+            "zip"
+          ],
+          "processes": 6,
+          "raw_xml": true,
+          "seconds": 0.407,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "entries_match_headings": true,
+              "page_numbers": true,
+              "headings_unchanged": true
+            },
+            "details": {
+              "toc": [
+                [
+                  1,
+                  "Introduction",
+                  "2"
+                ],
+                [
+                  1,
+                  "Scope of work",
+                  "3"
+                ],
+                [
+                  2,
+                  "Deliverables",
+                  "3"
+                ],
+                [
+                  1,
+                  "Payment terms",
+                  "4"
+                ],
+                [
+                  2,
+                  "Late payment",
+                  "5"
+                ],
+                [
+                  3,
+                  "Interest rate",
+                  "5"
+                ],
+                [
+                  1,
+                  "Termination",
+                  "6"
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "1 warning(s) in $BENCH/.cache/work/features_docx_review/R09-toc-update/builtin/out.docx:\n  1. 1 empty paragraph(s) found",
+            "builtin": "Paragraphs: 37 → 41 (+4)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.407,
+            "min": 0.406,
+            "max": 0.41,
+            "samples": [
+              0.406,
+              0.407,
+              0.41
+            ]
+          }
+        },
+        "pylib": {
+          "status": "unsupported",
+          "loc": 12,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (dirty flag, w:updateFields)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.044,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "python-docx has no layout engine, so it cannot know the page numbers. The usual fallback, run here, marks the TOC field dirty and sets w:updateFields so that Word rebuilds the TOC when the file is opened (after a prompt); the file itself keeps the stale entries.; oracle checks failed: entries_match_headings, page_numbers",
+          "check": {
+            "ok": false,
+            "checks": {
+              "entries_match_headings": false,
+              "page_numbers": false,
+              "headings_unchanged": true
+            },
+            "details": {
+              "toc": [
+                [
+                  1,
+                  "Introduction",
+                  "1"
+                ],
+                [
+                  1,
+                  "Scope",
+                  "2"
+                ],
+                [
+                  1,
+                  "Payment",
+                  "3"
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "1 warning(s) in $BENCH/.cache/work/features_docx_review/R09-toc-update/pylib/out.docx:\n  1. 1 empty paragraph(s) found",
+            "builtin": "Paragraphs: 37 → 37 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.044,
+            "min": 0.043,
+            "max": 0.045,
+            "samples": [
+              0.045,
+              0.043,
+              0.044,
+              0.044,
+              0.043
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R10",
+      "slug": "R10-fields",
+      "title": "Update PAGE, NUMPAGES and DATE fields",
+      "category": "layout",
+      "spec": "Update the cached results of the body's DATE (today, yyyy-MM-dd), NUMPAGES (3) and PAGE (3, on the last page) fields, keeping them fields; say so when a stack cannot.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rdocx fields update --now"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.043,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "still_fields": true,
+              "date": true,
+              "numpages": true,
+              "page": true,
+              "text_around_kept": true
+            },
+            "details": {
+              "fields": [
+                [
+                  "DATE",
+                  "2026-10-31"
+                ],
+                [
+                  "NUMPAGES",
+                  "3"
+                ],
+                [
+                  "PAGE",
+                  "3"
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R10-fields/rdocx/out.docx",
+            "builtin": "Paragraphs: 9 → 9 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.043,
+            "min": 0.041,
+            "max": 0.043,
+            "samples": [
+              0.043,
+              0.041,
+              0.041,
+              0.043,
+              0.043
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 42,
+          "files": [
+            "builtin.sh",
+            "builtin_edit.py"
+          ],
+          "tools": [
+            "soffice.py (PDF)",
+            "pdftotext",
+            "unzip",
+            "python + lxml (field results by hand)",
+            "zip"
+          ],
+          "processes": 6,
+          "raw_xml": true,
+          "seconds": 0.398,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "still_fields": true,
+              "date": true,
+              "numpages": true,
+              "page": true,
+              "text_around_kept": true
+            },
+            "details": {
+              "fields": [
+                [
+                  "DATE",
+                  "2026-10-31"
+                ],
+                [
+                  "NUMPAGES",
+                  "3"
+                ],
+                [
+                  "PAGE",
+                  "3"
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R10-fields/builtin/out.docx",
+            "builtin": "Paragraphs: 9 → 9 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.398,
+            "min": 0.395,
+            "max": 0.399,
+            "samples": [
+              0.398,
+              0.395,
+              0.399
+            ]
+          }
+        },
+        "pylib": {
+          "status": "unsupported",
+          "loc": 16,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (field results, w:updateFields)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.044,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "python-docx has no layout engine: PAGE and NUMPAGES cannot be computed. The fallback, run here, writes today's date into the DATE field and sets w:updateFields so that Word refreshes every field when the file is opened (after a prompt).; oracle checks failed: numpages, page",
+          "check": {
+            "ok": false,
+            "checks": {
+              "still_fields": true,
+              "date": true,
+              "numpages": false,
+              "page": false,
+              "text_around_kept": true
+            },
+            "details": {
+              "fields": [
+                [
+                  "DATE",
+                  "2026-10-31"
+                ],
+                [
+                  "NUMPAGES",
+                  "1"
+                ],
+                [
+                  "PAGE",
+                  "1"
+                ]
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R10-fields/pylib/out.docx",
+            "builtin": "Paragraphs: 9 → 9 (0)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.044,
+            "min": 0.042,
+            "max": 0.044,
+            "samples": [
+              0.044,
+              0.044,
+              0.042,
+              0.044,
+              0.042
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R11",
+      "slug": "R11-render-png",
+      "title": "Render pages 1-3 to PNG (accepted and tracked views)",
+      "category": "render",
+      "spec": "Render pages 1-3 to PNG at 100 dpi, the accepted view into OUT/accepted/ and the tracked-changes view (insertions and deletions visible) into OUT/tracked/.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 3,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rdocx render",
+            "rdocx render --revision-view tracked"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.117,
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "accepted_three_pages": true,
+              "tracked_three_pages": true,
+              "100_dpi_letter": true,
+              "not_blank": true,
+              "tracked_marks_visible": true
+            },
+            "details": {
+              "pages": {
+                "accepted/input_page1.png": [
+                  850,
+                  1100,
+                  0.0861
+                ],
+                "accepted/input_page2.png": [
+                  850,
+                  1100,
+                  0.0179
+                ],
+                "accepted/input_page3.png": [
+                  850,
+                  1100,
+                  0.0382
+                ],
+                "tracked/input_page1.png": [
+                  850,
+                  1100,
+                  0.0871
+                ],
+                "tracked/input_page2.png": [
+                  850,
+                  1100,
+                  0.0188
+                ],
+                "tracked/input_page3.png": [
+                  850,
+                  1100,
+                  0.0383
+                ]
+              },
+              "row_diff": [
+                0.34454545454545454,
+                0.07454545454545454,
+                0.019090909090909092
+              ]
+            }
+          },
+          "timing": {
+            "median": 0.117,
+            "min": 0.115,
+            "max": 0.122,
+            "samples": [
+              0.122,
+              0.122,
+              0.115,
+              0.117,
+              0.116
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 8,
+          "files": [
+            "builtin.sh"
+          ],
+          "tools": [
+            "accept_changes.py (LibreOffice)",
+            "soffice.py (PDF)",
+            "pdftoppm"
+          ],
+          "processes": 6,
+          "raw_xml": false,
+          "seconds": 1.07,
+          "notes": "LibreOffice's PDF shows tracked changes (coloured, underlined, struck through) by default: the accepted view needs accept_changes.py first",
+          "check": {
+            "ok": true,
+            "checks": {
+              "accepted_three_pages": true,
+              "tracked_three_pages": true,
+              "100_dpi_letter": true,
+              "not_blank": true,
+              "tracked_marks_visible": true
+            },
+            "details": {
+              "pages": {
+                "accepted/page-1.png": [
+                  850,
+                  1100,
+                  0.0862
+                ],
+                "accepted/page-2.png": [
+                  850,
+                  1100,
+                  0.0156
+                ],
+                "accepted/page-3.png": [
+                  850,
+                  1100,
+                  0.0365
+                ],
+                "tracked/page-1.png": [
+                  850,
+                  1100,
+                  0.0867
+                ],
+                "tracked/page-2.png": [
+                  850,
+                  1100,
+                  0.0164
+                ],
+                "tracked/page-3.png": [
+                  850,
+                  1100,
+                  0.0365
+                ]
+              },
+              "row_diff": [
+                0.33090909090909093,
+                0.05545454545454546,
+                0.0
+              ]
+            }
+          },
+          "timing": {
+            "median": 1.07,
+            "min": 1.068,
+            "max": 1.07,
+            "samples": [
+              1.07,
+              1.068,
+              1.07
+            ]
+          }
+        },
+        "pylib": {
+          "status": "unsupported",
+          "loc": 0,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [],
+          "processes": 0,
+          "raw_xml": false,
+          "seconds": null,
+          "notes": "python-docx has no renderer: pages cannot be drawn without another tool (LibreOffice, Word)."
+        }
+      }
+    },
+    {
+      "id": "R12",
+      "slug": "R12-page-of-heading",
+      "title": "Page number of each heading",
+      "category": "layout",
+      "spec": "Report, as JSON, the page each heading (levels 1-3) starts on, from the stack's own pagination.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 11,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx Python (layout)"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.094,
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "headings_listed": true,
+              "page_of_Introduction": true,
+              "page_of_Scope of work": true,
+              "page_of_Deliverables": true,
+              "page_of_Acceptance tests": true,
+              "page_of_Payment terms": true,
+              "page_of_Late payment": true,
+              "page_of_Interest rate": true,
+              "page_of_Termination": true
+            },
+            "details": {
+              "got": [
+                [
+                  1,
+                  "Introduction",
+                  1
+                ],
+                [
+                  1,
+                  "Scope of work",
+                  1
+                ],
+                [
+                  2,
+                  "Deliverables",
+                  2
+                ],
+                [
+                  2,
+                  "Acceptance tests",
+                  2
+                ],
+                [
+                  1,
+                  "Payment terms",
+                  3
+                ],
+                [
+                  2,
+                  "Late payment",
+                  4
+                ],
+                [
+                  3,
+                  "Interest rate",
+                  4
+                ],
+                [
+                  1,
+                  "Termination",
+                  5
+                ]
+              ]
+            }
+          },
+          "timing": {
+            "median": 0.094,
+            "min": 0.093,
+            "max": 0.096,
+            "samples": [
+              0.096,
+              0.094,
+              0.093,
+              0.095,
+              0.094
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 21,
+          "files": [
+            "builtin.sh",
+            "builtin_pages.py"
+          ],
+          "tools": [
+            "soffice.py (PDF)",
+            "pdftotext",
+            "pandoc -t json",
+            "python"
+          ],
+          "processes": 5,
+          "raw_xml": false,
+          "seconds": 0.418,
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "headings_listed": true,
+              "page_of_Introduction": true,
+              "page_of_Scope of work": true,
+              "page_of_Deliverables": true,
+              "page_of_Acceptance tests": true,
+              "page_of_Payment terms": true,
+              "page_of_Late payment": true,
+              "page_of_Interest rate": true,
+              "page_of_Termination": true
+            },
+            "details": {
+              "got": [
+                [
+                  1,
+                  "Introduction",
+                  1
+                ],
+                [
+                  1,
+                  "Scope of work",
+                  1
+                ],
+                [
+                  2,
+                  "Deliverables",
+                  2
+                ],
+                [
+                  2,
+                  "Acceptance tests",
+                  2
+                ],
+                [
+                  1,
+                  "Payment terms",
+                  3
+                ],
+                [
+                  2,
+                  "Late payment",
+                  4
+                ],
+                [
+                  3,
+                  "Interest rate",
+                  4
+                ],
+                [
+                  1,
+                  "Termination",
+                  5
+                ]
+              ]
+            }
+          },
+          "timing": {
+            "median": 0.418,
+            "min": 0.416,
+            "max": 0.422,
+            "samples": [
+              0.416,
+              0.422,
+              0.418
+            ]
+          }
+        },
+        "pylib": {
+          "status": "unsupported",
+          "loc": 0,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [],
+          "processes": 0,
+          "raw_xml": false,
+          "seconds": null,
+          "notes": "python-docx has no layout engine: it cannot tell on which page a paragraph lands (Paragraph.rendered_page_breaks only reads the page breaks Word cached at its last save, and this file was not last saved by Word)."
+        }
+      }
+    },
+    {
+      "id": "R13",
+      "slug": "R13-to-pdf",
+      "title": "Convert to PDF (accepted and tracked views)",
+      "category": "convert",
+      "spec": "Convert to PDF: the accepted view as OUT/document.pdf and, where the stack can, the tracked-changes view as OUT/tracked.pdf.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 4,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rdocx convert --to pdf",
+            "rdocx convert --revision-view tracked"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.056,
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "document_pages": true,
+              "document_not_blank": true,
+              "tracked_pages": true,
+              "tracked_not_blank": true,
+              "views_differ": true
+            },
+            "details": {
+              "document": [
+                4,
+                true
+              ],
+              "tracked": [
+                4,
+                true
+              ]
+            }
+          },
+          "timing": {
+            "median": 0.056,
+            "min": 0.054,
+            "max": 0.057,
+            "samples": [
+              0.056,
+              0.054,
+              0.057,
+              0.056,
+              0.057
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 6,
+          "files": [
+            "builtin.sh"
+          ],
+          "tools": [
+            "accept_changes.py (LibreOffice)",
+            "soffice.py (PDF)"
+          ],
+          "processes": 4,
+          "raw_xml": false,
+          "seconds": 0.746,
+          "notes": "LibreOffice's PDF shows tracked changes by default: the accepted view needs accept_changes.py first",
+          "check": {
+            "ok": true,
+            "checks": {
+              "document_pages": true,
+              "document_not_blank": true,
+              "tracked_pages": true,
+              "tracked_not_blank": true,
+              "views_differ": true
+            },
+            "details": {
+              "document": [
+                4,
+                true
+              ],
+              "tracked": [
+                4,
+                true
+              ]
+            }
+          },
+          "timing": {
+            "median": 0.746,
+            "min": 0.739,
+            "max": 0.748,
+            "samples": [
+              0.739,
+              0.746,
+              0.748
+            ]
+          }
+        },
+        "pylib": {
+          "status": "unsupported",
+          "loc": 0,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [],
+          "processes": 0,
+          "raw_xml": false,
+          "seconds": null,
+          "notes": "python-docx has no renderer: a PDF needs another tool (LibreOffice, Word)."
+        }
+      }
+    },
+    {
+      "id": "R14",
+      "slug": "R14-text-diff",
+      "title": "Which paragraphs differ between two versions",
+      "category": "review",
+      "spec": "Report, as JSON, which paragraphs (table cells included) differ between v1 and v2: changed pairs, added and removed paragraphs; run fragmentation alone is no difference.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 9,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx diff --json"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.024,
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "changed:The Customer shall pay each in": true,
+              "changed:Payable net 30 from receipt": true,
+              "changed:Notices are sent by registered": true,
+              "added:The Supplier gives two working": true,
+              "removed:Paper invoices are accepted un": true,
+              "nothing_else": true
+            },
+            "details": {
+              "got": {
+                "changed": [
+                  [
+                    "The Customer shall pay each invoice within thirty days after delivery of the goods.",
+                    "The Customer shall pay each invoice within forty-five days after delivery of the goods."
+                  ],
+                  [
+                    "Notices are sent by registered letter to the addresses below.",
+                    "Notices are sent by email or by registered letter to the addresses below."
+                  ],
+                  [
+                    "Payable net 30 from receipt",
+                    "Payable net 45 from receipt"
+                  ]
+                ],
+                "added": [
+                  "The Supplier gives two working days' notice of each delivery."
+                ],
+                "removed": [
+                  "Paper invoices are accepted until the end of the year."
+                ]
+              }
+            }
+          },
+          "timing": {
+            "median": 0.024,
+            "min": 0.023,
+            "max": 0.024,
+            "samples": [
+              0.024,
+              0.023,
+              0.024,
+              0.024,
+              0.023
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 20,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "pandoc -t plain",
+            "difflib"
+          ],
+          "processes": 3,
+          "raw_xml": false,
+          "seconds": 0.028,
+          "notes": "pandoc's plain text puts a table row on one line, so the changed cell is reported with its row",
+          "check": {
+            "ok": true,
+            "checks": {
+              "changed:The Customer shall pay each in": true,
+              "changed:Payable net 30 from receipt": true,
+              "changed:Notices are sent by registered": true,
+              "added:The Supplier gives two working": true,
+              "removed:Paper invoices are accepted un": true,
+              "nothing_else": true
+            },
+            "details": {
+              "got": {
+                "changed": [
+                  [
+                    "The Customer shall pay each invoice within thirty days after delivery of the goods.",
+                    "The Customer shall pay each invoice within forty-five days after delivery of the goods."
+                  ],
+                  [
+                    "Invoices               Payable net 30 from receipt",
+                    "Invoices               Payable net 45 from receipt"
+                  ],
+                  [
+                    "Notices are sent by registered letter to the addresses below.",
+                    "Notices are sent by email or by registered letter to the addresses below."
+                  ]
+                ],
+                "added": [
+                  "The Supplier gives two working days' notice of each delivery."
+                ],
+                "removed": [
+                  "Paper invoices are accepted until the end of the year."
+                ]
+              }
+            }
+          },
+          "timing": {
+            "median": 0.028,
+            "min": 0.027,
+            "max": 0.029,
+            "samples": [
+              0.029,
+              0.027,
+              0.028,
+              0.027,
+              0.028
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 25,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "difflib"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.045,
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "changed:The Customer shall pay each in": true,
+              "changed:Payable net 30 from receipt": true,
+              "changed:Notices are sent by registered": true,
+              "added:The Supplier gives two working": true,
+              "removed:Paper invoices are accepted un": true,
+              "nothing_else": true
+            },
+            "details": {
+              "got": {
+                "changed": [
+                  [
+                    "The Customer shall pay each invoice within thirty days after delivery of the goods.",
+                    "The Customer shall pay each invoice within forty-five days after delivery of the goods."
+                  ],
+                  [
+                    "Payable net 30 from receipt",
+                    "Payable net 45 from receipt"
+                  ],
+                  [
+                    "Notices are sent by registered letter to the addresses below.",
+                    "Notices are sent by email or by registered letter to the addresses below."
+                  ]
+                ],
+                "added": [
+                  "The Supplier gives two working days' notice of each delivery."
+                ],
+                "removed": [
+                  "Paper invoices are accepted until the end of the year."
+                ]
+              }
+            }
+          },
+          "timing": {
+            "median": 0.045,
+            "min": 0.044,
+            "max": 0.047,
+            "samples": [
+              0.047,
+              0.045,
+              0.044,
+              0.045,
+              0.045
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "R15",
+      "slug": "R15-combine",
+      "title": "Append a document with its own styles, picture and numbering",
+      "category": "edit",
+      "spec": "Append document B (its own styles, docDefaults, a list numbered with the same numId as A's, a picture with the same part name as A's) to the end of A, keeping B's formatting and A's.",
+      "stacks": {
+        "rdocx": {
+          "status": "fail",
+          "loc": 6,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx Python (insert_document)"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.059,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "insert_document renames B's conflicting styles (Heading1Merge1), renumbers its list and copies its picture, but drops B's w:docDefaults: B's body text falls back to A's Calibri instead of Georgia (NOTES_review.md, finding 3); oracle checks failed: b_body_font_kept",
+          "check": {
+            "ok": false,
+            "checks": {
+              "a_then_b": true,
+              "a_headings_kept": true,
+              "a_body_font_kept": true,
+              "b_headings_kept": true,
+              "b_body_font_kept": false,
+              "b_own_style_kept": true,
+              "a_numbering_kept": true,
+              "b_numbering_kept": true,
+              "pictures_kept": true
+            },
+            "details": {
+              "sequence": [
+                "Annual report",
+                "Overview",
+                "The year closed with four new service contracts.",
+                "Revenue grew in every region.",
+                "Two sites were refurbished.",
+                "Results",
+                "Results are detailed in the appendix.",
+                "Appendix: site visits",
+                "Each site was visited twice during the year.",
+                "Visits in December were postponed because of snow.",
+                "North site: handrails replaced.",
+                "South site: drainage cleared.",
+                "Figure B1. South site after works."
+              ],
+              "formats": {
+                "Annual report": [
+                  [
+                    {
+                      "font": "Calibri Light",
+                      "size": "56"
+                    }
+                  ],
+                  null,
+                  "Title"
+                ],
+                "Overview": [
+                  [
+                    {
+                      "font": "Calibri Light",
+                      "size": "32",
+                      "color": "2F5496"
+                    }
+                  ],
+                  null,
+                  "Heading1"
+                ],
+                "The year closed with four new service contracts.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  null
+                ],
+                "Revenue grew in every region.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "decimal",
+                    "%1."
+                  ],
+                  "ListParagraph"
+                ],
+                "Two sites were refurbished.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "decimal",
+                    "%1."
+                  ],
+                  "ListParagraph"
+                ],
+                "Results": [
+                  [
+                    {
+                      "font": "Calibri Light",
+                      "size": "32",
+                      "color": "2F5496"
+                    }
+                  ],
+                  null,
+                  "Heading1"
+                ],
+                "Results are detailed in the appendix.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  null
+                ],
+                "Appendix: site visits": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "32",
+                      "color": "C00000"
+                    }
+                  ],
+                  null,
+                  "Heading1Merge1"
+                ],
+                "Each site was visited twice during the year.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  null
+                ],
+                "Visits in December were postponed because of snow.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22",
+                      "color": "00B050",
+                      "i": true
+                    }
+                  ],
+                  null,
+                  "BNote"
+                ],
+                "North site: handrails replaced.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "lowerRoman",
+                    "%1)"
+                  ],
+                  "ListParagraph"
+                ],
+                "South site: drainage cleared.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "lowerRoman",
+                    "%1)"
+                  ],
+                  "ListParagraph"
+                ],
+                "Figure B1. South site after works.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  null
+                ]
+              },
+              "pictures": [
+                359,
+                359
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R15-combine/rdocx/out.docx",
+            "builtin": "Paragraphs: 8 → 15 (+7)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.059,
+            "min": 0.058,
+            "max": 0.063,
+            "samples": [
+              0.059,
+              0.059,
+              0.058,
+              0.062,
+              0.063
+            ]
+          }
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 101,
+          "files": [
+            "builtin.sh",
+            "builtin_merge.py"
+          ],
+          "tools": [
+            "unzip",
+            "python + lxml (merge by hand)",
+            "zip"
+          ],
+          "processes": 4,
+          "raw_xml": true,
+          "seconds": 0.034,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "a_then_b": true,
+              "a_headings_kept": true,
+              "a_body_font_kept": true,
+              "b_headings_kept": true,
+              "b_body_font_kept": true,
+              "b_own_style_kept": true,
+              "a_numbering_kept": true,
+              "b_numbering_kept": true,
+              "pictures_kept": true
+            },
+            "details": {
+              "sequence": [
+                "Annual report",
+                "Overview",
+                "The year closed with four new service contracts.",
+                "Revenue grew in every region.",
+                "Two sites were refurbished.",
+                "Results",
+                "Results are detailed in the appendix.",
+                "Appendix: site visits",
+                "Each site was visited twice during the year.",
+                "Visits in December were postponed because of snow.",
+                "North site: handrails replaced.",
+                "South site: drainage cleared.",
+                "Figure B1. South site after works."
+              ],
+              "formats": {
+                "Annual report": [
+                  [
+                    {
+                      "font": "Calibri Light",
+                      "size": "56"
+                    }
+                  ],
+                  null,
+                  "Title"
+                ],
+                "Overview": [
+                  [
+                    {
+                      "font": "Calibri Light",
+                      "size": "32",
+                      "color": "2F5496"
+                    }
+                  ],
+                  null,
+                  "Heading1"
+                ],
+                "The year closed with four new service contracts.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  null
+                ],
+                "Revenue grew in every region.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "decimal",
+                    "%1."
+                  ],
+                  "ListParagraph"
+                ],
+                "Two sites were refurbished.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "decimal",
+                    "%1."
+                  ],
+                  "ListParagraph"
+                ],
+                "Results": [
+                  [
+                    {
+                      "font": "Calibri Light",
+                      "size": "32",
+                      "color": "2F5496"
+                    }
+                  ],
+                  null,
+                  "Heading1"
+                ],
+                "Results are detailed in the appendix.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  null
+                ],
+                "Appendix: site visits": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "32",
+                      "color": "C00000"
+                    }
+                  ],
+                  null,
+                  "BHeading1"
+                ],
+                "Each site was visited twice during the year.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  "BNormal"
+                ],
+                "Visits in December were postponed because of snow.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22",
+                      "color": "00B050",
+                      "i": true
+                    }
+                  ],
+                  null,
+                  "BNote"
+                ],
+                "North site: handrails replaced.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "lowerRoman",
+                    "%1)"
+                  ],
+                  "BListParagraph"
+                ],
+                "South site: drainage cleared.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "lowerRoman",
+                    "%1)"
+                  ],
+                  "BListParagraph"
+                ],
+                "Figure B1. South site after works.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  "BNormal"
+                ]
+              },
+              "pictures": [
+                359,
+                359
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R15-combine/builtin/out.docx",
+            "builtin": "Paragraphs: 8 → 15 (+7)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.034,
+            "min": 0.034,
+            "max": 0.035,
+            "samples": [
+              0.035,
+              0.034,
+              0.034,
+              0.034,
+              0.034
+            ]
+          }
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 78,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml (styles, numbering, body copy)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.045,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "",
+          "check": {
+            "ok": true,
+            "checks": {
+              "a_then_b": true,
+              "a_headings_kept": true,
+              "a_body_font_kept": true,
+              "b_headings_kept": true,
+              "b_body_font_kept": true,
+              "b_own_style_kept": true,
+              "a_numbering_kept": true,
+              "b_numbering_kept": true,
+              "pictures_kept": true
+            },
+            "details": {
+              "sequence": [
+                "Annual report",
+                "Overview",
+                "The year closed with four new service contracts.",
+                "Revenue grew in every region.",
+                "Two sites were refurbished.",
+                "Results",
+                "Results are detailed in the appendix.",
+                "Appendix: site visits",
+                "Each site was visited twice during the year.",
+                "Visits in December were postponed because of snow.",
+                "North site: handrails replaced.",
+                "South site: drainage cleared.",
+                "Figure B1. South site after works."
+              ],
+              "formats": {
+                "Annual report": [
+                  [
+                    {
+                      "font": "Calibri Light",
+                      "size": "56"
+                    }
+                  ],
+                  null,
+                  "Title"
+                ],
+                "Overview": [
+                  [
+                    {
+                      "font": "Calibri Light",
+                      "size": "32",
+                      "color": "2F5496"
+                    }
+                  ],
+                  null,
+                  "Heading1"
+                ],
+                "The year closed with four new service contracts.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  null
+                ],
+                "Revenue grew in every region.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "decimal",
+                    "%1."
+                  ],
+                  "ListParagraph"
+                ],
+                "Two sites were refurbished.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "decimal",
+                    "%1."
+                  ],
+                  "ListParagraph"
+                ],
+                "Results": [
+                  [
+                    {
+                      "font": "Calibri Light",
+                      "size": "32",
+                      "color": "2F5496"
+                    }
+                  ],
+                  null,
+                  "Heading1"
+                ],
+                "Results are detailed in the appendix.": [
+                  [
+                    {
+                      "font": "Calibri",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  null
+                ],
+                "Appendix: site visits": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "32",
+                      "color": "C00000"
+                    }
+                  ],
+                  null,
+                  "BHeading1"
+                ],
+                "Each site was visited twice during the year.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  "BNormal"
+                ],
+                "Visits in December were postponed because of snow.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22",
+                      "color": "00B050",
+                      "i": true
+                    }
+                  ],
+                  null,
+                  "BNote"
+                ],
+                "North site: handrails replaced.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "lowerRoman",
+                    "%1)"
+                  ],
+                  "BListParagraph"
+                ],
+                "South site: drainage cleared.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22"
+                    }
+                  ],
+                  [
+                    "lowerRoman",
+                    "%1)"
+                  ],
+                  "BListParagraph"
+                ],
+                "Figure B1. South site after works.": [
+                  [
+                    {
+                      "font": "Georgia",
+                      "size": "22"
+                    }
+                  ],
+                  null,
+                  "BNormal"
+                ]
+              },
+              "pictures": [
+                359,
+                359
+              ]
+            }
+          },
+          "validator_messages": {
+            "rdocx": "OK — no issues found in $BENCH/.cache/work/features_docx_review/R15-combine/pylib/out.docx",
+            "builtin": "Paragraphs: 8 → 15 (+7)\nAll validations PASSED!"
+          },
+          "timing": {
+            "median": 0.045,
+            "min": 0.044,
+            "max": 0.046,
+            "samples": [
+              0.045,
+              0.044,
+              0.046,
+              0.045,
+              0.044
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

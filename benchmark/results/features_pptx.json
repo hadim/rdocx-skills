@@ -1,0 +1,1475 @@
+{
+  "section": "features_pptx",
+  "versions": {
+    "date": "2026-10-31",
+    "machine": "Linux x86_64, 32 CPUs",
+    "rdocx_pin": "401e3f4218e6",
+    "rdocx": "rdocx 0.16.4",
+    "rpptx": "rpptx 0.14.4",
+    "python-docx": "1.2.0",
+    "python-pptx": "1.0.2",
+    "docx-js": "9.15.0",
+    "pptxgenjs": "4.0.1",
+    "node": "v26.10.0",
+    "pandoc": "pandoc 3.13",
+    "libreoffice": "LibreOffice 26.2.6.3 620(Build:3)",
+    "pdftoppm": "pdftoppm version 26.01.0",
+    "builtin_skills_sha256": "5883fcb286af5337"
+  },
+  "tasks": [
+    {
+      "id": "P01",
+      "title": "Create a 10-slide structured deck",
+      "category": "create",
+      "spec": "From content.json: a 16:9 deck on a theme named Northwind (its colours and fonts: Cambria headings, Calibri body) and its layouts: title slide, agenda bullets, section divider, a table slide, a native clustered-column chart slide, a picture slide, a two-column slide, two bullet slides, a closing slide; speaker notes on every slide; slide numbers on every slide but the title slide.",
+      "task_md": "Create a 10-slide 16:9 deck from content.json on a theme (\"Northwind\" colours and fonts) and layouts: title, agenda bullets, section divider, table, native chart, picture, two columns, two bullet slides, closing; speaker notes on each slide; slide numbers on all slides but the title slide.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 53,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python)",
+            "pptx_ops.save_atomic"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.092,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.093,
+            0.094,
+            0.092,
+            0.092,
+            0.091
+          ],
+          "notes": "rpptx.Presentation() is 16:9 with the default layouts; theme name, colours and fonts through the theme API; set_header_footer() numbers every slide but title-layout slides."
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 73,
+          "files": [
+            "builtin.js"
+          ],
+          "tools": [
+            "pptxgenjs",
+            "apply_theme.js"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.125,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "package_warnings": [
+              "override for missing part /ppt/slideMasters/slideMaster2.xml",
+              "override for missing part /ppt/slideMasters/slideMaster3.xml",
+              "override for missing part /ppt/slideMasters/slideMaster4.xml",
+              "override for missing part /ppt/slideMasters/slideMaster5.xml",
+              "override for missing part /ppt/slideMasters/slideMaster6.xml",
+              "override for missing part /ppt/slideMasters/slideMaster7.xml",
+              "override for missing part /ppt/slideMasters/slideMaster8.xml",
+              "override for missing part /ppt/slideMasters/slideMaster9.xml",
+              "override for missing part /ppt/slideMasters/slideMaster10.xml"
+            ]
+          },
+          "seconds_samples": [
+            0.121,
+            0.121,
+            0.125,
+            0.125,
+            0.126
+          ],
+          "notes": "Structured deck as SKILL.md describes: 6 layouts (defineSlideMaster) with named placeholders and slideNumber, scheme colours, sections, addNotes, then applyTheme. pptxgenjs writes [Content_Types] overrides for slideMaster2..10, which do not exist (package warning)."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 71,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.11,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.11,
+            0.108,
+            0.111,
+            0.107,
+            0.113
+          ],
+          "notes": "python-pptx's default template is 4:3: slide size set to 16:9, but its layouts keep their 10-inch geometry (content sits on the left); theme via lxml on the theme part; slide numbers by cloning the layout's sldNum placeholder and writing the field."
+        }
+      }
+    },
+    {
+      "id": "P02",
+      "title": "Read a deck into JSON",
+      "category": "read",
+      "spec": "Titles, every text (groups and table cells included) and speaker notes of an 8-slide deck as JSON; the oracle looks for the marker strings of each slide in that slide only.",
+      "task_md": "Read a deck (titles, every text including groups and tables, speaker notes) into JSON: `{\"slides\": [{\"number\", \"title\", \"text\": [...], \"notes\"}]}`.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 17,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python)",
+            "pptx_ops.walk"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.044,
+          "seconds_samples": [
+            0.043,
+            0.045,
+            0.043,
+            0.044,
+            0.045
+          ],
+          "notes": ""
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 23,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "slide_text.py"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.087,
+          "seconds_samples": [
+            0.087,
+            0.086,
+            0.087,
+            0.087,
+            0.086
+          ],
+          "notes": "slide_text.py's Markdown parsed back into the JSON."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 21,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.072,
+          "seconds_samples": [
+            0.073,
+            0.071,
+            0.07,
+            0.072,
+            0.072
+          ],
+          "notes": ""
+        }
+      }
+    },
+    {
+      "id": "P03",
+      "title": "Counted replace across slides and notes",
+      "category": "edit",
+      "spec": "Replace 'Project Falcon' with 'Project Osprey' exactly 7 times across titles, bullets, a table cell, a group and notes; three occurrences are split across runs with different formatting, two decoys differ in case. Formatting outside the match is kept, the replacement takes a format of the matched runs. The same command with an expected count of 8 must refuse and write nothing.",
+      "task_md": "Replace \"Project Falcon\" with \"Project Osprey\" exactly 7 times across slides and notes (some occurrences split across differently formatted runs) keeping formatting, and refuse when the expected count is wrong.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rpptx replace"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.019,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "paragraphs_with_matches": 7
+          },
+          "refuses_wrong_count": true,
+          "seconds_samples": [
+            0.02,
+            0.019,
+            0.019,
+            0.02,
+            0.019
+          ],
+          "notes": ""
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 45,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "zipfile",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.029,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "paragraphs_with_matches": 7
+          },
+          "refuses_wrong_count": true,
+          "seconds_samples": [
+            0.03,
+            0.029,
+            0.029,
+            0.029,
+            0.031
+          ],
+          "notes": "Cross-run replacement written by hand on the slide and notes XML; count checked before anything is written."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 38,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.075,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "paragraphs_with_matches": 7
+          },
+          "refuses_wrong_count": true,
+          "seconds_samples": [
+            0.076,
+            0.077,
+            0.075,
+            0.071,
+            0.072
+          ],
+          "notes": "Cross-run replacement written by hand over runs (python-pptx has no replace); emptied runs are left empty."
+        }
+      }
+    },
+    {
+      "id": "P04",
+      "title": "Duplicate, move, delete and hide slides",
+      "category": "edit",
+      "spec": "On an 8-slide deck (slides referred to by their original numbers): duplicate slide 3 (content and notes) to just after slide 5, move the last slide to position 2, delete slide 4 (it holds the only use of a picture and has notes), hide slide 6. The oracle checks the final order by marker text, the hidden flag, the copy's notes and picture, relationships, content types and that no part is left orphaned (the deleted slide, its notes and its picture gone).",
+      "task_md": "On an 8-slide deck, slides named by their original numbers: duplicate slide 3 (content and notes) to just after slide 5, move the last slide to position 2, delete slide 4, hide slide 6.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 13,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python)",
+            "pptx_ops.save_atomic"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.049,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.047,
+            0.05,
+            0.048,
+            0.049,
+            0.049
+          ],
+          "notes": ""
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 67,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "add_slide.py",
+            "clean.py",
+            "zipfile",
+            "lxml"
+          ],
+          "processes": 3,
+          "raw_xml": true,
+          "seconds": 0.095,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.095,
+            0.094,
+            0.097,
+            0.095,
+            0.093
+          ],
+          "notes": "add_slide.py duplicates without the notes (documented): notes slide copied and registered by hand; sldIdLst edited; clean.py drops the deleted slide, its notes and its picture."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 30,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.075,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.072,
+            0.072,
+            0.075,
+            0.075,
+            0.075
+          ],
+          "notes": "No duplicate, move or delete API: shapes deep-copied with their image relationships, _sldIdLst edited, drop_rel."
+        }
+      }
+    },
+    {
+      "id": "P05",
+      "title": "Merge slides from another deck keeping their look",
+      "category": "edit",
+      "spec": "Import slides 2 and 3 of deck B (theme Harbor, its own master and layouts; a native chart with its workbook, a picture) into deck A (theme Northwind) at position 2, keeping B's look: the copies use B's layouts, master and theme, A's slides keep A's.",
+      "task_md": "Import slides 2 and 3 of deck B (another theme, master and layouts; a native chart, a picture) into deck A at position 2, keeping B's look.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rpptx slide import"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.095,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "masters": 2,
+            "b2_notes_kept": true
+          },
+          "seconds_samples": [
+            0.095,
+            0.094,
+            0.095,
+            0.095,
+            0.095
+          ],
+          "notes": "One command; notes travel with the slides."
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 113,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "zipfile",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.035,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "masters": 2,
+            "b2_notes_kept": false
+          },
+          "seconds_samples": [
+            0.035,
+            0.034,
+            0.034,
+            0.035,
+            0.037
+          ],
+          "notes": "No cross-deck helper: the slides' part closure (used layouts, master, theme, chart, workbook, image) copied under free names, master layout list pruned, ids renumbered, rels, sldMasterIdLst, sldIdLst and content types written. Notes left behind (they would need a second notes master)."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 48,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx (OPC parts)",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.072,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "masters": 2,
+            "b2_notes_kept": false
+          },
+          "seconds_samples": [
+            0.072,
+            0.072,
+            0.079,
+            0.074,
+            0.072
+          ],
+          "notes": "OPC level: A related to B's part objects, parts renamed to free names, master pruned and registered with lxml. Notes left behind."
+        }
+      }
+    },
+    {
+      "id": "P06",
+      "title": "Report overflowing text frames",
+      "category": "review",
+      "spec": "On a 3-slide deck with 14 text frames of known fit (5 overflow: a wrapped text box, an unwrapped line, a title and a body placeholder whose size and font size are inherited, a table whose long cell pushes it off the slide; 9 fit, among them a near miss and a table whose cell is taller than its stored row, which PowerPoint grows), report the overflowing frames as JSON; scored by precision and recall (pass: both 1).",
+      "task_md": "Report which text frames of a deck overflow their box (text boxes, a placeholder with inherited size, a table cell), as JSON `{\"overflowing\": [{\"slide\", \"shape\"}]}`; scored by precision and recall against the known truth.",
+      "stacks": {
+        "rdocx": {
+          "status": "fail",
+          "loc": 9,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python) fit_report"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.105,
+          "precision": 0.833,
+          "recall": 1.0,
+          "oracle_info": {
+            "precision": 0.833,
+            "recall": 1.0,
+            "reported": [
+              [
+                1,
+                "Box narrow"
+              ],
+              [
+                1,
+                "Unwrapped line"
+              ],
+              [
+                2,
+                "Content Placeholder 2"
+              ],
+              [
+                2,
+                "Title 1"
+              ],
+              [
+                3,
+                "Growing table"
+              ],
+              [
+                3,
+                "Overflow table"
+              ]
+            ]
+          },
+          "seconds_samples": [
+            0.105,
+            0.106,
+            0.105,
+            0.103,
+            0.105
+          ],
+          "notes": "prs.fit_report(): flags 'Growing table' because table cells are measured against the stored row height, while PowerPoint (and rpptx's own renderer) grow the row and the table stays on the slide. | false alarms: [(3, 'Growing table')]"
+        },
+        "builtin": {
+          "status": "fail",
+          "loc": 80,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "soffice.py (LibreOffice)",
+            "pdftoppm",
+            "lxml",
+            "Pillow"
+          ],
+          "processes": 4,
+          "raw_xml": true,
+          "seconds": 0.765,
+          "precision": 0.833,
+          "recall": 1.0,
+          "oracle_info": {
+            "precision": 0.833,
+            "recall": 1.0,
+            "reported": [
+              [
+                1,
+                "Box narrow"
+              ],
+              [
+                1,
+                "Unwrapped line"
+              ],
+              [
+                2,
+                "Content Placeholder 2"
+              ],
+              [
+                2,
+                "Title 1"
+              ],
+              [
+                3,
+                "Growing table"
+              ],
+              [
+                3,
+                "Overflow table"
+              ]
+            ]
+          },
+          "seconds_samples": [
+            0.763,
+            0.765,
+            0.769
+          ],
+          "notes": "Automatable stand-in for the skill's visual QA: LibreOffice render at 50 dpi, ink in a 0.4-inch band outside each text frame that no other shape covers. Blind to overflow into a neighbouring shape; any row growth reads as overflow. | false alarms: [(3, 'Growing table')]"
+        },
+        "pylib": {
+          "status": "fail",
+          "loc": 71,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx",
+            "lxml",
+            "Pillow (font metrics)"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.077,
+          "precision": 0.833,
+          "recall": 1.0,
+          "oracle_info": {
+            "precision": 0.833,
+            "recall": 1.0,
+            "reported": [
+              [
+                1,
+                "Box narrow"
+              ],
+              [
+                1,
+                "Unwrapped line"
+              ],
+              [
+                2,
+                "Content Placeholder 2"
+              ],
+              [
+                2,
+                "Title 1"
+              ],
+              [
+                3,
+                "Growing table"
+              ],
+              [
+                3,
+                "Overflow table"
+              ]
+            ]
+          },
+          "seconds_samples": [
+            0.077,
+            0.077,
+            0.077,
+            0.077,
+            0.077
+          ],
+          "notes": "Own estimator: word wrap with Carlito/Caladea metrics (Pillow), sizes inherited through layout and master (lxml), table cells against the stored row height. | false alarms: [(3, 'Growing table')]"
+        }
+      }
+    },
+    {
+      "id": "P07",
+      "title": "Comment anchored to a shape, then a reply",
+      "category": "review",
+      "spec": "Add a comment by 'Dana Reviewer' on slide 3 anchored to the shape named 'Key figure', then a reply by 'Sam Author'; the oracle accepts modern comments (anchor = the shape's id) and reports legacy ones as not anchored.",
+      "task_md": "Add a comment by \"Dana Reviewer\" on slide 3 anchored to the shape named \"Key figure\", then a reply to it by \"Sam Author\".",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 15,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python)",
+            "pptx_ops.save_atomic"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.049,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": false,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.047,
+            0.049,
+            0.049,
+            0.049,
+            0.048
+          ],
+          "notes": "builtin_validate: FAILED - Found NEW validation errors:\n  ppt/authors.xml: 1 new error(s)\n    - Element '{http://schemas.microsoft.com/office/powerpoint/2018/8/main}authorLst': No matching global declaration available for the validation root."
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 67,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "zipfile",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.03,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": false,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.03,
+            0.031,
+            0.029,
+            0.029,
+            0.03
+          ],
+          "notes": "Modern comments (p188) written by hand: authors part, comment part, the slide's commentRel extension, rels, content types. | builtin_validate: FAILED - Found NEW validation errors:\n  ppt/authors.xml: 1 new error(s)\n    - Element '{http://schemas.microsoft.com/office/powerpoint/2018/8/main}authorLst': No matching global declaration available for the validation root."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 37,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx (OPC parts)",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.068,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": false,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.073,
+            0.069,
+            0.067,
+            0.068,
+            0.068
+          ],
+          "notes": "Modern comments (p188) as OPC parts; the slide's commentRel extension with lxml. | builtin_validate: FAILED - Found NEW validation errors:\n  ppt/authors.xml: 1 new error(s)\n    - Element '{http://schemas.microsoft.com/office/powerpoint/2018/8/main}authorLst': No matching global declaration available for the validation root."
+        }
+      }
+    },
+    {
+      "id": "P08",
+      "title": "Change a chart's data",
+      "category": "edit",
+      "spec": "A formatted clustered-column chart (2 series, 4 quarters, series fills, data labels, title): new values and a fifth category; formatting kept; caches, formulas and the embedded workbook match.",
+      "task_md": "Give the clustered-column chart on slide 3 new values and a fifth category (data in the task), keeping its formatting; caches, formulas and embedded workbook must agree.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 11,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python)",
+            "pptx_ops.save_atomic"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.049,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "workbook_sheets": [
+              "Sheet1"
+            ]
+          },
+          "seconds_samples": [
+            0.049,
+            0.046,
+            0.046,
+            0.049,
+            0.049
+          ],
+          "notes": ""
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 54,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "zipfile",
+            "lxml",
+            "openpyxl"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.176,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "workbook_sheets": [
+              "Sheet1"
+            ]
+          },
+          "seconds_samples": [
+            0.176,
+            0.174,
+            0.176,
+            0.178,
+            0.177
+          ],
+          "notes": "Caches and formulas with lxml; the embedded workbook rewritten with openpyxl (the skill names no tool for it)."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 11,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.08,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "workbook_sheets": [
+              "Sheet1"
+            ]
+          },
+          "seconds_samples": [
+            0.08,
+            0.08,
+            0.08,
+            0.08,
+            0.08
+          ],
+          "notes": ""
+        }
+      }
+    },
+    {
+      "id": "P09",
+      "title": "Replace a picture keeping its frame",
+      "category": "edit",
+      "spec": "Replace the image of a cropped picture on slide 3 with new.png, keeping position, size, crop, name and alt text; the same old image used on slide 2 must stay; no orphan image part.",
+      "task_md": "Replace the image of the cropped picture \"Site photo\" on slide 3 with new.png, keeping its position, size, crop, name and alt text; slide 2 uses the same old image and must keep it.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 7,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python)",
+            "pptx_ops.save_atomic"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.045,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "stale_image_rels_on_slide3": []
+          },
+          "seconds_samples": [
+            0.045,
+            0.047,
+            0.047,
+            0.043,
+            0.044
+          ],
+          "notes": ""
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 38,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "zipfile",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.032,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "stale_image_rels_on_slide3": []
+          },
+          "seconds_samples": [
+            0.035,
+            0.042,
+            0.031,
+            0.032,
+            0.031
+          ],
+          "notes": "A new media part: the old image is shared with slide 2, so it is not overwritten."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 11,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.077,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "oracle_info": {
+            "stale_image_rels_on_slide3": []
+          },
+          "seconds_samples": [
+            0.077,
+            0.076,
+            0.078,
+            0.08,
+            0.077
+          ],
+          "notes": "get_or_add_image_part, then the blip's r:embed repointed and the old relationship dropped."
+        }
+      }
+    },
+    {
+      "id": "P10",
+      "title": "Table: add a row, merge cells, fill a cell",
+      "category": "edit",
+      "spec": "On a styled 4x4 table: add a row at the end formatted like the row above (texts given), merge its first two cells, fill cell (2, 3) with FFC000.",
+      "task_md": "On the slide-2 table: add a row at the end (\"Total\", \"\", \"2,980\", \"+5 %\") formatted like the row above, merge its first two cells, and fill cell (row 2, column 3, zero-based) with FFC000.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 13,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python)",
+            "pptx_ops.save_atomic"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.054,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.056,
+            0.053,
+            0.054,
+            0.053,
+            0.056
+          ],
+          "notes": "rows.add_row() writes cells without runs, so the run-level edit (paragraphs[0].runs[0].text) raises IndexError on them; cell.text = keeps the size through endParaRPr."
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 47,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "zipfile",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.029,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.03,
+            0.03,
+            0.029,
+            0.029,
+            0.028
+          ],
+          "notes": ""
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 14,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.071,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.073,
+            0.071,
+            0.068,
+            0.073,
+            0.071
+          ],
+          "notes": "No add-row API: the last a:tr deep-copied; merge and fill through the API."
+        }
+      }
+    },
+    {
+      "id": "P11",
+      "title": "Set and change speaker notes",
+      "category": "edit",
+      "spec": "Add notes to slides 2, 4 and 6 (none before) and replace those of slide 3; the others stay.",
+      "task_md": "Set speaker notes on slides 2, 4 and 6 (which have none) and replace the notes of slide 3 (two paragraphs), leaving slides 1 and 5 as they are.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 9,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python)",
+            "pptx_ops.save_atomic"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.05,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.048,
+            0.048,
+            0.05,
+            0.051,
+            0.051
+          ],
+          "notes": ""
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 75,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "zipfile",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.033,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.034,
+            0.034,
+            0.032,
+            0.033,
+            0.033
+          ],
+          "notes": "No notes helper: new notes slides cloned from an existing one, rels and content types by hand."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 9,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.074,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.074,
+            0.073,
+            0.076,
+            0.074,
+            0.076
+          ],
+          "notes": ""
+        }
+      }
+    },
+    {
+      "id": "P12",
+      "title": "Render every slide to PNG at 100 dpi",
+      "category": "render",
+      "spec": "One PNG per slide, 1333x750 pixels, not blank: the agent's visual feedback loop.",
+      "task_md": "Render every slide of a deck to PNG at 100 dpi, one file per slide, into a new folder (the agent's visual feedback loop).",
+      "stacks": {
+        "rdocx": {
+          "status": "fail",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rpptx render"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.236,
+          "oracle_info": {
+            "files": [
+              "deck_slide1.png",
+              "deck_slide2.png",
+              "deck_slide3.png",
+              "deck_slide4.png",
+              "deck_slide5.png",
+              "deck_slide6.png",
+              "deck_slide7.png",
+              "deck_slide8.png"
+            ],
+            "bar_pixels": 0,
+            "photo_pixels": 204233
+          },
+          "seconds_samples": [
+            0.236,
+            0.235,
+            0.236,
+            0.239,
+            0.237
+          ],
+          "notes": "slide 6: the chart's bars are not drawn (0 pixels in the series colour)"
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 6,
+          "files": [
+            "builtin.sh"
+          ],
+          "tools": [
+            "soffice.py (LibreOffice)",
+            "pdftoppm"
+          ],
+          "processes": 4,
+          "raw_xml": false,
+          "seconds": 1.139,
+          "oracle_info": {
+            "files": [
+              "slide-1.png",
+              "slide-2.png",
+              "slide-3.png",
+              "slide-4.png",
+              "slide-5.png",
+              "slide-6.png",
+              "slide-7.png",
+              "slide-8.png"
+            ],
+            "bar_pixels": 69478,
+            "photo_pixels": 204261
+          },
+          "seconds_samples": [
+            1.139,
+            1.133,
+            1.199
+          ],
+          "notes": ""
+        },
+        "pylib": {
+          "status": "unsupported",
+          "loc": 0,
+          "files": [],
+          "tools": [],
+          "processes": 0,
+          "raw_xml": false,
+          "seconds": null,
+          "notes": "python-pptx has no renderer. An agent without a skill would call LibreOffice and pdftoppm, which is the builtin stack's path (measured there)."
+        }
+      }
+    },
+    {
+      "id": "P13",
+      "title": "Export the deck to Markdown",
+      "category": "convert",
+      "spec": "Titles as headings in slide order, bullets as list items with their nesting, the table as a GFM table, speaker notes.",
+      "task_md": "Export a deck to Markdown: slide titles as headings in order, bullets as list items keeping their nesting, the table as a GFM table, speaker notes.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rpptx convert"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.022,
+          "seconds_samples": [
+            0.022,
+            0.022,
+            0.024,
+            0.022,
+            0.021
+          ],
+          "notes": "Valid CommonMark, but every space of titles, runs and notes is written &#32; and punctuation is escaped; the chart is left out (diagnostic: unsupported chart projection) where slide_text.py prints its data."
+        },
+        "builtin": {
+          "status": "fail",
+          "loc": 21,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "slide_text.py"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.086,
+          "seconds_samples": [
+            0.086,
+            0.086,
+            0.087,
+            0.086,
+            0.093
+          ],
+          "notes": "slide_text.py is the skill's Markdown reader; it prints paragraphs without their level, so the nesting cannot be restored. An agent that writes python-pptx code instead gets the pylib result. | slide 2 level-2 bullet not nested (indent 0 vs 0)"
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 28,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.074,
+          "seconds_samples": [
+            0.077,
+            0.074,
+            0.073,
+            0.073,
+            0.076
+          ],
+          "notes": ""
+        }
+      }
+    },
+    {
+      "id": "P14",
+      "title": "Slide numbers and footer as the Header and Footer dialog does",
+      "category": "layout",
+      "spec": "Slide numbers and the footer 'Northwind Confidential' on every slide but the title slide, as slide-level sldNum and ftr placeholders matching the layouts' (Apply to All, 'Don't show on title slide').",
+      "task_md": "Add slide numbers and the footer \"Northwind Confidential\" to every slide but the title slide, as PowerPoint's Header and Footer dialog does (Apply to All, \"Don't show on title slide\").",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rpptx footer"
+          ],
+          "processes": 2,
+          "raw_xml": false,
+          "seconds": 0.03,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.03,
+            0.03,
+            0.03,
+            0.03,
+            0.03
+          ],
+          "notes": ""
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 46,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "zipfile",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.03,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.03,
+            0.03,
+            0.03,
+            0.031,
+            0.031
+          ],
+          "notes": "The layout's ftr and sldNum placeholders copied into each non-title slide with lxml."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 22,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.074,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.074,
+            0.073,
+            0.075,
+            0.076,
+            0.072
+          ],
+          "notes": "clone_placeholder() for the layout's footer and slide-number placeholders; the slidenum field with lxml."
+        }
+      }
+    },
+    {
+      "id": "P15",
+      "title": "Fill a .potx template",
+      "category": "create",
+      "spec": "From a .potx (3 layouts used, one instruction slide to drop): a .pptx with a title slide, a bullet slide and a picture slide filled through their placeholders (title, subtitle, body, picture).",
+      "task_md": "From a .potx template, make a .pptx with 3 slides filled through placeholders: a title slide (title, subtitle), a bullet slide (title, body) and a picture slide (title, picture placeholder, caption); the template's instruction slide must not remain.",
+      "stacks": {
+        "rdocx": {
+          "status": "pass",
+          "loc": 20,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rpptx (Python)",
+            "pptx_ops.save_atomic"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "seconds": 0.046,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.046,
+            0.047,
+            0.047,
+            0.046,
+            0.045
+          ],
+          "notes": ""
+        },
+        "builtin": {
+          "status": "pass",
+          "loc": 83,
+          "files": [
+            "builtin.py"
+          ],
+          "tools": [
+            "add_slide.py",
+            "clean.py",
+            "zipfile",
+            "lxml",
+            "Pillow"
+          ],
+          "processes": 5,
+          "raw_xml": true,
+          "seconds": 0.142,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.146,
+            0.142,
+            0.142,
+            0.141,
+            0.142
+          ],
+          "notes": "add_slide.py from a layout makes an empty slide: placeholders, the picture placeholder with a computed srcRect, media, rels written by hand; template content type switched to presentation. thumbnail.py (picking layouts by eye) has no role in a script."
+        },
+        "pylib": {
+          "status": "pass",
+          "loc": 30,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-pptx",
+            "zipfile"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "seconds": 0.083,
+          "valid": {
+            "rpptx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "seconds_samples": [
+            0.083,
+            0.083,
+            0.083,
+            0.083,
+            0.083
+          ],
+          "notes": "python-pptx refuses a .potx: content type patched in memory; the instruction slide removed through _sldIdLst."
+        }
+      }
+    }
+  ]
+}

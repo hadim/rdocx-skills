@@ -1,0 +1,1 @@
+D03 counted-replace: replace 'Service Level Agreement' by 'Support Contract' exactly N=5 times (runs split by Word, mixed formatting, a table cell, the header) keeping the formatting around; with N=4 refuse and write nothing; args: `input.docx OUT.docx N`.

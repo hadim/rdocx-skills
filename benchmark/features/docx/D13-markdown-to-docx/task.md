@@ -1,0 +1,1 @@
+D13 markdown-to-docx: convert notes.md (# / ## / ### headings, a bulleted and a numbered list, a GFM table, a fenced code block, **bold**, *italic*, a link) to a .docx that uses Word's structures (heading styles, numbering, a table, a monospace code block, a hyperlink that looks like one); args: `notes.md OUT.docx`.

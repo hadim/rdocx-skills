@@ -1,0 +1,1 @@
+D05 table-edit: in the existing table insert a 'Supplier' column after 'Item' (Acme, Bolt & Co, Acme, empty; header bold like its neighbours), merge 'Total' with the cell to its right, delete the 'Nuts' row, shade the 'Amount' header cell FFC000; args: `input.docx OUT.docx`.
