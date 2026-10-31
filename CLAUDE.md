@@ -84,31 +84,38 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 28/10/2026
+## State on 31/10/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
-  `v2026.10.27` (pin `3b25072d`, `integration/open-prs-2026-10-27`).
-- Pinned: `integration/open-prs-2026-10-28` on hadim/rdocx (`401e3f42`): the upstream release v0.16.4 /
-  rpptx-v0.14.4 (tensorbee/rdocx `24af95d3`, sprint S95.4) plus the open pull requests tensorbee/rdocx#427 (compare
-  keeps the revisions of a redline, #425) and #428 (the body starts below a header taller than the top margin, #424,
-  and a TOC with `\u` rebuilds past vertically merged cells, #426), rebased onto `24af95d3`. S95.4 adapted and
-  closed #409 to #422 (findings #402 to #408, edit costs #403 and #407): their tests left
-  `tests/test_docx_carried.py`, which keeps the three of #427 and #428. Upstream does not merge pull requests from
-  here: it adapts them in a sprint and closes them, so pin its `main` or its tags again once a sprint carries them,
-  and delete `tests/test_docx_carried.py` then (its tests name their pull requests).
-- Open gaps: none (`tests/gaps.py` is empty, both `references/gaps.md` say so). No call grows with the body or the
-  deck from 25 to 100 paragraphs (10 to 40 slides) but the 26 of `ACCEPTED` in `test_docx_scaling.py`, linear and
-  called once or a few times per document. v0.16.4 re-implemented the edit-cost series its own way: six section and
-  page calls became linear (about 0.6 s at 1000 paragraphs, 6 times the previous pin, accepted 2026-10-28), and an
-  edit costs more in a large body than on the previous pin (at 1000 paragraphs `run.text` 0.14 s against 0.07, a
-  replacement 0.17 s against 0.11 to 0.14; the docx gap page gives the costs). The form operations of v0.16.4
-  (`fill_form`, `reset_form`, `protect_form`, `validate_form`) check the whole document on each call, 3 to 9 s at
-  1000 paragraphs: `WHOLE_DOCUMENT` or reads in the scaling test.
-- Suite against `401e3f42` on Linux (local): no failure, the scaling tests included. Run
-  `tests/test_docs_snippets.py` without `-n`: its blocks chain files, and xdist spreads them over workers. The docx
-  SKILL.md is 8 bytes under its 16,000-byte budget.
+  `v2026.10.28` (pin `401e3f42`, `integration/open-prs-2026-10-28`).
+- Pinned: `integration/open-prs-2026-10-31` on hadim/rdocx (`e00c8f3c`): the upstream release v0.16.4 /
+  rpptx-v0.14.4 (tensorbee/rdocx `24af95d3`, sprint S95.4) plus tensorbee/rdocx#427 (#425) and #428 (#424, #426),
+  and the fix pull requests of the 2026-10-31 findings (42 findings met comparing rdocx and rpptx with other Office
+  libraries on synthetic tasks, grouped into tensorbee/rdocx#431 to #437): #438 (`rpptx fit` on the whole deck,
+  Markdown spaces, `slides.index`, #431), #439 (stricter `validate`, a ZIP name stored twice refused, shared
+  bookmark ids open, negative shape sizes refused, #435), #440 (layout and render, #433), #441 (markup rdocx writes,
+  #432), #442 (EMF, interlaced PNG, chart formats and exports, hidden shapes, #436), #443 (cell setters in place,
+  the styles parse kept across edits, #437) and #444 (comment markup, compare over split runs, revision text,
+  `insert_document` defaults and lists, #434), with a merge fix of #444 on #443 and #439 counting `gridSpan` in
+  `rpptx validate`. Their tests are in
+  `tests/test_docx_carried.py` and `tests/test_pptx_carried.py`, each naming its pull request. Upstream does not
+  merge pull requests from here: it adapts them in a sprint and closes them, so pin its `main` or its tags again once
+  a sprint carries them, and delete those tests then.
+- Open gaps: four, strict xfails in the carried files. docx-reply-without-range (#434 case 1: a reply gets no range
+  and no reference mark), docx-control-character-round-trip and
+  pptx-control-character-round-trip (#435 case 5: a part holding U+0001 opens and is saved back; `validate` reports
+  it since #439) and docx-font-fallback-by-entry-point (#433 case 7: `rdocx convert`, `to_pdf()` and `page_count()`
+  pick different fonts for a font rdocx does not bundle; a `--font-dir` / `font_dir=` folder holding the font makes
+  them agree). Edit costs: no call grows with the body or the deck from 25 to 100 paragraphs (10 to 40 slides) but
+  the 30 of `ACCEPTED` in `test_docx_scaling.py`; the edit cost series of v0.16.4 and the form operations as on
+  28/10/2026 (the docx gap page gives the costs). #443 made cell paragraph setters and edits with a large
+  `styles.xml` flat (its cases are timed in test_docx_carried.py), but in a cell inside a content control; `cell.text`,
+  `cell.vertical_alignment` and `cell.shading` still grow with the body.
+- Suite against `e00c8f3c` on Linux (local): see the pin's pull request. Run `tests/test_docs_snippets.py`
+  without `-n`: its blocks chain files, and xdist spreads them over workers. The docx SKILL.md is a few bytes under its
+  16,000-byte budget.
 - `rdocx_env.py build` exports the source with the commit's time only over a build folder whose last build was that
   commit (`target/<platform>/built-commit`): a folder restored from another commit's cache, built after this commit was
   made, linked that commit's crates on Windows (2026-10-23).

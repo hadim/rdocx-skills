@@ -191,7 +191,7 @@ $R/rpptx notes set s2.pptx 8 --text "Questions from the board." -o s3.pptx
 $R/rpptx footer s3.pptx --slide-number --footer "Riverton Footbridge" --skip-title -o s4.pptx
 $R/rpptx meta set s4.pptx --title "Footbridge options" --author "Claude" -o s5.pptx
 $R/rpptx meta get s5.pptx
-$R/rpptx fit --json s5.pptx > fit.json || [ $? -eq 1 ]      # exit 1: a frame overflows, listed in fit.json
+$R/rpptx fit --json s5.pptx > fit.json || [ $? -eq 1 ]      # exit 1: a frame overflows or cannot be assessed (fit.json)
 ```
 
 ## Brand a deck: theme, logo, slide numbers, transitions, alt text
