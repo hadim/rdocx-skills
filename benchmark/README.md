@@ -15,7 +15,7 @@ The tools move fast: read the date above before quoting a number.
 ## 🏁 Scoreboard
 
 <!-- bench:scoreboard:start -->
-|  | rdocx-skills | Built-in skill | python-docx / python-pptx |
+|  | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone |
 | --- | :---: | :---: | :---: |
 | 🧰 Tasks done, out of 44 | **43** | 41 | 37 |
 | ✍️ Lines of code an agent writes (34 tasks all three do) | **388** | 1600 | 1190 |
@@ -46,7 +46,7 @@ comment gets no range of its own.
 ## 💡 What it changes for an agent
 
 <!-- bench:value:start -->
-| Your agent needs to... | rdocx-skills | Built-in skill | python-docx / python-pptx |
+| Your agent needs to... | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone |
 | --- | :--- | :--- | :--- |
 | 🔀 Redline two versions of a Word file | `rdocx compare --granularity word`<br><sub>2 lines</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>86 lines · 🧬 raw XML</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>80 lines · 🧬 raw XML</sub> |
 | ✅ Reject one reviewer's tracked changes | `rdocx revision reject --author`<br><sub>2 lines</sub> | the XML edited by hand<br><sub>42 lines · 🧬 raw XML</sub> | the XML edited by hand<br><sub>35 lines · 🧬 raw XML</sub> |
@@ -68,9 +68,9 @@ tasks). 🧬: OOXML written or edited by hand.</sub>
 
 | | What it is | How an agent uses it |
 |---|---|---|
-| **rdocx-skills** | This plugin: the pinned [rdocx](https://github.com/tensorbee/rdocx) and rpptx build, native Rust CLIs with Python bindings, and the helpers `docx_ops.py` / `pptx_ops.py` | One CLI call for whole-file work, the Python binding for anything finer; renders pages itself |
-| **Built-in skill** | Claude's own `docx` and `pptx` skills | docx-js and pptxgenjs (npm) to create; unzip, edit the XML, zip to edit, with the skills' helper scripts (`merge_runs.py`, `comment.py`, `accept_changes.py`, `add_slide.py`, `clean.py`, `slide_text.py`, `thumbnail.py`, `office/validate.py`); pandoc to read Word files; LibreOffice and pdftoppm to render |
-| **python-docx / python-pptx** | The two libraries alone, lxml where they have no API | What an agent writes with no skill, and the path the built-in pptx skill mentions |
+| **Claude + rdocx-skills** | This plugin: the pinned [rdocx](https://github.com/tensorbee/rdocx) and rpptx build, native Rust CLIs with Python bindings, and the helpers `docx_ops.py` / `pptx_ops.py` | One CLI call for whole-file work, the Python binding for anything finer; renders pages itself |
+| **Claude + built-in skill** | Claude's own `docx` and `pptx` skills, what Claude uses without this plugin | docx-js and pptxgenjs (npm) to create; unzip, edit the XML, zip to edit, with the skills' helper scripts (`merge_runs.py`, `comment.py`, `accept_changes.py`, `add_slide.py`, `clean.py`, `slide_text.py`, `thumbnail.py`, `office/validate.py`); pandoc to read Word files; LibreOffice and pdftoppm to render |
+| **Python libraries alone** | python-docx and python-pptx, lxml where they have no API | What an agent writes with no skill, and the path the built-in pptx skill mentions. Also what ChatGPT does as far as third-party reviews describe it: it writes and runs python-docx or python-pptx code in its code interpreter (OpenAI documents no method of its own). Fast, as everything runs in one Python process, but it has no renderer, no validator and no API for tracked changes |
 
 The built-in skills' scripts are proprietary: the benchmark calls them where Claude Code installs them and never
 copies them. They carry no version number, so each run records a SHA-256 of their files (`Versions` below).
@@ -82,7 +82,7 @@ neutral oracle (`zipfile` and `lxml` only) that decides whether the output does 
 also run through `rdocx validate`, the built-in `validate.py` and a LibreOffice conversion.
 
 <!-- bench:features-summary:start -->
-| 44 tasks | rdocx-skills | Built-in skill | python-docx / python-pptx |
+| 44 tasks | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone |
 | --- | :---: | :---: | :---: |
 | ✅ Done (oracle passes) | **43 / 44** | 41 / 44 | 37 / 44 |
 | ⚠️ Partly done | 0 | 1 | 1 |
@@ -102,7 +102,7 @@ also run through `rdocx validate`, the built-in `validate.py` and a LibreOffice 
 
 **Word: create and edit**
 
-| Task | rdocx-skills | Built-in skill | python-docx / python-pptx |
+| Task | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone |
 | --- | :--- | :--- | :--- |
 | D01 Create a report | ✅ 37 | ✅ 53 | ✅ 60 🧬 |
 | D02 Read every story | ✅ 14 | ✅ 51 | ✅ 38 |
@@ -121,7 +121,7 @@ also run through `rdocx validate`, the built-in `validate.py` and a LibreOffice 
 
 **Word: review, layout and render**
 
-| Task | rdocx-skills | Built-in skill | python-docx / python-pptx |
+| Task | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone |
 | --- | :--- | :--- | :--- |
 | R01 Comment on a phrase split across runs | ✅ 3 | ✅ 29 🧬 | ✅ 30 🧬 |
 | R02 Reply to a comment and resolve the thread | ❌ 8 | ✅ 33 🧬 | ✅ 34 🧬 |
@@ -141,7 +141,7 @@ also run through `rdocx validate`, the built-in `validate.py` and a LibreOffice 
 
 **PowerPoint**
 
-| Task | rdocx-skills | Built-in skill | python-docx / python-pptx |
+| Task | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone |
 | --- | :--- | :--- | :--- |
 | P01 Create a 10-slide structured deck | ✅ 53 | ✅ 73 | ✅ 71 🧬 |
 | P02 Read a deck into JSON | ✅ 17 | ✅ 23 | ✅ 21 |
@@ -247,7 +247,7 @@ unchanged; `remeasured` in `results/speed.json`).
 <!-- bench:speed:start -->
 **A 52-page Word report** (`docx-M`), median wall time of the command an agent runs
 
-| Operation | rdocx-skills | Built-in skill | python-docx / python-pptx | rdocx-skills against the built-in skill |
+| Operation | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone | rdocx-skills against the built-in skill |
 | --- | :---: | :---: | :---: | :---: |
 | 📖 Read all the text | 0.48 s | 0.44 s | **0.12 s** | ≈ same |
 | ✏️ Counted replacement (the skill's helper) | 3.07 s | 0.44 s | **0.19 s** | 🐢 6.9× slower |
@@ -262,7 +262,7 @@ unchanged; `remeasured` in `results/speed.json`).
 
 **A 60-slide deck** (`pptx-M`), median wall time of the command an agent runs
 
-| Operation | rdocx-skills | Built-in skill | python-docx / python-pptx | rdocx-skills against the built-in skill |
+| Operation | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone | rdocx-skills against the built-in skill |
 | --- | :---: | :---: | :---: | :---: |
 | 📖 Read text and notes | **0.11 s** | 0.13 s | 0.12 s | ≈ same |
 | ✏️ Counted replacement | 0.24 s | **0.12 s** | 0.16 s | 🐢 2.1× slower |
@@ -533,7 +533,7 @@ The counted replacement and the comment go through the skill's helpers (`docx_op
 What an agent can look at while it works, and how close the picture is to what Office itself draws.
 
 <!-- bench:visual-capabilities:start -->
-| What the agent can see | rdocx-skills | Built-in skill | python-docx / python-pptx |
+| What the agent can see | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone |
 | --- | :---: | :---: | :---: |
 | One page or slide to PNG (docx) | ✅ | ✅ | ➖ |
 | One page or slide to PNG (pptx) | ✅ | ✅ | ➖ |
@@ -552,7 +552,7 @@ What an agent can look at while it works, and how close the picture is to what O
 
 Time to the first picture of page 1, one cold run
 
-| File | rdocx-skills | Built-in skill |
+| File | Claude + rdocx-skills | Claude + built-in skill |
 | --- | :---: | :---: |
 | docx-L | 6.22 s | **3.95 s** |
 | docx-M | **0.79 s** | 1.11 s |
@@ -565,7 +565,7 @@ publisher exported from Word or PowerPoint: the page count, a structural similar
 60 dpi) and where each word lands (`pdftotext -bbox`).
 
 <!-- bench:visual-fidelity:start -->
-| Files | Measure | rdocx-skills (rdocx / rpptx) | Built-in skill (LibreOffice) |
+| Files | Measure | Claude + rdocx-skills (rdocx / rpptx) | Claude + built-in skill (LibreOffice) |
 | --- | --- | :---: | :---: |
 | Word files, PDF exported by Word (8) | 📏 Same page count as Office | 4 / 8 | **7** / 8 |
 |  | 🖼️ Page similarity (SSIM, median) | 0.60 | **0.80** |
