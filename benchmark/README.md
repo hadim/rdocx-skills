@@ -1,7 +1,7 @@
 # 📊 Benchmark: rdocx-skills against Claude's built-in docx and pptx skills
 
 <!-- bench:date:start -->
-Run of 2026-10-31: rdocx 0.16.4 and rpptx 0.14.4 (pin `b3be9b6db132`) against the built-in skills (docx-js 9.15.0, pptxgenjs 4.0.1, LibreOffice 26.2.6.3, pandoc 3.13) and python-docx 1.2.0 / python-pptx 1.0.2.
+Run of 2026-11-01: rdocx 0.16.4 and rpptx 0.14.4 (pin `3707323312e9`) against the built-in skills (docx-js 9.15.0, pptxgenjs 4.0.1, LibreOffice 26.2.6.3, pandoc 3.13) and python-docx 1.2.0 / python-pptx 1.0.2.
 <!-- bench:date:end -->
 
 What does an agent gain, and lose, when it works on Word and PowerPoint files through rdocx-skills rather than
@@ -25,8 +25,8 @@ The tools move fast: read the date above before quoting a number.
 | 🔎 Corrupt or invalid pptx caught by the stack's checks | **97 %** | 73 % | 39 % |
 | ⚡ Every page of a 52-page Word report to PNG | **2.13 s** | 7.38 s | ➖ |
 | ⚡ Every slide of a 60-slide deck to PNG | **1.34 s** | 5.81 s | ➖ |
-| ✏️ Counted replacement in a 52-page Word report | 3.08 s | 0.44 s | **0.19 s** |
-| 🏗️ Build a 52-page Word report from scratch | 34 s | **0.29 s** | 0.48 s |
+| ✏️ Counted replacement in a 52-page Word report | 3.07 s | 0.44 s | **0.19 s** |
+| 🏗️ Build a 52-page Word report from scratch | 13 s | **0.29 s** | 0.48 s |
 | 🖨️ Word files with the same page count as Word's own PDF | 4 / 8 | **7 / 8** | ➖ |
 <!-- bench:scoreboard:end -->
 
@@ -237,7 +237,10 @@ Method, label sources and every mutation: `validity/NOTES.md`.
 
 Wall time of the command an agent runs, process start included: the median of 5 runs after a warm-up (3 for
 LibreOffice and anything over 20 s), on a quiet machine. Each operation's output is checked (replacement count,
-comment present, one PNG per page...).
+comment present, one PNG per page...). The rdocx rows of the five operations that go through the Python binding
+(creation, counted replacement and comment, with and without validation) were measured again on pin `3707323312e9`;
+every other row comes from the full run of 2026-10-31 on pin `b3be9b6db132` (same machine, the other stacks
+unchanged; `remeasured` in `results/speed.json`).
 
 ![Every page or slide to PNG against the length of the file](figures/speed-render.svg)
 
@@ -247,15 +250,15 @@ comment present, one PNG per page...).
 | Operation | rdocx-skills | Built-in skill | python-docx / python-pptx | rdocx-skills against the built-in skill |
 | --- | :---: | :---: | :---: | :---: |
 | 📖 Read all the text | 0.48 s | 0.44 s | **0.12 s** | ≈ same |
-| ✏️ Counted replacement (the skill's helper) | 3.08 s | 0.44 s | **0.19 s** | 🐢 6.9× slower |
-| 💬 Comment on a phrase | 3.08 s | 0.48 s | **0.09 s** | 🐢 6.4× slower |
+| ✏️ Counted replacement (the skill's helper) | 3.07 s | 0.44 s | **0.19 s** | 🐢 6.9× slower |
+| 💬 Comment on a phrase | 3.07 s | 0.48 s | **0.09 s** | 🐢 6.4× slower |
 | ✅ Accept all tracked changes | 1.23 s | **0.78 s** | ➖ | 🐢 1.6× slower |
 | 🖼️ Page 1 to PNG | **0.84 s** | 1.20 s | ➖ | 🚀 1.4× faster |
 | 🖼️ Every page to PNG | **2.13 s** | 7.38 s | ➖ | 🚀 3.5× faster |
 | 📄 PDF | **1.07 s** | 1.15 s | ➖ | ≈ same |
 | 📝 Markdown | **0.39 s** | 0.45 s | ➖ | ≈ same |
 | 🔎 Validate | **0.27 s** | 0.40 s | ➖ | 🚀 1.5× faster |
-| 🏗️ Build the document from scratch | 34 s | **0.29 s** | 0.48 s | 🐢 116× slower |
+| 🏗️ Build the document from scratch | 13 s | **0.29 s** | 0.48 s | 🐢 45× slower |
 
 **A 60-slide deck** (`pptx-M`), median wall time of the command an agent runs
 
@@ -292,61 +295,61 @@ comment present, one PNG per page...).
 | docx.read | gov-uk-dcms-taylor-review-interim-evaluation (66 pages) | rdocx: text --json 3.95 s; builtin: pandoc 0.73 s; builtin: xml (unzip + lxml) 0.16 s; pylib: python-docx 0.16 s |
 | docx.read | gov-uk-dcms-social-impacts-culture-sport-appendices (153 pages) | rdocx: text --json 0.69 s; builtin: pandoc 0.90 s; builtin: xml (unzip + lxml) 0.15 s; pylib: python-docx 0.20 s |
 | docx.read | gov-uk-dcms-social-impacts-culture-sport (137 pages) | rdocx: text --json 0.93 s; builtin: pandoc 0.77 s; builtin: xml (unzip + lxml) 0.22 s; pylib: python-docx 0.23 s |
-| docx.replace | docx-S (6 pages) | rdocx: docx_ops replace 0.36 s; builtin: unzip/merge_runs/lxml/zip 0.10 s; rdocx: rdocx replace --expect 0.08 s; pylib: python-docx 0.06 s |
-| docx.replace | docx-M-clean (51 pages) | rdocx: docx_ops replace 2.97 s; builtin: unzip/merge_runs/lxml/zip 0.44 s; rdocx: rdocx replace --expect 0.69 s; pylib: python-docx 0.18 s |
-| docx.replace | docx-M (52 pages) | rdocx: docx_ops replace 3.08 s; builtin: unzip/merge_runs/lxml/zip 0.44 s; rdocx: rdocx replace --expect 0.71 s; pylib: python-docx 0.19 s |
-| docx.replace | docx-M-lo (52 pages) | rdocx: docx_ops replace 2.19 s; builtin: unzip/merge_runs/lxml/zip 0.46 s; rdocx: rdocx replace --expect 0.49 s; pylib: python-docx 0.18 s |
-| docx.replace | docx-L (198 pages) | rdocx: docx_ops replace 14 s; builtin: unzip/merge_runs/lxml/zip 1.85 s; rdocx: rdocx replace --expect 2.83 s; pylib: python-docx 0.62 s |
+| docx.replace | docx-S (6 pages) | rdocx: docx_ops replace 0.35 s; builtin: unzip/merge_runs/lxml/zip 0.10 s; rdocx: rdocx replace --expect 0.07 s; pylib: python-docx 0.06 s |
+| docx.replace | docx-M-clean (51 pages) | rdocx: docx_ops replace 2.96 s; builtin: unzip/merge_runs/lxml/zip 0.44 s; rdocx: rdocx replace --expect 0.67 s; pylib: python-docx 0.18 s |
+| docx.replace | docx-M (52 pages) | rdocx: docx_ops replace 3.07 s; builtin: unzip/merge_runs/lxml/zip 0.44 s; rdocx: rdocx replace --expect 0.69 s; pylib: python-docx 0.19 s |
+| docx.replace | docx-M-lo (52 pages) | rdocx: docx_ops replace 2.15 s; builtin: unzip/merge_runs/lxml/zip 0.46 s; rdocx: rdocx replace --expect 0.48 s; pylib: python-docx 0.18 s |
+| docx.replace | docx-L (198 pages) | rdocx: docx_ops replace 14 s; builtin: unzip/merge_runs/lxml/zip 1.85 s; rdocx: rdocx replace --expect 2.79 s; pylib: python-docx 0.62 s |
 | docx.replace | gov-uk-dbt-flexible-working-request-form (3 pages) | rdocx: docx_ops replace 0.11 s; builtin: unzip/merge_runs/lxml/zip 0.07 s; rdocx: rdocx replace --expect 0.03 s; pylib: python-docx 0.05 s |
 | docx.replace | data-gouv-ssmsi-cvs-note-presentation (5 pages) | rdocx: docx_ops replace 0.19 s; builtin: unzip/merge_runs/lxml/zip 0.10 s; rdocx: rdocx replace --expect 0.06 s; pylib: python-docx 0.08 s |
-| docx.replace | gov-uk-pins-local-plan-webinar-qa (11 pages) | rdocx: docx_ops replace 0.37 s; builtin: unzip/merge_runs/lxml/zip 0.12 s; rdocx: rdocx replace --expect 0.07 s; pylib: python-docx 0.06 s |
-| docx.replace | gov-uk-charity-commission-independent-examiner-template (2 pages) | rdocx: docx_ops replace 0.21 s; builtin: unzip/merge_runs/lxml/zip 0.08 s; rdocx: rdocx replace --expect 0.05 s; pylib: python-docx 0.05 s |
-| docx.replace | gov-uk-dcms-creative-industries-consultation (22 pages) | rdocx: docx_ops replace 0.83 s; builtin: unzip/merge_runs/lxml/zip 0.18 s; rdocx: rdocx replace --expect 0.22 s; pylib: python-docx 0.09 s |
-| docx.replace | gov-uk-dcms-taylor-review-past-schemes (47 pages) | rdocx: docx_ops replace 6.89 s; builtin: unzip/merge_runs/lxml/zip 1.43 s; rdocx: rdocx replace --expect 1.47 s; pylib: python-docx 0.30 s |
-| docx.replace | gov-uk-dcms-taylor-review-interim-evaluation (66 pages) | rdocx: docx_ops replace 11 s; builtin: unzip/merge_runs/lxml/zip 1.39 s; rdocx: rdocx replace --expect 1.48 s; pylib: python-docx 0.32 s |
-| docx.replace | gov-uk-dcms-social-impacts-culture-sport-appendices (153 pages) | rdocx: docx_ops replace 4.66 s; builtin: unzip/merge_runs/lxml/zip 1.22 s; rdocx: rdocx replace --expect 1.13 s; pylib: python-docx 0.38 s |
-| docx.replace | gov-uk-dcms-social-impacts-culture-sport (137 pages) | rdocx: docx_ops replace 5.83 s; builtin: unzip/merge_runs/lxml/zip 1.46 s; rdocx: rdocx replace --expect 1.65 s; pylib: python-docx 0.83 s |
-| docx.replace+validate | docx-S (6 pages) | rdocx: docx_ops replace+validate 0.39 s; builtin: unzip/merge_runs/lxml/zip+validate 0.26 s |
-| docx.replace+validate | docx-M-clean (51 pages) | rdocx: docx_ops replace+validate 3.23 s; builtin: unzip/merge_runs/lxml/zip+validate 0.84 s |
-| docx.replace+validate | docx-M (52 pages) | rdocx: docx_ops replace+validate 3.34 s; builtin: unzip/merge_runs/lxml/zip+validate 0.86 s |
-| docx.replace+validate | docx-M-lo (52 pages) | rdocx: docx_ops replace+validate 2.36 s; builtin: unzip/merge_runs/lxml/zip+validate 0.94 s |
+| docx.replace | gov-uk-pins-local-plan-webinar-qa (11 pages) | rdocx: docx_ops replace 0.36 s; builtin: unzip/merge_runs/lxml/zip 0.12 s; rdocx: rdocx replace --expect 0.07 s; pylib: python-docx 0.06 s |
+| docx.replace | gov-uk-charity-commission-independent-examiner-template (2 pages) | rdocx: docx_ops replace 0.20 s; builtin: unzip/merge_runs/lxml/zip 0.08 s; rdocx: rdocx replace --expect 0.05 s; pylib: python-docx 0.05 s |
+| docx.replace | gov-uk-dcms-creative-industries-consultation (22 pages) | rdocx: docx_ops replace 0.81 s; builtin: unzip/merge_runs/lxml/zip 0.18 s; rdocx: rdocx replace --expect 0.21 s; pylib: python-docx 0.09 s |
+| docx.replace | gov-uk-dcms-taylor-review-past-schemes (47 pages) | rdocx: docx_ops replace 6.98 s; builtin: unzip/merge_runs/lxml/zip 1.43 s; rdocx: rdocx replace --expect 1.46 s; pylib: python-docx 0.30 s |
+| docx.replace | gov-uk-dcms-taylor-review-interim-evaluation (66 pages) | rdocx: docx_ops replace 11 s; builtin: unzip/merge_runs/lxml/zip 1.39 s; rdocx: rdocx replace --expect 1.47 s; pylib: python-docx 0.32 s |
+| docx.replace | gov-uk-dcms-social-impacts-culture-sport-appendices (153 pages) | rdocx: docx_ops replace 4.59 s; builtin: unzip/merge_runs/lxml/zip 1.22 s; rdocx: rdocx replace --expect 1.10 s; pylib: python-docx 0.38 s |
+| docx.replace | gov-uk-dcms-social-impacts-culture-sport (137 pages) | rdocx: docx_ops replace 5.76 s; builtin: unzip/merge_runs/lxml/zip 1.46 s; rdocx: rdocx replace --expect 1.60 s; pylib: python-docx 0.83 s |
+| docx.replace+validate | docx-S (6 pages) | rdocx: docx_ops replace+validate 0.38 s; builtin: unzip/merge_runs/lxml/zip+validate 0.26 s |
+| docx.replace+validate | docx-M-clean (51 pages) | rdocx: docx_ops replace+validate 3.22 s; builtin: unzip/merge_runs/lxml/zip+validate 0.84 s |
+| docx.replace+validate | docx-M (52 pages) | rdocx: docx_ops replace+validate 3.33 s; builtin: unzip/merge_runs/lxml/zip+validate 0.86 s |
+| docx.replace+validate | docx-M-lo (52 pages) | rdocx: docx_ops replace+validate 2.32 s; builtin: unzip/merge_runs/lxml/zip+validate 0.94 s |
 | docx.replace+validate | docx-L (198 pages) | rdocx: docx_ops replace+validate 15 s; builtin: unzip/merge_runs/lxml/zip+validate 3.31 s |
-| docx.replace+validate | gov-uk-dbt-flexible-working-request-form (3 pages) | rdocx: docx_ops replace+validate 0.13 s; builtin: unzip/merge_runs/lxml/zip+validate 0.19 s |
-| docx.replace+validate | data-gouv-ssmsi-cvs-note-presentation (5 pages) | rdocx: docx_ops replace+validate 0.22 s; builtin: unzip/merge_runs/lxml/zip+validate 0.23 s |
-| docx.replace+validate | gov-uk-pins-local-plan-webinar-qa (11 pages) | rdocx: docx_ops replace+validate 0.41 s; builtin: unzip/merge_runs/lxml/zip+validate 0.28 s |
-| docx.replace+validate | gov-uk-charity-commission-independent-examiner-template (2 pages) | rdocx: docx_ops replace+validate 0.23 s; builtin: unzip/merge_runs/lxml/zip+validate 0.22 s |
-| docx.replace+validate | gov-uk-dcms-creative-industries-consultation (22 pages) | rdocx: docx_ops replace+validate 0.91 s; builtin: unzip/merge_runs/lxml/zip+validate 0.43 s |
-| docx.replace+validate | gov-uk-dcms-taylor-review-past-schemes (47 pages) | rdocx: docx_ops replace+validate 7.45 s; builtin: unzip/merge_runs/lxml/zip+validate 2.44 s |
-| docx.replace+validate | gov-uk-dcms-taylor-review-interim-evaluation (66 pages) | rdocx: docx_ops replace+validate 11 s; builtin: unzip/merge_runs/lxml/zip+validate 2.59 s |
-| docx.replace+validate | gov-uk-dcms-social-impacts-culture-sport-appendices (153 pages) | rdocx: docx_ops replace+validate 5.13 s; builtin: unzip/merge_runs/lxml/zip+validate 2.26 s |
-| docx.replace+validate | gov-uk-dcms-social-impacts-culture-sport (137 pages) | rdocx: docx_ops replace+validate 6.30 s; builtin: unzip/merge_runs/lxml/zip+validate 2.27 s |
-| docx.comment | docx-S (6 pages) | rdocx: docx_ops comment 0.34 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.14 s; rdocx: rdocx comment add --anchor 0.08 s; pylib: python-docx add_comment 0.05 s |
-| docx.comment | docx-M-clean (51 pages) | rdocx: docx_ops comment 2.95 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.48 s; rdocx: rdocx comment add --anchor 0.75 s; pylib: python-docx add_comment 0.09 s |
-| docx.comment | docx-M (52 pages) | rdocx: docx_ops comment 3.08 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.48 s; rdocx: rdocx comment add --anchor 0.78 s; pylib: python-docx add_comment 0.09 s |
-| docx.comment | docx-M-lo (52 pages) | rdocx: docx_ops comment 2.14 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.50 s; rdocx: rdocx comment add --anchor 0.50 s; pylib: python-docx add_comment 0.09 s |
-| docx.comment | docx-L (198 pages) | rdocx: docx_ops comment 15 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.87 s; rdocx: rdocx comment add --anchor 3.12 s; pylib: python-docx add_comment 0.25 s |
+| docx.replace+validate | gov-uk-dbt-flexible-working-request-form (3 pages) | rdocx: docx_ops replace+validate 0.12 s; builtin: unzip/merge_runs/lxml/zip+validate 0.19 s |
+| docx.replace+validate | data-gouv-ssmsi-cvs-note-presentation (5 pages) | rdocx: docx_ops replace+validate 0.21 s; builtin: unzip/merge_runs/lxml/zip+validate 0.23 s |
+| docx.replace+validate | gov-uk-pins-local-plan-webinar-qa (11 pages) | rdocx: docx_ops replace+validate 0.40 s; builtin: unzip/merge_runs/lxml/zip+validate 0.28 s |
+| docx.replace+validate | gov-uk-charity-commission-independent-examiner-template (2 pages) | rdocx: docx_ops replace+validate 0.22 s; builtin: unzip/merge_runs/lxml/zip+validate 0.22 s |
+| docx.replace+validate | gov-uk-dcms-creative-industries-consultation (22 pages) | rdocx: docx_ops replace+validate 0.89 s; builtin: unzip/merge_runs/lxml/zip+validate 0.43 s |
+| docx.replace+validate | gov-uk-dcms-taylor-review-past-schemes (47 pages) | rdocx: docx_ops replace+validate 7.55 s; builtin: unzip/merge_runs/lxml/zip+validate 2.44 s |
+| docx.replace+validate | gov-uk-dcms-taylor-review-interim-evaluation (66 pages) | rdocx: docx_ops replace+validate 12 s; builtin: unzip/merge_runs/lxml/zip+validate 2.59 s |
+| docx.replace+validate | gov-uk-dcms-social-impacts-culture-sport-appendices (153 pages) | rdocx: docx_ops replace+validate 5.05 s; builtin: unzip/merge_runs/lxml/zip+validate 2.26 s |
+| docx.replace+validate | gov-uk-dcms-social-impacts-culture-sport (137 pages) | rdocx: docx_ops replace+validate 6.23 s; builtin: unzip/merge_runs/lxml/zip+validate 2.27 s |
+| docx.comment | docx-S (6 pages) | rdocx: docx_ops comment 0.33 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.14 s; rdocx: rdocx comment add --anchor 0.08 s; pylib: python-docx add_comment 0.05 s |
+| docx.comment | docx-M-clean (51 pages) | rdocx: docx_ops comment 2.94 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.48 s; rdocx: rdocx comment add --anchor 0.74 s; pylib: python-docx add_comment 0.09 s |
+| docx.comment | docx-M (52 pages) | rdocx: docx_ops comment 3.07 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.48 s; rdocx: rdocx comment add --anchor 0.76 s; pylib: python-docx add_comment 0.09 s |
+| docx.comment | docx-M-lo (52 pages) | rdocx: docx_ops comment 2.10 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.50 s; rdocx: rdocx comment add --anchor 0.48 s; pylib: python-docx add_comment 0.09 s |
+| docx.comment | docx-L (198 pages) | rdocx: docx_ops comment 15 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.87 s; rdocx: rdocx comment add --anchor 3.08 s; pylib: python-docx add_comment 0.25 s |
 | docx.comment | gov-uk-dbt-flexible-working-request-form (3 pages) | rdocx: docx_ops comment 0.11 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.11 s; rdocx: rdocx comment add --anchor 0.03 s; pylib: python-docx add_comment 0.05 s |
 | docx.comment | data-gouv-ssmsi-cvs-note-presentation (5 pages) | rdocx: docx_ops comment 0.20 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.14 s; rdocx: rdocx comment add --anchor 0.06 s; pylib: python-docx add_comment 0.05 s |
-| docx.comment | gov-uk-pins-local-plan-webinar-qa (11 pages) | rdocx: docx_ops comment 0.34 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.15 s; rdocx: rdocx comment add --anchor 0.08 s; pylib: python-docx add_comment 0.05 s |
+| docx.comment | gov-uk-pins-local-plan-webinar-qa (11 pages) | rdocx: docx_ops comment 0.33 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.15 s; rdocx: rdocx comment add --anchor 0.08 s; pylib: python-docx add_comment 0.05 s |
 | docx.comment | gov-uk-charity-commission-independent-examiner-template (2 pages) |  |
-| docx.comment | gov-uk-dcms-creative-industries-consultation (22 pages) | rdocx: docx_ops comment 0.75 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.22 s; rdocx: rdocx comment add --anchor 0.22 s; pylib: python-docx add_comment 0.06 s |
-| docx.comment | gov-uk-dcms-taylor-review-past-schemes (47 pages) | rdocx: docx_ops comment 5.39 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.45 s; rdocx: rdocx comment add --anchor 1.70 s; pylib: python-docx add_comment 0.23 s |
-| docx.comment | gov-uk-dcms-taylor-review-interim-evaluation (66 pages) | rdocx: docx_ops comment 7.76 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.42 s; rdocx: rdocx comment add --anchor 1.68 s; pylib: python-docx add_comment 0.23 s |
-| docx.comment | gov-uk-dcms-social-impacts-culture-sport-appendices (153 pages) | rdocx: docx_ops comment 4.22 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.24 s; rdocx: rdocx comment add --anchor 1.18 s; pylib: python-docx add_comment 0.23 s |
-| docx.comment | gov-uk-dcms-social-impacts-culture-sport (137 pages) | rdocx: docx_ops comment 5.56 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.50 s; rdocx: rdocx comment add --anchor 1.66 s; pylib: python-docx add_comment 0.70 s |
-| docx.comment+validate | docx-S (6 pages) | rdocx: docx_ops comment+validate 0.37 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 0.42 s |
-| docx.comment+validate | docx-M-clean (51 pages) | rdocx: docx_ops comment+validate 3.20 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 1.01 s |
-| docx.comment+validate | docx-M (52 pages) | rdocx: docx_ops comment+validate 3.34 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 1.03 s |
-| docx.comment+validate | docx-M-lo (52 pages) | rdocx: docx_ops comment+validate 2.32 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 1.10 s |
+| docx.comment | gov-uk-dcms-creative-industries-consultation (22 pages) | rdocx: docx_ops comment 0.72 s; builtin: unzip/merge_runs/comment.py/markers/zip 0.22 s; rdocx: rdocx comment add --anchor 0.21 s; pylib: python-docx add_comment 0.06 s |
+| docx.comment | gov-uk-dcms-taylor-review-past-schemes (47 pages) | rdocx: docx_ops comment 5.45 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.45 s; rdocx: rdocx comment add --anchor 1.68 s; pylib: python-docx add_comment 0.23 s |
+| docx.comment | gov-uk-dcms-taylor-review-interim-evaluation (66 pages) | rdocx: docx_ops comment 7.89 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.42 s; rdocx: rdocx comment add --anchor 1.67 s; pylib: python-docx add_comment 0.23 s |
+| docx.comment | gov-uk-dcms-social-impacts-culture-sport-appendices (153 pages) | rdocx: docx_ops comment 4.16 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.24 s; rdocx: rdocx comment add --anchor 1.16 s; pylib: python-docx add_comment 0.23 s |
+| docx.comment | gov-uk-dcms-social-impacts-culture-sport (137 pages) | rdocx: docx_ops comment 5.51 s; builtin: unzip/merge_runs/comment.py/markers/zip 1.50 s; rdocx: rdocx comment add --anchor 1.60 s; pylib: python-docx add_comment 0.70 s |
+| docx.comment+validate | docx-S (6 pages) | rdocx: docx_ops comment+validate 0.36 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 0.42 s |
+| docx.comment+validate | docx-M-clean (51 pages) | rdocx: docx_ops comment+validate 3.19 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 1.01 s |
+| docx.comment+validate | docx-M (52 pages) | rdocx: docx_ops comment+validate 3.33 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 1.03 s |
+| docx.comment+validate | docx-M-lo (52 pages) | rdocx: docx_ops comment+validate 2.27 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 1.10 s |
 | docx.comment+validate | docx-L (198 pages) | rdocx: docx_ops comment+validate 16 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 3.45 s |
 | docx.comment+validate | gov-uk-dbt-flexible-working-request-form (3 pages) | rdocx: docx_ops comment+validate 0.12 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 0.35 s |
-| docx.comment+validate | data-gouv-ssmsi-cvs-note-presentation (5 pages) | rdocx: docx_ops comment+validate 0.23 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 0.39 s |
+| docx.comment+validate | data-gouv-ssmsi-cvs-note-presentation (5 pages) | rdocx: docx_ops comment+validate 0.22 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 0.39 s |
 | docx.comment+validate | gov-uk-pins-local-plan-webinar-qa (11 pages) | rdocx: docx_ops comment+validate 0.37 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 0.44 s |
-| docx.comment+validate | gov-uk-dcms-creative-industries-consultation (22 pages) | rdocx: docx_ops comment+validate 0.84 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 0.58 s |
-| docx.comment+validate | gov-uk-dcms-taylor-review-past-schemes (47 pages) | rdocx: docx_ops comment+validate 5.96 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 2.60 s |
-| docx.comment+validate | gov-uk-dcms-taylor-review-interim-evaluation (66 pages) | rdocx: docx_ops comment+validate 8.33 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 2.73 s |
-| docx.comment+validate | gov-uk-dcms-social-impacts-culture-sport-appendices (153 pages) | rdocx: docx_ops comment+validate 4.69 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 2.40 s |
-| docx.comment+validate | gov-uk-dcms-social-impacts-culture-sport (137 pages) | rdocx: docx_ops comment+validate 6.05 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 2.42 s |
+| docx.comment+validate | gov-uk-dcms-creative-industries-consultation (22 pages) | rdocx: docx_ops comment+validate 0.81 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 0.58 s |
+| docx.comment+validate | gov-uk-dcms-taylor-review-past-schemes (47 pages) | rdocx: docx_ops comment+validate 6.00 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 2.60 s |
+| docx.comment+validate | gov-uk-dcms-taylor-review-interim-evaluation (66 pages) | rdocx: docx_ops comment+validate 8.46 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 2.73 s |
+| docx.comment+validate | gov-uk-dcms-social-impacts-culture-sport-appendices (153 pages) | rdocx: docx_ops comment+validate 4.62 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 2.40 s |
+| docx.comment+validate | gov-uk-dcms-social-impacts-culture-sport (137 pages) | rdocx: docx_ops comment+validate 5.98 s; builtin: unzip/merge_runs/comment.py/markers/zip+validate 2.42 s |
 | docx.accept | docx-S (6 pages) | rdocx: rdocx revision accept 0.13 s; builtin: accept_changes.py (LibreOffice) 0.40 s |
 | docx.accept | docx-M (52 pages) | rdocx: rdocx revision accept 1.23 s; builtin: accept_changes.py (LibreOffice) 0.78 s |
 | docx.accept | docx-M-lo (52 pages) | rdocx: rdocx revision accept 0.94 s; builtin: accept_changes.py (LibreOffice) 0.79 s |
@@ -511,9 +514,9 @@ comment present, one PNG per page...).
 | pptx.validate | gov-uk-ofqual-qualifications-reform-teachers (28 slides) | rdocx: rpptx validate 0.11 s; builtin: validate.py 0.25 s |
 | pptx.validate | gov-uk-dcms-taylor-review-technical-annex-deck (52 slides) | rdocx: rpptx validate 0.73 s; builtin: validate.py 1.42 s |
 | pptx.validate | gov-uk-ofsted-childminder-pre-registration-briefing (41 slides) | rdocx: rpptx validate 0.11 s; builtin: validate.py 0.26 s |
-| docx.create | docx-S (None pages) | rdocx: rdocx Python (chapters + insert_document) 4.08 s; builtin: docx-js (corpus/gen_docx.js) 0.12 s; pylib: python-docx (+ lxml) 0.11 s; rdocx: rdocx Python naive (one body, cell handles) 5.09 s |
-| docx.create | docx-M (None pages) | rdocx: rdocx Python (chapters + insert_document) 34 s; builtin: docx-js (corpus/gen_docx.js) 0.29 s; pylib: python-docx (+ lxml) 0.48 s |
-| docx.create | docx-L (None pages) | rdocx: rdocx Python (chapters + insert_document) 234 s; builtin: docx-js (corpus/gen_docx.js) 0.75 s; pylib: python-docx (+ lxml) 1.93 s |
+| docx.create | docx-S (None pages) | rdocx: rdocx Python (chapters + insert_document) 1.46 s; builtin: docx-js (corpus/gen_docx.js) 0.12 s; pylib: python-docx (+ lxml) 0.11 s; rdocx: rdocx Python naive (one body, cell handles) 1.56 s |
+| docx.create | docx-M (None pages) | rdocx: rdocx Python (chapters + insert_document) 13 s; builtin: docx-js (corpus/gen_docx.js) 0.29 s; pylib: python-docx (+ lxml) 0.48 s |
+| docx.create | docx-L (None pages) | rdocx: rdocx Python (chapters + insert_document) 91 s; builtin: docx-js (corpus/gen_docx.js) 0.75 s; pylib: python-docx (+ lxml) 1.93 s |
 | pptx.create | pptx-S (None pages) | rdocx: rpptx Python 0.33 s; builtin: pptxgenjs + apply_theme.js (corpus/gen_pptx.js) 0.15 s; pylib: python-pptx (corpus/gen_pptx_pythonpptx.py) 0.14 s |
 | pptx.create | pptx-M (None pages) | rdocx: rpptx Python 2.34 s; builtin: pptxgenjs + apply_theme.js (corpus/gen_pptx.js) 0.28 s; pylib: python-pptx (corpus/gen_pptx_pythonpptx.py) 0.29 s |
 | pptx.create | pptx-L (None pages) | rdocx: rpptx Python 7.87 s; builtin: pptxgenjs + apply_theme.js (corpus/gen_pptx.js) 0.50 s; pylib: python-pptx (corpus/gen_pptx_pythonpptx.py) 0.67 s |
@@ -551,10 +554,10 @@ Time to the first picture of page 1, one cold run
 
 | File | rdocx-skills | Built-in skill |
 | --- | :---: | :---: |
-| docx-L | 7.05 s | **4.11 s** |
-| docx-M | **0.84 s** | 1.14 s |
-| pptx-L | **1.70 s** | 3.60 s |
-| pptx-M | **0.68 s** | 1.63 s |
+| docx-L | 6.22 s | **3.95 s** |
+| docx-M | **0.79 s** | 1.11 s |
+| pptx-L | **1.65 s** | 3.45 s |
+| pptx-M | **0.66 s** | 1.59 s |
 <!-- bench:visual-capabilities:end -->
 
 **Fidelity.** Public Word documents and decks were rendered by both stacks and compared with the PDF their
@@ -676,11 +679,11 @@ folder that holds their `docx/` and `pptx/` folders.
 <!-- bench:versions:start -->
 |  | Version |
 | --- | --- |
-| date | 2026-10-31 |
+| date | 2026-11-01 |
 | machine | Linux x86_64, 32 CPUs |
 | rdocx | rdocx 0.16.4 |
 | rpptx | rpptx 0.14.4 |
-| rdocx_pin | b3be9b6db132 |
+| rdocx_pin | 3707323312e9 |
 | python-docx | 1.2.0 |
 | python-pptx | 1.0.2 |
 | docx-js | 9.15.0 |

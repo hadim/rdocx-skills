@@ -6479,18 +6479,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/docx/docx-S.docx .cache/work/speed/out/docx-S/replace.docx water WATER 8",
       "status": "ok",
-      "median": 0.3591,
-      "min": 0.3569,
-      "max": 0.3644,
+      "median": 0.3529,
+      "min": 0.352,
+      "max": 0.3557,
       "samples": [
-        0.3591,
-        0.3569,
-        0.3633,
-        0.3644,
-        0.3571
+        0.3545,
+        0.3529,
+        0.352,
+        0.3522,
+        0.3557
       ],
       "runs": 5,
-      "warmup": 0.3582,
+      "warmup": 0.3545,
       "flags": [],
       "check": {
         "ok": true,
@@ -6506,14 +6506,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.04,
-        2.67,
-        2.42
+        0.96,
+        1.53,
+        2.3
       ],
       "load_after": [
-        2.04,
-        2.66,
-        2.42
+        0.96,
+        1.53,
+        2.3
       ]
     },
     {
@@ -6589,18 +6589,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/docx/docx-S.docx -p water -v WATER --expect 8 -o .cache/work/speed/out/docx-S/replace.docx",
       "status": "ok",
-      "median": 0.0752,
-      "min": 0.075,
-      "max": 0.0761,
+      "median": 0.0717,
+      "min": 0.0706,
+      "max": 0.074,
       "samples": [
-        0.075,
-        0.0752,
-        0.0761,
-        0.075,
-        0.0754
+        0.0706,
+        0.0734,
+        0.0717,
+        0.0709,
+        0.074
       ],
       "runs": 5,
-      "warmup": 0.08,
+      "warmup": 0.0761,
       "flags": [],
       "check": {
         "ok": true,
@@ -6616,14 +6616,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.04,
-        2.67,
-        2.42
+        0.96,
+        1.53,
+        2.3
       ],
       "load_after": [
-        2.04,
-        2.66,
-        2.42
+        0.96,
+        1.53,
+        2.3
       ]
     },
     {
@@ -6699,18 +6699,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/docx/docx-M-clean.docx .cache/work/speed/out/docx-M-clean/replace.docx million MILLION 130",
       "status": "ok",
-      "median": 2.9689,
-      "min": 2.9592,
-      "max": 2.9886,
+      "median": 2.963,
+      "min": 2.9535,
+      "max": 2.9817,
       "samples": [
-        2.9662,
-        2.9592,
-        2.9689,
-        2.9858,
-        2.9886
+        2.9535,
+        2.9582,
+        2.9817,
+        2.9696,
+        2.963
       ],
       "runs": 5,
-      "warmup": 2.9642,
+      "warmup": 2.9697,
       "flags": [],
       "check": {
         "ok": true,
@@ -6726,14 +6726,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.04,
-        2.66,
-        2.42
+        0.96,
+        1.53,
+        2.3
       ],
       "load_after": [
-        2.02,
-        2.6,
-        2.4
+        0.98,
+        1.48,
+        2.26
       ]
     },
     {
@@ -6809,18 +6809,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/docx/docx-M-clean.docx -p million -v MILLION --expect 130 -o .cache/work/speed/out/docx-M-clean/replace.docx",
       "status": "ok",
-      "median": 0.6867,
-      "min": 0.6823,
-      "max": 0.6922,
+      "median": 0.6681,
+      "min": 0.6652,
+      "max": 0.6723,
       "samples": [
-        0.6831,
-        0.6922,
-        0.6867,
-        0.6868,
-        0.6823
+        0.6681,
+        0.6669,
+        0.6692,
+        0.6652,
+        0.6723
       ],
       "runs": 5,
-      "warmup": 0.6941,
+      "warmup": 0.6709,
       "flags": [],
       "check": {
         "ok": true,
@@ -6836,14 +6836,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.04,
-        2.66,
-        2.42
+        0.96,
+        1.53,
+        2.3
       ],
       "load_after": [
-        2.02,
-        2.6,
-        2.4
+        0.98,
+        1.48,
+        2.26
       ]
     },
     {
@@ -6919,18 +6919,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/docx/docx-M.docx .cache/work/speed/out/docx-M/replace.docx million MILLION 130",
       "status": "ok",
-      "median": 3.0755,
-      "min": 3.0648,
-      "max": 3.0805,
+      "median": 3.0673,
+      "min": 3.063,
+      "max": 3.0765,
       "samples": [
-        3.0755,
-        3.0805,
-        3.0684,
-        3.0648,
-        3.0795
+        3.0657,
+        3.0673,
+        3.063,
+        3.0708,
+        3.0765
       ],
       "runs": 5,
-      "warmup": 3.0715,
+      "warmup": 3.075,
       "flags": [],
       "check": {
         "ok": true,
@@ -6946,14 +6946,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.02,
-        2.6,
-        2.4
+        0.98,
+        1.48,
+        2.26
       ],
       "load_after": [
-        2.01,
-        2.54,
-        2.39
+        0.98,
+        1.44,
+        2.23
       ]
     },
     {
@@ -7029,18 +7029,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/docx/docx-M.docx -p million -v MILLION --expect 130 -o .cache/work/speed/out/docx-M/replace.docx",
       "status": "ok",
-      "median": 0.7131,
-      "min": 0.7086,
-      "max": 0.7143,
+      "median": 0.6921,
+      "min": 0.689,
+      "max": 0.6956,
       "samples": [
-        0.7135,
-        0.7143,
-        0.7089,
-        0.7086,
-        0.7131
+        0.6956,
+        0.6921,
+        0.689,
+        0.6904,
+        0.6939
       ],
       "runs": 5,
-      "warmup": 0.7127,
+      "warmup": 0.6878,
       "flags": [],
       "check": {
         "ok": true,
@@ -7056,14 +7056,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.02,
-        2.6,
-        2.4
+        0.98,
+        1.48,
+        2.26
       ],
       "load_after": [
-        2.01,
-        2.54,
-        2.39
+        0.98,
+        1.44,
+        2.23
       ]
     },
     {
@@ -7139,18 +7139,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/docx/docx-M-lo.docx .cache/work/speed/out/docx-M-lo/replace.docx million MILLION 130",
       "status": "ok",
-      "median": 2.1898,
-      "min": 2.1746,
-      "max": 2.1978,
+      "median": 2.1487,
+      "min": 2.1359,
+      "max": 2.1768,
       "samples": [
-        2.1899,
-        2.1978,
-        2.1898,
-        2.1795,
-        2.1746
+        2.145,
+        2.1487,
+        2.1518,
+        2.1768,
+        2.1359
       ],
       "runs": 5,
-      "warmup": 2.1936,
+      "warmup": 2.1413,
       "flags": [],
       "check": {
         "ok": true,
@@ -7166,14 +7166,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.01,
-        2.54,
-        2.39
+        0.98,
+        1.44,
+        2.23
       ],
       "load_after": [
-        2.01,
-        2.5,
-        2.38
+        0.99,
+        1.42,
+        2.21
       ]
     },
     {
@@ -7249,18 +7249,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/docx/docx-M-lo.docx -p million -v MILLION --expect 130 -o .cache/work/speed/out/docx-M-lo/replace.docx",
       "status": "ok",
-      "median": 0.494,
-      "min": 0.488,
-      "max": 0.4966,
+      "median": 0.4771,
+      "min": 0.4741,
+      "max": 0.4797,
       "samples": [
-        0.4926,
-        0.488,
-        0.4966,
-        0.4958,
-        0.494
+        0.4797,
+        0.4772,
+        0.4771,
+        0.4752,
+        0.4741
       ],
       "runs": 5,
-      "warmup": 0.4843,
+      "warmup": 0.4809,
       "flags": [],
       "check": {
         "ok": true,
@@ -7276,14 +7276,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.01,
-        2.54,
-        2.39
+        0.98,
+        1.44,
+        2.23
       ],
       "load_after": [
-        2.01,
-        2.5,
-        2.38
+        0.99,
+        1.42,
+        2.21
       ]
     },
     {
@@ -7359,18 +7359,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/docx/docx-L.docx .cache/work/speed/out/docx-L/replace.docx million MILLION 521",
       "status": "ok",
-      "median": 13.8739,
-      "min": 13.847,
-      "max": 13.8983,
+      "median": 13.9215,
+      "min": 13.8705,
+      "max": 13.9787,
       "samples": [
-        13.8983,
-        13.847,
-        13.8739,
-        13.8801,
-        13.8713
+        13.9787,
+        13.8705,
+        13.9215,
+        13.9442,
+        13.9018
       ],
       "runs": 5,
-      "warmup": 13.8617,
+      "warmup": 13.9074,
       "flags": [],
       "check": {
         "ok": true,
@@ -7386,14 +7386,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.01,
-        2.5,
-        2.38
+        0.99,
+        1.42,
+        2.21
       ],
       "load_after": [
-        2.06,
-        2.34,
-        2.33
+        1.01,
+        1.31,
+        2.08
       ]
     },
     {
@@ -7469,18 +7469,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/docx/docx-L.docx -p million -v MILLION --expect 521 -o .cache/work/speed/out/docx-L/replace.docx",
       "status": "ok",
-      "median": 2.8288,
-      "min": 2.8147,
-      "max": 2.8351,
+      "median": 2.7867,
+      "min": 2.7734,
+      "max": 2.8004,
       "samples": [
-        2.83,
-        2.8271,
-        2.8351,
-        2.8288,
-        2.8147
+        2.7867,
+        2.7827,
+        2.8004,
+        2.7875,
+        2.7734
       ],
       "runs": 5,
-      "warmup": 2.8246,
+      "warmup": 2.7778,
       "flags": [],
       "check": {
         "ok": true,
@@ -7496,14 +7496,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.01,
-        2.5,
-        2.38
+        0.99,
+        1.42,
+        2.21
       ],
       "load_after": [
-        2.06,
-        2.34,
-        2.33
+        1.01,
+        1.31,
+        2.08
       ]
     },
     {
@@ -7579,18 +7579,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/real/gov-uk-dbt-flexible-working-request-form/office/request-flexible-working-docx-form.docx .cache/work/speed/out/gov-uk-dbt-flexible-working-request-form/replace.docx application APPLICATION 11",
       "status": "ok",
-      "median": 0.1138,
-      "min": 0.1128,
-      "max": 0.1145,
+      "median": 0.1056,
+      "min": 0.1022,
+      "max": 0.1106,
       "samples": [
-        0.1138,
-        0.1143,
-        0.1145,
-        0.1135,
-        0.1128
+        0.1064,
+        0.1106,
+        0.1056,
+        0.1025,
+        0.1022
       ],
       "runs": 5,
-      "warmup": 0.1092,
+      "warmup": 0.1067,
       "flags": [],
       "check": {
         "ok": true,
@@ -7606,14 +7606,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.06,
-        2.34,
-        2.33
+        1.01,
+        1.31,
+        2.08
       ],
       "load_after": [
-        2.05,
-        2.34,
-        2.33
+        1.01,
+        1.31,
+        2.08
       ]
     },
     {
@@ -7689,18 +7689,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/real/gov-uk-dbt-flexible-working-request-form/office/request-flexible-working-docx-form.docx -p application -v APPLICATION --expect 11 -o .cache/work/speed/out/gov-uk-dbt-flexible-working-request-form/replace.docx",
       "status": "ok",
-      "median": 0.0302,
-      "min": 0.0299,
-      "max": 0.0314,
+      "median": 0.03,
+      "min": 0.0293,
+      "max": 0.0312,
       "samples": [
-        0.0302,
         0.0299,
-        0.0314,
-        0.0313,
-        0.0302
+        0.03,
+        0.0293,
+        0.0312,
+        0.0306
       ],
       "runs": 5,
-      "warmup": 0.0339,
+      "warmup": 0.0334,
       "flags": [],
       "check": {
         "ok": true,
@@ -7716,14 +7716,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.06,
-        2.34,
-        2.33
+        1.01,
+        1.31,
+        2.08
       ],
       "load_after": [
-        2.05,
-        2.34,
-        2.33
+        1.01,
+        1.31,
+        2.08
       ]
     },
     {
@@ -7799,18 +7799,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/real/data-gouv-ssmsi-cvs-note-presentation/office/note-presentation-open-data-cvs-mars22.docx .cache/work/speed/out/data-gouv-ssmsi-cvs-note-presentation/replace.docx violences VIOLENCES 51",
       "status": "ok",
-      "median": 0.1949,
-      "min": 0.1938,
-      "max": 0.1965,
+      "median": 0.1851,
+      "min": 0.1848,
+      "max": 0.1874,
       "samples": [
-        0.1949,
-        0.1938,
-        0.1955,
-        0.1941,
-        0.1965
+        0.1851,
+        0.1848,
+        0.1849,
+        0.1874,
+        0.1863
       ],
       "runs": 5,
-      "warmup": 0.1956,
+      "warmup": 0.1914,
       "flags": [],
       "check": {
         "ok": true,
@@ -7826,14 +7826,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.05,
-        2.34,
-        2.33
+        1.01,
+        1.31,
+        2.08
       ],
       "load_after": [
-        2.05,
-        2.34,
-        2.33
+        1.01,
+        1.3,
+        2.07
       ]
     },
     {
@@ -7909,18 +7909,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/real/data-gouv-ssmsi-cvs-note-presentation/office/note-presentation-open-data-cvs-mars22.docx -p violences -v VIOLENCES --expect 51 -o .cache/work/speed/out/data-gouv-ssmsi-cvs-note-presentation/replace.docx",
       "status": "ok",
-      "median": 0.0604,
-      "min": 0.0574,
-      "max": 0.0613,
+      "median": 0.0563,
+      "min": 0.0559,
+      "max": 0.0567,
       "samples": [
-        0.0574,
-        0.0605,
-        0.0604,
-        0.0613,
-        0.0589
+        0.0559,
+        0.0567,
+        0.0564,
+        0.056,
+        0.0563
       ],
       "runs": 5,
-      "warmup": 0.0646,
+      "warmup": 0.0597,
       "flags": [],
       "check": {
         "ok": true,
@@ -7936,14 +7936,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.05,
-        2.34,
-        2.33
+        1.01,
+        1.31,
+        2.08
       ],
       "load_after": [
-        2.05,
-        2.34,
-        2.33
+        1.01,
+        1.3,
+        2.07
       ]
     },
     {
@@ -8019,18 +8019,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/real/gov-uk-pins-local-plan-webinar-qa/office/Local_Plan_webinar_questions_and_responses.docx .cache/work/speed/out/gov-uk-pins-local-plan-webinar-qa/replace.docx would WOULD 21",
       "status": "ok",
-      "median": 0.372,
-      "min": 0.3716,
-      "max": 0.3723,
+      "median": 0.3635,
+      "min": 0.3627,
+      "max": 0.3669,
       "samples": [
-        0.372,
-        0.3719,
-        0.3716,
-        0.3723,
-        0.3721
+        0.3635,
+        0.3669,
+        0.3638,
+        0.3631,
+        0.3627
       ],
       "runs": 5,
-      "warmup": 0.3728,
+      "warmup": 0.3663,
       "flags": [],
       "check": {
         "ok": true,
@@ -8046,14 +8046,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.05,
-        2.34,
-        2.33
+        1.01,
+        1.3,
+        2.07
       ],
       "load_after": [
-        2.05,
-        2.33,
-        2.33
+        1.01,
+        1.3,
+        2.07
       ]
     },
     {
@@ -8129,18 +8129,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/real/gov-uk-pins-local-plan-webinar-qa/office/Local_Plan_webinar_questions_and_responses.docx -p would -v WOULD --expect 21 -o .cache/work/speed/out/gov-uk-pins-local-plan-webinar-qa/replace.docx",
       "status": "ok",
-      "median": 0.0715,
-      "min": 0.0703,
-      "max": 0.0724,
+      "median": 0.0687,
+      "min": 0.0667,
+      "max": 0.0707,
       "samples": [
-        0.0703,
-        0.0724,
-        0.0715,
-        0.0711,
-        0.0717
+        0.0687,
+        0.0667,
+        0.0705,
+        0.0672,
+        0.0707
       ],
       "runs": 5,
-      "warmup": 0.0729,
+      "warmup": 0.0722,
       "flags": [],
       "check": {
         "ok": true,
@@ -8156,14 +8156,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.05,
-        2.34,
-        2.33
+        1.01,
+        1.3,
+        2.07
       ],
       "load_after": [
-        2.05,
-        2.33,
-        2.33
+        1.01,
+        1.3,
+        2.07
       ]
     },
     {
@@ -8239,18 +8239,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/real/gov-uk-charity-commission-independent-examiner-template/office/Independent_examiner_s_report_template_R_P_accounts_Oct_2018.docx .cache/work/speed/out/gov-uk-charity-commission-independent-examiner-template/replace.docx accounts ACCOUNTS 8",
       "status": "ok",
-      "median": 0.2129,
-      "min": 0.2123,
-      "max": 0.2146,
+      "median": 0.203,
+      "min": 0.2018,
+      "max": 0.2055,
       "samples": [
-        0.2142,
-        0.2146,
-        0.2123,
-        0.2127,
-        0.2129
+        0.2055,
+        0.203,
+        0.2022,
+        0.2018,
+        0.2039
       ],
       "runs": 5,
-      "warmup": 0.2128,
+      "warmup": 0.2064,
       "flags": [],
       "check": {
         "ok": true,
@@ -8266,14 +8266,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.05,
-        2.33,
-        2.33
+        1.01,
+        1.3,
+        2.07
       ],
       "load_after": [
-        2.04,
-        2.32,
-        2.33
+        1.01,
+        1.29,
+        2.06
       ]
     },
     {
@@ -8349,18 +8349,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/real/gov-uk-charity-commission-independent-examiner-template/office/Independent_examiner_s_report_template_R_P_accounts_Oct_2018.docx -p accounts -v ACCOUNTS --expect 8 -o .cache/work/speed/out/gov-uk-charity-commission-independent-examiner-template/replace.docx",
       "status": "ok",
-      "median": 0.0502,
-      "min": 0.0482,
-      "max": 0.0516,
+      "median": 0.0471,
+      "min": 0.0465,
+      "max": 0.0488,
       "samples": [
-        0.0516,
-        0.0482,
-        0.0509,
-        0.0483,
-        0.0502
+        0.0488,
+        0.0471,
+        0.0465,
+        0.0471,
+        0.0487
       ],
       "runs": 5,
-      "warmup": 0.054,
+      "warmup": 0.0524,
       "flags": [],
       "check": {
         "ok": true,
@@ -8376,14 +8376,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.05,
-        2.33,
-        2.33
+        1.01,
+        1.3,
+        2.07
       ],
       "load_after": [
-        2.04,
-        2.32,
-        2.33
+        1.01,
+        1.29,
+        2.06
       ]
     },
     {
@@ -8459,18 +8459,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-creative-industries-consultation/office/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.docx .cache/work/speed/out/gov-uk-dcms-creative-industries-consultation/replace.docx activities ACTIVITIES 50",
       "status": "ok",
-      "median": 0.8289,
-      "min": 0.8275,
-      "max": 0.8303,
+      "median": 0.8092,
+      "min": 0.8063,
+      "max": 0.8117,
       "samples": [
-        0.8275,
-        0.829,
-        0.8289,
-        0.8275,
-        0.8303
+        0.8117,
+        0.8096,
+        0.8063,
+        0.8092,
+        0.8077
       ],
       "runs": 5,
-      "warmup": 0.8259,
+      "warmup": 0.8088,
       "flags": [],
       "check": {
         "ok": true,
@@ -8486,14 +8486,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.04,
-        2.32,
-        2.33
+        1.01,
+        1.29,
+        2.06
       ],
       "load_after": [
-        2.04,
-        2.31,
-        2.32
+        1.01,
+        1.29,
+        2.06
       ]
     },
     {
@@ -8569,18 +8569,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/real/gov-uk-dcms-creative-industries-consultation/office/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.docx -p activities -v ACTIVITIES --expect 50 -o .cache/work/speed/out/gov-uk-dcms-creative-industries-consultation/replace.docx",
       "status": "ok",
-      "median": 0.2159,
-      "min": 0.2143,
-      "max": 0.2188,
+      "median": 0.2103,
+      "min": 0.2063,
+      "max": 0.2136,
       "samples": [
-        0.2188,
-        0.2171,
-        0.2159,
-        0.2143,
-        0.2149
+        0.2103,
+        0.2063,
+        0.2107,
+        0.2136,
+        0.208
       ],
       "runs": 5,
-      "warmup": 0.2139,
+      "warmup": 0.2118,
       "flags": [],
       "check": {
         "ok": true,
@@ -8596,14 +8596,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.04,
-        2.32,
-        2.33
+        1.01,
+        1.29,
+        2.06
       ],
       "load_after": [
-        2.04,
-        2.31,
-        2.32
+        1.01,
+        1.29,
+        2.06
       ]
     },
     {
@@ -8679,18 +8679,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-taylor-review-past-schemes/office/Report_on_Past_Scheme_Evaluations__Word_.docx .cache/work/speed/out/gov-uk-dcms-taylor-review-past-schemes/replace.docx community COMMUNITY 88",
       "status": "ok",
-      "median": 6.8862,
-      "min": 6.8819,
-      "max": 6.8956,
+      "median": 6.9797,
+      "min": 6.9368,
+      "max": 6.9943,
       "samples": [
-        6.8819,
-        6.8956,
-        6.8862,
-        6.8874,
-        6.8831
+        6.9797,
+        6.9943,
+        6.9368,
+        6.975,
+        6.9818
       ],
       "runs": 5,
-      "warmup": 6.8862,
+      "warmup": 6.995,
       "flags": [],
       "check": {
         "ok": true,
@@ -8706,14 +8706,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.04,
-        2.31,
-        2.32
+        1.01,
+        1.29,
+        2.06
       ],
       "load_after": [
-        2.11,
-        2.28,
-        2.31
+        1.0,
+        1.24,
+        1.99
       ]
     },
     {
@@ -8789,18 +8789,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/real/gov-uk-dcms-taylor-review-past-schemes/office/Report_on_Past_Scheme_Evaluations__Word_.docx -p community -v COMMUNITY --expect 88 -o .cache/work/speed/out/gov-uk-dcms-taylor-review-past-schemes/replace.docx",
       "status": "ok",
-      "median": 1.4688,
-      "min": 1.4622,
-      "max": 1.4751,
+      "median": 1.4632,
+      "min": 1.4497,
+      "max": 1.465,
       "samples": [
-        1.4751,
-        1.4622,
-        1.4676,
-        1.4688,
-        1.4694
+        1.4643,
+        1.4578,
+        1.465,
+        1.4497,
+        1.4632
       ],
       "runs": 5,
-      "warmup": 1.4706,
+      "warmup": 1.4617,
       "flags": [],
       "check": {
         "ok": true,
@@ -8816,14 +8816,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.04,
-        2.31,
-        2.32
+        1.01,
+        1.29,
+        2.06
       ],
       "load_after": [
-        2.11,
-        2.28,
-        2.31
+        1.0,
+        1.24,
+        1.99
       ]
     },
     {
@@ -8899,18 +8899,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-taylor-review-interim-evaluation/office/Interim_Evalution_of_the_Taylor_Review_Pilot__Word_.docx .cache/work/speed/out/gov-uk-dcms-taylor-review-interim-evaluation/replace.docx workshops WORKSHOPS 75",
       "status": "ok",
-      "median": 10.8573,
-      "min": 10.8066,
-      "max": 10.9099,
+      "median": 11.1796,
+      "min": 11.1281,
+      "max": 11.1842,
       "samples": [
-        10.8516,
-        10.8573,
-        10.8066,
-        10.9099,
-        10.9004
+        11.1842,
+        11.1796,
+        11.1281,
+        11.1657,
+        11.1807
       ],
       "runs": 5,
-      "warmup": 10.9204,
+      "warmup": 11.1345,
       "flags": [],
       "check": {
         "ok": true,
@@ -8926,14 +8926,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.11,
-        2.28,
-        2.31
+        1.0,
+        1.24,
+        1.99
       ],
       "load_after": [
-        2.02,
-        2.2,
-        2.27
+        1.07,
+        1.2,
+        1.91
       ]
     },
     {
@@ -9009,18 +9009,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/real/gov-uk-dcms-taylor-review-interim-evaluation/office/Interim_Evalution_of_the_Taylor_Review_Pilot__Word_.docx -p workshops -v WORKSHOPS --expect 75 -o .cache/work/speed/out/gov-uk-dcms-taylor-review-interim-evaluation/replace.docx",
       "status": "ok",
-      "median": 1.481,
-      "min": 1.4715,
-      "max": 1.4828,
+      "median": 1.4658,
+      "min": 1.4559,
+      "max": 1.4743,
       "samples": [
-        1.4828,
-        1.4715,
-        1.482,
-        1.4806,
-        1.481
+        1.4559,
+        1.461,
+        1.4658,
+        1.4713,
+        1.4743
       ],
       "runs": 5,
-      "warmup": 1.4831,
+      "warmup": 1.4589,
       "flags": [],
       "check": {
         "ok": true,
@@ -9036,14 +9036,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.11,
-        2.28,
-        2.31
+        1.0,
+        1.24,
+        1.99
       ],
       "load_after": [
-        2.02,
-        2.2,
-        2.27
+        1.07,
+        1.2,
+        1.91
       ]
     },
     {
@@ -9119,18 +9119,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/office/Appendices.docx .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport-appendices/replace.docx study STUDY 341",
       "status": "ok",
-      "median": 4.6569,
-      "min": 4.6413,
-      "max": 4.7646,
+      "median": 4.5854,
+      "min": 4.5788,
+      "max": 4.6,
       "samples": [
-        4.6413,
-        4.6541,
-        4.6594,
-        4.7646,
-        4.6569
+        4.6,
+        4.5858,
+        4.5854,
+        4.5814,
+        4.5788
       ],
       "runs": 5,
-      "warmup": 4.6631,
+      "warmup": 4.5808,
       "flags": [],
       "check": {
         "ok": true,
@@ -9146,14 +9146,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.02,
-        2.2,
-        2.27
+        1.07,
+        1.2,
+        1.91
       ],
       "load_after": [
-        2.01,
-        2.17,
-        2.26
+        1.04,
+        1.17,
+        1.88
       ]
     },
     {
@@ -9229,18 +9229,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/office/Appendices.docx -p study -v STUDY --expect 341 -o .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport-appendices/replace.docx",
       "status": "ok",
-      "median": 1.128,
-      "min": 1.1211,
-      "max": 1.1395,
+      "median": 1.1019,
+      "min": 1.0987,
+      "max": 1.1086,
       "samples": [
-        1.1226,
-        1.1394,
-        1.128,
-        1.1211,
-        1.1395
+        1.1061,
+        1.0987,
+        1.1004,
+        1.1086,
+        1.1019
       ],
       "runs": 5,
-      "warmup": 1.1295,
+      "warmup": 1.1046,
       "flags": [],
       "check": {
         "ok": true,
@@ -9256,14 +9256,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.02,
-        2.2,
-        2.27
+        1.07,
+        1.2,
+        1.91
       ],
       "load_after": [
-        2.01,
-        2.17,
-        2.26
+        1.04,
+        1.17,
+        1.88
       ]
     },
     {
@@ -9339,18 +9339,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/office/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport/replace.docx studies STUDIES 241",
       "status": "ok",
-      "median": 5.8277,
-      "min": 5.8102,
-      "max": 5.8442,
+      "median": 5.76,
+      "min": 5.7504,
+      "max": 5.7686,
       "samples": [
-        5.8442,
-        5.8102,
-        5.8277,
-        5.8277,
-        5.8266
+        5.76,
+        5.7673,
+        5.7686,
+        5.7504,
+        5.7515
       ],
       "runs": 5,
-      "warmup": 5.8067,
+      "warmup": 5.7557,
       "flags": [],
       "check": {
         "ok": true,
@@ -9366,14 +9366,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.01,
-        2.17,
-        2.26
+        1.04,
+        1.17,
+        1.88
       ],
       "load_after": [
-        2.0,
-        2.13,
-        2.24
+        1.01,
+        1.14,
+        1.83
       ]
     },
     {
@@ -9449,18 +9449,18 @@
       "primary": false,
       "command": "$R/rdocx replace .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/office/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx -p studies -v STUDIES --expect 241 -o .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport/replace.docx",
       "status": "ok",
-      "median": 1.6479,
-      "min": 1.6449,
-      "max": 1.6702,
+      "median": 1.5963,
+      "min": 1.591,
+      "max": 1.5964,
       "samples": [
-        1.6449,
-        1.6479,
-        1.646,
-        1.6519,
-        1.6702
+        1.5964,
+        1.591,
+        1.5963,
+        1.594,
+        1.5963
       ],
       "runs": 5,
-      "warmup": 1.6549,
+      "warmup": 1.6063,
       "flags": [],
       "check": {
         "ok": true,
@@ -9476,14 +9476,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.01,
-        2.17,
-        2.26
+        1.04,
+        1.17,
+        1.88
       ],
       "load_after": [
-        2.0,
-        2.13,
-        2.24
+        1.01,
+        1.14,
+        1.83
       ]
     },
     {
@@ -9559,18 +9559,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-S.docx .cache/work/speed/out/docx-S/replace.docx water WATER 8",
       "status": "ok",
-      "median": 0.3948,
-      "min": 0.3945,
-      "max": 0.3982,
+      "median": 0.3817,
+      "min": 0.379,
+      "max": 0.3857,
       "samples": [
-        0.3945,
-        0.3971,
-        0.3982,
-        0.3948,
-        0.3947
+        0.3804,
+        0.3856,
+        0.379,
+        0.3857,
+        0.3817
       ],
       "runs": 5,
-      "warmup": 0.3981,
+      "warmup": 0.3812,
       "flags": [],
       "check": {
         "ok": true,
@@ -9586,14 +9586,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.0,
-        2.13,
-        2.24
+        1.01,
+        1.14,
+        1.83
       ],
       "load_after": [
-        2.0,
-        2.13,
-        2.24
+        1.01,
+        1.14,
+        1.83
       ]
     },
     {
@@ -9698,18 +9698,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-M-clean.docx .cache/work/speed/out/docx-M-clean/replace.docx million MILLION 130",
       "status": "ok",
-      "median": 3.2339,
-      "min": 3.219,
-      "max": 3.2406,
+      "median": 3.2165,
+      "min": 3.1967,
+      "max": 3.2243,
       "samples": [
-        3.2237,
-        3.2339,
-        3.219,
-        3.2406,
-        3.2364
+        3.2243,
+        3.2179,
+        3.2165,
+        3.2101,
+        3.1967
       ],
       "runs": 5,
-      "warmup": 3.2402,
+      "warmup": 3.2113,
       "flags": [],
       "check": {
         "ok": true,
@@ -9725,14 +9725,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.0,
-        2.13,
-        2.24
+        1.01,
+        1.14,
+        1.83
       ],
       "load_after": [
-        2.0,
-        2.12,
-        2.23
+        1.01,
+        1.13,
+        1.81
       ]
     },
     {
@@ -9837,18 +9837,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-M.docx .cache/work/speed/out/docx-M/replace.docx million MILLION 130",
       "status": "ok",
-      "median": 3.3435,
-      "min": 3.3314,
-      "max": 3.3536,
+      "median": 3.3298,
+      "min": 3.3252,
+      "max": 3.3398,
       "samples": [
-        3.3524,
-        3.3435,
-        3.3314,
-        3.3536,
-        3.3327
+        3.3371,
+        3.3252,
+        3.3284,
+        3.3298,
+        3.3398
       ],
       "runs": 5,
-      "warmup": 3.3354,
+      "warmup": 3.3392,
       "flags": [],
       "check": {
         "ok": true,
@@ -9864,14 +9864,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.0,
-        2.12,
-        2.23
+        1.01,
+        1.13,
+        1.81
       ],
       "load_after": [
-        2.0,
-        2.11,
-        2.22
+        1.07,
+        1.14,
+        1.8
       ]
     },
     {
@@ -9976,18 +9976,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-M-lo.docx .cache/work/speed/out/docx-M-lo/replace.docx million MILLION 130",
       "status": "ok",
-      "median": 2.3605,
-      "min": 2.3548,
-      "max": 2.3689,
+      "median": 2.321,
+      "min": 2.3172,
+      "max": 2.3294,
       "samples": [
-        2.3616,
-        2.3566,
-        2.3548,
-        2.3689,
-        2.3605
+        2.321,
+        2.3172,
+        2.3242,
+        2.3294,
+        2.3204
       ],
       "runs": 5,
-      "warmup": 2.3644,
+      "warmup": 2.326,
       "flags": [],
       "check": {
         "ok": true,
@@ -10003,14 +10003,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.0,
-        2.11,
-        2.22
+        1.07,
+        1.14,
+        1.8
       ],
       "load_after": [
-        2.0,
-        2.1,
-        2.22
+        1.06,
+        1.13,
+        1.79
       ]
     },
     {
@@ -10115,18 +10115,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-L.docx .cache/work/speed/out/docx-L/replace.docx million MILLION 521",
       "status": "ok",
-      "median": 14.9946,
-      "min": 14.9653,
-      "max": 15.0282,
+      "median": 14.968,
+      "min": 14.9534,
+      "max": 14.9941,
       "samples": [
-        15.0031,
-        14.9653,
-        14.9946,
-        15.0282,
-        14.9938
+        14.9534,
+        14.9941,
+        14.968,
+        14.9601,
+        14.9931
       ],
       "runs": 5,
-      "warmup": 15.0299,
+      "warmup": 14.9801,
       "flags": [],
       "check": {
         "ok": true,
@@ -10142,14 +10142,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.0,
-        2.1,
-        2.22
+        1.06,
+        1.13,
+        1.79
       ],
       "load_after": [
-        2.02,
-        2.07,
-        2.19
+        1.01,
+        1.09,
+        1.71
       ]
     },
     {
@@ -10254,18 +10254,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dbt-flexible-working-request-form/office/request-flexible-working-docx-form.docx .cache/work/speed/out/gov-uk-dbt-flexible-working-request-form/replace.docx application APPLICATION 11",
       "status": "ok",
-      "median": 0.1252,
-      "min": 0.1216,
-      "max": 0.1256,
+      "median": 0.1168,
+      "min": 0.116,
+      "max": 0.119,
       "samples": [
-        0.1216,
-        0.1252,
-        0.1256,
-        0.1246,
-        0.1252
+        0.119,
+        0.1162,
+        0.116,
+        0.1177,
+        0.1168
       ],
       "runs": 5,
-      "warmup": 0.1239,
+      "warmup": 0.117,
       "flags": [],
       "check": {
         "ok": true,
@@ -10281,14 +10281,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.02,
-        2.07,
-        2.19
+        1.01,
+        1.09,
+        1.71
       ],
       "load_after": [
-        2.02,
-        2.07,
-        2.19
+        1.01,
+        1.09,
+        1.71
       ]
     },
     {
@@ -10393,18 +10393,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/data-gouv-ssmsi-cvs-note-presentation/office/note-presentation-open-data-cvs-mars22.docx .cache/work/speed/out/data-gouv-ssmsi-cvs-note-presentation/replace.docx violences VIOLENCES 51",
       "status": "ok",
-      "median": 0.219,
-      "min": 0.2179,
-      "max": 0.2194,
+      "median": 0.2082,
+      "min": 0.2081,
+      "max": 0.209,
       "samples": [
-        0.2193,
-        0.2179,
-        0.2184,
-        0.2194,
-        0.219
+        0.2082,
+        0.209,
+        0.2081,
+        0.2082,
+        0.2082
       ],
       "runs": 5,
-      "warmup": 0.2188,
+      "warmup": 0.2085,
       "flags": [],
       "check": {
         "ok": true,
@@ -10420,14 +10420,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.02,
-        2.07,
-        2.19
+        1.01,
+        1.09,
+        1.71
       ],
       "load_after": [
-        2.02,
-        2.07,
-        2.19
+        1.01,
+        1.09,
+        1.71
       ]
     },
     {
@@ -10532,18 +10532,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-pins-local-plan-webinar-qa/office/Local_Plan_webinar_questions_and_responses.docx .cache/work/speed/out/gov-uk-pins-local-plan-webinar-qa/replace.docx would WOULD 21",
       "status": "ok",
-      "median": 0.41,
-      "min": 0.4068,
-      "max": 0.4183,
+      "median": 0.3983,
+      "min": 0.3977,
+      "max": 0.4019,
       "samples": [
-        0.4088,
-        0.41,
-        0.4183,
-        0.4068,
-        0.4139
+        0.4018,
+        0.3977,
+        0.3982,
+        0.4019,
+        0.3983
       ],
       "runs": 5,
-      "warmup": 0.4072,
+      "warmup": 0.3987,
       "flags": [],
       "check": {
         "ok": true,
@@ -10559,14 +10559,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.02,
-        2.07,
-        2.19
+        1.01,
+        1.09,
+        1.71
       ],
       "load_after": [
-        2.02,
-        2.07,
-        2.19
+        1.17,
+        1.12,
+        1.71
       ]
     },
     {
@@ -10671,18 +10671,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-charity-commission-independent-examiner-template/office/Independent_examiner_s_report_template_R_P_accounts_Oct_2018.docx .cache/work/speed/out/gov-uk-charity-commission-independent-examiner-template/replace.docx accounts ACCOUNTS 8",
       "status": "ok",
-      "median": 0.2285,
-      "min": 0.2242,
-      "max": 0.2296,
+      "median": 0.2219,
+      "min": 0.2192,
+      "max": 0.2241,
       "samples": [
-        0.2242,
-        0.2296,
-        0.2287,
-        0.2262,
-        0.2285
+        0.2226,
+        0.2192,
+        0.2192,
+        0.2219,
+        0.2241
       ],
       "runs": 5,
-      "warmup": 0.2274,
+      "warmup": 0.2223,
       "flags": [],
       "check": {
         "ok": true,
@@ -10698,14 +10698,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.02,
-        2.07,
-        2.19
+        1.17,
+        1.12,
+        1.71
       ],
       "load_after": [
-        2.02,
-        2.07,
-        2.18
+        1.17,
+        1.12,
+        1.71
       ]
     },
     {
@@ -10810,18 +10810,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-creative-industries-consultation/office/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.docx .cache/work/speed/out/gov-uk-dcms-creative-industries-consultation/replace.docx activities ACTIVITIES 50",
       "status": "ok",
-      "median": 0.914,
-      "min": 0.9071,
-      "max": 0.9216,
+      "median": 0.8916,
+      "min": 0.8899,
+      "max": 0.8969,
       "samples": [
-        0.9216,
-        0.914,
-        0.9071,
-        0.9156,
-        0.9112
+        0.8899,
+        0.8969,
+        0.8916,
+        0.894,
+        0.8907
       ],
       "runs": 5,
-      "warmup": 0.9151,
+      "warmup": 0.8895,
       "flags": [],
       "check": {
         "ok": true,
@@ -10837,14 +10837,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.02,
-        2.07,
-        2.18
+        1.17,
+        1.12,
+        1.71
       ],
       "load_after": [
-        2.01,
-        2.07,
-        2.18
+        1.15,
+        1.12,
+        1.71
       ]
     },
     {
@@ -10949,18 +10949,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-taylor-review-past-schemes/office/Report_on_Past_Scheme_Evaluations__Word_.docx .cache/work/speed/out/gov-uk-dcms-taylor-review-past-schemes/replace.docx community COMMUNITY 88",
       "status": "ok",
-      "median": 7.4529,
-      "min": 7.4271,
-      "max": 7.4613,
+      "median": 7.5478,
+      "min": 7.5186,
+      "max": 7.5605,
       "samples": [
-        7.4529,
-        7.4613,
-        7.4499,
-        7.4271,
-        7.4613
+        7.5404,
+        7.5605,
+        7.5523,
+        7.5186,
+        7.5478
       ],
       "runs": 5,
-      "warmup": 7.4384,
+      "warmup": 7.546,
       "flags": [],
       "check": {
         "ok": true,
@@ -10976,14 +10976,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.01,
-        2.07,
-        2.18
+        1.15,
+        1.12,
+        1.71
       ],
       "load_after": [
-        2.0,
-        2.05,
-        2.17
+        1.07,
+        1.1,
+        1.67
       ]
     },
     {
@@ -11088,18 +11088,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-taylor-review-interim-evaluation/office/Interim_Evalution_of_the_Taylor_Review_Pilot__Word_.docx .cache/work/speed/out/gov-uk-dcms-taylor-review-interim-evaluation/replace.docx workshops WORKSHOPS 75",
       "status": "ok",
-      "median": 11.4531,
-      "min": 11.4303,
-      "max": 11.5081,
+      "median": 11.7342,
+      "min": 11.6768,
+      "max": 11.763,
       "samples": [
-        11.5081,
-        11.4531,
-        11.4913,
-        11.4501,
-        11.4303
+        11.6768,
+        11.763,
+        11.7342,
+        11.7225,
+        11.7541
       ],
       "runs": 5,
-      "warmup": 11.6068,
+      "warmup": 11.7435,
       "flags": [],
       "check": {
         "ok": true,
@@ -11115,14 +11115,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.0,
-        2.05,
-        2.17
+        1.07,
+        1.1,
+        1.67
       ],
       "load_after": [
-        2.05,
-        2.05,
-        2.16
+        1.09,
+        1.09,
+        1.62
       ]
     },
     {
@@ -11227,18 +11227,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/office/Appendices.docx .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport-appendices/replace.docx study STUDY 341",
       "status": "ok",
-      "median": 5.1309,
-      "min": 5.1278,
-      "max": 5.2196,
+      "median": 5.0503,
+      "min": 5.0382,
+      "max": 5.0536,
       "samples": [
-        5.1309,
-        5.1304,
-        5.1441,
-        5.2196,
-        5.1278
+        5.0446,
+        5.0503,
+        5.0382,
+        5.0536,
+        5.0513
       ],
       "runs": 5,
-      "warmup": 5.1286,
+      "warmup": 5.0518,
       "flags": [],
       "check": {
         "ok": true,
@@ -11254,14 +11254,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.05,
-        2.05,
-        2.16
+        1.09,
+        1.09,
+        1.62
       ],
       "load_after": [
-        2.37,
-        2.14,
-        2.18
+        1.06,
+        1.08,
+        1.6
       ]
     },
     {
@@ -11366,18 +11366,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops replace \"$1\" \"$2\" --edit \"$3\" \"$4\" \"$5\" >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/office/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport/replace.docx studies STUDIES 241",
       "status": "ok",
-      "median": 6.3041,
-      "min": 6.2907,
-      "max": 6.3219,
+      "median": 6.2308,
+      "min": 6.222,
+      "max": 6.2809,
       "samples": [
-        6.3041,
-        6.3118,
-        6.3219,
-        6.2907,
-        6.2957
+        6.2809,
+        6.2308,
+        6.257,
+        6.222,
+        6.2233
       ],
       "runs": 5,
-      "warmup": 6.3045,
+      "warmup": 6.2386,
       "flags": [],
       "check": {
         "ok": true,
@@ -11393,14 +11393,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.37,
-        2.14,
-        2.18
+        1.06,
+        1.08,
+        1.6
       ],
       "load_after": [
-        2.51,
-        2.21,
-        2.2
+        1.03,
+        1.07,
+        1.58
       ]
     },
     {
@@ -11505,18 +11505,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/docx/docx-S.docx .cache/work/speed/out/docx-S/comment.docx In the fourth quarter Speed benchmark comment",
       "status": "ok",
-      "median": 0.3359,
-      "min": 0.3338,
-      "max": 0.3361,
+      "median": 0.3302,
+      "min": 0.329,
+      "max": 0.3321,
       "samples": [
-        0.3359,
-        0.3344,
-        0.336,
-        0.3338,
-        0.3361
+        0.329,
+        0.3302,
+        0.3321,
+        0.3314,
+        0.3298
       ],
       "runs": 5,
-      "warmup": 0.3413,
+      "warmup": 0.3324,
       "flags": [],
       "check": {
         "ok": true,
@@ -11531,14 +11531,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.51,
-        2.21,
-        2.2
+        1.03,
+        1.07,
+        1.58
       ],
       "load_after": [
-        2.55,
-        2.22,
-        2.21
+        1.02,
+        1.07,
+        1.57
       ]
     },
     {
@@ -11617,18 +11617,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/docx/docx-S.docx --anchor In the fourth quarter --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/docx-S/comment.docx",
       "status": "ok",
-      "median": 0.0839,
-      "min": 0.0829,
-      "max": 0.0842,
+      "median": 0.0803,
+      "min": 0.0793,
+      "max": 0.0822,
       "samples": [
-        0.0835,
-        0.0842,
-        0.084,
-        0.0829,
-        0.0839
+        0.0793,
+        0.0803,
+        0.0817,
+        0.0822,
+        0.0797
       ],
       "runs": 5,
-      "warmup": 0.0889,
+      "warmup": 0.0869,
       "flags": [],
       "check": {
         "ok": true,
@@ -11643,14 +11643,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.51,
-        2.21,
-        2.2
+        1.03,
+        1.07,
+        1.58
       ],
       "load_after": [
-        2.55,
-        2.22,
-        2.21
+        1.02,
+        1.07,
+        1.57
       ]
     },
     {
@@ -11729,18 +11729,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/docx/docx-M-clean.docx .cache/work/speed/out/docx-M-clean/comment.docx satisfaction increased by 22 Speed benchmark comment",
       "status": "ok",
-      "median": 2.9464,
-      "min": 2.9325,
-      "max": 2.9607,
+      "median": 2.9363,
+      "min": 2.9256,
+      "max": 2.9486,
       "samples": [
-        2.9464,
-        2.9391,
-        2.9325,
-        2.9607,
-        2.9473
+        2.9384,
+        2.9486,
+        2.9263,
+        2.9363,
+        2.9256
       ],
       "runs": 5,
-      "warmup": 2.9618,
+      "warmup": 2.9409,
       "flags": [],
       "check": {
         "ok": true,
@@ -11755,14 +11755,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.55,
-        2.22,
-        2.21
+        1.02,
+        1.07,
+        1.57
       ],
       "load_after": [
-        2.84,
-        2.33,
-        2.25
+        1.02,
+        1.06,
+        1.56
       ]
     },
     {
@@ -11841,18 +11841,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/docx/docx-M-clean.docx --anchor satisfaction increased by 22 --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/docx-M-clean/comment.docx",
       "status": "ok",
-      "median": 0.7488,
-      "min": 0.7462,
-      "max": 0.7533,
+      "median": 0.7398,
+      "min": 0.7351,
+      "max": 0.7418,
       "samples": [
-        0.7469,
-        0.7533,
-        0.7462,
-        0.7493,
-        0.7488
+        0.7415,
+        0.7351,
+        0.7363,
+        0.7398,
+        0.7418
       ],
       "runs": 5,
-      "warmup": 0.7489,
+      "warmup": 0.7331,
       "flags": [],
       "check": {
         "ok": true,
@@ -11867,14 +11867,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.55,
-        2.22,
-        2.21
+        1.02,
+        1.07,
+        1.57
       ],
       "load_after": [
-        2.84,
-        2.33,
-        2.25
+        1.02,
+        1.06,
+        1.56
       ]
     },
     {
@@ -11953,18 +11953,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/docx/docx-M.docx .cache/work/speed/out/docx-M/comment.docx replacement scheme is stable Speed benchmark comment",
       "status": "ok",
-      "median": 3.0804,
-      "min": 3.0772,
-      "max": 3.0929,
+      "median": 3.0665,
+      "min": 3.0509,
+      "max": 3.0773,
       "samples": [
-        3.0772,
-        3.0804,
-        3.0798,
-        3.0929,
-        3.0853
+        3.0509,
+        3.0641,
+        3.0773,
+        3.0698,
+        3.0665
       ],
       "runs": 5,
-      "warmup": 3.073,
+      "warmup": 3.0624,
       "flags": [],
       "check": {
         "ok": true,
@@ -11979,14 +11979,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.84,
-        2.33,
-        2.25
+        1.02,
+        1.06,
+        1.56
       ],
       "load_after": [
-        2.68,
-        2.35,
-        2.25
+        1.01,
+        1.06,
+        1.54
       ]
     },
     {
@@ -12065,18 +12065,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/docx/docx-M.docx --anchor replacement scheme is stable --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/docx-M/comment.docx",
       "status": "ok",
-      "median": 0.7819,
-      "min": 0.7748,
-      "max": 0.7857,
+      "median": 0.7581,
+      "min": 0.7563,
+      "max": 0.7627,
       "samples": [
-        0.7819,
-        0.7857,
-        0.7766,
-        0.7748,
-        0.7829
+        0.7622,
+        0.7627,
+        0.7581,
+        0.7571,
+        0.7563
       ],
       "runs": 5,
-      "warmup": 0.7778,
+      "warmup": 0.7629,
       "flags": [],
       "check": {
         "ok": true,
@@ -12091,14 +12091,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.84,
-        2.33,
-        2.25
+        1.02,
+        1.06,
+        1.56
       ],
       "load_after": [
-        2.68,
-        2.35,
-        2.25
+        1.01,
+        1.06,
+        1.54
       ]
     },
     {
@@ -12177,18 +12177,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/docx/docx-M-lo.docx .cache/work/speed/out/docx-M-lo/comment.docx replacement scheme is stable Speed benchmark comment",
       "status": "ok",
-      "median": 2.1425,
-      "min": 2.136,
-      "max": 2.1496,
+      "median": 2.0959,
+      "min": 2.0888,
+      "max": 2.1031,
       "samples": [
-        2.1432,
-        2.136,
-        2.1425,
-        2.1372,
-        2.1496
+        2.0959,
+        2.0954,
+        2.0992,
+        2.0888,
+        2.1031
       ],
       "runs": 5,
-      "warmup": 2.1477,
+      "warmup": 2.0942,
       "flags": [],
       "check": {
         "ok": true,
@@ -12203,14 +12203,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.68,
-        2.35,
-        2.25
+        1.01,
+        1.06,
+        1.54
       ],
       "load_after": [
-        2.77,
-        2.39,
-        2.27
+        1.01,
+        1.05,
+        1.53
       ]
     },
     {
@@ -12289,18 +12289,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/docx/docx-M-lo.docx --anchor replacement scheme is stable --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/docx-M-lo/comment.docx",
       "status": "ok",
-      "median": 0.5002,
-      "min": 0.4974,
-      "max": 0.505,
+      "median": 0.4825,
+      "min": 0.48,
+      "max": 0.488,
       "samples": [
-        0.4974,
-        0.4978,
-        0.5002,
-        0.505,
-        0.5048
+        0.4825,
+        0.484,
+        0.4819,
+        0.48,
+        0.488
       ],
       "runs": 5,
-      "warmup": 0.5042,
+      "warmup": 0.4807,
       "flags": [],
       "check": {
         "ok": true,
@@ -12315,14 +12315,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.68,
-        2.35,
-        2.25
+        1.01,
+        1.06,
+        1.54
       ],
       "load_after": [
-        2.77,
-        2.39,
-        2.27
+        1.01,
+        1.05,
+        1.53
       ]
     },
     {
@@ -12401,18 +12401,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/docx/docx-L.docx .cache/work/speed/out/docx-L/comment.docx 564 households have joined Speed benchmark comment",
       "status": "ok",
-      "median": 14.6868,
-      "min": 14.646,
-      "max": 14.7095,
+      "median": 14.728,
+      "min": 14.7135,
+      "max": 14.7754,
       "samples": [
-        14.6868,
-        14.6607,
-        14.6984,
-        14.646,
-        14.7095
+        14.7754,
+        14.7264,
+        14.7135,
+        14.728,
+        14.728
       ],
       "runs": 5,
-      "warmup": 14.6505,
+      "warmup": 14.7082,
       "flags": [],
       "check": {
         "ok": true,
@@ -12427,14 +12427,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.77,
-        2.39,
-        2.27
+        1.01,
+        1.05,
+        1.53
       ],
       "load_after": [
-        2.98,
-        2.58,
-        2.36
+        1.47,
+        1.21,
+        1.54
       ]
     },
     {
@@ -12513,18 +12513,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/docx/docx-L.docx --anchor 564 households have joined --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/docx-L/comment.docx",
       "status": "ok",
-      "median": 3.1231,
-      "min": 3.1126,
-      "max": 3.1487,
+      "median": 3.0819,
+      "min": 3.0784,
+      "max": 3.1422,
       "samples": [
-        3.1231,
-        3.1215,
-        3.1487,
-        3.1287,
-        3.1126
+        3.0999,
+        3.0791,
+        3.0819,
+        3.0784,
+        3.1422
       ],
       "runs": 5,
-      "warmup": 3.1281,
+      "warmup": 3.1029,
       "flags": [],
       "check": {
         "ok": true,
@@ -12539,14 +12539,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.77,
-        2.39,
-        2.27
+        1.01,
+        1.05,
+        1.53
       ],
       "load_after": [
-        2.98,
-        2.58,
-        2.36
+        1.47,
+        1.21,
+        1.54
       ]
     },
     {
@@ -12625,18 +12625,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/real/gov-uk-dbt-flexible-working-request-form/office/request-flexible-working-docx-form.docx .cache/work/speed/out/gov-uk-dbt-flexible-working-request-form/comment.docx of the relevant boxes Speed benchmark comment",
       "status": "ok",
-      "median": 0.1131,
-      "min": 0.1127,
-      "max": 0.1133,
+      "median": 0.1065,
+      "min": 0.1053,
+      "max": 0.1075,
       "samples": [
-        0.1127,
-        0.1132,
-        0.1131,
-        0.1133,
-        0.1127
+        0.1069,
+        0.1058,
+        0.1065,
+        0.1053,
+        0.1075
       ],
       "runs": 5,
-      "warmup": 0.114,
+      "warmup": 0.1104,
       "flags": [],
       "check": {
         "ok": true,
@@ -12651,14 +12651,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.98,
-        2.58,
-        2.36
+        1.47,
+        1.21,
+        1.54
       ],
       "load_after": [
-        2.98,
-        2.58,
-        2.36
+        1.43,
+        1.2,
+        1.53
       ]
     },
     {
@@ -12733,18 +12733,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/real/gov-uk-dbt-flexible-working-request-form/office/request-flexible-working-docx-form.docx --anchor of the relevant boxes --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/gov-uk-dbt-flexible-working-request-form/comment.docx",
       "status": "ok",
-      "median": 0.0286,
-      "min": 0.0276,
-      "max": 0.0303,
+      "median": 0.0284,
+      "min": 0.0274,
+      "max": 0.0288,
       "samples": [
-        0.0282,
-        0.0276,
-        0.0286,
-        0.0295,
-        0.0303
+        0.0274,
+        0.0277,
+        0.0284,
+        0.0284,
+        0.0288
       ],
       "runs": 5,
-      "warmup": 0.0322,
+      "warmup": 0.031,
       "flags": [],
       "check": {
         "ok": true,
@@ -12759,14 +12759,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.98,
-        2.58,
-        2.36
+        1.47,
+        1.21,
+        1.54
       ],
       "load_after": [
-        2.98,
-        2.58,
-        2.36
+        1.43,
+        1.2,
+        1.53
       ]
     },
     {
@@ -12841,18 +12841,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/real/data-gouv-ssmsi-cvs-note-presentation/office/note-presentation-open-data-cvs-mars22.docx .cache/work/speed/out/data-gouv-ssmsi-cvs-note-presentation/comment.docx Pour harmoniser le recueil Speed benchmark comment",
       "status": "ok",
-      "median": 0.2043,
-      "min": 0.2013,
-      "max": 0.2046,
+      "median": 0.1965,
+      "min": 0.1941,
+      "max": 0.1989,
       "samples": [
-        0.2013,
-        0.202,
-        0.2046,
-        0.2046,
-        0.2043
+        0.1965,
+        0.1954,
+        0.1941,
+        0.1976,
+        0.1989
       ],
       "runs": 5,
-      "warmup": 0.2049,
+      "warmup": 0.1959,
       "flags": [],
       "check": {
         "ok": true,
@@ -12867,14 +12867,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.98,
-        2.58,
-        2.36
+        1.43,
+        1.2,
+        1.53
       ],
       "load_after": [
-        2.9,
-        2.57,
-        2.36
+        1.43,
+        1.2,
+        1.53
       ]
     },
     {
@@ -12953,18 +12953,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/real/data-gouv-ssmsi-cvs-note-presentation/office/note-presentation-open-data-cvs-mars22.docx --anchor Pour harmoniser le recueil --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/data-gouv-ssmsi-cvs-note-presentation/comment.docx",
       "status": "ok",
-      "median": 0.0632,
-      "min": 0.0604,
-      "max": 0.0649,
+      "median": 0.0601,
+      "min": 0.0591,
+      "max": 0.0629,
       "samples": [
-        0.0604,
-        0.0622,
-        0.0649,
-        0.0635,
-        0.0632
+        0.0629,
+        0.06,
+        0.0601,
+        0.0591,
+        0.0606
       ],
       "runs": 5,
-      "warmup": 0.0685,
+      "warmup": 0.0635,
       "flags": [],
       "check": {
         "ok": true,
@@ -12979,14 +12979,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.98,
-        2.58,
-        2.36
+        1.43,
+        1.2,
+        1.53
       ],
       "load_after": [
-        2.9,
-        2.57,
-        2.36
+        1.43,
+        1.2,
+        1.53
       ]
     },
     {
@@ -13065,18 +13065,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/real/gov-uk-pins-local-plan-webinar-qa/office/Local_Plan_webinar_questions_and_responses.docx .cache/work/speed/out/gov-uk-pins-local-plan-webinar-qa/comment.docx held on 3 February Speed benchmark comment",
       "status": "ok",
-      "median": 0.3386,
-      "min": 0.335,
-      "max": 0.3391,
+      "median": 0.3279,
+      "min": 0.3267,
+      "max": 0.3282,
       "samples": [
-        0.336,
-        0.3387,
-        0.335,
-        0.3386,
-        0.3391
+        0.3282,
+        0.3279,
+        0.327,
+        0.3279,
+        0.3267
       ],
       "runs": 5,
-      "warmup": 0.3367,
+      "warmup": 0.3286,
       "flags": [],
       "check": {
         "ok": true,
@@ -13091,14 +13091,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.9,
-        2.57,
-        2.36
+        1.43,
+        1.2,
+        1.53
       ],
       "load_after": [
-        2.83,
-        2.56,
-        2.36
+        1.47,
+        1.22,
+        1.54
       ]
     },
     {
@@ -13177,18 +13177,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/real/gov-uk-pins-local-plan-webinar-qa/office/Local_Plan_webinar_questions_and_responses.docx --anchor held on 3 February --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/gov-uk-pins-local-plan-webinar-qa/comment.docx",
       "status": "ok",
-      "median": 0.0837,
-      "min": 0.08,
-      "max": 0.086,
+      "median": 0.0819,
+      "min": 0.081,
+      "max": 0.0843,
       "samples": [
-        0.086,
-        0.0828,
-        0.0837,
-        0.0843,
-        0.08
+        0.081,
+        0.0819,
+        0.0814,
+        0.0841,
+        0.0843
       ],
       "runs": 5,
-      "warmup": 0.0878,
+      "warmup": 0.0846,
       "flags": [],
       "check": {
         "ok": true,
@@ -13203,14 +13203,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.9,
-        2.57,
-        2.36
+        1.43,
+        1.2,
+        1.53
       ],
       "load_after": [
-        2.83,
-        2.56,
-        2.36
+        1.47,
+        1.22,
+        1.54
       ]
     },
     {
@@ -13290,14 +13290,14 @@
       "status": "unsupported",
       "reason": "no phrase meets the selection rules (oracle.choose_docx_phrase)",
       "load_before": [
-        2.83,
-        2.56,
-        2.36
+        1.47,
+        1.22,
+        1.54
       ],
       "load_after": [
-        2.83,
-        2.56,
-        2.36
+        1.47,
+        1.22,
+        1.54
       ]
     },
     {
@@ -13376,18 +13376,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/real/gov-uk-dcms-creative-industries-consultation/office/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.docx .cache/work/speed/out/gov-uk-dcms-creative-industries-consultation/comment.docx of the three stages Speed benchmark comment",
       "status": "ok",
-      "median": 0.7472,
-      "min": 0.7448,
-      "max": 0.7481,
+      "median": 0.7193,
+      "min": 0.7188,
+      "max": 0.7197,
       "samples": [
-        0.748,
-        0.7472,
-        0.7481,
-        0.7469,
-        0.7448
+        0.7194,
+        0.7197,
+        0.7188,
+        0.7193,
+        0.7191
       ],
       "runs": 5,
-      "warmup": 0.7466,
+      "warmup": 0.7262,
       "flags": [],
       "check": {
         "ok": true,
@@ -13402,14 +13402,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.83,
-        2.56,
-        2.36
+        1.47,
+        1.22,
+        1.54
       ],
       "load_after": [
-        2.62,
-        2.53,
-        2.35
+        1.44,
+        1.21,
+        1.53
       ]
     },
     {
@@ -13488,18 +13488,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/real/gov-uk-dcms-creative-industries-consultation/office/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.docx --anchor of the three stages --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/gov-uk-dcms-creative-industries-consultation/comment.docx",
       "status": "ok",
-      "median": 0.2225,
-      "min": 0.2201,
-      "max": 0.2248,
+      "median": 0.2148,
+      "min": 0.2137,
+      "max": 0.2185,
       "samples": [
-        0.2201,
-        0.2246,
-        0.2248,
-        0.2225,
-        0.2204
+        0.214,
+        0.2185,
+        0.2137,
+        0.2148,
+        0.2151
       ],
       "runs": 5,
-      "warmup": 0.2304,
+      "warmup": 0.2134,
       "flags": [],
       "check": {
         "ok": true,
@@ -13514,14 +13514,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.83,
-        2.56,
-        2.36
+        1.47,
+        1.22,
+        1.54
       ],
       "load_after": [
-        2.62,
-        2.53,
-        2.35
+        1.44,
+        1.21,
+        1.53
       ]
     },
     {
@@ -13600,18 +13600,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/real/gov-uk-dcms-taylor-review-past-schemes/office/Report_on_Past_Scheme_Evaluations__Word_.docx .cache/work/speed/out/gov-uk-dcms-taylor-review-past-schemes/comment.docx Schemes that provide non Speed benchmark comment",
       "status": "ok",
-      "median": 5.3944,
-      "min": 5.3694,
-      "max": 5.3968,
+      "median": 5.45,
+      "min": 5.427,
+      "max": 5.4582,
       "samples": [
-        5.3954,
-        5.3694,
-        5.3866,
-        5.3944,
-        5.3968
+        5.427,
+        5.4506,
+        5.431,
+        5.4582,
+        5.45
       ],
       "runs": 5,
-      "warmup": 5.4166,
+      "warmup": 5.4626,
       "flags": [],
       "check": {
         "ok": true,
@@ -13626,14 +13626,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.62,
-        2.53,
-        2.35
+        1.44,
+        1.21,
+        1.53
       ],
       "load_after": [
-        2.59,
-        2.54,
-        2.36
+        1.67,
+        1.31,
+        1.55
       ]
     },
     {
@@ -13708,18 +13708,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/real/gov-uk-dcms-taylor-review-past-schemes/office/Report_on_Past_Scheme_Evaluations__Word_.docx --anchor Schemes that provide non --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/gov-uk-dcms-taylor-review-past-schemes/comment.docx",
       "status": "ok",
-      "median": 1.6991,
-      "min": 1.6923,
-      "max": 1.701,
+      "median": 1.68,
+      "min": 1.6734,
+      "max": 1.6812,
       "samples": [
-        1.701,
-        1.6923,
-        1.6986,
-        1.7009,
-        1.6991
+        1.68,
+        1.6734,
+        1.6812,
+        1.6809,
+        1.679
       ],
       "runs": 5,
-      "warmup": 1.6956,
+      "warmup": 1.6784,
       "flags": [],
       "check": {
         "ok": true,
@@ -13734,14 +13734,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.62,
-        2.53,
-        2.35
+        1.44,
+        1.21,
+        1.53
       ],
       "load_after": [
-        2.59,
-        2.54,
-        2.36
+        1.67,
+        1.31,
+        1.55
       ]
     },
     {
@@ -13816,18 +13816,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/real/gov-uk-dcms-taylor-review-interim-evaluation/office/Interim_Evalution_of_the_Taylor_Review_Pilot__Word_.docx .cache/work/speed/out/gov-uk-dcms-taylor-review-interim-evaluation/comment.docx process of the Minor Speed benchmark comment",
       "status": "ok",
-      "median": 7.7608,
-      "min": 7.7515,
-      "max": 7.7684,
+      "median": 7.8904,
+      "min": 7.8855,
+      "max": 7.9164,
       "samples": [
-        7.7684,
-        7.7608,
-        7.7581,
-        7.7621,
-        7.7515
+        7.8904,
+        7.902,
+        7.8855,
+        7.8862,
+        7.9164
       ],
       "runs": 5,
-      "warmup": 7.7486,
+      "warmup": 7.869,
       "flags": [],
       "check": {
         "ok": true,
@@ -13842,14 +13842,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.59,
-        2.54,
-        2.36
+        1.67,
+        1.31,
+        1.55
       ],
       "load_after": [
-        2.58,
-        2.54,
-        2.38
+        1.57,
+        1.34,
+        1.55
       ]
     },
     {
@@ -13924,18 +13924,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/real/gov-uk-dcms-taylor-review-interim-evaluation/office/Interim_Evalution_of_the_Taylor_Review_Pilot__Word_.docx --anchor process of the Minor --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/gov-uk-dcms-taylor-review-interim-evaluation/comment.docx",
       "status": "ok",
-      "median": 1.6834,
-      "min": 1.6794,
-      "max": 1.7022,
+      "median": 1.6655,
+      "min": 1.6551,
+      "max": 1.6696,
       "samples": [
-        1.7022,
-        1.6797,
-        1.6929,
-        1.6794,
-        1.6834
+        1.6639,
+        1.6551,
+        1.6655,
+        1.6666,
+        1.6696
       ],
       "runs": 5,
-      "warmup": 1.6779,
+      "warmup": 1.6717,
       "flags": [],
       "check": {
         "ok": true,
@@ -13950,14 +13950,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.59,
-        2.54,
-        2.36
+        1.67,
+        1.31,
+        1.55
       ],
       "load_after": [
-        2.58,
-        2.54,
-        2.38
+        1.57,
+        1.34,
+        1.55
       ]
     },
     {
@@ -14032,18 +14032,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/office/Appendices.docx .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport-appendices/comment.docx Institute of Sport and Speed benchmark comment",
       "status": "ok",
-      "median": 4.2184,
-      "min": 4.1971,
-      "max": 4.237,
+      "median": 4.1581,
+      "min": 4.153,
+      "max": 4.1704,
       "samples": [
-        4.2184,
-        4.2215,
-        4.1971,
-        4.2184,
-        4.237
+        4.1595,
+        4.1574,
+        4.1704,
+        4.1581,
+        4.153
       ],
       "runs": 5,
-      "warmup": 4.2336,
+      "warmup": 4.1717,
       "flags": [],
       "check": {
         "ok": true,
@@ -14058,14 +14058,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.58,
-        2.54,
-        2.38
+        1.57,
+        1.34,
+        1.55
       ],
       "load_after": [
-        2.64,
-        2.57,
-        2.39
+        1.49,
+        1.35,
+        1.54
       ]
     },
     {
@@ -14140,18 +14140,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/office/Appendices.docx --anchor Institute of Sport and --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport-appendices/comment.docx",
       "status": "ok",
-      "median": 1.1847,
-      "min": 1.179,
-      "max": 1.1883,
+      "median": 1.1563,
+      "min": 1.1495,
+      "max": 1.1601,
       "samples": [
-        1.1883,
-        1.1879,
-        1.179,
-        1.1803,
-        1.1847
+        1.1601,
+        1.1563,
+        1.157,
+        1.1495,
+        1.153
       ],
       "runs": 5,
-      "warmup": 1.1949,
+      "warmup": 1.1621,
       "flags": [],
       "check": {
         "ok": true,
@@ -14166,14 +14166,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.58,
-        2.54,
-        2.38
+        1.57,
+        1.34,
+        1.55
       ],
       "load_after": [
-        2.64,
-        2.57,
-        2.39
+        1.49,
+        1.35,
+        1.54
       ]
     },
     {
@@ -14248,18 +14248,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null _ .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/office/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport/comment.docx A study on disabled Speed benchmark comment",
       "status": "ok",
-      "median": 5.5644,
-      "min": 5.5632,
-      "max": 5.5707,
+      "median": 5.5094,
+      "min": 5.4966,
+      "max": 5.5227,
       "samples": [
-        5.5696,
-        5.5644,
-        5.5635,
-        5.5707,
-        5.5632
+        5.5227,
+        5.5163,
+        5.4981,
+        5.4966,
+        5.5094
       ],
       "runs": 5,
-      "warmup": 5.571,
+      "warmup": 5.5038,
       "flags": [],
       "check": {
         "ok": true,
@@ -14274,14 +14274,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.64,
-        2.57,
-        2.39
+        1.49,
+        1.35,
+        1.54
       ],
       "load_after": [
-        2.59,
-        2.56,
-        2.4
+        1.51,
+        1.38,
+        1.54
       ]
     },
     {
@@ -14356,18 +14356,18 @@
       "primary": false,
       "command": "$R/rdocx comment add .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/office/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx --anchor A study on disabled --author Speed Bench --initials SB --text Speed benchmark comment --date 2026-10-31T09:00:00Z -o .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport/comment.docx",
       "status": "ok",
-      "median": 1.6581,
-      "min": 1.6454,
-      "max": 1.6687,
+      "median": 1.6006,
+      "min": 1.5997,
+      "max": 1.6124,
       "samples": [
-        1.6454,
-        1.6583,
-        1.6581,
-        1.6556,
-        1.6687
+        1.6,
+        1.6006,
+        1.6124,
+        1.5997,
+        1.612
       ],
       "runs": 5,
-      "warmup": 1.6567,
+      "warmup": 1.5995,
       "flags": [],
       "check": {
         "ok": true,
@@ -14382,14 +14382,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.64,
-        2.57,
-        2.39
+        1.49,
+        1.35,
+        1.54
       ],
       "load_after": [
-        2.59,
-        2.56,
-        2.4
+        1.51,
+        1.38,
+        1.54
       ]
     },
     {
@@ -14464,18 +14464,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-S.docx .cache/work/speed/out/docx-S/comment.docx In the fourth quarter Speed benchmark comment",
       "status": "ok",
-      "median": 0.3686,
-      "min": 0.3666,
-      "max": 0.3712,
+      "median": 0.3608,
+      "min": 0.3604,
+      "max": 0.3625,
       "samples": [
-        0.3686,
-        0.3712,
-        0.3702,
-        0.3672,
-        0.3666
+        0.3604,
+        0.3625,
+        0.3608,
+        0.3614,
+        0.3607
       ],
       "runs": 5,
-      "warmup": 0.3667,
+      "warmup": 0.3621,
       "flags": [],
       "check": {
         "ok": true,
@@ -14490,14 +14490,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.59,
-        2.56,
-        2.4
+        1.51,
+        1.38,
+        1.54
       ],
       "load_after": [
-        2.62,
-        2.57,
-        2.41
+        1.47,
+        1.37,
+        1.54
       ]
     },
     {
@@ -14605,18 +14605,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-M-clean.docx .cache/work/speed/out/docx-M-clean/comment.docx satisfaction increased by 22 Speed benchmark comment",
       "status": "ok",
-      "median": 3.1997,
-      "min": 3.1882,
-      "max": 3.2228,
+      "median": 3.1877,
+      "min": 3.1849,
+      "max": 3.1934,
       "samples": [
-        3.1991,
-        3.1882,
-        3.2004,
-        3.2228,
-        3.1997
+        3.1849,
+        3.19,
+        3.185,
+        3.1934,
+        3.1877
       ],
       "runs": 5,
-      "warmup": 3.2021,
+      "warmup": 3.1914,
       "flags": [],
       "check": {
         "ok": true,
@@ -14631,14 +14631,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.62,
-        2.57,
-        2.41
+        1.47,
+        1.37,
+        1.54
       ],
       "load_after": [
-        2.7,
-        2.59,
-        2.42
+        1.48,
+        1.38,
+        1.54
       ]
     },
     {
@@ -14746,18 +14746,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-M.docx .cache/work/speed/out/docx-M/comment.docx replacement scheme is stable Speed benchmark comment",
       "status": "ok",
-      "median": 3.344,
-      "min": 3.3408,
-      "max": 3.3673,
+      "median": 3.3281,
+      "min": 3.3207,
+      "max": 3.3408,
       "samples": [
+        3.3207,
         3.3408,
-        3.3516,
-        3.3423,
-        3.3673,
-        3.344
+        3.3281,
+        3.3263,
+        3.3292
       ],
       "runs": 5,
-      "warmup": 3.3529,
+      "warmup": 3.3336,
       "flags": [],
       "check": {
         "ok": true,
@@ -14772,14 +14772,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.7,
-        2.59,
-        2.42
+        1.48,
+        1.38,
+        1.54
       ],
       "load_after": [
-        2.72,
-        2.6,
-        2.42
+        1.56,
+        1.41,
+        1.55
       ]
     },
     {
@@ -14887,18 +14887,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-M-lo.docx .cache/work/speed/out/docx-M-lo/comment.docx replacement scheme is stable Speed benchmark comment",
       "status": "ok",
-      "median": 2.3245,
-      "min": 2.3081,
-      "max": 2.3305,
+      "median": 2.2731,
+      "min": 2.2656,
+      "max": 2.2773,
       "samples": [
-        2.3269,
-        2.3305,
-        2.3081,
-        2.3245,
-        2.3203
+        2.2656,
+        2.277,
+        2.2773,
+        2.273,
+        2.2731
       ],
       "runs": 5,
-      "warmup": 2.3253,
+      "warmup": 2.2788,
       "flags": [],
       "check": {
         "ok": true,
@@ -14913,14 +14913,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.72,
-        2.6,
-        2.42
+        1.56,
+        1.41,
+        1.55
       ],
       "load_after": [
-        2.52,
-        2.56,
-        2.41
+        1.66,
+        1.44,
+        1.55
       ]
     },
     {
@@ -15028,18 +15028,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/docx/docx-L.docx .cache/work/speed/out/docx-L/comment.docx 564 households have joined Speed benchmark comment",
       "status": "ok",
-      "median": 15.7593,
-      "min": 15.7455,
-      "max": 15.8483,
+      "median": 15.8238,
+      "min": 15.7823,
+      "max": 15.8292,
       "samples": [
-        15.7593,
-        15.8483,
-        15.7465,
-        15.7684,
-        15.7455
+        15.8238,
+        15.7838,
+        15.7823,
+        15.8282,
+        15.8292
       ],
       "runs": 5,
-      "warmup": 15.7652,
+      "warmup": 15.7919,
       "flags": [],
       "check": {
         "ok": true,
@@ -15054,14 +15054,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.52,
-        2.56,
-        2.41
+        1.66,
+        1.44,
+        1.55
       ],
       "load_after": [
-        2.68,
-        2.64,
-        2.46
+        1.41,
+        1.42,
+        1.53
       ]
     },
     {
@@ -15169,18 +15169,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dbt-flexible-working-request-form/office/request-flexible-working-docx-form.docx .cache/work/speed/out/gov-uk-dbt-flexible-working-request-form/comment.docx of the relevant boxes Speed benchmark comment",
       "status": "ok",
-      "median": 0.1225,
-      "min": 0.1196,
-      "max": 0.1233,
+      "median": 0.1178,
+      "min": 0.116,
+      "max": 0.1213,
       "samples": [
-        0.1233,
-        0.1196,
-        0.1233,
-        0.1224,
-        0.1225
+        0.1165,
+        0.116,
+        0.1202,
+        0.1178,
+        0.1213
       ],
       "runs": 5,
-      "warmup": 0.1256,
+      "warmup": 0.1189,
       "flags": [],
       "check": {
         "ok": true,
@@ -15195,14 +15195,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.68,
-        2.64,
-        2.46
+        1.41,
+        1.42,
+        1.53
       ],
       "load_after": [
-        2.62,
-        2.63,
-        2.46
+        1.38,
+        1.41,
+        1.53
       ]
     },
     {
@@ -15306,18 +15306,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/data-gouv-ssmsi-cvs-note-presentation/office/note-presentation-open-data-cvs-mars22.docx .cache/work/speed/out/data-gouv-ssmsi-cvs-note-presentation/comment.docx Pour harmoniser le recueil Speed benchmark comment",
       "status": "ok",
-      "median": 0.2268,
-      "min": 0.2255,
-      "max": 0.228,
+      "median": 0.2171,
+      "min": 0.2156,
+      "max": 0.2172,
       "samples": [
-        0.2277,
-        0.2268,
-        0.2255,
-        0.228,
-        0.2266
+        0.2172,
+        0.216,
+        0.2172,
+        0.2171,
+        0.2156
       ],
       "runs": 5,
-      "warmup": 0.2273,
+      "warmup": 0.2172,
       "flags": [],
       "check": {
         "ok": true,
@@ -15332,14 +15332,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.62,
-        2.63,
-        2.46
+        1.38,
+        1.41,
+        1.53
       ],
       "load_after": [
-        2.65,
-        2.64,
-        2.46
+        1.38,
+        1.41,
+        1.53
       ]
     },
     {
@@ -15447,18 +15447,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-pins-local-plan-webinar-qa/office/Local_Plan_webinar_questions_and_responses.docx .cache/work/speed/out/gov-uk-pins-local-plan-webinar-qa/comment.docx held on 3 February Speed benchmark comment",
       "status": "ok",
-      "median": 0.3741,
-      "min": 0.3717,
-      "max": 0.3754,
+      "median": 0.3655,
+      "min": 0.3621,
+      "max": 0.372,
       "samples": [
-        0.3717,
-        0.3754,
-        0.3741,
-        0.3722,
-        0.375
+        0.372,
+        0.3655,
+        0.3658,
+        0.3633,
+        0.3621
       ],
       "runs": 5,
-      "warmup": 0.3765,
+      "warmup": 0.364,
       "flags": [],
       "check": {
         "ok": true,
@@ -15473,14 +15473,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.65,
-        2.64,
-        2.46
+        1.38,
+        1.41,
+        1.53
       ],
       "load_after": [
-        2.6,
-        2.63,
-        2.46
+        1.38,
+        1.41,
+        1.53
       ]
     },
     {
@@ -15588,18 +15588,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-creative-industries-consultation/office/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.docx .cache/work/speed/out/gov-uk-dcms-creative-industries-consultation/comment.docx of the three stages Speed benchmark comment",
       "status": "ok",
-      "median": 0.8417,
-      "min": 0.8313,
-      "max": 0.851,
+      "median": 0.8054,
+      "min": 0.8003,
+      "max": 0.811,
       "samples": [
-        0.851,
-        0.8313,
-        0.8417,
-        0.8426,
-        0.8393
+        0.811,
+        0.8033,
+        0.8073,
+        0.8054,
+        0.8003
       ],
       "runs": 5,
-      "warmup": 0.8354,
+      "warmup": 0.8027,
       "flags": [],
       "check": {
         "ok": true,
@@ -15614,14 +15614,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.6,
-        2.63,
-        2.46
+        1.38,
+        1.41,
+        1.53
       ],
       "load_after": [
-        2.51,
-        2.61,
-        2.45
+        1.35,
+        1.4,
+        1.53
       ]
     },
     {
@@ -15729,18 +15729,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-taylor-review-past-schemes/office/Report_on_Past_Scheme_Evaluations__Word_.docx .cache/work/speed/out/gov-uk-dcms-taylor-review-past-schemes/comment.docx Schemes that provide non Speed benchmark comment",
       "status": "ok",
-      "median": 5.9607,
-      "min": 5.9409,
-      "max": 5.9722,
+      "median": 6.0007,
+      "min": 5.987,
+      "max": 6.0088,
       "samples": [
-        5.9503,
-        5.9409,
-        5.9662,
-        5.9722,
-        5.9607
+        6.0088,
+        6.0043,
+        6.0007,
+        5.9906,
+        5.987
       ],
       "runs": 5,
-      "warmup": 5.9951,
+      "warmup": 5.9933,
       "flags": [],
       "check": {
         "ok": true,
@@ -15755,14 +15755,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.51,
-        2.61,
-        2.45
+        1.35,
+        1.4,
+        1.53
       ],
       "load_after": [
-        2.3,
-        2.53,
-        2.44
+        1.31,
+        1.38,
+        1.52
       ]
     },
     {
@@ -15866,18 +15866,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-taylor-review-interim-evaluation/office/Interim_Evalution_of_the_Taylor_Review_Pilot__Word_.docx .cache/work/speed/out/gov-uk-dcms-taylor-review-interim-evaluation/comment.docx process of the Minor Speed benchmark comment",
       "status": "ok",
-      "median": 8.3314,
-      "min": 8.3151,
-      "max": 8.3476,
+      "median": 8.4644,
+      "min": 8.4578,
+      "max": 8.4732,
       "samples": [
-        8.3314,
-        8.3476,
-        8.3151,
-        8.3187,
-        8.3444
+        8.4725,
+        8.4584,
+        8.4578,
+        8.4732,
+        8.4644
       ],
       "runs": 5,
-      "warmup": 8.3183,
+      "warmup": 8.4699,
       "flags": [],
       "check": {
         "ok": true,
@@ -15892,14 +15892,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.3,
-        2.53,
-        2.44
+        1.31,
+        1.38,
+        1.52
       ],
       "load_after": [
-        2.09,
-        2.42,
-        2.4
+        1.12,
+        1.32,
+        1.48
       ]
     },
     {
@@ -16003,18 +16003,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/office/Appendices.docx .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport-appendices/comment.docx Institute of Sport and Speed benchmark comment",
       "status": "ok",
-      "median": 4.6859,
-      "min": 4.667,
-      "max": 4.7007,
+      "median": 4.616,
+      "min": 4.607,
+      "max": 4.6292,
       "samples": [
-        4.6741,
-        4.6859,
-        4.667,
-        4.7007,
-        4.6954
+        4.6165,
+        4.6292,
+        4.616,
+        4.607,
+        4.6124
       ],
       "runs": 5,
-      "warmup": 4.6824,
+      "warmup": 4.6197,
       "flags": [],
       "check": {
         "ok": true,
@@ -16029,14 +16029,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.09,
-        2.42,
-        2.4
+        1.12,
+        1.32,
+        1.48
       ],
       "load_after": [
-        2.04,
-        2.36,
-        2.38
+        1.08,
+        1.29,
+        1.47
       ]
     },
     {
@@ -16140,18 +16140,18 @@
       "primary": true,
       "command": "bash -c python -m docx_ops comment \"$1\" \"$2\" --anchor \"$3\" --text \"$4\" --author \"Speed Bench\" --initials SB --date 2026-10-31T09:00:00Z >/dev/null && rdocx validate \"$2\" >/dev/null _ .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/office/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx .cache/work/speed/out/gov-uk-dcms-social-impacts-culture-sport/comment.docx A study on disabled Speed benchmark comment",
       "status": "ok",
-      "median": 6.0459,
-      "min": 6.0351,
-      "max": 6.0719,
+      "median": 5.9807,
+      "min": 5.9748,
+      "max": 6.04,
       "samples": [
-        6.0419,
-        6.0523,
-        6.0719,
-        6.0459,
-        6.0351
+        5.9841,
+        5.9807,
+        6.04,
+        5.9767,
+        5.9748
       ],
       "runs": 5,
-      "warmup": 6.054,
+      "warmup": 5.9837,
       "flags": [],
       "check": {
         "ok": true,
@@ -16166,14 +16166,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        2.04,
-        2.36,
-        2.38
+        1.08,
+        1.29,
+        1.47
       ],
       "load_after": [
-        2.02,
-        2.3,
-        2.36
+        1.04,
+        1.25,
+        1.45
       ]
     },
     {
@@ -37264,24 +37264,24 @@
       "size_class": "S",
       "pages": null,
       "slides": null,
-      "bytes": 34833,
+      "bytes": 34836,
       "stack": "rdocx",
       "variant": "rdocx Python (chapters + insert_document)",
       "primary": true,
       "command": "$R/python speed/docx_create_rdocx.py .cache/corpus/plans/docx-S.json .cache/work/speed/out/docx-S/created.docx",
       "status": "ok",
-      "median": 4.0799,
-      "min": 4.0586,
-      "max": 4.1637,
+      "median": 1.4568,
+      "min": 1.4543,
+      "max": 1.4577,
       "samples": [
-        4.0739,
-        4.0906,
-        4.0586,
-        4.1637,
-        4.0799
+        1.4568,
+        1.4577,
+        1.4577,
+        1.4543,
+        1.4545
       ],
       "runs": 5,
-      "warmup": 4.0805,
+      "warmup": 1.4538,
       "flags": [],
       "check": {
         "ok": true,
@@ -37316,14 +37316,14 @@
         ]
       },
       "load_before": [
-        1.99,
-        2.0,
-        2.0
+        1.04,
+        1.25,
+        1.45
       ],
       "load_after": [
-        2.0,
-        2.0,
-        2.0
+        1.03,
+        1.23,
+        1.44
       ]
     },
     {
@@ -37469,24 +37469,24 @@
       "size_class": "S",
       "pages": null,
       "slides": null,
-      "bytes": 34833,
+      "bytes": 34836,
       "stack": "rdocx",
       "variant": "rdocx Python naive (one body, cell handles)",
       "primary": false,
       "command": "$R/python speed/docx_create_rdocx.py .cache/corpus/plans/docx-S.json .cache/work/speed/out/docx-S/created.docx --naive",
       "status": "ok",
-      "median": 5.0868,
-      "min": 5.0669,
-      "max": 5.1121,
+      "median": 1.5563,
+      "min": 1.5511,
+      "max": 1.5665,
       "samples": [
-        5.1121,
-        5.0875,
-        5.0669,
-        5.0851,
-        5.0868
+        1.56,
+        1.5563,
+        1.5511,
+        1.5512,
+        1.5665
       ],
       "runs": 5,
-      "warmup": 5.1057,
+      "warmup": 1.5731,
       "flags": [],
       "check": {
         "ok": true,
@@ -37517,14 +37517,14 @@
         "builtin_validate_tail": null
       },
       "load_before": [
-        1.99,
-        2.0,
-        2.0
+        1.04,
+        1.25,
+        1.45
       ],
       "load_after": [
-        2.0,
-        2.0,
-        2.0
+        1.03,
+        1.23,
+        1.44
       ]
     },
     {
@@ -37535,25 +37535,25 @@
       "size_class": "M",
       "pages": null,
       "slides": null,
-      "bytes": 422950,
+      "bytes": 422974,
       "stack": "rdocx",
       "variant": "rdocx Python (chapters + insert_document)",
       "primary": true,
       "command": "$R/python speed/docx_create_rdocx.py .cache/corpus/plans/docx-M.json .cache/work/speed/out/docx-M/created.docx",
       "status": "ok",
-      "median": 33.5997,
-      "min": 33.4327,
-      "max": 33.6208,
+      "median": 12.9259,
+      "min": 12.8834,
+      "max": 13.023,
       "samples": [
-        33.5997,
-        33.6208,
-        33.4327
+        12.8834,
+        12.9259,
+        13.023,
+        12.9771,
+        12.9128
       ],
-      "runs": 3,
-      "warmup": 33.5084,
-      "flags": [
-        "3 runs (warm-up over 20 s)"
-      ],
+      "runs": 5,
+      "warmup": 12.8979,
+      "flags": [],
       "check": {
         "ok": true,
         "counts": {
@@ -37587,14 +37587,14 @@
         ]
       },
       "load_before": [
-        2.0,
-        2.0,
-        2.0
+        1.03,
+        1.23,
+        1.44
       ],
       "load_after": [
-        2.07,
-        2.03,
-        2.01
+        1.04,
+        1.19,
+        1.41
       ]
     },
     {
@@ -37740,20 +37740,20 @@
       "size_class": "L",
       "pages": null,
       "slides": null,
-      "bytes": 1630017,
+      "bytes": 1630170,
       "stack": "rdocx",
       "variant": "rdocx Python (chapters + insert_document)",
       "primary": true,
       "command": "$R/python speed/docx_create_rdocx.py .cache/corpus/plans/docx-L.json .cache/work/speed/out/docx-L/created.docx",
       "status": "ok",
-      "median": 233.561,
-      "min": 233.561,
-      "max": 233.561,
+      "median": 90.5376,
+      "min": 90.5376,
+      "max": 90.5376,
       "samples": [
-        233.561
+        90.5376
       ],
       "runs": 1,
-      "warmup": 233.3137,
+      "warmup": 90.3802,
       "flags": [
         "single-run (warm-up over 60 s)"
       ],
@@ -37790,14 +37790,14 @@
         ]
       },
       "load_before": [
-        2.07,
-        2.03,
-        2.01
+        1.04,
+        1.19,
+        1.41
       ],
       "load_after": [
-        2.12,
-        2.04,
-        2.01
+        1.0,
+        1.1,
+        1.33
       ]
     },
     {
@@ -39096,7 +39096,7 @@
       "bytes": 46859,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 0.3591,
+          "median": 0.3529,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39104,7 +39104,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 0.0752,
+          "median": 0.0717,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39112,14 +39112,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.3591,
+      "rdocx": 0.3529,
       "rdocx_status": "ok",
       "builtin": 0.1037,
       "builtin_status": "ok",
       "pylib": 0.0621,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.289,
-      "pylib/rdocx": 0.173
+      "builtin/rdocx": 0.294,
+      "pylib/rdocx": 0.176
     },
     {
       "op": "docx.replace",
@@ -39135,7 +39135,7 @@
       "bytes": 649434,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 2.9689,
+          "median": 2.963,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39143,7 +39143,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 0.6867,
+          "median": 0.6681,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39151,7 +39151,7 @@
           "status": "ok"
         }
       },
-      "rdocx": 2.9689,
+      "rdocx": 2.963,
       "rdocx_status": "ok",
       "builtin": 0.4419,
       "builtin_status": "ok",
@@ -39174,7 +39174,7 @@
       "bytes": 654931,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 3.0755,
+          "median": 3.0673,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39182,7 +39182,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 0.7131,
+          "median": 0.6921,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39190,7 +39190,7 @@
           "status": "ok"
         }
       },
-      "rdocx": 3.0755,
+      "rdocx": 3.0673,
       "rdocx_status": "ok",
       "builtin": 0.4446,
       "builtin_status": "ok",
@@ -39213,7 +39213,7 @@
       "bytes": 661400,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 2.1898,
+          "median": 2.1487,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39221,7 +39221,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 0.494,
+          "median": 0.4771,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39229,14 +39229,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 2.1898,
+      "rdocx": 2.1487,
       "rdocx_status": "ok",
       "builtin": 0.4637,
       "builtin_status": "ok",
       "pylib": 0.1752,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.212,
-      "pylib/rdocx": 0.08
+      "builtin/rdocx": 0.216,
+      "pylib/rdocx": 0.082
     },
     {
       "op": "docx.replace",
@@ -39252,7 +39252,7 @@
       "bytes": 3762023,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 13.8739,
+          "median": 13.9215,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39260,7 +39260,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 2.8288,
+          "median": 2.7867,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39268,7 +39268,7 @@
           "status": "ok"
         }
       },
-      "rdocx": 13.8739,
+      "rdocx": 13.9215,
       "rdocx_status": "ok",
       "builtin": 1.8455,
       "builtin_status": "ok",
@@ -39291,7 +39291,7 @@
       "bytes": 20535,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 0.1138,
+          "median": 0.1056,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39299,7 +39299,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 0.0302,
+          "median": 0.03,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39307,14 +39307,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.1138,
+      "rdocx": 0.1056,
       "rdocx_status": "ok",
       "builtin": 0.0699,
       "builtin_status": "ok",
       "pylib": 0.0475,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.614,
-      "pylib/rdocx": 0.417
+      "builtin/rdocx": 0.662,
+      "pylib/rdocx": 0.45
     },
     {
       "op": "docx.replace",
@@ -39330,7 +39330,7 @@
       "bytes": 28380,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 0.1949,
+          "median": 0.1851,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39338,7 +39338,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 0.0604,
+          "median": 0.0563,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39346,14 +39346,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.1949,
+      "rdocx": 0.1851,
       "rdocx_status": "ok",
       "builtin": 0.1016,
       "builtin_status": "ok",
       "pylib": 0.0789,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.521,
-      "pylib/rdocx": 0.405
+      "builtin/rdocx": 0.549,
+      "pylib/rdocx": 0.426
     },
     {
       "op": "docx.replace",
@@ -39369,7 +39369,7 @@
       "bytes": 35865,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 0.372,
+          "median": 0.3635,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39377,7 +39377,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 0.0715,
+          "median": 0.0687,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39385,14 +39385,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.372,
+      "rdocx": 0.3635,
       "rdocx_status": "ok",
       "builtin": 0.1161,
       "builtin_status": "ok",
       "pylib": 0.0621,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.312,
-      "pylib/rdocx": 0.167
+      "builtin/rdocx": 0.319,
+      "pylib/rdocx": 0.171
     },
     {
       "op": "docx.replace",
@@ -39408,7 +39408,7 @@
       "bytes": 63891,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 0.2129,
+          "median": 0.203,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39416,7 +39416,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 0.0502,
+          "median": 0.0471,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39424,14 +39424,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.2129,
+      "rdocx": 0.203,
       "rdocx_status": "ok",
       "builtin": 0.0829,
       "builtin_status": "ok",
       "pylib": 0.0545,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.389,
-      "pylib/rdocx": 0.256
+      "builtin/rdocx": 0.408,
+      "pylib/rdocx": 0.268
     },
     {
       "op": "docx.replace",
@@ -39447,7 +39447,7 @@
       "bytes": 109655,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 0.8289,
+          "median": 0.8092,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39455,7 +39455,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 0.2159,
+          "median": 0.2103,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39463,14 +39463,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.8289,
+      "rdocx": 0.8092,
       "rdocx_status": "ok",
       "builtin": 0.1791,
       "builtin_status": "ok",
       "pylib": 0.0929,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.216,
-      "pylib/rdocx": 0.112
+      "builtin/rdocx": 0.221,
+      "pylib/rdocx": 0.115
     },
     {
       "op": "docx.replace",
@@ -39486,7 +39486,7 @@
       "bytes": 1363875,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 6.8862,
+          "median": 6.9797,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39494,7 +39494,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 1.4688,
+          "median": 1.4632,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39502,13 +39502,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 6.8862,
+      "rdocx": 6.9797,
       "rdocx_status": "ok",
       "builtin": 1.4272,
       "builtin_status": "ok",
       "pylib": 0.2984,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.207,
+      "builtin/rdocx": 0.204,
       "pylib/rdocx": 0.043
     },
     {
@@ -39525,7 +39525,7 @@
       "bytes": 1668963,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 10.8573,
+          "median": 11.1796,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39533,7 +39533,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 1.481,
+          "median": 1.4658,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39541,14 +39541,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 10.8573,
+      "rdocx": 11.1796,
       "rdocx_status": "ok",
       "builtin": 1.3855,
       "builtin_status": "ok",
       "pylib": 0.316,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.128,
-      "pylib/rdocx": 0.029
+      "builtin/rdocx": 0.124,
+      "pylib/rdocx": 0.028
     },
     {
       "op": "docx.replace",
@@ -39564,7 +39564,7 @@
       "bytes": 5482945,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 4.6569,
+          "median": 4.5854,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39572,7 +39572,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 1.128,
+          "median": 1.1019,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39580,14 +39580,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 4.6569,
+      "rdocx": 4.5854,
       "rdocx_status": "ok",
       "builtin": 1.2241,
       "builtin_status": "ok",
       "pylib": 0.383,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.263,
-      "pylib/rdocx": 0.082
+      "builtin/rdocx": 0.267,
+      "pylib/rdocx": 0.084
     },
     {
       "op": "docx.replace",
@@ -39603,7 +39603,7 @@
       "bytes": 17768891,
       "variants": {
         "rdocx: docx_ops replace": {
-          "median": 5.8277,
+          "median": 5.76,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip": {
@@ -39611,7 +39611,7 @@
           "status": "ok"
         },
         "rdocx: rdocx replace --expect": {
-          "median": 1.6479,
+          "median": 1.5963,
           "status": "ok"
         },
         "pylib: python-docx": {
@@ -39619,14 +39619,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 5.8277,
+      "rdocx": 5.76,
       "rdocx_status": "ok",
       "builtin": 1.4626,
       "builtin_status": "ok",
       "pylib": 0.8314,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.251,
-      "pylib/rdocx": 0.143
+      "builtin/rdocx": 0.254,
+      "pylib/rdocx": 0.144
     },
     {
       "op": "docx.replace+validate",
@@ -39642,7 +39642,7 @@
       "bytes": 46859,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 0.3948,
+          "median": 0.3817,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39650,13 +39650,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.3948,
+      "rdocx": 0.3817,
       "rdocx_status": "ok",
       "builtin": 0.2574,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.652,
+      "builtin/rdocx": 0.674,
       "pylib/rdocx": null
     },
     {
@@ -39673,7 +39673,7 @@
       "bytes": 649434,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 3.2339,
+          "median": 3.2165,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39681,13 +39681,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 3.2339,
+      "rdocx": 3.2165,
       "rdocx_status": "ok",
       "builtin": 0.8376,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.259,
+      "builtin/rdocx": 0.26,
       "pylib/rdocx": null
     },
     {
@@ -39704,7 +39704,7 @@
       "bytes": 654931,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 3.3435,
+          "median": 3.3298,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39712,13 +39712,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 3.3435,
+      "rdocx": 3.3298,
       "rdocx_status": "ok",
       "builtin": 0.8634,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.258,
+      "builtin/rdocx": 0.259,
       "pylib/rdocx": null
     },
     {
@@ -39735,7 +39735,7 @@
       "bytes": 661400,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 2.3605,
+          "median": 2.321,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39743,13 +39743,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 2.3605,
+      "rdocx": 2.321,
       "rdocx_status": "ok",
       "builtin": 0.9408,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.399,
+      "builtin/rdocx": 0.405,
       "pylib/rdocx": null
     },
     {
@@ -39766,7 +39766,7 @@
       "bytes": 3762023,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 14.9946,
+          "median": 14.968,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39774,7 +39774,7 @@
           "status": "ok"
         }
       },
-      "rdocx": 14.9946,
+      "rdocx": 14.968,
       "rdocx_status": "ok",
       "builtin": 3.3122,
       "builtin_status": "ok",
@@ -39797,7 +39797,7 @@
       "bytes": 20535,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 0.1252,
+          "median": 0.1168,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39805,13 +39805,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.1252,
+      "rdocx": 0.1168,
       "rdocx_status": "ok",
       "builtin": 0.1914,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 1.529,
+      "builtin/rdocx": 1.639,
       "pylib/rdocx": null
     },
     {
@@ -39828,7 +39828,7 @@
       "bytes": 28380,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 0.219,
+          "median": 0.2082,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39836,13 +39836,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.219,
+      "rdocx": 0.2082,
       "rdocx_status": "ok",
       "builtin": 0.2349,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 1.073,
+      "builtin/rdocx": 1.128,
       "pylib/rdocx": null
     },
     {
@@ -39859,7 +39859,7 @@
       "bytes": 35865,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 0.41,
+          "median": 0.3983,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39867,13 +39867,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.41,
+      "rdocx": 0.3983,
       "rdocx_status": "ok",
       "builtin": 0.2773,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.676,
+      "builtin/rdocx": 0.696,
       "pylib/rdocx": null
     },
     {
@@ -39890,7 +39890,7 @@
       "bytes": 63891,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 0.2285,
+          "median": 0.2219,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39898,13 +39898,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.2285,
+      "rdocx": 0.2219,
       "rdocx_status": "ok",
       "builtin": 0.219,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.958,
+      "builtin/rdocx": 0.987,
       "pylib/rdocx": null
     },
     {
@@ -39921,7 +39921,7 @@
       "bytes": 109655,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 0.914,
+          "median": 0.8916,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39929,13 +39929,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.914,
+      "rdocx": 0.8916,
       "rdocx_status": "ok",
       "builtin": 0.4303,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.471,
+      "builtin/rdocx": 0.483,
       "pylib/rdocx": null
     },
     {
@@ -39952,7 +39952,7 @@
       "bytes": 1363875,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 7.4529,
+          "median": 7.5478,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39960,13 +39960,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 7.4529,
+      "rdocx": 7.5478,
       "rdocx_status": "ok",
       "builtin": 2.4383,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.327,
+      "builtin/rdocx": 0.323,
       "pylib/rdocx": null
     },
     {
@@ -39983,7 +39983,7 @@
       "bytes": 1668963,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 11.4531,
+          "median": 11.7342,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -39991,13 +39991,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 11.4531,
+      "rdocx": 11.7342,
       "rdocx_status": "ok",
       "builtin": 2.5869,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.226,
+      "builtin/rdocx": 0.22,
       "pylib/rdocx": null
     },
     {
@@ -40014,7 +40014,7 @@
       "bytes": 5482945,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 5.1309,
+          "median": 5.0503,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -40022,13 +40022,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 5.1309,
+      "rdocx": 5.0503,
       "rdocx_status": "ok",
       "builtin": 2.2622,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.441,
+      "builtin/rdocx": 0.448,
       "pylib/rdocx": null
     },
     {
@@ -40045,7 +40045,7 @@
       "bytes": 17768891,
       "variants": {
         "rdocx: docx_ops replace+validate": {
-          "median": 6.3041,
+          "median": 6.2308,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/lxml/zip+validate": {
@@ -40053,13 +40053,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 6.3041,
+      "rdocx": 6.2308,
       "rdocx_status": "ok",
       "builtin": 2.2727,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.361,
+      "builtin/rdocx": 0.365,
       "pylib/rdocx": null
     },
     {
@@ -40076,7 +40076,7 @@
       "bytes": 46859,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 0.3359,
+          "median": 0.3302,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40084,7 +40084,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 0.0839,
+          "median": 0.0803,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40092,14 +40092,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.3359,
+      "rdocx": 0.3302,
       "rdocx_status": "ok",
       "builtin": 0.1391,
       "builtin_status": "ok",
       "pylib": 0.0509,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.414,
-      "pylib/rdocx": 0.152
+      "builtin/rdocx": 0.421,
+      "pylib/rdocx": 0.154
     },
     {
       "op": "docx.comment",
@@ -40115,7 +40115,7 @@
       "bytes": 649434,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 2.9464,
+          "median": 2.9363,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40123,7 +40123,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 0.7488,
+          "median": 0.7398,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40131,7 +40131,7 @@
           "status": "ok"
         }
       },
-      "rdocx": 2.9464,
+      "rdocx": 2.9363,
       "rdocx_status": "ok",
       "builtin": 0.4764,
       "builtin_status": "ok",
@@ -40154,7 +40154,7 @@
       "bytes": 654931,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 3.0804,
+          "median": 3.0665,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40162,7 +40162,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 0.7819,
+          "median": 0.7581,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40170,13 +40170,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 3.0804,
+      "rdocx": 3.0665,
       "rdocx_status": "ok",
       "builtin": 0.4802,
       "builtin_status": "ok",
       "pylib": 0.0948,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.156,
+      "builtin/rdocx": 0.157,
       "pylib/rdocx": 0.031
     },
     {
@@ -40193,7 +40193,7 @@
       "bytes": 661400,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 2.1425,
+          "median": 2.0959,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40201,7 +40201,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 0.5002,
+          "median": 0.4825,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40209,14 +40209,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 2.1425,
+      "rdocx": 2.0959,
       "rdocx_status": "ok",
       "builtin": 0.4999,
       "builtin_status": "ok",
       "pylib": 0.0947,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.233,
-      "pylib/rdocx": 0.044
+      "builtin/rdocx": 0.239,
+      "pylib/rdocx": 0.045
     },
     {
       "op": "docx.comment",
@@ -40232,7 +40232,7 @@
       "bytes": 3762023,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 14.6868,
+          "median": 14.728,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40240,7 +40240,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 3.1231,
+          "median": 3.0819,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40248,13 +40248,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 14.6868,
+      "rdocx": 14.728,
       "rdocx_status": "ok",
       "builtin": 1.8749,
       "builtin_status": "ok",
       "pylib": 0.2517,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.128,
+      "builtin/rdocx": 0.127,
       "pylib/rdocx": 0.017
     },
     {
@@ -40271,7 +40271,7 @@
       "bytes": 20535,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 0.1131,
+          "median": 0.1065,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40279,7 +40279,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 0.0286,
+          "median": 0.0284,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40287,14 +40287,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.1131,
+      "rdocx": 0.1065,
       "rdocx_status": "ok",
       "builtin": 0.1067,
       "builtin_status": "ok",
       "pylib": 0.0487,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.943,
-      "pylib/rdocx": 0.431
+      "builtin/rdocx": 1.002,
+      "pylib/rdocx": 0.457
     },
     {
       "op": "docx.comment",
@@ -40310,7 +40310,7 @@
       "bytes": 28380,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 0.2043,
+          "median": 0.1965,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40318,7 +40318,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 0.0632,
+          "median": 0.0601,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40326,14 +40326,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.2043,
+      "rdocx": 0.1965,
       "rdocx_status": "ok",
       "builtin": 0.1388,
       "builtin_status": "ok",
       "pylib": 0.0548,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.679,
-      "pylib/rdocx": 0.268
+      "builtin/rdocx": 0.706,
+      "pylib/rdocx": 0.279
     },
     {
       "op": "docx.comment",
@@ -40349,7 +40349,7 @@
       "bytes": 35865,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 0.3386,
+          "median": 0.3279,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40357,7 +40357,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 0.0837,
+          "median": 0.0819,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40365,14 +40365,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.3386,
+      "rdocx": 0.3279,
       "rdocx_status": "ok",
       "builtin": 0.1537,
       "builtin_status": "ok",
       "pylib": 0.0533,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.454,
-      "pylib/rdocx": 0.157
+      "builtin/rdocx": 0.469,
+      "pylib/rdocx": 0.163
     },
     {
       "op": "docx.comment",
@@ -40410,7 +40410,7 @@
       "bytes": 109655,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 0.7472,
+          "median": 0.7193,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40418,7 +40418,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 0.2225,
+          "median": 0.2148,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40426,14 +40426,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.7472,
+      "rdocx": 0.7193,
       "rdocx_status": "ok",
       "builtin": 0.2165,
       "builtin_status": "ok",
       "pylib": 0.0649,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.29,
-      "pylib/rdocx": 0.087
+      "builtin/rdocx": 0.301,
+      "pylib/rdocx": 0.09
     },
     {
       "op": "docx.comment",
@@ -40449,7 +40449,7 @@
       "bytes": 1363875,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 5.3944,
+          "median": 5.45,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40457,7 +40457,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 1.6991,
+          "median": 1.68,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40465,13 +40465,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 5.3944,
+      "rdocx": 5.45,
       "rdocx_status": "ok",
       "builtin": 1.4474,
       "builtin_status": "ok",
       "pylib": 0.2318,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.268,
+      "builtin/rdocx": 0.266,
       "pylib/rdocx": 0.043
     },
     {
@@ -40488,7 +40488,7 @@
       "bytes": 1668963,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 7.7608,
+          "median": 7.8904,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40496,7 +40496,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 1.6834,
+          "median": 1.6655,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40504,14 +40504,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 7.7608,
+      "rdocx": 7.8904,
       "rdocx_status": "ok",
       "builtin": 1.4194,
       "builtin_status": "ok",
       "pylib": 0.2317,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.183,
-      "pylib/rdocx": 0.03
+      "builtin/rdocx": 0.18,
+      "pylib/rdocx": 0.029
     },
     {
       "op": "docx.comment",
@@ -40527,7 +40527,7 @@
       "bytes": 5482945,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 4.2184,
+          "median": 4.1581,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40535,7 +40535,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 1.1847,
+          "median": 1.1563,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40543,14 +40543,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 4.2184,
+      "rdocx": 4.1581,
       "rdocx_status": "ok",
       "builtin": 1.2415,
       "builtin_status": "ok",
       "pylib": 0.2296,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.294,
-      "pylib/rdocx": 0.054
+      "builtin/rdocx": 0.299,
+      "pylib/rdocx": 0.055
     },
     {
       "op": "docx.comment",
@@ -40566,7 +40566,7 @@
       "bytes": 17768891,
       "variants": {
         "rdocx: docx_ops comment": {
-          "median": 5.5644,
+          "median": 5.5094,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip": {
@@ -40574,7 +40574,7 @@
           "status": "ok"
         },
         "rdocx: rdocx comment add --anchor": {
-          "median": 1.6581,
+          "median": 1.6006,
           "status": "ok"
         },
         "pylib: python-docx add_comment": {
@@ -40582,14 +40582,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 5.5644,
+      "rdocx": 5.5094,
       "rdocx_status": "ok",
       "builtin": 1.4978,
       "builtin_status": "ok",
       "pylib": 0.6962,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.269,
-      "pylib/rdocx": 0.125
+      "builtin/rdocx": 0.272,
+      "pylib/rdocx": 0.126
     },
     {
       "op": "docx.comment+validate",
@@ -40605,7 +40605,7 @@
       "bytes": 46859,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 0.3686,
+          "median": 0.3608,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40613,13 +40613,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.3686,
+      "rdocx": 0.3608,
       "rdocx_status": "ok",
       "builtin": 0.4157,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 1.128,
+      "builtin/rdocx": 1.152,
       "pylib/rdocx": null
     },
     {
@@ -40636,7 +40636,7 @@
       "bytes": 649434,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 3.1997,
+          "median": 3.1877,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40644,13 +40644,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 3.1997,
+      "rdocx": 3.1877,
       "rdocx_status": "ok",
       "builtin": 1.0082,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.315,
+      "builtin/rdocx": 0.316,
       "pylib/rdocx": null
     },
     {
@@ -40667,7 +40667,7 @@
       "bytes": 654931,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 3.344,
+          "median": 3.3281,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40675,13 +40675,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 3.344,
+      "rdocx": 3.3281,
       "rdocx_status": "ok",
       "builtin": 1.0289,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.308,
+      "builtin/rdocx": 0.309,
       "pylib/rdocx": null
     },
     {
@@ -40698,7 +40698,7 @@
       "bytes": 661400,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 2.3245,
+          "median": 2.2731,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40706,13 +40706,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 2.3245,
+      "rdocx": 2.2731,
       "rdocx_status": "ok",
       "builtin": 1.1041,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.475,
+      "builtin/rdocx": 0.486,
       "pylib/rdocx": null
     },
     {
@@ -40729,7 +40729,7 @@
       "bytes": 3762023,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 15.7593,
+          "median": 15.8238,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40737,13 +40737,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 15.7593,
+      "rdocx": 15.8238,
       "rdocx_status": "ok",
       "builtin": 3.4487,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.219,
+      "builtin/rdocx": 0.218,
       "pylib/rdocx": null
     },
     {
@@ -40760,7 +40760,7 @@
       "bytes": 20535,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 0.1225,
+          "median": 0.1178,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40768,13 +40768,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.1225,
+      "rdocx": 0.1178,
       "rdocx_status": "ok",
       "builtin": 0.3519,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 2.873,
+      "builtin/rdocx": 2.987,
       "pylib/rdocx": null
     },
     {
@@ -40791,7 +40791,7 @@
       "bytes": 28380,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 0.2268,
+          "median": 0.2171,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40799,13 +40799,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.2268,
+      "rdocx": 0.2171,
       "rdocx_status": "ok",
       "builtin": 0.3948,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 1.741,
+      "builtin/rdocx": 1.819,
       "pylib/rdocx": null
     },
     {
@@ -40822,7 +40822,7 @@
       "bytes": 35865,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 0.3741,
+          "median": 0.3655,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40830,13 +40830,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.3741,
+      "rdocx": 0.3655,
       "rdocx_status": "ok",
       "builtin": 0.4374,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 1.169,
+      "builtin/rdocx": 1.197,
       "pylib/rdocx": null
     },
     {
@@ -40853,7 +40853,7 @@
       "bytes": 109655,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 0.8417,
+          "median": 0.8054,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40861,13 +40861,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 0.8417,
+      "rdocx": 0.8054,
       "rdocx_status": "ok",
       "builtin": 0.583,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.693,
+      "builtin/rdocx": 0.724,
       "pylib/rdocx": null
     },
     {
@@ -40884,7 +40884,7 @@
       "bytes": 1363875,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 5.9607,
+          "median": 6.0007,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40892,13 +40892,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 5.9607,
+      "rdocx": 6.0007,
       "rdocx_status": "ok",
       "builtin": 2.599,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.436,
+      "builtin/rdocx": 0.433,
       "pylib/rdocx": null
     },
     {
@@ -40915,7 +40915,7 @@
       "bytes": 1668963,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 8.3314,
+          "median": 8.4644,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40923,13 +40923,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 8.3314,
+      "rdocx": 8.4644,
       "rdocx_status": "ok",
       "builtin": 2.7342,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.328,
+      "builtin/rdocx": 0.323,
       "pylib/rdocx": null
     },
     {
@@ -40946,7 +40946,7 @@
       "bytes": 5482945,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 4.6859,
+          "median": 4.616,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40954,13 +40954,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 4.6859,
+      "rdocx": 4.616,
       "rdocx_status": "ok",
       "builtin": 2.4007,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.512,
+      "builtin/rdocx": 0.52,
       "pylib/rdocx": null
     },
     {
@@ -40977,7 +40977,7 @@
       "bytes": 17768891,
       "variants": {
         "rdocx: docx_ops comment+validate": {
-          "median": 6.0459,
+          "median": 5.9807,
           "status": "ok"
         },
         "builtin: unzip/merge_runs/comment.py/markers/zip+validate": {
@@ -40985,13 +40985,13 @@
           "status": "ok"
         }
       },
-      "rdocx": 6.0459,
+      "rdocx": 5.9807,
       "rdocx_status": "ok",
       "builtin": 2.4174,
       "builtin_status": "ok",
       "pylib": null,
       "pylib_status": "unsupported",
-      "builtin/rdocx": 0.4,
+      "builtin/rdocx": 0.404,
       "pylib/rdocx": null
     },
     {
@@ -45813,10 +45813,10 @@
       "size_class": "S",
       "pages": null,
       "slides": null,
-      "bytes": 34833,
+      "bytes": 34836,
       "variants": {
         "rdocx: rdocx Python (chapters + insert_document)": {
-          "median": 4.0799,
+          "median": 1.4568,
           "status": "ok"
         },
         "builtin: docx-js (corpus/gen_docx.js)": {
@@ -45828,18 +45828,18 @@
           "status": "ok"
         },
         "rdocx: rdocx Python naive (one body, cell handles)": {
-          "median": 5.0868,
+          "median": 1.5563,
           "status": "ok"
         }
       },
-      "rdocx": 4.0799,
+      "rdocx": 1.4568,
       "rdocx_status": "ok",
       "builtin": 0.1222,
       "builtin_status": "ok",
       "pylib": 0.1147,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.03,
-      "pylib/rdocx": 0.028
+      "builtin/rdocx": 0.084,
+      "pylib/rdocx": 0.079
     },
     {
       "op": "docx.create",
@@ -45848,10 +45848,10 @@
       "size_class": "M",
       "pages": null,
       "slides": null,
-      "bytes": 422950,
+      "bytes": 422974,
       "variants": {
         "rdocx: rdocx Python (chapters + insert_document)": {
-          "median": 33.5997,
+          "median": 12.9259,
           "status": "ok"
         },
         "builtin: docx-js (corpus/gen_docx.js)": {
@@ -45863,14 +45863,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 33.5997,
+      "rdocx": 12.9259,
       "rdocx_status": "ok",
       "builtin": 0.2901,
       "builtin_status": "ok",
       "pylib": 0.4797,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.009,
-      "pylib/rdocx": 0.014
+      "builtin/rdocx": 0.022,
+      "pylib/rdocx": 0.037
     },
     {
       "op": "docx.create",
@@ -45879,10 +45879,10 @@
       "size_class": "L",
       "pages": null,
       "slides": null,
-      "bytes": 1630017,
+      "bytes": 1630170,
       "variants": {
         "rdocx: rdocx Python (chapters + insert_document)": {
-          "median": 233.561,
+          "median": 90.5376,
           "status": "ok"
         },
         "builtin: docx-js (corpus/gen_docx.js)": {
@@ -45894,14 +45894,14 @@
           "status": "ok"
         }
       },
-      "rdocx": 233.561,
+      "rdocx": 90.5376,
       "rdocx_status": "ok",
       "builtin": 0.7515,
       "builtin_status": "ok",
       "pylib": 1.9283,
       "pylib_status": "ok",
-      "builtin/rdocx": 0.003,
-      "pylib/rdocx": 0.008
+      "builtin/rdocx": 0.008,
+      "pylib/rdocx": 0.021
     },
     {
       "op": "pptx.create",
@@ -45996,5 +45996,29 @@
       "builtin/rdocx": 0.064,
       "pylib/rdocx": 0.085
     }
-  ]
+  ],
+  "remeasured": {
+    "versions": {
+      "date": "2026-11-01",
+      "machine": "Linux x86_64, 32 CPUs",
+      "rdocx_pin": "3707323312e9",
+      "rdocx": "rdocx 0.16.4",
+      "rpptx": "rpptx 0.14.4",
+      "python-docx": "1.2.0",
+      "python-pptx": "1.0.2",
+      "docx-js": "9.15.0",
+      "pptxgenjs": "4.0.1",
+      "node": "v26.10.0",
+      "pandoc": "pandoc 3.13",
+      "libreoffice": "LibreOffice 26.2.6.3 620(Build:3)",
+      "pdftoppm": "pdftoppm version 26.01.0",
+      "builtin_skills_sha256": "5883fcb286af5337"
+    },
+    "what": "the rdocx stack of docx.comment, docx.comment+validate, docx.create, docx.replace, docx.replace+validate (86 commands), measured again on pin 3707323312e9 with the same protocol",
+    "others": {
+      "date": "2026-11-01",
+      "rdocx_pin": "b3be9b6db132"
+    },
+    "elapsed_s": 1740.6
+  }
 }

@@ -130,7 +130,7 @@ call for each task.
 ## 📊 How it compares
 
 <!-- bench:date:start -->
-Run of 2026-10-31: rdocx 0.16.4 and rpptx 0.14.4 (pin `b3be9b6db132`) against the built-in skills (docx-js 9.15.0, pptxgenjs 4.0.1, LibreOffice 26.2.6.3, pandoc 3.13) and python-docx 1.2.0 / python-pptx 1.0.2.
+Run of 2026-11-01: rdocx 0.16.4 and rpptx 0.14.4 (pin `3707323312e9`) against the built-in skills (docx-js 9.15.0, pptxgenjs 4.0.1, LibreOffice 26.2.6.3, pandoc 3.13) and python-docx 1.2.0 / python-pptx 1.0.2.
 <!-- bench:date:end -->
 
 <!-- bench:scoreboard:start -->
@@ -144,8 +144,8 @@ Run of 2026-10-31: rdocx 0.16.4 and rpptx 0.14.4 (pin `b3be9b6db132`) against th
 | 🔎 Corrupt or invalid pptx caught by the stack's checks | **97 %** | 73 % | 39 % |
 | ⚡ Every page of a 52-page Word report to PNG | **2.13 s** | 7.38 s | ➖ |
 | ⚡ Every slide of a 60-slide deck to PNG | **1.34 s** | 5.81 s | ➖ |
-| ✏️ Counted replacement in a 52-page Word report | 3.08 s | 0.44 s | **0.19 s** |
-| 🏗️ Build a 52-page Word report from scratch | 34 s | **0.29 s** | 0.48 s |
+| ✏️ Counted replacement in a 52-page Word report | 3.07 s | 0.44 s | **0.19 s** |
+| 🏗️ Build a 52-page Word report from scratch | 13 s | **0.29 s** | 0.48 s |
 | 🖨️ Word files with the same page count as Word's own PDF | 4 / 8 | **7 / 8** | ➖ |
 <!-- bench:scoreboard:end -->
 
