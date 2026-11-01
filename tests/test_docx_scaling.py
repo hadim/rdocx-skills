@@ -35,6 +35,10 @@ RATIO, FIXED, FLOOR_MS = 2.5, 1.5, 5
 # A call of ACCEPTED may cost a time linear in the body, about 4 times at most from N to 4N; it fails over LINEAR
 # times, which a cost that grows faster, about 16 times for a quadratic one, exceeds.
 LINEAR = 6
+# A call over its bound is measured again, up to REMEASURE times, the fastest of every measure counting at each size:
+# a load spike on a shared CI runner rarely comes back, a cost that grows with the document does every time. A call of
+# GROWING (a strict gap) is not measured again, so that a second chance cannot read as an XPASS.
+REMEASURE = 2
 GROWS = "docx-edit-cost-grows-with-body"
 STAMP = "2026-10-01T12:00:00Z"
 LICENSE = rdocx.FontEmbeddingLicense(authorized=True, identity="CC0-1.0: Aileron")
@@ -812,8 +816,14 @@ ACCEPTED = {
 @pytest.mark.parametrize("name", [pytest.param(name, marks=pytest.mark.gap(GROWS)) if name in GROWING else name
                                   for name in TIMED | READS_TIMED])
 def test_call_cost_does_not_grow_with_the_document(documents, name):
+    factor = FIXED if name in GROWING else LINEAR if name in ACCEPTED else RATIO
     small, large = costs_ms(documents, (TIMED | READS_TIMED)[name])
-    bound = (FIXED if name in GROWING else LINEAR if name in ACCEPTED else RATIO) * small + FLOOR_MS
+    for _ in range(0 if name in GROWING else REMEASURE):
+        if large < factor * small + FLOOR_MS:
+            break
+        again = costs_ms(documents, (TIMED | READS_TIMED)[name])
+        small, large = min(small, again[0]), min(large, again[1])
+    bound = factor * small + FLOOR_MS
     assert large < bound, f"{name}: {large:.1f} ms at {4 * N} paragraphs, {small:.1f} ms at {N}"
 
 

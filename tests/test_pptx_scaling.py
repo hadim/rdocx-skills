@@ -29,6 +29,10 @@ CALLS = 3  # fresh targets a call is timed on in each deck, the fastest counting
 # the result stays: a call of GROWING counts as fixed under FIXED times, any other one as grown over RATIO times, so
 # that the noise of a loaded runner does not turn a call near 2 times into an XPASS or a failure.
 RATIO, FIXED, FLOOR_MS = 2.5, 1.5, 5
+# A call over its bound is measured again, up to REMEASURE times, the fastest of every measure counting at each size:
+# a load spike on a shared CI runner rarely comes back, a cost that grows with the deck does every time. A call of
+# GROWING (a strict gap) is not measured again, so that a second chance cannot read as an XPASS.
+REMEASURE = 2
 REOPEN = 16  # timed calls between two openings of a deck, so that the probe slides stay small next to N slides
 GROWS = "pptx-edit-cost-grows-with-deck"
 AUTHOR = "{6F1B3A52-0000-4000-8000-0000000000A0}"
@@ -633,8 +637,14 @@ GROWING = set()
 @pytest.mark.parametrize("name", [pytest.param(name, marks=pytest.mark.gap(GROWS))
                                   if name in GROWING else name for name in TIMED])
 def test_call_cost_does_not_grow_with_the_deck(decks, name):
+    factor = FIXED if name in GROWING else RATIO
     small, large = costs_ms(decks, TIMED[name])
-    bound = (FIXED if name in GROWING else RATIO) * small + FLOOR_MS
+    for _ in range(0 if name in GROWING else REMEASURE):
+        if large < factor * small + FLOOR_MS:
+            break
+        again = costs_ms(decks, TIMED[name])
+        small, large = min(small, again[0]), min(large, again[1])
+    bound = factor * small + FLOOR_MS
     assert large < bound, f"{name}: {large:.1f} ms at {4 * N} slides, {small:.1f} ms at {N}"
 
 
