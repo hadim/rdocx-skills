@@ -1,0 +1,1 @@
+D02 read-all-text: extract to JSON (`body`, `headers`, `footers`, `footnotes`, `text_boxes`, `comments`, each a list of paragraph texts) every story of a document whose markers sit in each story, some split across differently formatted runs; args: `input.docx OUT.json`.

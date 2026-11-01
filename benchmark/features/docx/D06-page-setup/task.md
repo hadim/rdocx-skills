@@ -1,0 +1,1 @@
+D06 page-setup: in a 2-section document make section 2 landscape with 2 cm margins (section 1 unchanged) and give both sections a header 'Confidential' and a footer 'Page X of Y' (PAGE, NUMPAGES fields); args: `input.docx OUT.docx`.

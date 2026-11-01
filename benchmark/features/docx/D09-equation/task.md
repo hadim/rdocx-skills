@@ -1,0 +1,1 @@
+D09 equation: insert after 'The roots are given by:' a display equation in native OMML: x = (-b +- sqrt(b^2 - 4ac)) / 2a (fraction, radical, superscript), structured as the OMML schema requires (a radical holds its degree element, hidden); args: `input.docx OUT.docx`.

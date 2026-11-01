@@ -1,0 +1,1 @@
+Create a 10-slide 16:9 deck from content.json on a theme ("Northwind" colours and fonts) and layouts: title, agenda bullets, section divider, table, native chart, picture, two columns, two bullet slides, closing; speaker notes on each slide; slide numbers on all slides but the title slide.

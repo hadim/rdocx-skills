@@ -1,0 +1,1 @@
+D10 hyperlinks: append to 'Further reading: ' an external link 'Project site' (https://example.com/project), ' and ', an internal link 'Appendix A' to a bookmark on the heading 'Appendix A', then '.'; links must look like links (Hyperlink style or underline), as Word makes them; args: `input.docx OUT.docx`.
