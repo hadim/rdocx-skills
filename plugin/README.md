@@ -33,7 +33,7 @@ call LibreOffice to see a page. rdocx-skills gives your agent one native tool th
 and checks Office files, so an everyday task is a call, not an XML project:
 
 <!-- bench:value:start -->
-| Your agent needs to... | rdocx-skills | Built-in skill | python-docx / python-pptx |
+| Your agent needs to... | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone |
 | --- | :--- | :--- | :--- |
 | 🔀 Redline two versions of a Word file | `rdocx compare --granularity word`<br><sub>2 lines</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>86 lines · 🧬 raw XML</sub> | a diff written by hand, emitted as `w:ins` / `w:del`<br><sub>80 lines · 🧬 raw XML</sub> |
 | ✅ Reject one reviewer's tracked changes | `rdocx revision reject --author`<br><sub>2 lines</sub> | the XML edited by hand<br><sub>42 lines · 🧬 raw XML</sub> | the XML edited by hand<br><sub>35 lines · 🧬 raw XML</sub> |
@@ -130,11 +130,11 @@ call for each task.
 ## 📊 How it compares
 
 <!-- bench:date:start -->
-Run of 2026-10-31: rdocx 0.16.4 and rpptx 0.14.4 (pin `b3be9b6db132`) against the built-in skills (docx-js 9.15.0, pptxgenjs 4.0.1, LibreOffice 26.2.6.3, pandoc 3.13) and python-docx 1.2.0 / python-pptx 1.0.2.
+Run of 2026-11-01: rdocx 0.16.4 and rpptx 0.14.4 (pin `3707323312e9`) against the built-in skills (docx-js 9.15.0, pptxgenjs 4.0.1, LibreOffice 26.2.6.3, pandoc 3.13) and python-docx 1.2.0 / python-pptx 1.0.2.
 <!-- bench:date:end -->
 
 <!-- bench:scoreboard:start -->
-|  | rdocx-skills | Built-in skill | python-docx / python-pptx |
+|  | Claude + rdocx-skills | Claude + built-in skill | Python libraries alone |
 | --- | :---: | :---: | :---: |
 | 🧰 Tasks done, out of 44 | **43** | 41 | 37 |
 | ✍️ Lines of code an agent writes (34 tasks all three do) | **388** | 1600 | 1190 |
@@ -144,13 +144,17 @@ Run of 2026-10-31: rdocx 0.16.4 and rpptx 0.14.4 (pin `b3be9b6db132`) against th
 | 🔎 Corrupt or invalid pptx caught by the stack's checks | **97 %** | 73 % | 39 % |
 | ⚡ Every page of a 52-page Word report to PNG | **2.13 s** | 7.38 s | ➖ |
 | ⚡ Every slide of a 60-slide deck to PNG | **1.34 s** | 5.81 s | ➖ |
-| ✏️ Counted replacement in a 52-page Word report | 3.08 s | 0.44 s | **0.19 s** |
-| 🏗️ Build a 52-page Word report from scratch | 34 s | **0.29 s** | 0.48 s |
+| ✏️ Counted replacement in a 52-page Word report | 3.07 s | 0.44 s | **0.19 s** |
+| 🏗️ Build a 52-page Word report from scratch | 13 s | **0.29 s** | 0.48 s |
 | 🖨️ Word files with the same page count as Word's own PDF | 4 / 8 | **7 / 8** | ➖ |
 <!-- bench:scoreboard:end -->
 
-<sub>Best value of each row in bold; ➖: the stack has no way to do it. Where rdocx-skills is behind, the cause is
-reported upstream and the benchmark is rerun on each new pin.</sub>
+<sub>Claude + rdocx-skills: this plugin. Claude + built-in skill: what Claude uses without it (docx-js and pptxgenjs
+to create, the XML unzipped and edited to change a file, pandoc to read, LibreOffice to render). Python libraries
+alone: python-docx and python-pptx, what an agent writes with no skill and, as far as third-party reviews describe it,
+what ChatGPT runs in its code interpreter; fast, as everything runs in one Python process, but with no renderer, no
+validator and no tracked changes. Best value of each row in bold; ➖: the stack has no way to do it. Where rdocx-skills
+is behind, the cause is reported upstream and the benchmark is rerun on each new pin.</sub>
 
 👉 [The full benchmark](https://github.com/hadim/rdocx-skills/tree/main/benchmark): the method, all 44 tasks
 with the code of each stack, broken-file detection, speed on realistic files and pages compared with Office's own

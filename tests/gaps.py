@@ -88,6 +88,9 @@ gaps closed.
 # 2026-10-28: the pin moved to the upstream release v0.16.4 (tensorbee/rdocx 24af95d3, S95.4) plus #427 and #428,
 # which adapted #409 to #412 and #414: their tests in test_docx_carried.py were deleted, passing there. Six section
 # and page calls became linear in the body there; the maintainer accepted it (ACCEPTED in test_docx_scaling.py).
+# 2026-11-01: integration/open-prs-2026-11-01 (-10-31 plus the cell setters of tensorbee/rdocx#443, issue #445 case 1)
+# made the cell property setters flat. The binding's open + replace cost (#445 case 2) became
+# docx-python-replace-slower-than-cli.
 GAPS = {
     # upstream: tensorbee/rdocx#435 (case 5; #439 makes validate report it)
     "docx-control-character-round-trip": "a part holding a control character XML 1.0 forbids (U+0001) opens, and "
@@ -98,6 +101,9 @@ GAPS = {
     # upstream: tensorbee/rdocx#434 (case 1; #444 adds the reply's initials)
     "docx-reply-without-range": "a reply added by reply_to or `rdocx comment reply` gets no comment range and no "
                                 "reference mark in the body, where Word gives each reply its parent's range",
+    # upstream: tensorbee/rdocx#445 (case 2)
+    "docx-python-replace-slower-than-cli": "Document.open + try_replace_text + save take about twice `rdocx replace` "
+                                           "on the same file, 3 to 4 times on rich reports",
     # upstream: tensorbee/rdocx#433 (case 7)
     "docx-font-fallback-by-entry-point": "for a font rdocx does not bundle, `rdocx convert`, to_pdf() and page_count() "
                                          "/ layout() pick different fonts, and the substitution is not reported",

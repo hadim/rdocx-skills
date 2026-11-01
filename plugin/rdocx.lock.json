@@ -1,8 +1,8 @@
 {
   "upstream": "https://github.com/hadim/rdocx",
   "source": "git",
-  "commit": "b3be9b6db13280b300a40255a8e5e5fb56daf6d0",
-  "ref": "integration/open-prs-2026-10-31",
+  "commit": "3707323312e9aa7e38b0ee8e40f9792595732f4a",
+  "ref": "integration/open-prs-2026-11-01",
   "release": "",
   "versions": {},
   "artifacts": {},
