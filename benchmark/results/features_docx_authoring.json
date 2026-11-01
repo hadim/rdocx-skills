@@ -1,9 +1,9 @@
 {
   "section": "features_docx_authoring",
   "versions": {
-    "date": "2026-10-31",
+    "date": "2026-11-01",
     "machine": "Linux x86_64, 32 CPUs",
-    "rdocx_pin": "b3be9b6db132",
+    "rdocx_pin": "3707323312e9",
     "rdocx": "rdocx 0.16.4",
     "rpptx": "rpptx 0.14.4",
     "python-docx": "1.2.0",
@@ -35,7 +35,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.17,
+          "seconds": 0.13,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -55,7 +55,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.091,
+          "seconds": 0.085,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -75,7 +75,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.065,
+          "seconds": 0.059,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": false,
@@ -104,7 +104,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.051,
+          "seconds": 0.047,
           "valid": null,
           "notes": ""
         },
@@ -122,7 +122,7 @@
           "processes": 3,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.032,
+          "seconds": 0.031,
           "valid": null,
           "notes": "parses the OOXML parts by hand (no write)"
         },
@@ -138,7 +138,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.053,
+          "seconds": 0.048,
           "valid": null,
           "notes": "parses the OOXML parts by hand (no write)"
         }
@@ -162,7 +162,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.07,
+          "seconds": 0.064,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -186,7 +186,7 @@
           "processes": 5,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.071,
+          "seconds": 0.07,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -205,7 +205,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.058,
+          "seconds": 0.055,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -233,7 +233,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.42,
+          "seconds": 0.412,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -257,7 +257,7 @@
           "processes": 5,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.074,
+          "seconds": 0.073,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -276,7 +276,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.062,
+          "seconds": 0.056,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -304,7 +304,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.12,
+          "seconds": 0.096,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -328,7 +328,7 @@
           "processes": 5,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.07,
+          "seconds": 0.071,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -348,7 +348,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.058,
+          "seconds": 0.054,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -376,7 +376,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.097,
+          "seconds": 0.092,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -419,7 +419,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.057,
+          "seconds": 0.055,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -447,7 +447,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.062,
+          "seconds": 0.06,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -470,7 +470,7 @@
           "processes": 4,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.04,
+          "seconds": 0.05,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -489,7 +489,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.057,
+          "seconds": 0.056,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -517,7 +517,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.063,
+          "seconds": 0.057,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -541,7 +541,7 @@
           "processes": 4,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.214,
+          "seconds": 0.25,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -562,13 +562,13 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.113,
+          "seconds": 0.16,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": false,
             "libreoffice_opens": true
           },
-          "notes": "builtin_validate:  - Found NEW validation errors:\n  word/charts/chart1.xml: 4 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}crossAx', attribute 'val': '-2068027336' is not a valid value of the atomic type 'xs:unsignedInt'.\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}axId', attribute 'val': '-2113994440' is not a valid value of the atomic type 'xs:unsignedInt'.\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}axId', attribute 'val': '-2068027336' is not a valid value of the atomic type 'xs:unsignedInt'.\n\nParagraphs: 4 → 5 (+1)"
+          "notes": "builtin_validate:  - Found NEW validation errors:\n  word/charts/chart1.xml: 4 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}axId', attribute 'val': '-2068027336' is not a valid value of the atomic type 'xs:unsignedInt'.\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}crossAx', attribute 'val': '-2068027336' is not a valid value of the atomic type 'xs:unsignedInt'.\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}axId', attribute 'val': '-2113994440' is not a valid value of the atomic type 'xs:unsignedInt'.\n\nParagraphs: 4 → 5 (+1)"
         }
       }
     },
@@ -590,7 +590,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.056,
+          "seconds": 0.051,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -613,7 +613,7 @@
           "processes": 5,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.052,
+          "seconds": 0.056,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -633,7 +633,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.057,
+          "seconds": 0.055,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -661,7 +661,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.109,
+          "seconds": 0.1,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -685,7 +685,7 @@
           "processes": 5,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.056,
+          "seconds": 0.06,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -705,7 +705,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.058,
+          "seconds": 0.055,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -733,7 +733,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.075,
+          "seconds": 0.07,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -757,7 +757,7 @@
           "processes": 5,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.059,
+          "seconds": 0.061,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -777,7 +777,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.057,
+          "seconds": 0.054,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -805,7 +805,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.085,
+          "seconds": 0.079,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -848,7 +848,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.058,
+          "seconds": 0.053,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -876,7 +876,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.049,
+          "seconds": 0.044,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -895,7 +895,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.033,
+          "seconds": 0.027,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -916,7 +916,7 @@
           "processes": 1,
           "raw_xml": true,
           "status": "pass",
-          "seconds": 0.065,
+          "seconds": 0.06,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": false,
@@ -943,7 +943,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.021,
+          "seconds": 0.02,
           "valid": null,
           "notes": ""
         },
@@ -958,7 +958,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.066,
+          "seconds": 0.056,
           "valid": null,
           "notes": ""
         },
@@ -973,7 +973,7 @@
           "processes": 1,
           "raw_xml": false,
           "status": "pass",
-          "seconds": 0.053,
+          "seconds": 0.051,
           "valid": null,
           "notes": "parses the OOXML parts by hand (no write)"
         }

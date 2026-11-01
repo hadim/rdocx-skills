@@ -1,9 +1,9 @@
 {
   "section": "features_docx_review",
   "versions": {
-    "date": "2026-10-31",
+    "date": "2026-11-01",
     "machine": "Linux x86_64, 32 CPUs",
-    "rdocx_pin": "b3be9b6db132",
+    "rdocx_pin": "3707323312e9",
     "rdocx": "rdocx 0.16.4",
     "rpptx": "rpptx 0.14.4",
     "python-docx": "1.2.0",
@@ -35,7 +35,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.052,
+          "seconds": 0.048,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -72,15 +72,15 @@
             "builtin": "Paragraphs: 6 → 6 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.052,
-            "min": 0.05,
-            "max": 0.055,
+            "median": 0.048,
+            "min": 0.046,
+            "max": 0.049,
             "samples": [
-              0.054,
-              0.05,
-              0.055,
-              0.05,
-              0.052
+              0.046,
+              0.048,
+              0.048,
+              0.049,
+              0.048
             ]
           }
         },
@@ -100,7 +100,7 @@
           ],
           "processes": 5,
           "raw_xml": true,
-          "seconds": 0.094,
+          "seconds": 0.095,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -126,7 +126,7 @@
                 "initials": "DR",
                 "text": "Should this be 45 days?",
                 "para_ids": [
-                  "731D9B9D"
+                  "25D2E89E"
                 ]
               },
               "anchor": "thirty days after delivery"
@@ -137,14 +137,14 @@
             "builtin": "Paragraphs: 6 → 6 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.094,
-            "min": 0.093,
+            "median": 0.095,
+            "min": 0.094,
             "max": 0.096,
             "samples": [
-              0.094,
-              0.093,
-              0.094,
+              0.095,
               0.096,
+              0.095,
+              0.095,
               0.094
             ]
           }
@@ -161,7 +161,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.046,
+          "seconds": 0.044,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -198,14 +198,14 @@
             "builtin": "Paragraphs: 6 → 6 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.046,
-            "min": 0.043,
-            "max": 0.047,
+            "median": 0.044,
+            "min": 0.044,
+            "max": 0.045,
             "samples": [
-              0.047,
-              0.043,
-              0.046,
-              0.047,
+              0.045,
+              0.044,
+              0.044,
+              0.045,
               0.044
             ]
           }
@@ -230,7 +230,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.045,
+          "seconds": 0.039,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -281,15 +281,15 @@
             "builtin": "Paragraphs: 4 → 4 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.045,
-            "min": 0.043,
-            "max": 0.047,
+            "median": 0.039,
+            "min": 0.039,
+            "max": 0.041,
             "samples": [
-              0.043,
-              0.046,
-              0.047,
-              0.045,
-              0.045
+              0.039,
+              0.04,
+              0.041,
+              0.039,
+              0.039
             ]
           }
         },
@@ -308,7 +308,7 @@
           ],
           "processes": 4,
           "raw_xml": true,
-          "seconds": 0.059,
+          "seconds": 0.06,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -335,7 +335,7 @@
                 "initials": "DR",
                 "text": "Agreed, changed to 45 days.",
                 "para_ids": [
-                  "242405D4"
+                  "0125034D"
                 ]
               },
               "commentsExtended": {
@@ -347,7 +347,7 @@
                   null,
                   "0"
                 ],
-                "242405D4": [
+                "0125034D": [
                   "1A2B0555",
                   "0"
                 ]
@@ -359,15 +359,15 @@
             "builtin": "Paragraphs: 4 → 4 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.059,
-            "min": 0.058,
-            "max": 0.062,
+            "median": 0.06,
+            "min": 0.059,
+            "max": 0.06,
             "samples": [
-              0.061,
+              0.06,
+              0.06,
               0.059,
-              0.062,
-              0.058,
-              0.059
+              0.06,
+              0.06
             ]
           }
         },
@@ -383,7 +383,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.047,
+          "seconds": 0.044,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -434,15 +434,15 @@
             "builtin": "Paragraphs: 4 → 4 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.047,
-            "min": 0.044,
-            "max": 0.049,
+            "median": 0.044,
+            "min": 0.043,
+            "max": 0.044,
             "samples": [
-              0.049,
-              0.047,
               0.044,
-              0.047,
-              0.049
+              0.044,
+              0.044,
+              0.043,
+              0.044
             ]
           }
         }
@@ -466,7 +466,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.028,
+          "seconds": 0.025,
           "notes": "",
           "check": {
             "ok": true,
@@ -527,15 +527,15 @@
             }
           },
           "timing": {
-            "median": 0.028,
-            "min": 0.026,
-            "max": 0.029,
+            "median": 0.025,
+            "min": 0.024,
+            "max": 0.027,
             "samples": [
+              0.025,
+              0.027,
               0.026,
-              0.029,
-              0.026,
-              0.028,
-              0.029
+              0.024,
+              0.024
             ]
           }
         },
@@ -550,7 +550,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.024,
+          "seconds": 0.023,
           "notes": "pandoc's comment-start / comment-end spans carry id, author, date and text; the anchor is rebuilt by walking the AST (tables included)",
           "check": {
             "ok": true,
@@ -607,15 +607,15 @@
             }
           },
           "timing": {
-            "median": 0.024,
+            "median": 0.023,
             "min": 0.022,
-            "max": 0.026,
+            "max": 0.023,
             "samples": [
               0.023,
               0.022,
-              0.024,
-              0.026,
-              0.024
+              0.023,
+              0.023,
+              0.023
             ]
           }
         },
@@ -631,7 +631,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.047,
+          "seconds": 0.045,
           "notes": "python-docx gives author, date and text; the anchored text needs the range markers in the body XML",
           "check": {
             "ok": true,
@@ -688,15 +688,15 @@
             }
           },
           "timing": {
-            "median": 0.047,
-            "min": 0.046,
-            "max": 0.05,
+            "median": 0.045,
+            "min": 0.045,
+            "max": 0.047,
             "samples": [
               0.047,
-              0.049,
-              0.046,
-              0.05,
-              0.046
+              0.045,
+              0.047,
+              0.045,
+              0.045
             ]
           }
         }
@@ -721,7 +721,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.04,
+          "seconds": 0.038,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -753,15 +753,15 @@
             "builtin": "Paragraphs: 11 → 11 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.04,
-            "min": 0.039,
-            "max": 0.04,
+            "median": 0.038,
+            "min": 0.037,
+            "max": 0.039,
             "samples": [
-              0.04,
               0.039,
-              0.04,
-              0.04,
-              0.04
+              0.037,
+              0.037,
+              0.039,
+              0.038
             ]
           }
         },
@@ -780,7 +780,7 @@
           ],
           "processes": 4,
           "raw_xml": true,
-          "seconds": 0.057,
+          "seconds": 0.056,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -811,15 +811,15 @@
             "builtin": "Paragraphs: 11 → 11 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.057,
-            "min": 0.056,
-            "max": 0.06,
+            "median": 0.056,
+            "min": 0.055,
+            "max": 0.056,
             "samples": [
-              0.057,
-              0.057,
-              0.06,
+              0.055,
               0.056,
-              0.058
+              0.056,
+              0.056,
+              0.055
             ]
           }
         },
@@ -835,7 +835,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.044,
+          "seconds": 0.042,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -866,15 +866,15 @@
             "builtin": "Paragraphs: 11 → 11 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.044,
-            "min": 0.043,
-            "max": 0.048,
+            "median": 0.042,
+            "min": 0.042,
+            "max": 0.045,
             "samples": [
-              0.044,
-              0.048,
-              0.043,
-              0.047,
-              0.043
+              0.042,
+              0.042,
+              0.042,
+              0.042,
+              0.045
             ]
           }
         }
@@ -899,7 +899,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.027,
+          "seconds": 0.026,
           "notes": "rdocx lists each revision's id, kind, author, date and story but not its text: the text comes from part_xml, parsed with ElementTree (NOTES_review.md, finding 4)",
           "check": {
             "ok": true,
@@ -947,15 +947,15 @@
             }
           },
           "timing": {
-            "median": 0.027,
-            "min": 0.026,
-            "max": 0.029,
+            "median": 0.026,
+            "min": 0.024,
+            "max": 0.027,
             "samples": [
-              0.029,
-              0.029,
-              0.027,
+              0.024,
+              0.024,
               0.026,
-              0.026
+              0.026,
+              0.027
             ]
           }
         },
@@ -970,7 +970,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.023,
+          "seconds": 0.021,
           "notes": "pandoc --track-changes=all reports insertions and deletions (body, cells, notes) but not formatting changes (w:rPrChange): the format change is missing; oracle checks failed: format:Notices are binding, nothing_else",
           "check": {
             "ok": false,
@@ -1012,15 +1012,15 @@
             }
           },
           "timing": {
-            "median": 0.023,
+            "median": 0.021,
             "min": 0.021,
-            "max": 0.025,
+            "max": 0.022,
             "samples": [
-              0.025,
-              0.023,
               0.021,
-              0.024,
-              0.023
+              0.022,
+              0.022,
+              0.021,
+              0.021
             ]
           }
         },
@@ -1036,7 +1036,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.047,
+          "seconds": 0.043,
           "notes": "",
           "check": {
             "ok": true,
@@ -1084,15 +1084,15 @@
             }
           },
           "timing": {
-            "median": 0.047,
-            "min": 0.043,
-            "max": 0.048,
+            "median": 0.043,
+            "min": 0.042,
+            "max": 0.046,
             "samples": [
-              0.048,
-              0.047,
               0.043,
-              0.045,
-              0.047
+              0.046,
+              0.043,
+              0.042,
+              0.042
             ]
           }
         }
@@ -1116,7 +1116,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.015,
+          "seconds": 0.014,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1211,14 +1211,14 @@
             "builtin": "Paragraphs: 19 → 16 (-3)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.015,
+            "median": 0.014,
             "min": 0.014,
             "max": 0.015,
             "samples": [
               0.015,
-              0.015,
               0.014,
-              0.015,
+              0.014,
+              0.014,
               0.014
             ]
           }
@@ -1234,7 +1234,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.34,
+          "seconds": 0.338,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1329,13 +1329,13 @@
             "builtin": "Paragraphs: 19 → 16 (-3)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.34,
-            "min": 0.333,
-            "max": 0.348,
+            "median": 0.338,
+            "min": 0.326,
+            "max": 0.339,
             "samples": [
-              0.34,
-              0.333,
-              0.348
+              0.338,
+              0.326,
+              0.339
             ]
           }
         },
@@ -1351,7 +1351,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.046,
+          "seconds": 0.043,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1446,15 +1446,15 @@
             "builtin": "Paragraphs: 19 → 16 (-3)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.046,
-            "min": 0.044,
-            "max": 0.046,
+            "median": 0.043,
+            "min": 0.042,
+            "max": 0.048,
             "samples": [
-              0.044,
-              0.046,
-              0.044,
-              0.046,
-              0.046
+              0.048,
+              0.043,
+              0.043,
+              0.042,
+              0.042
             ]
           }
         }
@@ -1478,7 +1478,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.013,
+          "seconds": 0.012,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1571,15 +1571,15 @@
             "builtin": "Note: this document has tracked changes; they were not checked against the original (pass --author to check).\n\nParagraphs: 13 → 12 (-1)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.013,
+            "median": 0.012,
             "min": 0.012,
-            "max": 0.013,
+            "max": 0.012,
             "samples": [
               0.012,
-              0.013,
-              0.013,
-              0.013,
-              0.013
+              0.012,
+              0.012,
+              0.012,
+              0.012
             ]
           }
         },
@@ -1691,14 +1691,14 @@
           },
           "timing": {
             "median": 0.03,
-            "min": 0.03,
+            "min": 0.029,
             "max": 0.031,
             "samples": [
-              0.031,
               0.03,
+              0.029,
               0.03,
               0.031,
-              0.03
+              0.031
             ]
           }
         },
@@ -1714,7 +1714,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.045,
+          "seconds": 0.042,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1807,15 +1807,15 @@
             "builtin": "Note: this document has tracked changes; they were not checked against the original (pass --author to check).\n\nParagraphs: 13 → 12 (-1)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.045,
-            "min": 0.044,
-            "max": 0.047,
+            "median": 0.042,
+            "min": 0.042,
+            "max": 0.044,
             "samples": [
-              0.045,
-              0.047,
-              0.046,
+              0.042,
               0.044,
-              0.045
+              0.042,
+              0.042,
+              0.042
             ]
           }
         }
@@ -1839,7 +1839,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.039,
+          "seconds": 0.04,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -1964,14 +1964,14 @@
             "builtin": "Paragraphs: 12 → 12 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.039,
-            "min": 0.038,
+            "median": 0.04,
+            "min": 0.039,
             "max": 0.04,
             "samples": [
               0.04,
+              0.04,
               0.039,
-              0.039,
-              0.038,
+              0.04,
               0.04
             ]
           }
@@ -2116,13 +2116,13 @@
           },
           "timing": {
             "median": 0.033,
-            "min": 0.032,
+            "min": 0.033,
             "max": 0.033,
             "samples": [
               0.033,
               0.033,
               0.033,
-              0.032,
+              0.033,
               0.033
             ]
           }
@@ -2265,14 +2265,14 @@
           },
           "timing": {
             "median": 0.047,
-            "min": 0.046,
-            "max": 0.051,
+            "min": 0.045,
+            "max": 0.049,
             "samples": [
+              0.049,
               0.047,
-              0.048,
               0.046,
-              0.051,
-              0.046
+              0.047,
+              0.045
             ]
           }
         }
@@ -2296,7 +2296,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.08,
+          "seconds": 0.076,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2355,15 +2355,15 @@
             "builtin": "Paragraphs: 37 → 41 (+4)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.08,
-            "min": 0.079,
-            "max": 0.083,
+            "median": 0.076,
+            "min": 0.074,
+            "max": 0.078,
             "samples": [
-              0.08,
-              0.079,
-              0.08,
-              0.079,
-              0.083
+              0.078,
+              0.074,
+              0.077,
+              0.076,
+              0.074
             ]
           }
         },
@@ -2383,7 +2383,7 @@
           ],
           "processes": 6,
           "raw_xml": true,
-          "seconds": 0.408,
+          "seconds": 0.406,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2442,13 +2442,13 @@
             "builtin": "Paragraphs: 37 → 41 (+4)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.408,
-            "min": 0.406,
-            "max": 0.478,
+            "median": 0.406,
+            "min": 0.403,
+            "max": 0.406,
             "samples": [
               0.406,
-              0.408,
-              0.478
+              0.403,
+              0.406
             ]
           }
         },
@@ -2464,7 +2464,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.046,
+          "seconds": 0.044,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2503,15 +2503,15 @@
             "builtin": "Paragraphs: 37 → 37 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.046,
-            "min": 0.046,
-            "max": 0.065,
+            "median": 0.044,
+            "min": 0.043,
+            "max": 0.045,
             "samples": [
-              0.065,
-              0.046,
-              0.046,
-              0.046,
-              0.064
+              0.044,
+              0.043,
+              0.045,
+              0.044,
+              0.043
             ]
           }
         }
@@ -2535,7 +2535,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.047,
+          "seconds": 0.04,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2555,7 +2555,7 @@
               "fields": [
                 [
                   "DATE",
-                  "2026-10-31"
+                  "2026-11-01"
                 ],
                 [
                   "NUMPAGES",
@@ -2573,15 +2573,15 @@
             "builtin": "Paragraphs: 9 → 9 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.047,
-            "min": 0.044,
-            "max": 0.052,
+            "median": 0.04,
+            "min": 0.038,
+            "max": 0.041,
             "samples": [
-              0.044,
-              0.051,
-              0.052,
-              0.046,
-              0.047
+              0.038,
+              0.039,
+              0.04,
+              0.041,
+              0.04
             ]
           }
         },
@@ -2601,7 +2601,7 @@
           ],
           "processes": 6,
           "raw_xml": true,
-          "seconds": 0.426,
+          "seconds": 0.399,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2621,7 +2621,7 @@
               "fields": [
                 [
                   "DATE",
-                  "2026-10-31"
+                  "2026-11-01"
                 ],
                 [
                   "NUMPAGES",
@@ -2639,13 +2639,13 @@
             "builtin": "Paragraphs: 9 → 9 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.426,
-            "min": 0.421,
-            "max": 0.429,
+            "median": 0.399,
+            "min": 0.397,
+            "max": 0.401,
             "samples": [
-              0.429,
-              0.426,
-              0.421
+              0.397,
+              0.401,
+              0.399
             ]
           }
         },
@@ -2661,7 +2661,7 @@
           ],
           "processes": 1,
           "raw_xml": true,
-          "seconds": 0.051,
+          "seconds": 0.042,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -2681,7 +2681,7 @@
               "fields": [
                 [
                   "DATE",
-                  "2026-10-31"
+                  "2026-11-01"
                 ],
                 [
                   "NUMPAGES",
@@ -2699,15 +2699,15 @@
             "builtin": "Paragraphs: 9 → 9 (0)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.051,
-            "min": 0.044,
-            "max": 0.053,
+            "median": 0.042,
+            "min": 0.042,
+            "max": 0.043,
             "samples": [
-              0.052,
-              0.053,
-              0.044,
-              0.051,
-              0.051
+              0.043,
+              0.042,
+              0.042,
+              0.042,
+              0.043
             ]
           }
         }
@@ -2732,7 +2732,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.132,
+          "seconds": 0.12,
           "notes": "",
           "check": {
             "ok": true,
@@ -2784,15 +2784,15 @@
             }
           },
           "timing": {
-            "median": 0.132,
-            "min": 0.124,
-            "max": 0.136,
+            "median": 0.12,
+            "min": 0.116,
+            "max": 0.125,
             "samples": [
-              0.131,
-              0.136,
-              0.133,
-              0.132,
-              0.124
+              0.124,
+              0.125,
+              0.118,
+              0.12,
+              0.116
             ]
           }
         },
@@ -2809,7 +2809,7 @@
           ],
           "processes": 6,
           "raw_xml": false,
-          "seconds": 1.095,
+          "seconds": 1.069,
           "notes": "LibreOffice's PDF shows tracked changes (coloured, underlined, struck through) by default: the accepted view needs accept_changes.py first",
           "check": {
             "ok": true,
@@ -2861,13 +2861,13 @@
             }
           },
           "timing": {
-            "median": 1.095,
-            "min": 1.092,
-            "max": 1.099,
+            "median": 1.069,
+            "min": 1.065,
+            "max": 1.072,
             "samples": [
-              1.092,
-              1.099,
-              1.095
+              1.072,
+              1.065,
+              1.069
             ]
           }
         },
@@ -2903,7 +2903,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.1,
+          "seconds": 0.091,
           "notes": "",
           "check": {
             "ok": true,
@@ -2964,15 +2964,15 @@
             }
           },
           "timing": {
-            "median": 0.1,
-            "min": 0.098,
-            "max": 0.107,
+            "median": 0.091,
+            "min": 0.091,
+            "max": 0.093,
             "samples": [
-              0.101,
-              0.1,
-              0.1,
-              0.098,
-              0.107
+              0.091,
+              0.093,
+              0.091,
+              0.091,
+              0.091
             ]
           }
         },
@@ -2991,7 +2991,7 @@
           ],
           "processes": 5,
           "raw_xml": false,
-          "seconds": 0.42,
+          "seconds": 0.419,
           "notes": "",
           "check": {
             "ok": true,
@@ -3052,13 +3052,13 @@
             }
           },
           "timing": {
-            "median": 0.42,
-            "min": 0.417,
-            "max": 0.431,
+            "median": 0.419,
+            "min": 0.414,
+            "max": 0.42,
             "samples": [
+              0.419,
               0.42,
-              0.417,
-              0.431
+              0.414
             ]
           }
         },
@@ -3095,7 +3095,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.057,
+          "seconds": 0.05,
           "notes": "",
           "check": {
             "ok": true,
@@ -3118,15 +3118,15 @@
             }
           },
           "timing": {
-            "median": 0.057,
-            "min": 0.054,
-            "max": 0.058,
+            "median": 0.05,
+            "min": 0.05,
+            "max": 0.054,
             "samples": [
-              0.058,
-              0.057,
-              0.057,
+              0.05,
+              0.05,
+              0.05,
               0.054,
-              0.056
+              0.05
             ]
           }
         },
@@ -3142,7 +3142,7 @@
           ],
           "processes": 4,
           "raw_xml": false,
-          "seconds": 0.742,
+          "seconds": 0.754,
           "notes": "LibreOffice's PDF shows tracked changes by default: the accepted view needs accept_changes.py first",
           "check": {
             "ok": true,
@@ -3165,13 +3165,13 @@
             }
           },
           "timing": {
-            "median": 0.742,
-            "min": 0.742,
-            "max": 0.747,
+            "median": 0.754,
+            "min": 0.745,
+            "max": 0.755,
             "samples": [
-              0.742,
-              0.747,
-              0.742
+              0.754,
+              0.745,
+              0.755
             ]
           }
         },
@@ -3207,7 +3207,7 @@
           ],
           "processes": 2,
           "raw_xml": false,
-          "seconds": 0.023,
+          "seconds": 0.022,
           "notes": "",
           "check": {
             "ok": true,
@@ -3245,15 +3245,15 @@
             }
           },
           "timing": {
-            "median": 0.023,
+            "median": 0.022,
             "min": 0.022,
-            "max": 0.024,
+            "max": 0.023,
             "samples": [
               0.022,
-              0.024,
-              0.024,
+              0.022,
               0.023,
-              0.023
+              0.022,
+              0.022
             ]
           }
         },
@@ -3269,7 +3269,7 @@
           ],
           "processes": 3,
           "raw_xml": false,
-          "seconds": 0.031,
+          "seconds": 0.028,
           "notes": "pandoc's plain text puts a table row on one line, so the changed cell is reported with its row",
           "check": {
             "ok": true,
@@ -3307,15 +3307,15 @@
             }
           },
           "timing": {
-            "median": 0.031,
-            "min": 0.03,
-            "max": 0.032,
+            "median": 0.028,
+            "min": 0.028,
+            "max": 0.03,
             "samples": [
-              0.031,
+              0.028,
+              0.028,
               0.03,
-              0.03,
-              0.031,
-              0.032
+              0.028,
+              0.028
             ]
           }
         },
@@ -3331,7 +3331,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.045,
+          "seconds": 0.046,
           "notes": "",
           "check": {
             "ok": true,
@@ -3369,15 +3369,15 @@
             }
           },
           "timing": {
-            "median": 0.045,
-            "min": 0.044,
+            "median": 0.046,
+            "min": 0.045,
             "max": 0.047,
             "samples": [
+              0.047,
               0.045,
-              0.045,
-              0.044,
-              0.044,
-              0.047
+              0.046,
+              0.047,
+              0.045
             ]
           }
         }
@@ -3401,7 +3401,7 @@
           ],
           "processes": 1,
           "raw_xml": false,
-          "seconds": 0.06,
+          "seconds": 0.055,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -3597,15 +3597,15 @@
             "builtin": "Paragraphs: 8 → 15 (+7)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.06,
-            "min": 0.057,
-            "max": 0.06,
+            "median": 0.055,
+            "min": 0.053,
+            "max": 0.057,
             "samples": [
-              0.06,
               0.057,
-              0.06,
-              0.059,
-              0.06
+              0.056,
+              0.053,
+              0.055,
+              0.054
             ]
           }
         },
@@ -3623,7 +3623,7 @@
           ],
           "processes": 4,
           "raw_xml": true,
-          "seconds": 0.036,
+          "seconds": 0.035,
           "valid": {
             "rdocx_validate": true,
             "builtin_validate": true,
@@ -3819,15 +3819,15 @@
             "builtin": "Paragraphs: 8 → 15 (+7)\nAll validations PASSED!"
           },
           "timing": {
-            "median": 0.036,
-            "min": 0.035,
-            "max": 0.037,
+            "median": 0.035,
+            "min": 0.034,
+            "max": 0.035,
             "samples": [
-              0.037,
-              0.037,
-              0.036,
-              0.036,
-              0.035
+              0.035,
+              0.035,
+              0.035,
+              0.035,
+              0.034
             ]
           }
         },
@@ -4040,14 +4040,14 @@
           },
           "timing": {
             "median": 0.046,
-            "min": 0.045,
-            "max": 0.049,
+            "min": 0.046,
+            "max": 0.048,
             "samples": [
-              0.045,
-              0.049,
               0.046,
               0.048,
-              0.045
+              0.047,
+              0.046,
+              0.046
             ]
           }
         }

@@ -22,9 +22,9 @@ RESULTS = BENCH / "results"
 
 STACKS = ("rdocx", "builtin", "pylib")
 STACK_NAMES = {
-    "rdocx": "rdocx-skills",
-    "builtin": "Built-in skill",
-    "pylib": "python-docx / python-pptx",
+    "rdocx": "Claude + rdocx-skills",
+    "builtin": "Claude + built-in skill",
+    "pylib": "Python libraries alone",
 }
 STACK_SHORT = {"rdocx": "rdocx-skills", "builtin": "built-in", "pylib": "python-docx/pptx"}
 ICON = {"pass": "\u2705", "partial": "\u26a0\ufe0f", "fail": "\u274c", "unsupported": "\u2796"}
@@ -406,7 +406,7 @@ def block_visual_fidelity():
             else:
                 cells = bold_best([m(r, metric), m(lo, metric)], fmt=fmt)
             rows.append([f"{label} ({n})" if metric == "page_count_exact" else "", mlabel] + cells)
-    return table(["Files", "Measure", "rdocx-skills (rdocx / rpptx)", "Built-in skill (LibreOffice)"], rows,
+    return table(["Files", "Measure", "Claude + rdocx-skills (rdocx / rpptx)", "Claude + built-in skill (LibreOffice)"], rows,
                  ["---", "---", ":---:", ":---:"])
 
 
@@ -452,7 +452,7 @@ def block_visual_capabilities():
     return (table(["What the agent can see"] + [STACK_NAMES[s] for s in STACKS], rows) + "\n\n"
             + "\n".join(f"<sub>{n}</sub><br>" for n in notes) + "\n\n"
             + "Time to the first picture of page 1, one cold run\n\n"
-            + table(["File", "rdocx-skills", "Built-in skill"], trows))
+            + table(["File", STACK_NAMES["rdocx"], STACK_NAMES["builtin"]], trows))
 
 
 def block_visual_figures():
@@ -510,7 +510,7 @@ def block_value():
         if not t:
             continue
         rows.append([need] + [value_cell(t["stacks"][s], h) for s, h in zip(STACKS, hows)])
-    return table(["Your agent needs to...", "rdocx-skills", "Built-in skill", "python-docx / python-pptx"], rows,
+    return table(["Your agent needs to..."] + [STACK_NAMES[s] for s in STACKS], rows,
                  ["---", ":---", ":---", ":---"])
 
 
@@ -552,7 +552,7 @@ def block_scoreboard():
         rows.append(["\U0001f5a8\ufe0f Word files with the same page count as Word's own PDF"] + [
             f"{x}" for x in bold_best([r["page_count_exact"], lo["page_count_exact"]],
                                       fmt=lambda k: f"{k} / {d['documents']}")] + ["\u2796"])
-    return table(["", "rdocx-skills", "Built-in skill", "python-docx / python-pptx"], rows)
+    return table([""] + [STACK_NAMES[s] for s in STACKS], rows)
 
 
 def block_versions():

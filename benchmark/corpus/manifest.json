@@ -2,7 +2,7 @@
   "about": "Benchmark corpus: synthetic files built by corpus/build.py (deterministic) and public files pinned in corpus/real.json (fetched into .cache/corpus/real/, never committed). Paths are relative to benchmark/. pages.libreoffice: pages of LibreOffice's PDF export (kept in .cache/corpus/lo_pdf/); pages.rdocx: rdocx page_count with the benchmark fonts; pages.app_xml: what the producing application stored (Word's own count for real files). Counts come from corpus/ooxml_stats.py (zipfile + lxml): docx paragraphs = every w:p of word/document.xml (table cells and TOC included), pictures = pic:pic + v:imagedata in the body, headers, footers and notes, revisions = w:ins + w:del + moves + property changes in those stories; pptx paragraphs = every a:p of the slides. checks: rdocx/rpptx inspect, rdocx page_count (font_dir), rdocx/rpptx validate, python-docx/python-pptx open, LibreOffice PDF export (soffice.py), the built-in skill's office/validate.py; checks_failed lists those that failed.",
   "versions": {
     "machine": "Linux x86_64, 32 CPUs",
-    "rdocx_pin": "b3be9b6db132",
+    "rdocx_pin": "3707323312e9",
     "rdocx": "rdocx 0.16.4",
     "rpptx": "rpptx 0.14.4",
     "python-docx": "1.2.0",

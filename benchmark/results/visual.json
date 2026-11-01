@@ -1,9 +1,9 @@
 {
   "section": "visual",
   "versions": {
-    "date": "2026-10-31",
+    "date": "2026-11-01",
     "machine": "Linux x86_64, 32 CPUs",
-    "rdocx_pin": "b3be9b6db132",
+    "rdocx_pin": "3707323312e9",
     "rdocx": "rdocx 0.16.4",
     "rpptx": "rpptx 0.14.4",
     "python-docx": "1.2.0",
@@ -103,7 +103,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 0.42,
+          "seconds": 0.41,
           "page_diff": 0,
           "pages_paired": 2,
           "page_size_pt": [
@@ -227,7 +227,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 0.04,
+          "seconds": 0.03,
           "page_diff": 0,
           "pages_paired": 3,
           "page_size_pt": [
@@ -284,7 +284,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 0.4,
+          "seconds": 0.39,
           "page_diff": 0,
           "pages_paired": 3,
           "page_size_pt": [
@@ -475,7 +475,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 0.49,
+          "seconds": 0.51,
           "page_diff": 0,
           "pages_paired": 11,
           "page_size_pt": [
@@ -740,7 +740,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 0.7,
+          "seconds": 0.8,
           "page_diff": 0,
           "pages_paired": 22,
           "page_size_pt": [
@@ -1023,7 +1023,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 2.39,
+          "seconds": 2.4,
           "page_diff": 0,
           "pages_paired": 47,
           "page_size_pt": [
@@ -1080,7 +1080,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 1.02,
+          "seconds": 1.06,
           "page_diff": 0,
           "pages_paired": 47,
           "page_size_pt": [
@@ -1566,7 +1566,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 2.86,
+          "seconds": 2.81,
           "page_diff": 1,
           "pages_paired": 66,
           "page_size_pt": [
@@ -1623,7 +1623,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 1.72,
+          "seconds": 1.68,
           "page_diff": 0,
           "pages_paired": 66,
           "page_size_pt": [
@@ -2261,7 +2261,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 2.37,
+          "seconds": 2.29,
           "page_diff": 3,
           "pages_paired": 136,
           "page_size_pt": [
@@ -2318,7 +2318,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 19.35,
+          "seconds": 19.12,
           "page_diff": 1,
           "pages_paired": 136,
           "page_size_pt": [
@@ -3519,7 +3519,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 2.02,
+          "seconds": 1.99,
           "page_diff": 10,
           "pages_paired": 153,
           "page_size_pt": [
@@ -3576,7 +3576,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 2.19,
+          "seconds": 2.18,
           "page_diff": 0,
           "pages_paired": 153,
           "page_size_pt": [
@@ -4913,7 +4913,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 1.66,
+          "seconds": 1.6,
           "page_diff": 0,
           "pages_paired": 13,
           "page_size_pt": [
@@ -4970,7 +4970,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 1.3,
+          "seconds": 1.31,
           "page_diff": 0,
           "pages_paired": 13,
           "page_size_pt": [
@@ -5187,7 +5187,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 1.25,
+          "seconds": 1.24,
           "page_diff": 0,
           "pages_paired": 28,
           "page_size_pt": [
@@ -5244,7 +5244,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 1.19,
+          "seconds": 1.21,
           "page_diff": 0,
           "pages_paired": 28,
           "page_size_pt": [
@@ -5586,7 +5586,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 2.63,
+          "seconds": 2.61,
           "page_diff": 0,
           "pages_paired": 41,
           "page_size_pt": [
@@ -5648,7 +5648,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 3.03,
+          "seconds": 2.98,
           "page_diff": 0,
           "pages_paired": 41,
           "page_size_pt": [
@@ -6099,7 +6099,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 1.72,
+          "seconds": 1.71,
           "page_diff": 0,
           "pages_paired": 52,
           "page_size_pt": [
@@ -6159,7 +6159,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 2.69,
+          "seconds": 2.67,
           "page_diff": 0,
           "pages_paired": 52,
           "page_size_pt": [
@@ -6690,7 +6690,7 @@
       "stacks": {
         "rdocx": {
           "status": "ok",
-          "seconds": 1.34,
+          "seconds": 1.3,
           "page_diff": 0,
           "pages_paired": 69,
           "page_size_pt": [
@@ -6754,7 +6754,7 @@
         },
         "libreoffice": {
           "status": "ok",
-          "seconds": 5.47,
+          "seconds": 5.22,
           "page_diff": 0,
           "pages_paired": 69,
           "page_size_pt": [
@@ -8796,7 +8796,7 @@
       "status": "pass",
       "how": "rdocx render docx-M.docx -o DIR --pages 1 --dpi 100 --font-dir FONTS",
       "evidence": "1 PNG written (docx-M_page1.png), one command, no PDF",
-      "seconds": 0.85
+      "seconds": 0.79
     },
     {
       "capability": "one page or slide to PNG",
@@ -8805,7 +8805,7 @@
       "status": "pass",
       "how": "rpptx render pptx-M.pptx -o DIR --slide 1 --dpi 100 --font-dir FONTS",
       "evidence": "1 PNG written, one command, no PDF",
-      "seconds": 0.67
+      "seconds": 0.66
     },
     {
       "capability": "one page or slide to PNG",
@@ -8814,9 +8814,9 @@
       "status": "pass",
       "how": "soffice.py --headless --convert-to pdf docx-M.docx; pdftoppm -jpeg -r 100 -f 1 -l 1",
       "evidence": "two steps: LibreOffice converts the whole file (52 pages) to PDF, pdftoppm rasterises page 1 (1 JPEG)",
-      "seconds": 1.15,
+      "seconds": 1.11,
       "steps": {
-        "soffice_pdf": 1.14,
+        "soffice_pdf": 1.1,
         "pdftoppm": 0.01
       }
     },
@@ -8827,10 +8827,10 @@
       "status": "pass",
       "how": "soffice.py --headless --convert-to pdf pptx-M.pptx; pdftoppm -jpeg -r 150 -f 1 -l 1",
       "evidence": "two steps: LibreOffice converts the whole file (60 pages) to PDF, pdftoppm rasterises page 1 (1 JPEG)",
-      "seconds": 1.63,
+      "seconds": 1.6,
       "steps": {
-        "soffice_pdf": 1.59,
-        "pdftoppm": 0.04
+        "soffice_pdf": 1.57,
+        "pdftoppm": 0.03
       }
     },
     {
@@ -8848,7 +8848,7 @@
       "status": "pass",
       "how": "rdocx render docx-L.docx -o DIR --pages 3,5 --dpi 100 --font-dir FONTS",
       "evidence": "['docx-L_page3.png', 'docx-L_page5.png'] from a 195-page document, nothing else laid out to images",
-      "seconds": 7.01
+      "seconds": 6.24
     },
     {
       "capability": "only selected pages",
@@ -8857,7 +8857,7 @@
       "status": "pass",
       "how": "rpptx convert pptx-L.pptx --to png --slides 3,5 --dpi 100 --font-dir FONTS -o OUT.png",
       "evidence": "['sel_p_001.png', 'sel_p_002.png'] (rpptx render takes one --slide; convert takes a range)",
-      "seconds": 1.71
+      "seconds": 1.67
     },
     {
       "capability": "only selected pages",
@@ -8865,8 +8865,8 @@
       "stack": "builtin",
       "status": "pass",
       "how": "soffice.py --convert-to pdf docx-L.docx; pdftoppm -f 3 -l 3 and -f 5 -l 5",
-      "evidence": "['p3-003.jpg', 'p5-005.jpg']; LibreOffice converts all 198 pages first (4.1 s of the 4.1 s)",
-      "seconds": 4.14
+      "evidence": "['p3-003.jpg', 'p5-005.jpg']; LibreOffice converts all 198 pages first (3.9 s of the 4.0 s)",
+      "seconds": 3.96
     },
     {
       "capability": "only selected pages",
@@ -8874,8 +8874,8 @@
       "stack": "builtin",
       "status": "pass",
       "how": "soffice.py --convert-to pdf pptx-L.pptx; pdftoppm -f 3 -l 3 and -f 5 -l 5",
-      "evidence": "['p3-003.jpg', 'p5-005.jpg']; LibreOffice converts all 150 pages first (3.5 s of the 3.6 s)",
-      "seconds": 3.58
+      "evidence": "['p3-003.jpg', 'p5-005.jpg']; LibreOffice converts all 150 pages first (3.4 s of the 3.5 s)",
+      "seconds": 3.48
     },
     {
       "capability": "only selected pages",
@@ -8892,7 +8892,7 @@
       "status": "pass",
       "how": "rdocx render docx-M.docx -o DIR --revision-view tracked [--revision-style legal] (same flag on convert --to pdf)",
       "evidence": "33 deletions in docx-M: their text with its context is in the tracked-view PDF for 32, in the default (accepted) view for 2 (accepted context found for 32): the default render hides revisions, the flag shows them (struck deletions, underlined insertions, change bars; legal: colours)",
-      "seconds": 1.04,
+      "seconds": 0.98,
       "default_view_shows_revisions": true
     },
     {
@@ -8902,7 +8902,7 @@
       "status": "pass",
       "how": "soffice.py --headless --convert-to pdf docx-M.docx (the skill's render)",
       "evidence": "33 deletions: deleted text with its context in LibreOffice's PDF for 31, accepted context for 0; LibreOffice exports the document as it displays it, changes shown (its default)",
-      "seconds": 1.13,
+      "seconds": 1.1,
       "default_view_shows_revisions": true
     },
     {
@@ -8928,7 +8928,7 @@
       "status": "partial",
       "how": "soffice.py --headless --convert-to pdf docx-M.docx",
       "evidence": "25 comments; found in LibreOffice's default PDF: 0. With an export option the skill does not document (--convert-to 'pdf:writer_pdf_Export:{\"ExportNotesInMargin\":...true}'): 25, in the page margin",
-      "seconds": 1.13
+      "seconds": 1.1
     },
     {
       "capability": "comments shown in the render",
@@ -8945,7 +8945,7 @@
       "status": "pass",
       "how": "python scripts/thumbnail.py pptx-M.pptx pptx-M-grid",
       "evidence": "5 labelled grid JPEG(s) for 60 slides (pptx-M-grid-1.jpg, pptx-M-grid-2.jpg, pptx-M-grid-3.jpg...), slides labelled with their XML file name",
-      "seconds": 2.66,
+      "seconds": 2.62,
       "files": [
         "$BENCH/.cache/work/visual/capabilities/grid/pptx-M-grid-1.jpg",
         "$BENCH/.cache/work/visual/capabilities/grid/pptx-M-grid-2.jpg",
@@ -8961,7 +8961,7 @@
       "status": "pass",
       "how": "prs.render_all_handouts(9, 60, font_dir=FONTS) (Python; also to_handout_pdf(9)); rpptx thumbnail is slide 1 only",
       "evidence": "7 handout pages of 9 slides for 60 slides (expected 7); handout layout, slides not labelled with their number",
-      "seconds": 0.79,
+      "seconds": 0.77,
       "files": [
         "$BENCH/.cache/work/visual/capabilities/grid/handout-1.png",
         "$BENCH/.cache/work/visual/capabilities/grid/handout-2.png",
@@ -9003,7 +9003,7 @@
       "status": "pass",
       "how": "rdocx layout --json --font-dir FONTS F (page of every body block) + rdocx text --json",
       "evidence": "a layout API for every block (rdocx's own pagination). Against Word's PDF outline of two Word reports: Word's page for 9 of 13 headings",
-      "seconds": 10.05,
+      "seconds": 9.96,
       "accuracy": 0.692
     },
     {
@@ -9013,7 +9013,7 @@
       "status": "partial",
       "how": "not in the skill: soffice.py to PDF, then read the PDF outline (pdftohtml -xml) or pdftotext page by page",
       "evidence": "no layout API; headings only, from LibreOffice's PDF bookmarks: Word's page for 11 of 13",
-      "seconds": 2.53,
+      "seconds": 2.43,
       "accuracy": 0.846
     },
     {
@@ -9023,7 +9023,7 @@
       "status": "partial",
       "how": "python-docx: count w:lastRenderedPageBreak (Paragraph.rendered_page_breaks) and next-page section breaks",
       "evidence": "Word's own pages as of its last save: Word's page for 7 of 13 headings (page totals {'gov-uk-dcms-taylor-review-past-schemes': 46, 'gov-uk-dcms-taylor-review-interim-evaluation': 64} against Word's {'gov-uk-dcms-taylor-review-past-schemes': 47, 'gov-uk-dcms-taylor-review-interim-evaluation': 66}); only for files Word saved (docx-M, written by docx-js: 0 rendered page breaks) and stale after any edit",
-      "seconds": 0.27,
+      "seconds": 0.26,
       "accuracy": 0.538
     },
     {
@@ -9064,7 +9064,7 @@
       "status": "pass",
       "how": "any rdocx render / convert (stderr); Python: render_*_with_diagnostics",
       "evidence": "Local Plan Q&A (set in Aptos): [\"Font 'Aptos' is approximate: selected 'Carlito' for contributing text\"]",
-      "seconds": 0.11
+      "seconds": 0.1
     },
     {
       "capability": "warns when a font is substituted",
@@ -9073,7 +9073,7 @@
       "status": "unsupported",
       "how": "soffice.py --headless --convert-to pdf (stdout, stderr)",
       "evidence": "no message (0 lines name Aptos); the substitute shows only in the PDF's fonts (pdffonts: ['liberationsans', 'notosans', 'notoserif']), which the skill does not tell the agent to check",
-      "seconds": 0.44
+      "seconds": 0.41
     },
     {
       "capability": "warns when a font is substituted",
@@ -9090,7 +9090,7 @@
       "status": "pass",
       "how": "rdocx render F -o DIR --pages 1 --dpi 100 --font-dir FONTS",
       "evidence": "one process",
-      "seconds": 0.84
+      "seconds": 0.79
     },
     {
       "capability": "time to the first picture of page 1 (one cold run)",
@@ -9099,9 +9099,9 @@
       "status": "pass",
       "how": "soffice.py --headless --convert-to pdf F; pdftoppm -jpeg -r 100|150 -f 1 -l 1 F.pdf page",
       "evidence": "two processes, the whole file converted first",
-      "seconds": 1.14,
+      "seconds": 1.11,
       "steps": {
-        "soffice_pdf": 1.12,
+        "soffice_pdf": 1.1,
         "pdftoppm": 0.01
       }
     },
@@ -9112,7 +9112,7 @@
       "status": "pass",
       "how": "rdocx render F -o DIR --pages 1 --dpi 100 --font-dir FONTS",
       "evidence": "one process",
-      "seconds": 7.05
+      "seconds": 6.22
     },
     {
       "capability": "time to the first picture of page 1 (one cold run)",
@@ -9121,9 +9121,9 @@
       "status": "pass",
       "how": "soffice.py --headless --convert-to pdf F; pdftoppm -jpeg -r 100|150 -f 1 -l 1 F.pdf page",
       "evidence": "two processes, the whole file converted first",
-      "seconds": 4.11,
+      "seconds": 3.95,
       "steps": {
-        "soffice_pdf": 4.1,
+        "soffice_pdf": 3.94,
         "pdftoppm": 0.02
       }
     },
@@ -9134,7 +9134,7 @@
       "status": "pass",
       "how": "rpptx render F -o DIR --slide 1 --dpi 100 --font-dir FONTS",
       "evidence": "one process",
-      "seconds": 0.68
+      "seconds": 0.66
     },
     {
       "capability": "time to the first picture of page 1 (one cold run)",
@@ -9143,9 +9143,9 @@
       "status": "pass",
       "how": "soffice.py --headless --convert-to pdf F; pdftoppm -jpeg -r 100|150 -f 1 -l 1 F.pdf page",
       "evidence": "two processes, the whole file converted first",
-      "seconds": 1.63,
+      "seconds": 1.59,
       "steps": {
-        "soffice_pdf": 1.6,
+        "soffice_pdf": 1.56,
         "pdftoppm": 0.03
       }
     },
@@ -9156,7 +9156,7 @@
       "status": "pass",
       "how": "rpptx render F -o DIR --slide 1 --dpi 100 --font-dir FONTS",
       "evidence": "one process",
-      "seconds": 1.7
+      "seconds": 1.65
     },
     {
       "capability": "time to the first picture of page 1 (one cold run)",
@@ -9165,9 +9165,9 @@
       "status": "pass",
       "how": "soffice.py --headless --convert-to pdf F; pdftoppm -jpeg -r 100|150 -f 1 -l 1 F.pdf page",
       "evidence": "two processes, the whole file converted first",
-      "seconds": 3.6,
+      "seconds": 3.45,
       "steps": {
-        "soffice_pdf": 3.56,
+        "soffice_pdf": 3.42,
         "pdftoppm": 0.03
       }
     },
