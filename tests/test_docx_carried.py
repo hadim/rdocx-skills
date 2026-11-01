@@ -1,7 +1,8 @@
-"""docx: fixes the pinned integration build (upstream v0.16.4 plus tensorbee/rdocx#427, #428 and #438 to #444)
-carries and upstream `main` does not have yet, which the skills rely on, and the cases of those issues that stay open
-as known gaps (strict xfails, tests/gaps.py). Each test names the pull request that carries it, or the issue of its
-gap: delete the test once upstream main has it. Each test builds its own input."""
+"""docx: fixes the pinned integration build (upstream v0.16.4 plus tensorbee/rdocx#427, #428 and #438 to #444, #443
+also carrying the cell setters of #445) carries and upstream `main` does not have yet, which the skills rely on, and
+the cases of those issues that stay open as known gaps (strict xfails, tests/gaps.py). Each test names the pull
+request that carries it, or the issue of its gap: delete the test once upstream main has it. Each test builds its own
+input."""
 import functools
 import io
 import json
@@ -1363,3 +1364,83 @@ def test_filling_a_table_cell_by_cell_costs_the_same_per_cell():
     small = min(fill_per_call_ms(5) for _ in range(2))
     large = min(fill_per_call_ms(20) for _ in range(2))
     assert large < 2.5 * small + 2, f"{small:.1f} ms a call at 30 cells, {large:.1f} ms at 120"
+
+
+# ---- tensorbee/rdocx#443 (#445) --------------------------------------------------------------------------------------
+def body_and_table(body):
+    """`body` paragraphs, then a fresh 4 x 5 table."""
+    doc = rdocx.Document()
+    for i in range(body):
+        doc.add_paragraph(f"Body paragraph {i} with some text in it to look like a report.")
+    doc.add_table(4, 5)
+    return doc
+
+
+G_CELL_PROPERTIES = {
+    "width": lambda c, i: setattr(c, "width", rdocx.Inches(1 + i % 2)),
+    "vertical_alignment": lambda c, i: setattr(c, "vertical_alignment", WD_ALIGN_VERTICAL.CENTER),
+    "shading": lambda c, i: setattr(c, "shading", "D9E2F3"),
+    "set_border": lambda c, i: c.set_border("top", "single", size=8, color="000000"),
+    "set_margins": lambda c, i: c.set_margins(top=Pt(2), right=Pt(2), bottom=Pt(2), left=Pt(2)),
+}
+
+
+# carried by tensorbee/rdocx#443 (#445), delete once upstream main has it
+@pytest.mark.parametrize("setter", G_CELL_PROPERTIES)
+def test_cell_property_setter_cost_does_not_grow_with_the_body(setter):
+    """A cell property setter edits the cell in place: on the fresh cells of a table after 2000 body paragraphs (the
+    first property of a cell included) it costs about what a body paragraph's alignment costs (python-api.md,
+    Handles). It used to cost 13 ms a call there, growing with the body (tensorbee/rdocx#445)."""
+    doc, op = body_and_table(2000), G_CELL_PROPERTIES[setter]
+    cells = [doc.tables[0].cell(r, c) for r in range(4) for c in range(5)]
+    cell = fastest_ms(lambda i: op(cells[i], i), len(cells))
+    paragraphs = doc.paragraphs
+    paragraph = fastest_ms(lambda i: setattr(paragraphs[i], "alignment", i % 2), len(cells))
+    assert cell < G_RATIO * paragraph + 2, f"{setter}: {cell:.2f} ms a cell, {paragraph:.2f} ms a paragraph"
+    body = zipfile.ZipFile(io.BytesIO(doc.to_bytes())).read("word/document.xml")
+    assert body.count(b"<w:tcPr>") == len(cells), f"{setter}: not every cell got its property"
+
+
+# carried by tensorbee/rdocx#443 (#445), delete once upstream main has it
+@pytest.mark.parametrize("target", ["cell", "cell paragraph"])
+def test_cell_text_costs_what_a_body_paragraph_text_costs(target):
+    """`cell.text` and a cell paragraph's `text` cost about what a body paragraph's `text` costs with 2000 paragraphs
+    in the body (gaps.md, edit costs). In the last row of the table they used to cost 3 and 7 times more
+    (tensorbee/rdocx#445)."""
+    doc = body_and_table(2000)
+    if target == "cell":
+        edit = lambda i: setattr(doc.tables[0].cell(3, i % 5), "text", f"v{i}")
+    else:
+        edit = lambda i: setattr(doc.tables[0].cell(3, i % 5).paragraphs[0], "text", f"v{i}")
+    in_cell = fastest_ms(edit, 4)
+    in_body = fastest_ms(lambda i: setattr(doc.paragraphs[i], "text", f"b{i}"), 4)
+    assert in_cell < 2 * in_body + G_FLOOR_MS, f"{target}: {in_cell:.1f} ms, {in_body:.1f} ms for a body paragraph"
+    assert rdocx.Document.from_bytes(doc.to_bytes()).tables[0].cell(3, 0).text == "v0"
+
+
+# upstream: tensorbee/rdocx#445
+@pytest.mark.gap("docx-python-replace-slower-than-cli")
+def test_python_replacement_costs_what_the_cli_costs(tmp_path, rdocx_cli):
+    """Document.open + try_replace_text + save cost at most 1.2 times `rdocx replace` on the same file of 4000
+    paragraphs, process start included (gaps.md). They take about twice its time: the binding builds its owner
+    inventory on open and again after the replacement (tensorbee/rdocx#445)."""
+    doc = rdocx.Document()
+    for i in range(4000):
+        p = doc.add_paragraph()
+        p.add_run(f"Section {i}: ").font.bold = True
+        p.add_run("the plant treats " + ("water" if i % 4 == 0 else "air") + " for the town, ")
+        p.add_run("as the report explains.").font.italic = True
+    src = tmp_path / "in.docx"
+    doc.save(str(src))
+    python, cli = [], []
+    for i in range(3):
+        t0 = time.perf_counter()
+        d = rdocx.Document.open(str(src))
+        assert d.try_replace_text("water", "WATER") == 1000
+        d.save(str(tmp_path / f"py{i}.docx"))
+        python.append(time.perf_counter() - t0)
+        t0 = time.perf_counter()
+        res = run([rdocx_cli, "replace", src, "-p", "water", "-v", "WATER", "-o", tmp_path / f"cli{i}.docx"])
+        cli.append(time.perf_counter() - t0)
+        assert res.returncode == 0, res.stderr
+    assert min(python) <= 1.2 * min(cli), f"Python {min(python):.2f} s, CLI {min(cli):.2f} s"

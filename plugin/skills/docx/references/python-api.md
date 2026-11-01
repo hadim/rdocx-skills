@@ -88,12 +88,13 @@ resolve without rescanning the document (400 paragraphs and 1,000 cells in 40 ta
 handle after an edit pays one pass over the document, and a cell of a nested table still reads its story again
 (about 15 ms each). Re-walk only after an edit that retires them.
 
-A setter reached through a cell's paragraph or run (`alignment`, `style`, `paragraph_format`, `runs[k].font.*`) edits
-the cell in place: it costs the same in any row, whatever the body around the table and the size of `styles.xml`, so a
-table fills cell by cell in a time linear in its cells. Two exceptions: in a cell inside a content control such a
-setter still costs a time that grows with the cell's place and the body, and `cell.text`, `cell.vertical_alignment`
-and `cell.shading` grow with the body (not with the cell's place). For bulk formatting of such tables, write each
-table's cell properties with one `table.replace_xml(xml)` (its `table.xml` edited as a string).
+A setter reached through a cell's paragraph or run (`alignment`, `style`, `paragraph_format`, `runs[k].font.*`) and a
+cell property setter (`width`, `vertical_alignment`, `shading`, `set_border`, `set_margins`) edit the cell in place: they
+cost the same in any row, whatever the body around the table and the size of `styles.xml`, so a table fills cell by
+cell in a time linear in its cells. `cell.text` and a cell paragraph's `text` cost what a body `p.text` costs, which
+still grows with the body (`references/gaps.md`, edit costs). In a cell inside a content control, a paragraph or run
+setter still costs a time that grows with the cell's place and the body: for bulk formatting of such tables, write
+each table's cell properties with one `table.replace_xml(xml)` (its `table.xml` edited as a string).
 
 ## Document
 
