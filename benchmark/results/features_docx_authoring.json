@@ -1,0 +1,983 @@
+{
+  "section": "features_docx_authoring",
+  "versions": {
+    "date": "2026-10-31",
+    "machine": "Linux x86_64, 32 CPUs",
+    "rdocx_pin": "b3be9b6db132",
+    "rdocx": "rdocx 0.16.4",
+    "rpptx": "rpptx 0.14.4",
+    "python-docx": "1.2.0",
+    "python-pptx": "1.0.2",
+    "docx-js": "9.15.0",
+    "pptxgenjs": "4.0.1",
+    "node": "v26.10.0",
+    "pandoc": "pandoc 3.13",
+    "libreoffice": "LibreOffice 26.2.6.3 620(Build:3)",
+    "pdftoppm": "pdftoppm version 26.01.0",
+    "builtin_skills_sha256": "5883fcb286af5337"
+  },
+  "tasks": [
+    {
+      "id": "D01",
+      "title": "Create a report",
+      "category": "create",
+      "spec": "New A4 document: Title, a table of contents, headings on 3 levels, a paragraph with bold and italic runs, a bulleted and a numbered list, a 5x4 table with a shaded header row, a PNG picture, a footer 'Page X of Y' with PAGE and NUMPAGES fields.",
+      "stacks": {
+        "rdocx": {
+          "loc": 37,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.17,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: toc_entries=4"
+        },
+        "builtin": {
+          "loc": 53,
+          "files": [
+            "builtin.js",
+            "builtin.sh"
+          ],
+          "tools": [
+            "docx-js (node)"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.091,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: toc_entries=4"
+        },
+        "pylib": {
+          "loc": 60,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.065,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": false,
+            "libreoffice_opens": true
+          },
+          "notes": "info: toc_entries=0; builtin_validate: FAILED - Found NEW validation errors:\n  word/settings.xml: 2 new error(s)\n    - Element '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}updateFields': This element is not expected.\n    - Element '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}zoom': The attribute '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}percent' is required but missing.\n\nParagraphs: 34"
+        }
+      }
+    },
+    {
+      "id": "D02",
+      "title": "Read every story",
+      "category": "read",
+      "spec": "Extract to JSON the text of body paragraphs and table cells in order, headers, footers, footnotes, text boxes and comments, each in its own key; every marker must land in its story and only there.",
+      "stacks": {
+        "rdocx": {
+          "loc": 14,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops",
+            "rdocx CLI"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.051,
+          "valid": null,
+          "notes": ""
+        },
+        "builtin": {
+          "loc": 51,
+          "files": [
+            "builtin.sh",
+            "builtin_read.py"
+          ],
+          "tools": [
+            "unzip",
+            "python",
+            "lxml"
+          ],
+          "processes": 3,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.032,
+          "valid": null,
+          "notes": "parses the OOXML parts by hand (no write)"
+        },
+        "pylib": {
+          "loc": 38,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.053,
+          "valid": null,
+          "notes": "parses the OOXML parts by hand (no write)"
+        }
+      }
+    },
+    {
+      "id": "D03",
+      "title": "Counted replacement",
+      "category": "edit",
+      "spec": "Replace 'Service Level Agreement' (5 occurrences: plain, split across runs with identical and with different formatting, in a table cell, in the header) by 'Support Contract', keeping the formatting around; with an expected count of 4 the implementation must refuse and write nothing.",
+      "stacks": {
+        "rdocx": {
+          "loc": 4,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.07,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: mixed-format occurrence: new text bold=True (first matched run was bold); refusal with expected count 4: refused, nothing written"
+        },
+        "builtin": {
+          "loc": 41,
+          "files": [
+            "builtin.sh",
+            "builtin_replace.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "merge_runs.py",
+            "python",
+            "lxml"
+          ],
+          "processes": 5,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.071,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: mixed-format occurrence: new text bold=True (first matched run was bold); refusal with expected count 4: refused, nothing written"
+        },
+        "pylib": {
+          "loc": 38,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.058,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: mixed-format occurrence: new text bold=True (first matched run was bold); refusal with expected count 4: refused, nothing written"
+        }
+      }
+    },
+    {
+      "id": "D04",
+      "title": "Fill a template",
+      "category": "edit",
+      "spec": "Fill {{client}} and {{date}} (placeholders split across runs) and repeat the table's item row ({{name}}, {{qty}}, {{price}}) once per item of a 6-item list, keeping the row's formatting and the total row after the items.",
+      "stacks": {
+        "rdocx": {
+          "loc": 15,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.42,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "builtin": {
+          "loc": 27,
+          "files": [
+            "builtin.sh",
+            "builtin_fill.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "merge_runs.py",
+            "python",
+            "regex"
+          ],
+          "processes": 5,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.074,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "pylib": {
+          "loc": 34,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.062,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        }
+      }
+    },
+    {
+      "id": "D05",
+      "title": "Edit a table",
+      "category": "edit",
+      "spec": "In an existing 4x5 table: insert a 'Supplier' column after the first one (bold header like its neighbours), merge the 'Total' cell with the empty cell to its right (one paragraph left, as Word merges), delete the 'Nuts' row, shade the 'Amount' header cell FFC000.",
+      "stacks": {
+        "rdocx": {
+          "loc": 14,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.12,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: grid width 10772 twips (text width 9071)"
+        },
+        "builtin": {
+          "loc": 46,
+          "files": [
+            "builtin.sh",
+            "builtin_table.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "merge_runs.py",
+            "python",
+            "lxml"
+          ],
+          "processes": 5,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.07,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: grid width 10773 twips (text width 9071)"
+        },
+        "pylib": {
+          "loc": 25,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.058,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: grid width 10773 twips (text width 9071)"
+        }
+      }
+    },
+    {
+      "id": "D06",
+      "title": "Page setup of two sections",
+      "category": "edit",
+      "spec": "In a 2-section document: section 2 landscape with 2 cm margins (section 1 unchanged), a header 'Confidential' and a 'Page X of Y' footer showing in both sections.",
+      "stacks": {
+        "rdocx": {
+          "loc": 13,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.097,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: section 1: header word/header1.xml, footer word/footer1.xml; info: section 2: header word/header1.xml, footer word/footer1.xml"
+        },
+        "builtin": {
+          "loc": 46,
+          "files": [
+            "builtin.sh",
+            "builtin_pages.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "python",
+            "regex"
+          ],
+          "processes": 4,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.024,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: section 1: header word/header1.xml, footer word/footer1.xml; info: section 2: header word/header1.xml, footer word/footer1.xml"
+        },
+        "pylib": {
+          "loc": 34,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.057,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: section 1: header word/header1.xml, footer word/footer1.xml; info: section 2: header word/header1.xml, footer word/footer1.xml"
+        }
+      }
+    },
+    {
+      "id": "D07",
+      "title": "Insert and replace pictures",
+      "category": "edit",
+      "spec": "Insert new.png after the paragraph 'Figure placement anchor.' at 10 cm wide (height in proportion), and replace the existing picture's image by replacement.png keeping its displayed size.",
+      "stacks": {
+        "rdocx": {
+          "loc": 11,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.062,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: original image part left in the package: False"
+        },
+        "builtin": {
+          "loc": 40,
+          "files": [
+            "builtin.sh",
+            "builtin_pictures.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "python",
+            "regex"
+          ],
+          "processes": 4,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.04,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: original image part left in the package: False"
+        },
+        "pylib": {
+          "loc": 12,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.057,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: original image part left in the package: True"
+        }
+      }
+    },
+    {
+      "id": "D08",
+      "title": "Insert a native chart",
+      "category": "edit",
+      "spec": "Insert after the paragraph 'Chart anchor: sales by quarter.' an editable clustered column chart (embedded workbook) with series 2025 and 2026 over Q1-Q4.",
+      "stacks": {
+        "rdocx": {
+          "loc": 13,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.063,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "builtin": {
+          "loc": 83,
+          "files": [
+            "builtin.sh",
+            "builtin_chart.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "python",
+            "openpyxl",
+            "regex"
+          ],
+          "processes": 4,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.214,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "pylib": {
+          "loc": 36,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "python-pptx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.113,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": false,
+            "libreoffice_opens": true
+          },
+          "notes": "builtin_validate:  - Found NEW validation errors:\n  word/charts/chart1.xml: 4 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}crossAx', attribute 'val': '-2068027336' is not a valid value of the atomic type 'xs:unsignedInt'.\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}axId', attribute 'val': '-2113994440' is not a valid value of the atomic type 'xs:unsignedInt'.\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}axId', attribute 'val': '-2068027336' is not a valid value of the atomic type 'xs:unsignedInt'.\n\nParagraphs: 4 → 5 (+1)"
+        }
+      }
+    },
+    {
+      "id": "D09",
+      "title": "Insert an equation",
+      "category": "edit",
+      "spec": "Insert after the paragraph 'The roots are given by:' a display equation (OMML) of the quadratic formula x = (-b +- sqrt(b^2 - 4ac)) / 2a, structured as the OMML schema requires (m:rad holds m:deg, hidden, then m:e).",
+      "stacks": {
+        "rdocx": {
+          "loc": 11,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.056,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "builtin": {
+          "loc": 20,
+          "files": [
+            "builtin.sh",
+            "builtin_equation.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "merge_runs.py",
+            "python"
+          ],
+          "processes": 5,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.052,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "pylib": {
+          "loc": 15,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.057,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        }
+      }
+    },
+    {
+      "id": "D10",
+      "title": "Add hyperlinks",
+      "category": "edit",
+      "spec": "Append to the paragraph 'Further reading: ' an external link 'Project site' to https://example.com/project, then ' and ', then an internal link 'Appendix A' to a bookmark on the heading 'Appendix A', then '.'; both links look like links (Hyperlink style or underline).",
+      "stacks": {
+        "rdocx": {
+          "loc": 15,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.109,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "builtin": {
+          "loc": 32,
+          "files": [
+            "builtin.sh",
+            "builtin_links.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "merge_runs.py",
+            "python",
+            "regex"
+          ],
+          "processes": 5,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.056,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "pylib": {
+          "loc": 32,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.058,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        }
+      }
+    },
+    {
+      "id": "D11",
+      "title": "Add a footnote",
+      "category": "edit",
+      "spec": "Add the footnote 'Source: field survey 2026.' with its reference mark right after the sentence 'The survey covered 120 sites.' in the middle of its paragraph (the document has no footnotes yet).",
+      "stacks": {
+        "rdocx": {
+          "loc": 10,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.075,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: separator notes present: True"
+        },
+        "builtin": {
+          "loc": 35,
+          "files": [
+            "builtin.sh",
+            "builtin_footnote.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "merge_runs.py",
+            "python",
+            "regex"
+          ],
+          "processes": 5,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.059,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: separator notes present: True"
+        },
+        "pylib": {
+          "loc": 37,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.057,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: separator notes present: True"
+        }
+      }
+    },
+    {
+      "id": "D12",
+      "title": "Custom style and list restart",
+      "category": "edit",
+      "spec": "Create the paragraph style 'Body Note' based on Normal (Arial 10 pt, 6 pt before, 12 pt after) and apply it to the two paragraphs starting 'Note:'; make the second numbered list restart at 1.",
+      "stacks": {
+        "rdocx": {
+          "loc": 15,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.085,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: restart by startOverride"
+        },
+        "builtin": {
+          "loc": 33,
+          "files": [
+            "builtin.sh",
+            "builtin_styles.py"
+          ],
+          "tools": [
+            "unzip",
+            "zip",
+            "merge_runs.py",
+            "python",
+            "regex"
+          ],
+          "processes": 5,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.06,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: restart by startOverride"
+        },
+        "pylib": {
+          "loc": 23,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.058,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": "info: restart by startOverride"
+        }
+      }
+    },
+    {
+      "id": "D13",
+      "title": "Markdown to Word",
+      "category": "convert",
+      "spec": "Convert a Markdown file (3 heading levels, bulleted and numbered lists, a table, a fenced code block, bold and italic, a link) to .docx with Word's own structures (the link looks like one).",
+      "stacks": {
+        "rdocx": {
+          "loc": 14,
+          "files": [
+            "rdocx.py"
+          ],
+          "tools": [
+            "rdocx (Python)",
+            "docx_ops"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.049,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "builtin": {
+          "loc": 2,
+          "files": [
+            "builtin.sh"
+          ],
+          "tools": [
+            "pandoc"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.033,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": true,
+            "libreoffice_opens": true
+          },
+          "notes": ""
+        },
+        "pylib": {
+          "loc": 64,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx",
+            "lxml",
+            "regex"
+          ],
+          "processes": 1,
+          "raw_xml": true,
+          "status": "pass",
+          "seconds": 0.065,
+          "valid": {
+            "rdocx_validate": true,
+            "builtin_validate": false,
+            "libreoffice_opens": true
+          },
+          "notes": "builtin_validate: FAILED - Found NEW validation errors:\n  word/settings.xml: 1 new error(s)\n    - Element '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}zoom': The attribute '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}percent' is required but missing.\n\nParagraphs: 24"
+        }
+      }
+    },
+    {
+      "id": "D14",
+      "title": "Word to Markdown",
+      "category": "convert",
+      "spec": "Convert a Word document (headings, bulleted and numbered lists made by Word's numbering, a table, bold and italic) to Markdown.",
+      "stacks": {
+        "rdocx": {
+          "loc": 2,
+          "files": [
+            "rdocx.sh"
+          ],
+          "tools": [
+            "rdocx CLI"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.021,
+          "valid": null,
+          "notes": ""
+        },
+        "builtin": {
+          "loc": 2,
+          "files": [
+            "builtin.sh"
+          ],
+          "tools": [
+            "pandoc"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.066,
+          "valid": null,
+          "notes": ""
+        },
+        "pylib": {
+          "loc": 47,
+          "files": [
+            "pylib.py"
+          ],
+          "tools": [
+            "python-docx"
+          ],
+          "processes": 1,
+          "raw_xml": false,
+          "status": "pass",
+          "seconds": 0.053,
+          "valid": null,
+          "notes": "parses the OOXML parts by hand (no write)"
+        }
+      }
+    }
+  ]
+}

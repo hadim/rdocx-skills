@@ -1,0 +1,1 @@
+D04 fill-template: fill {{client}} (twice) and {{date}}, repeat the table's item row ({{name}}, {{qty}}, {{price}}) for each of the 6 items of data.json keeping its formatting and the total row ({{total}}) after them; args: `template.docx data.json OUT.docx`.

@@ -1,0 +1,1 @@
+D07 pictures: insert new.png in a new paragraph after 'Figure placement anchor.' at 10 cm wide (height in proportion) and replace the existing picture's image by replacement.png keeping its displayed 8 x 6 cm; args: `input.docx new.png replacement.png OUT.docx`.

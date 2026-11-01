@@ -1,0 +1,2288 @@
+{
+  "about": "Benchmark corpus: synthetic files built by corpus/build.py (deterministic) and public files pinned in corpus/real.json (fetched into .cache/corpus/real/, never committed). Paths are relative to benchmark/. pages.libreoffice: pages of LibreOffice's PDF export (kept in .cache/corpus/lo_pdf/); pages.rdocx: rdocx page_count with the benchmark fonts; pages.app_xml: what the producing application stored (Word's own count for real files). Counts come from corpus/ooxml_stats.py (zipfile + lxml): docx paragraphs = every w:p of word/document.xml (table cells and TOC included), pictures = pic:pic + v:imagedata in the body, headers, footers and notes, revisions = w:ins + w:del + moves + property changes in those stories; pptx paragraphs = every a:p of the slides. checks: rdocx/rpptx inspect, rdocx page_count (font_dir), rdocx/rpptx validate, python-docx/python-pptx open, LibreOffice PDF export (soffice.py), the built-in skill's office/validate.py; checks_failed lists those that failed.",
+  "versions": {
+    "machine": "Linux x86_64, 32 CPUs",
+    "rdocx_pin": "b3be9b6db132",
+    "rdocx": "rdocx 0.16.4",
+    "rpptx": "rpptx 0.14.4",
+    "python-docx": "1.2.0",
+    "python-pptx": "1.0.2",
+    "docx-js": "9.15.0",
+    "pptxgenjs": "4.0.1",
+    "node": "v26.10.0",
+    "pandoc": "pandoc 3.13",
+    "libreoffice": "LibreOffice 26.2.6.3 620(Build:3)",
+    "pdftoppm": "pdftoppm version 26.01.0",
+    "builtin_skills_sha256": "5883fcb286af5337"
+  },
+  "summary": {
+    "files": 23,
+    "synthetic": 9,
+    "real": 14,
+    "real_missing": [],
+    "real_pdf_twins": {
+      "gov-uk-charity-commission-independent-examiner-template": "office-native",
+      "gov-uk-dbt-flexible-working-request-form": "office-native",
+      "gov-uk-dcms-creative-industries-consultation": "office-native",
+      "gov-uk-dcms-social-impacts-culture-sport": "office-native",
+      "gov-uk-dcms-social-impacts-culture-sport-appendices": "office-native",
+      "gov-uk-dcms-taylor-review-interim-evaluation": "office-native",
+      "gov-uk-dcms-taylor-review-past-schemes": "office-native",
+      "gov-uk-pins-local-plan-webinar-qa": "office-native",
+      "gov-uk-dcms-taylor-review-technical-annex-deck": "office-native",
+      "gov-uk-ofqual-qualifications-reform-teachers": "office-mac-quartz",
+      "gov-uk-ofqual-skills-employability-regulator-view": "office-mac-quartz",
+      "gov-uk-ofsted-childminder-pre-registration-briefing": "acrobat-pdfmaker",
+      "gov-uk-ukces-employer-skills-survey-2015-slide-pack": "acrobat-pdfmaker"
+    },
+    "with_failed_checks": {
+      "gov-uk-dcms-social-impacts-culture-sport-appendices": [
+        "builtin_validate"
+      ],
+      "gov-uk-dcms-taylor-review-interim-evaluation": [
+        "builtin_validate"
+      ],
+      "gov-uk-ofsted-childminder-pre-registration-briefing": [
+        "builtin_validate"
+      ],
+      "gov-uk-ukces-employer-skills-survey-2015-slide-pack": [
+        "builtin_validate"
+      ],
+      "pptx-L": [
+        "rpptx_validate"
+      ],
+      "pptx-M": [
+        "rpptx_validate"
+      ],
+      "pptx-S": [
+        "rpptx_validate"
+      ]
+    }
+  },
+  "files": [
+    {
+      "id": "data-gouv-ssmsi-cvs-note-presentation",
+      "origin": "real",
+      "kind": "docx",
+      "status": "ok",
+      "size_class": "S",
+      "band": "short",
+      "path": ".cache/corpus/real/data-gouv-ssmsi-cvs-note-presentation/office/note-presentation-open-data-cvs-mars22.docx",
+      "bytes": 28380,
+      "sha256": "d06244fbe6f0df895ee3d56a6df3b9ee5f4e292141e2a9b7527acd2ee79f9be6",
+      "pages": {
+        "libreoffice": 5,
+        "rdocx": 5,
+        "app_xml": 5
+      },
+      "generator": "Microsoft Office Word 15.0000",
+      "producer_application": "Microsoft Office Word 15.0000",
+      "title": "Presentation des enquetes Cadre de vie et securite (CVS) - note open data mars 2022",
+      "publisher": "Ministere de l'Interieur (SSMSI), via data.gouv.fr",
+      "url": "https://static.data.gouv.fr/resources/indicateurs-annuels-de-la-victimation-et-du-sentiment-dinsecurite-issus-des-enquetes-cadre-de-vie-et-securite/20220614-103737/note-presentation-open-data-cvs-mars22.docx",
+      "source_page": "https://www.data.gouv.fr/datasets/indicateurs-annuels-de-la-victimation-et-du-sentiment-dinsecurite-issus-des-enquetes-cadre-de-vie-et-securite",
+      "licence": "Licence Ouverte / Open Licence v2.0 (Etalab), dataset licence 'lov2' on data.gouv.fr",
+      "why": "5-page French methodology note (Word 2013), text only: accented French text and dense paragraphs; no PDF twin published.",
+      "counts": {
+        "paragraphs": 101,
+        "tables": 0,
+        "pictures": 0,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "footnotes": 0,
+        "sections": 1,
+        "landscape_sections": 0,
+        "media_files": 0,
+        "media_bytes": 0,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": false,
+        "fields": [],
+        "headers": 0,
+        "footers": 0,
+        "fonts": [
+          "Calibri",
+          "Calibri Light",
+          "Palatino Linotype",
+          "PalatinoLinotype-Roman",
+          "Segoe UI",
+          "Times New Roman"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 101\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 5,
+          "pdf": ".cache/corpus/lo_pdf/data-gouv-ssmsi-cvs-note-presentation.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 5,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 101,
+            "tables": 0,
+            "pictures": 0
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 5
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "2 warning(s) in .cache/corpus/real/data-gouv-ssmsi-cvs-note-presentation/office/note-presentation-open-data-cvs-mars22.docx:\n  1. 31 empty paragraph(s) found\n  2. Missing document title"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-charity-commission-independent-examiner-template",
+      "origin": "real",
+      "kind": "docx",
+      "status": "ok",
+      "size_class": "S",
+      "band": "short",
+      "path": ".cache/corpus/real/gov-uk-charity-commission-independent-examiner-template/office/Independent_examiner_s_report_template_R_P_accounts_Oct_2018.docx",
+      "bytes": 63891,
+      "sha256": "1e80983047b04abda15bdb35985b7246e033a05015209f7b774f8c06e5a662e2",
+      "pages": {
+        "libreoffice": 2,
+        "rdocx": 2,
+        "app_xml": 2
+      },
+      "pages_office_pdf": 2,
+      "generator": "Microsoft Office Word 15.0000",
+      "producer_application": "Microsoft Office Word 15.0000",
+      "title": "Independent examiner's report template for Receipts and Payments accounts",
+      "publisher": "The Charity Commission (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/5be2c8a3e5274a0847c448d8/Independent_examiner_s_report_template_R_P_accounts_Oct_2018.docx",
+      "source_page": "https://www.gov.uk/government/publications/independent-examiners-report-template-for-receipts-and-payments-accounts",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "2-page report template (Word 2013 docx and Word 2013 PDF, 2/2 pages) with 2 tables and a logo image.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5be2c88be5274a083b51f944/Independent_examiner_s_report_template_R_P_accounts_Oct_2018.pdf",
+        "route": "office-native",
+        "path": ".cache/corpus/real/gov-uk-charity-commission-independent-examiner-template/pdf/Independent_examiner_s_report_template_R_P_accounts_Oct_2018.pdf",
+        "sha256": "30e9c7bf5b95ac5f8db15cadb6ebf37624b7868bc2860e11cf5454b925b956e6",
+        "bytes": 235522,
+        "page_size": "595.32 x 842.04 pts (A4)",
+        "creator": "Microsoft\u00ae Word 2013",
+        "producer": "Microsoft\u00ae Word 2013",
+        "pages": 2,
+        "creator_is_office": true,
+        "pages_match": {
+          "app_xml": true,
+          "libreoffice": true,
+          "rdocx": true
+        }
+      },
+      "counts": {
+        "paragraphs": 68,
+        "tables": 2,
+        "pictures": 1,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "footnotes": 0,
+        "sections": 1,
+        "landscape_sections": 0,
+        "media_files": 1,
+        "media_bytes": 39015,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": false,
+        "fields": [],
+        "headers": 3,
+        "footers": 3,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Calibri Light",
+          "Courier New",
+          "Symbol",
+          "Tahoma",
+          "Times New Roman"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 68\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 2,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-charity-commission-independent-examiner-template.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 2,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 2,
+            "tables": 1,
+            "pictures": 1
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 2
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "1 warning(s) in .cache/corpus/real/gov-uk-charity-commission-independent-examiner-template/office/Independent_examiner_s_report_template_R_P_accounts_Oct_2018.docx:\n  1. 2 empty paragraph(s) found"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-dbt-flexible-working-request-form",
+      "origin": "real",
+      "kind": "docx",
+      "status": "ok",
+      "size_class": "S",
+      "band": "short",
+      "path": ".cache/corpus/real/gov-uk-dbt-flexible-working-request-form/office/request-flexible-working-docx-form.docx",
+      "bytes": 20535,
+      "sha256": "055fe6227daa62d63d0764158214c9a7bdac55427b37cd27229118efa65bc673",
+      "pages": {
+        "libreoffice": 3,
+        "rdocx": 3,
+        "app_xml": 3
+      },
+      "pages_office_pdf": 3,
+      "generator": "Microsoft Office Word 16.0000",
+      "producer_application": "Microsoft Office Word 16.0000",
+      "title": "Request flexible working: application form template",
+      "publisher": "Department for Business and Trade (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/65f1a247981227a772f6136e/request-flexible-working-docx-form.docx",
+      "source_page": "https://www.gov.uk/government/publications/the-right-to-request-flexible-working-form",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "Blank 3-page form template with a PDF exported by Word for Microsoft 365 (3/3 pages); plain headings, form prompts, no tables.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/65f3256afa18510011011779/request-flexible-working-pdf-form.pdf",
+        "route": "office-native",
+        "path": ".cache/corpus/real/gov-uk-dbt-flexible-working-request-form/pdf/request-flexible-working-pdf-form.pdf",
+        "sha256": "df1831adb9582bb2a504d929eefabf95a3782f10088682d740026d61e46ab59e",
+        "bytes": 82760,
+        "page_size": "595.32 x 841.92 pts (A4)",
+        "creator": "Microsoft\u00ae Word for Microsoft 365",
+        "producer": "Microsoft\u00ae Word for Microsoft 365",
+        "pages": 3,
+        "creator_is_office": true,
+        "pages_match": {
+          "app_xml": true,
+          "libreoffice": true,
+          "rdocx": true
+        }
+      },
+      "counts": {
+        "paragraphs": 48,
+        "tables": 0,
+        "pictures": 0,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "footnotes": 0,
+        "sections": 1,
+        "landscape_sections": 0,
+        "media_files": 0,
+        "media_bytes": 0,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": false,
+        "fields": [],
+        "headers": 0,
+        "footers": 0,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Calibri Light",
+          "Courier New",
+          "DengXian",
+          "DengXian Light",
+          "Symbol",
+          "Times New Roman",
+          "Wingdings"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 48\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 3,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-dbt-flexible-working-request-form.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 3,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 48,
+            "tables": 0,
+            "pictures": 0
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 3
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "3 warning(s) in .cache/corpus/real/gov-uk-dbt-flexible-working-request-form/office/request-flexible-working-docx-form.docx:\n  1. 13 empty paragraph(s) found\n  2. Missing document title\n  3. Missing document author"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-dcms-creative-industries-consultation",
+      "origin": "real",
+      "kind": "docx",
+      "status": "ok",
+      "size_class": "M",
+      "band": "medium",
+      "path": ".cache/corpus/real/gov-uk-dcms-creative-industries-consultation/office/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.docx",
+      "bytes": 109655,
+      "sha256": "98f2c9b64a5c02ad6502f11e94d2990241c9c9ab31c6b67a476967c9dabf9336",
+      "pages": {
+        "libreoffice": 22,
+        "rdocx": 21,
+        "app_xml": 22
+      },
+      "pages_office_pdf": 22,
+      "generator": "Microsoft Office Word 14.0000",
+      "producer_application": "Microsoft Office Word 14.0000",
+      "title": "Classifying and measuring the creative industries: consultation paper (April 2013)",
+      "publisher": "Department for Culture, Media and Sport (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/5a7bfac7ed915d4147622056/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.docx",
+      "source_page": "https://www.gov.uk/government/consultations/classifying-and-measuring-the-creative-industries-consultation-on-proposed-changes",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "22-page consultation paper from a departmental template (Publication.dotm), Word 2010 docx and Word 2010 PDF, 22/22 pages; 6 tables, 4 images.",
+      "notes": "Gives a departmental enquiries e-mail and phone number; no named person.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5a7c0b3de5274a7202e19327/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.pdf",
+        "route": "office-native",
+        "path": ".cache/corpus/real/gov-uk-dcms-creative-industries-consultation/pdf/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.pdf",
+        "sha256": "eb9d90c6e26bff0c5041f49d5a1dbfadc272859d6509e7b8cc8650d14a49c1cb",
+        "bytes": 452848,
+        "page_size": "595.32 x 841.92 pts (A4)",
+        "creator": "Microsoft\u00ae Word 2010",
+        "producer": "Microsoft\u00ae Word 2010",
+        "pages": 22,
+        "creator_is_office": true,
+        "pages_match": {
+          "app_xml": true,
+          "libreoffice": true,
+          "rdocx": false
+        }
+      },
+      "counts": {
+        "paragraphs": 891,
+        "tables": 6,
+        "pictures": 2,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "footnotes": 6,
+        "sections": 5,
+        "landscape_sections": 0,
+        "media_files": 1,
+        "media_bytes": 22193,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "TOC"
+        ],
+        "headers": 5,
+        "footers": 0,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Cambria",
+          "Courier New",
+          "Symbol",
+          "Tahoma",
+          "Times New Roman",
+          "Wingdings"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 891\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 22,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-dcms-creative-industries-consultation.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 21,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 280,
+            "tables": 6,
+            "pictures": 2
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 21
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "2 warning(s) in .cache/corpus/real/gov-uk-dcms-creative-industries-consultation/office/Classifying_and_Measuring_the_Creative_Industries_Consultation_Paper_April_2013-final.docx:\n  1. 141 empty paragraph(s) found\n  2. Missing document title"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-dcms-social-impacts-culture-sport",
+      "origin": "real",
+      "kind": "docx",
+      "status": "ok",
+      "size_class": "L",
+      "band": "long",
+      "path": ".cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/office/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx",
+      "bytes": 17768891,
+      "sha256": "31578705527ee9bde283a9a07b17b5f594c82dddd8ceda44a2a32e43874d5e9a",
+      "pages": {
+        "libreoffice": 137,
+        "rdocx": 139,
+        "app_xml": 1
+      },
+      "pages_office_pdf": 136,
+      "generator": "Microsoft Office Word 15.0000",
+      "producer_application": "Microsoft Office Word 15.0000",
+      "title": "A Review of the Social Impacts of Culture and Sport (CASE programme)",
+      "publisher": "Department for Culture, Media and Sport (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/5a803723ed915d74e33f9214/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx",
+      "source_page": "https://www.gov.uk/government/publications/a-review-of-the-social-impacts-of-culture-and-sport",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "Long report (47k words, 17.8 MB with large images), Word 2013 docx and Word 2013 PDF of 136 pages; 27 sections incl. 8 landscape, 18 images. app.xml Pages=1 is stale, so the page match is unverified.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5a74a738ed915d0e8bf1a0d6/A_review_of_the_Social_Impacts_of_Culture_and_Sport.pdf",
+        "route": "office-native",
+        "path": ".cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/pdf/A_review_of_the_Social_Impacts_of_Culture_and_Sport.pdf",
+        "sha256": "87be3752548f5f57ed0b1177ca17dd7b77c5c794ba51514c5f98ee3d48ed963f",
+        "bytes": 1829396,
+        "page_size": "595.32 x 841.92 pts (A4)",
+        "creator": "Microsoft\u00ae Word 2013",
+        "producer": "Microsoft\u00ae Word 2013",
+        "pages": 136,
+        "creator_is_office": true,
+        "pages_match": {
+          "app_xml": false,
+          "libreoffice": false,
+          "rdocx": false
+        }
+      },
+      "counts": {
+        "paragraphs": 1646,
+        "tables": 3,
+        "pictures": 29,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "footnotes": 3,
+        "sections": 27,
+        "landscape_sections": 8,
+        "media_files": 27,
+        "media_bytes": 9569814,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "TOC"
+        ],
+        "headers": 5,
+        "footers": 4,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Cambria",
+          "Cambria Math",
+          "Courier New",
+          "Frutiger 45 Light",
+          "Lucida Sans",
+          "MS Mincho",
+          "SimSun",
+          "Symbol",
+          "Tahoma",
+          "Times New Roman",
+          "Wingdings"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 1646\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 137,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-dcms-social-impacts-culture-sport.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 139,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 1524,
+            "tables": 3,
+            "pictures": 16
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 139
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "3 warning(s) in .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport/office/A_review_of_the_Social_Impacts_of_Culture_and_Sport.docx:\n  1. bookmark id 1 is used by 2 bookmarks, in /word/document.xml, /word/header2.xml\n  2. 158 empty paragraph(s) found\n  3. Missing document title"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-dcms-social-impacts-culture-sport-appendices",
+      "origin": "real",
+      "kind": "docx",
+      "status": "ok",
+      "size_class": "L",
+      "band": "long",
+      "path": ".cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/office/Appendices.docx",
+      "bytes": 5482945,
+      "sha256": "d073585a0277dd37120c4c443f4751dfa1305674e0134975e0de000294285ba7",
+      "pages": {
+        "libreoffice": 153,
+        "rdocx": 163,
+        "app_xml": 1
+      },
+      "pages_office_pdf": 153,
+      "generator": "Microsoft Office Word 15.0000",
+      "producer_application": "Microsoft Office Word 15.0000",
+      "title": "A Review of the Social Impacts of Culture and Sport: Appendices",
+      "publisher": "Department for Culture, Media and Sport (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/5a74bd94ed915d502d6ca9c4/Appendices.docx",
+      "source_page": "https://www.gov.uk/government/publications/a-review-of-the-social-impacts-of-culture-and-sport",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "153-page appendices, Word 2013 docx and Word 2013 PDF; 9 native charts, 23 tables, 41 images, 21 sections incl. 14 landscape. app.xml Pages=1 is stale, so the page match is unverified.",
+      "notes": "Credits the report's academic authors by name (byline-style attribution).",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5a7f4a3aed915d74e33f5846/Appendices.pdf",
+        "route": "office-native",
+        "path": ".cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/pdf/Appendices.pdf",
+        "sha256": "d922a666106f5a814a4172291e3bcbe630bd062c57d49e54e8e55ed30258e57f",
+        "bytes": 2920711,
+        "page_size": "595.32 x 841.92 pts (A4)",
+        "creator": "Microsoft\u00ae Word 2013",
+        "producer": "Microsoft\u00ae Word 2013",
+        "pages": 153,
+        "creator_is_office": true,
+        "pages_match": {
+          "app_xml": false,
+          "libreoffice": true,
+          "rdocx": false
+        }
+      },
+      "counts": {
+        "paragraphs": 3805,
+        "tables": 23,
+        "pictures": 30,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 9,
+        "footnotes": 1,
+        "sections": 21,
+        "landscape_sections": 14,
+        "media_files": 28,
+        "media_bytes": 3228786,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "TOC"
+        ],
+        "headers": 2,
+        "footers": 6,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Cambria",
+          "Cambria Math",
+          "Courier New",
+          "SimSun",
+          "Symbol",
+          "Tahoma",
+          "Times New Roman",
+          "Wingdings",
+          "font323"
+        ]
+      },
+      "checks_failed": [
+        "builtin_validate"
+      ],
+      "checks": {
+        "builtin_validate": {
+          "ok": false,
+          "rc": 1,
+          "output": "FAILED - Found NEW validation errors:\n  word/charts/chart2.xml: 1 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n  word/charts/chart1.xml: 1 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n\nParagraphs: 3805"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 153,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-dcms-social-impacts-culture-sport-appendices.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 163,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 693,
+            "tables": 23,
+            "pictures": 30
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 163
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "3 warning(s) in .cache/corpus/real/gov-uk-dcms-social-impacts-culture-sport-appendices/office/Appendices.docx:\n  1. bookmark id 2 is used by 2 bookmarks, in /word/document.xml\n  2. 225 empty paragraph(s) found\n  3. Missing document title"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-dcms-taylor-review-interim-evaluation",
+      "origin": "real",
+      "kind": "docx",
+      "status": "ok",
+      "size_class": "M",
+      "band": "medium",
+      "path": ".cache/corpus/real/gov-uk-dcms-taylor-review-interim-evaluation/office/Interim_Evalution_of_the_Taylor_Review_Pilot__Word_.docx",
+      "bytes": 1668963,
+      "sha256": "e6e71ef68d8f5aa53962273f3eb03324b51d563f37f00f544117254fffcbfb36",
+      "pages": {
+        "libreoffice": 66,
+        "rdocx": 69,
+        "app_xml": 66
+      },
+      "pages_office_pdf": 66,
+      "generator": "Microsoft Office Word 16.0000",
+      "producer_application": "Microsoft Office Word 16.0000",
+      "title": "Interim Evaluation of the Taylor Review Pilot",
+      "publisher": "Department for Culture, Media and Sport (GOV.UK); authored by Frontier Economics",
+      "url": "https://assets.publishing.service.gov.uk/media/5e18828eed915d3b07ed038d/Interim_Evalution_of_the_Taylor_Review_Pilot__Word_.docx",
+      "source_page": "https://www.gov.uk/government/publications/evaluation-of-the-taylor-review-pilot-emerging-monitoring-and-evaluation-evidence-september-2018-to-march-2019",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "66-page report (a bit above the medium band), Word O365 docx and PDF, 66/66 pages; 11 native charts, 48 tables, 37 images, one landscape section. Contractor-authored: check for a third-party copyright line.",
+      "notes": "Written for DCMS by a contractor (Frontier Economics); no third-party copyright line found in the text.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5dfcd7d2ed915d1f8e52244e/TRP_Interim_Evaulation.pdf",
+        "route": "office-native",
+        "path": ".cache/corpus/real/gov-uk-dcms-taylor-review-interim-evaluation/pdf/TRP_Interim_Evaulation.pdf",
+        "sha256": "0d2e802e38d59585b54b3a02730100876ff0e85bf0ddcd65d9c0628108580d32",
+        "bytes": 1170989,
+        "page_size": "595.32 x 841.92 pts (A4)",
+        "creator": "Microsoft\u00ae Word for Office 365",
+        "producer": "Microsoft\u00ae Word for Office 365",
+        "pages": 66,
+        "creator_is_office": true,
+        "pages_match": {
+          "app_xml": true,
+          "libreoffice": true,
+          "rdocx": false
+        }
+      },
+      "counts": {
+        "paragraphs": 829,
+        "tables": 48,
+        "pictures": 23,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 11,
+        "footnotes": 23,
+        "sections": 6,
+        "landscape_sections": 1,
+        "media_files": 22,
+        "media_bytes": 1056356,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "REF",
+          "SEQ",
+          "TOC"
+        ],
+        "headers": 5,
+        "footers": 4,
+        "fonts": [
+          "(none)",
+          "Arial",
+          "Calibri",
+          "Courier New",
+          "Garamond",
+          "Open Sans Extrabold",
+          "SimHei",
+          "SimSun",
+          "Symbol",
+          "Tahoma",
+          "Times",
+          "Times New Roman",
+          "Wingdings",
+          "Wingdings 2",
+          "font440"
+        ]
+      },
+      "checks_failed": [
+        "builtin_validate"
+      ],
+      "checks": {
+        "builtin_validate": {
+          "ok": false,
+          "rc": 1,
+          "output": "...006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}showDLblsOverMax': This element is not expected.\n  word/charts/chart2.xml: 2 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}showDLblsOverMax': This element is not expected.\n  word/charts/chart1.xml: 2 new error(s)\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}ext': Missing child element(s). Expected is one of ( {*}*, * ).\n    - Element '{http://schemas.openxmlformats.org/drawingml/2006/chart}showDLblsOverMax': This element is not expected.\n\nParagraphs: 4"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 66,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-dcms-taylor-review-interim-evaluation.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 67,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 438,
+            "tables": 46,
+            "pictures": 23
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 69
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "4 warning(s) in .cache/corpus/real/gov-uk-dcms-taylor-review-interim-evaluation/office/Interim_Evalution_of_the_Taylor_Review_Pilot__Word_.docx:\n  1. 55 empty paragraph(s) found\n  2. Heading level gap: Heading2 -> Heading4 (skipped level(s))\n  3. Heading level gap: Heading2 -> Heading4 (skipped level(s))\n  4. Heading level gap: Heading2 -> Heading4 (skipped level(s))"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-dcms-taylor-review-past-schemes",
+      "origin": "real",
+      "kind": "docx",
+      "status": "ok",
+      "size_class": "M",
+      "band": "medium",
+      "path": ".cache/corpus/real/gov-uk-dcms-taylor-review-past-schemes/office/Report_on_Past_Scheme_Evaluations__Word_.docx",
+      "bytes": 1363875,
+      "sha256": "77787e403c0669f4ec2bf57ec0118ac6313ec45f187013fff080f2848f4d15d0",
+      "pages": {
+        "libreoffice": 47,
+        "rdocx": 49,
+        "app_xml": 47
+      },
+      "pages_office_pdf": 47,
+      "generator": "Microsoft Office Word 16.0000",
+      "producer_application": "Microsoft Office Word 16.0000",
+      "title": "Taylor Review Pilot evaluation: Report on Past Scheme Evaluations",
+      "publisher": "Department for Culture, Media and Sport (GOV.UK); authored by Frontier Economics",
+      "url": "https://assets.publishing.service.gov.uk/media/5e1882a7e5274a06b7450a03/Report_on_Past_Scheme_Evaluations__Word_.docx",
+      "source_page": "https://www.gov.uk/government/publications/evaluation-of-the-taylor-review-pilot-emerging-monitoring-and-evaluation-evidence-september-2018-to-march-2019",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "47-page contractor report template (Frontier Economics), Word O365 docx and Word for Office 365 PDF, 47/47 pages; 29 tables, 20 images. Contractor-authored: check the document for a third-party copyright line.",
+      "notes": "Written for DCMS by a contractor (Frontier Economics); no third-party copyright line found in the text.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5dfcd80ae5274a3483e59944/TRP_Review_of_Past_Schemes.pdf",
+        "route": "office-native",
+        "path": ".cache/corpus/real/gov-uk-dcms-taylor-review-past-schemes/pdf/TRP_Review_of_Past_Schemes.pdf",
+        "sha256": "0ba6faca3c90792b70a6defc1cbe02cececc56536f0f38d86faa311da2a4ad72",
+        "bytes": 598161,
+        "page_size": "595.32 x 841.92 pts (A4)",
+        "creator": "Microsoft\u00ae Word for Office 365",
+        "producer": "Microsoft\u00ae Word for Office 365",
+        "pages": 47,
+        "creator_is_office": true,
+        "pages_match": {
+          "app_xml": true,
+          "libreoffice": true,
+          "rdocx": false
+        }
+      },
+      "counts": {
+        "paragraphs": 559,
+        "tables": 29,
+        "pictures": 17,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "footnotes": 23,
+        "sections": 4,
+        "landscape_sections": 0,
+        "media_files": 20,
+        "media_bytes": 1355413,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "REF",
+          "SEQ",
+          "TOC"
+        ],
+        "headers": 5,
+        "footers": 4,
+        "fonts": [
+          "(none)",
+          "Arial",
+          "Calibri",
+          "Courier New",
+          "Garamond",
+          "Open Sans Extrabold",
+          "SimHei",
+          "SimSun",
+          "Symbol",
+          "Tahoma",
+          "Times",
+          "Times New Roman",
+          "Wingdings",
+          "Wingdings 2",
+          "font440"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 4\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 47,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-dcms-taylor-review-past-schemes.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 47,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 332,
+            "tables": 28,
+            "pictures": 17
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 49
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "4 warning(s) in .cache/corpus/real/gov-uk-dcms-taylor-review-past-schemes/office/Report_on_Past_Scheme_Evaluations__Word_.docx:\n  1. 27 empty paragraph(s) found\n  2. Heading level gap: Heading2 -> Heading4 (skipped level(s))\n  3. Heading level gap: Heading2 -> Heading4 (skipped level(s))\n  4. Heading level gap: Heading1 -> Heading4 (skipped level(s))"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-pins-local-plan-webinar-qa",
+      "origin": "real",
+      "kind": "docx",
+      "status": "ok",
+      "size_class": "M",
+      "band": "medium",
+      "path": ".cache/corpus/real/gov-uk-pins-local-plan-webinar-qa/office/Local_Plan_webinar_questions_and_responses.docx",
+      "bytes": 35865,
+      "sha256": "6553b31bbd2d55166ca71ea3ceef19e93e0217ccdc1108b83562cdfa189537ad",
+      "pages": {
+        "libreoffice": 11,
+        "rdocx": 11,
+        "app_xml": 11
+      },
+      "pages_office_pdf": 11,
+      "generator": "Microsoft Office Word 16.0000",
+      "producer_application": "Microsoft Office Word 16.0000",
+      "title": "Local Plan webinar questions and responses",
+      "publisher": "Planning Inspectorate (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/69860ac1c106cc5501b6e484/Local_Plan_webinar_questions_and_responses.docx",
+      "source_page": "https://www.gov.uk/government/news/applications-now-open-for-local-plan-inspector-roles",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "11 pages (between the short and medium bands), A4 landscape with one big Q&A table; PDF by Word for Microsoft 365, 11/11 pages.",
+      "notes": "Questions are anonymous; answers point to a recruitment mailbox.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/69860ace6da2dee8230a9b4f/Local_Plan_webinar_questions_and_responses.pdf",
+        "route": "office-native",
+        "path": ".cache/corpus/real/gov-uk-pins-local-plan-webinar-qa/pdf/Local_Plan_webinar_questions_and_responses.pdf",
+        "sha256": "a7386a403d81416af97d0ae8cc71c3f857513edfd613394bdae700d80970a710",
+        "bytes": 188554,
+        "page_size": "841.92 x 595.32 pts (A4)",
+        "creator": "Microsoft\u00ae Word for Microsoft 365",
+        "producer": "Microsoft\u00ae Word for Microsoft 365",
+        "pages": 11,
+        "creator_is_office": true,
+        "pages_match": {
+          "app_xml": true,
+          "libreoffice": true,
+          "rdocx": true
+        }
+      },
+      "counts": {
+        "paragraphs": 187,
+        "tables": 1,
+        "pictures": 1,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "footnotes": 0,
+        "sections": 1,
+        "landscape_sections": 1,
+        "media_files": 1,
+        "media_bytes": 5146,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": false,
+        "fields": [],
+        "headers": 0,
+        "footers": 0,
+        "fonts": [
+          "Aptos",
+          "Aptos Display",
+          "Aptos Narrow",
+          "Arial",
+          "Times New Roman"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 187\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 11,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-pins-local-plan-webinar-qa.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 11,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 4,
+            "tables": 1,
+            "pictures": 1
+          },
+          "diagnostics": [
+            "Font 'Aptos' is approximate: selected 'Carlito' for contributing text"
+          ]
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 11
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "2 warning(s) in .cache/corpus/real/gov-uk-pins-local-plan-webinar-qa/office/Local_Plan_webinar_questions_and_responses.docx:\n  1. 2 empty paragraph(s) found\n  2. Missing document title"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-dcms-taylor-review-technical-annex-deck",
+      "origin": "real",
+      "kind": "pptx",
+      "status": "ok",
+      "size_class": "M",
+      "band": "deck",
+      "path": ".cache/corpus/real/gov-uk-dcms-taylor-review-technical-annex-deck/office/Technical_Annex_to_the_Interim_Report__Powerpoint_.pptx",
+      "bytes": 3605201,
+      "sha256": "15b119a646fdfb804a0d1801e38aaec29694483c1da00f984ff3cc1ba17ce608",
+      "pages_office_pdf": 52,
+      "slides": 52,
+      "generator": "Microsoft Office PowerPoint 16.0000",
+      "producer_application": "Microsoft Office PowerPoint 16.0000",
+      "title": "Taylor Review Pilot: Technical Annex to the Interim Report (PowerPoint)",
+      "publisher": "Department for Culture, Media and Sport (GOV.UK); authored by Frontier Economics",
+      "url": "https://assets.publishing.service.gov.uk/media/5e1882c7ed915d3b0e875d54/Technical_Annex_to_the_Interim_Report__Powerpoint_.pptx",
+      "source_page": "https://www.gov.uk/government/publications/evaluation-of-the-taylor-review-pilot-emerging-monitoring-and-evaluation-evidence-september-2018-to-march-2019",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "52-slide text-dense report deck (13.5k words, A4 landscape slide size) with a PowerPoint for Office 365 PDF, 52/52; the best deck pair.",
+      "notes": "Written for DCMS by a contractor (Frontier Economics); no third-party copyright line found in the text.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5dfcd824e5274a33f13b25b9/TRP_Technical_Annex.pdf",
+        "route": "office-native",
+        "path": ".cache/corpus/real/gov-uk-dcms-taylor-review-technical-annex-deck/pdf/TRP_Technical_Annex.pdf",
+        "sha256": "173438a742a22dd77678d168b468a7985b290228a3b7ce5353d4ac25acc378e4",
+        "bytes": 2108769,
+        "page_size": "841.92 x 595.2 pts (A4)",
+        "creator": "Microsoft\u00ae PowerPoint\u00ae for Office 365",
+        "producer": "Microsoft\u00ae PowerPoint\u00ae for Office 365",
+        "pages": 52,
+        "creator_is_office": true,
+        "pages_match": true
+      },
+      "counts": {
+        "paragraphs": 1372,
+        "tables": 19,
+        "pictures": 2,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "sections": 0,
+        "notes": 6,
+        "slides": 52,
+        "layouts": 30,
+        "masters": 2,
+        "media_files": 6,
+        "media_bytes": 2874390,
+        "fonts": [
+          "Arial",
+          "Arial Black",
+          "Calibri",
+          "Calibri Light"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "All validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 52,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-dcms-taylor-review-technical-annex-deck.pdf"
+        },
+        "python_pptx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rpptx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "slides": 52,
+            "layouts": 30
+          }
+        },
+        "rpptx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Validation passed: .cache/corpus/real/gov-uk-dcms-taylor-review-technical-annex-deck/office/Technical_Annex_to_the_Interim_Report__Powerpoint_.pptx"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-ofqual-qualifications-reform-teachers",
+      "origin": "real",
+      "kind": "pptx",
+      "status": "ok",
+      "size_class": "M",
+      "band": "deck",
+      "path": ".cache/corpus/real/gov-uk-ofqual-qualifications-reform-teachers/office/OfqualDfESlidepack_2019.pptx",
+      "bytes": 2724893,
+      "sha256": "040a0eeb7421cc68ecbf9816f7f964bb1db7e561aef8f0ee8fad70a78e6219ca",
+      "pages_office_pdf": 28,
+      "slides": 28,
+      "generator": "Microsoft Macintosh PowerPoint 16.0000",
+      "producer_application": "Microsoft Macintosh PowerPoint 16.0000",
+      "title": "Qualifications reform: resources for teachers (slides and notes)",
+      "publisher": "Ofqual and Department for Education (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/5cd56c51e5274a3fd79d3727/OfqualDfESlidepack_2019.pptx",
+      "source_page": "https://www.gov.uk/government/publications/qualifications-reform-resources-for-teachers",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "28-slide training deck with speaker notes on every slide (Mac PowerPoint); PDF is slides only, Creator PowerPoint via macOS Quartz, 28/28.",
+      "notes": "Last slides give Ofqual's and DfE's public enquiry lines; no named person.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5cd56c7de5274a3fd33baa96/OfqualDfESlidepack_2019.pdf",
+        "route": "office-mac-quartz",
+        "path": ".cache/corpus/real/gov-uk-ofqual-qualifications-reform-teachers/pdf/OfqualDfESlidepack_2019.pdf",
+        "sha256": "61a878caa67910a49a46ba53dd1fdee184f6c75f9c00927f0ee5a5fe726fc56d",
+        "bytes": 1115446,
+        "page_size": "960 x 540 pts",
+        "creator": "PowerPoint",
+        "producer": "macOS Version 10.14.4 (Build 18E226) Quartz PDFContext",
+        "pages": 28,
+        "creator_is_office": true,
+        "pages_match": true
+      },
+      "counts": {
+        "paragraphs": 259,
+        "tables": 2,
+        "pictures": 8,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "sections": 1,
+        "notes": 28,
+        "slides": 28,
+        "layouts": 30,
+        "masters": 2,
+        "media_files": 24,
+        "media_bytes": 2519136,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Calibri Light",
+          "Roboto"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "All validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 28,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-ofqual-qualifications-reform-teachers.pdf"
+        },
+        "python_pptx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rpptx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "slides": 28,
+            "layouts": 30
+          }
+        },
+        "rpptx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Validation passed: .cache/corpus/real/gov-uk-ofqual-qualifications-reform-teachers/office/OfqualDfESlidepack_2019.pptx"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-ofqual-skills-employability-regulator-view",
+      "origin": "real",
+      "kind": "pptx",
+      "status": "ok",
+      "size_class": "S",
+      "band": "deck",
+      "path": ".cache/corpus/real/gov-uk-ofqual-skills-employability-regulator-view/office/2017-09-21_Skills_and_Employability_-_The_Regulator_s_view.pptx",
+      "bytes": 2254110,
+      "sha256": "9b8aa41a0b7d6a36a0ff26f840b2cb74177f5caaad30978a1fedef102fc9b71e",
+      "pages_office_pdf": 13,
+      "slides": 13,
+      "generator": "Microsoft Macintosh PowerPoint 15.0038",
+      "producer_application": "Microsoft Macintosh PowerPoint 15.0038",
+      "title": "Skills and Employability - The Regulator's view (slide pack)",
+      "publisher": "Ofqual (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/5a82d94e40f0b62305b94abe/2017-09-21_Skills_and_Employability_-_The_Regulator_s_view.pptx",
+      "source_page": "https://www.gov.uk/government/publications/slide-pack-from-phil-beach-at-the-skills-employability-summit",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "Short 13-slide 16:9 deck from Mac PowerPoint 2016 with a matching PDF (Creator PowerPoint, macOS Quartz), 13/13; branded template with pictures.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5a82ca7fe5274a2e8ab595ec/2017-09-21_Skills_and_Employability_-_The_Regulator_s_view.pdf",
+        "route": "office-mac-quartz",
+        "path": ".cache/corpus/real/gov-uk-ofqual-skills-employability-regulator-view/pdf/2017-09-21_Skills_and_Employability_-_The_Regulator_s_view.pdf",
+        "sha256": "4ccef8561905615f7cd267fb1285653db16f7fdd7c13f72eb2f597f1e158f0e4",
+        "bytes": 1509014,
+        "page_size": "960 x 540 pts",
+        "creator": "PowerPoint",
+        "producer": "Mac OS X 10.12.6 Quartz PDFContext",
+        "pages": 13,
+        "creator_is_office": true,
+        "pages_match": true
+      },
+      "counts": {
+        "paragraphs": 184,
+        "tables": 0,
+        "pictures": 49,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "sections": 0,
+        "notes": 4,
+        "slides": 13,
+        "layouts": 22,
+        "masters": 2,
+        "media_files": 39,
+        "media_bytes": 2132692,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Calibri Light"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "All validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 13,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-ofqual-skills-employability-regulator-view.pdf"
+        },
+        "python_pptx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rpptx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "slides": 13,
+            "layouts": 22
+          }
+        },
+        "rpptx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Validation passed: .cache/corpus/real/gov-uk-ofqual-skills-employability-regulator-view/office/2017-09-21_Skills_and_Employability_-_The_Regulator_s_view.pptx"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-ofsted-childminder-pre-registration-briefing",
+      "origin": "real",
+      "kind": "pptx",
+      "status": "ok",
+      "size_class": "M",
+      "band": "deck",
+      "path": ".cache/corpus/real/gov-uk-ofsted-childminder-pre-registration-briefing/office/Childminder_and_Childminder_without_domestic_premises_-_pre-registration_briefing.pptx",
+      "bytes": 6793627,
+      "sha256": "71a9842e008ef2a4f240ec5fa3faf19fac1f61260f1b13a49f9da3e2d2fc59e6",
+      "pages_office_pdf": 41,
+      "slides": 41,
+      "generator": "Microsoft Office PowerPoint 16.0000",
+      "producer_application": "Microsoft Office PowerPoint 16.0000",
+      "title": "Become a childminder: pre-registration briefing",
+      "publisher": "Ofsted (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/69c67a3b4a06660f08544346/Childminder_and_Childminder_without_domestic_premises_-_pre-registration_briefing.pptx",
+      "source_page": "https://www.gov.uk/government/publications/pre-registration-briefing-for-those-wishing-to-become-childminders",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "41-slide 2026 training deck (PowerPoint 16, 30 notes pages, 6.8 MB of pictures); PDF made with Acrobat PDFMaker for PowerPoint, 41/41.",
+      "notes": "Photographs on some slides: GOV.UK states no exception to the OGL for this publication.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/69c67a62b66ff902f4544339/Childminder_and_Childminder_without_domestic_premises_-_pre-registration_briefing.pdf",
+        "route": "acrobat-pdfmaker",
+        "path": ".cache/corpus/real/gov-uk-ofsted-childminder-pre-registration-briefing/pdf/Childminder_and_Childminder_without_domestic_premises_-_pre-registration_briefing.pdf",
+        "sha256": "1e55297e5eb69dc33e416f7cdf4bfec0f60e35285d3be9cf3cdb25c94ed57ef2",
+        "bytes": 2933786,
+        "page_size": "960 x 540 pts",
+        "creator": "Acrobat PDFMaker 25 for PowerPoint",
+        "producer": "Adobe PDF Library 25.1.40",
+        "pages": 41,
+        "creator_is_office": true,
+        "pages_match": true
+      },
+      "counts": {
+        "paragraphs": 223,
+        "tables": 1,
+        "pictures": 23,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "sections": 0,
+        "notes": 30,
+        "slides": 41,
+        "layouts": 16,
+        "masters": 1,
+        "media_files": 39,
+        "media_bytes": 6573874,
+        "fonts": [
+          "Calibri",
+          "Calibri Light",
+          "Tahoma"
+        ]
+      },
+      "checks_failed": [
+        "builtin_validate"
+      ],
+      "checks": {
+        "builtin_validate": {
+          "ok": false,
+          "rc": 1,
+          "output": "FAILED - Found NEW validation errors:\n  ppt/revisionInfo.xml: 1 new error(s)\n    - Element '{http://schemas.microsoft.com/office/powerpoint/2015/10/main}revInfo': No matching global declaration available for the validation root.\n  ppt/authors.xml: 1 new error(s)\n    - Element '{http://schemas.microsoft.com/office/powerpoint/2018/8/main}authorLst': No matching global declaration available for the validation root."
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 41,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-ofsted-childminder-pre-registration-briefing.pdf"
+        },
+        "python_pptx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rpptx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "slides": 41,
+            "layouts": 16
+          }
+        },
+        "rpptx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Validation passed: .cache/corpus/real/gov-uk-ofsted-childminder-pre-registration-briefing/office/Childminder_and_Childminder_without_domestic_premises_-_pre-registration_briefing.pptx"
+        }
+      }
+    },
+    {
+      "id": "gov-uk-ukces-employer-skills-survey-2015-slide-pack",
+      "origin": "real",
+      "kind": "pptx",
+      "status": "ok",
+      "size_class": "M",
+      "band": "deck",
+      "path": ".cache/corpus/real/gov-uk-ukces-employer-skills-survey-2015-slide-pack/office/ESS_2015_UK_Slide_Pack_v09.pptx",
+      "bytes": 2088733,
+      "sha256": "b0a6340fc0ade4b24747aee09cfbb92f4926aa716392550b9f237dcaf697fc41",
+      "pages_office_pdf": 69,
+      "slides": 69,
+      "generator": "Microsoft Office PowerPoint 16.0000",
+      "producer_application": "Microsoft Office PowerPoint 16.0000",
+      "title": "UK Employer Skills Survey 2015: slide pack (v09)",
+      "publisher": "UK Commission for Employment and Skills / Department for Education (GOV.UK)",
+      "url": "https://assets.publishing.service.gov.uk/media/5ae87a5fed915d42f7c6bcf5/ESS_2015_UK_Slide_Pack_v09.pptx",
+      "source_page": "https://www.gov.uk/government/publications/ukces-employer-skills-survey-2015-supplementary-documents",
+      "licence": "Open Government Licence v3.0 (GOV.UK: all content available under OGL v3.0 except where otherwise stated)",
+      "why": "69-slide chart-heavy deck (64 native charts, 592 parts); PDF made with Acrobat PDFMaker for PowerPoint, 69/69. Survey run by a contractor (IFF Research): check slides for a third-party copyright line.",
+      "notes": "Survey run by a contractor (IFF Research); no third-party copyright line found; last slide gives the publisher's generic contact.",
+      "pdf_twin": {
+        "status": "ok",
+        "url": "https://assets.publishing.service.gov.uk/media/5ae86b1fed915d42f7c6bcd2/ESS_2015_UK_Slide_Pack_v09.pdf",
+        "route": "acrobat-pdfmaker",
+        "path": ".cache/corpus/real/gov-uk-ukces-employer-skills-survey-2015-slide-pack/pdf/ESS_2015_UK_Slide_Pack_v09.pdf",
+        "sha256": "5c186970e0d7ec6a6bed7b5fb70cad7d8551120560edd1764ab17ec2b0746e63",
+        "bytes": 2001827,
+        "page_size": "960 x 540 pts",
+        "creator": "Acrobat PDFMaker 18 for PowerPoint",
+        "producer": "Adobe PDF Library 15.0",
+        "pages": 69,
+        "creator_is_office": true,
+        "pages_match": true
+      },
+      "counts": {
+        "paragraphs": 1610,
+        "tables": 18,
+        "pictures": 73,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 64,
+        "sections": 0,
+        "notes": 20,
+        "slides": 69,
+        "layouts": 77,
+        "masters": 3,
+        "media_files": 28,
+        "media_bytes": 602737,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Gill Sans",
+          "Impact",
+          "Lucida Grande",
+          "NeueHaasGroteskDisp Std Blk",
+          "Open Sans",
+          "Open Sans Extrabold",
+          "Open Sans Semibold",
+          "Times New Roman"
+        ]
+      },
+      "checks_failed": [
+        "builtin_validate"
+      ],
+      "checks": {
+        "builtin_validate": {
+          "ok": false,
+          "rc": 1,
+          "output": "FAILED - Found NEW validation errors:\n  ppt/revisionInfo.xml: 1 new error(s)\n    - Element '{http://schemas.microsoft.com/office/powerpoint/2015/10/main}revInfo': No matching global declaration available for the validation root."
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 69,
+          "pdf": ".cache/corpus/lo_pdf/gov-uk-ukces-employer-skills-survey-2015-slide-pack.pdf"
+        },
+        "python_pptx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rpptx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "slides": 69,
+            "layouts": 77
+          }
+        },
+        "rpptx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Validation passed: .cache/corpus/real/gov-uk-ukces-employer-skills-survey-2015-slide-pack/office/ESS_2015_UK_Slide_Pack_v09.pptx"
+        }
+      }
+    },
+    {
+      "id": "docx-L",
+      "origin": "synthetic",
+      "kind": "docx",
+      "size_class": "L",
+      "path": ".cache/corpus/docx/docx-L.docx",
+      "bytes": 3762023,
+      "sha256": "b947027324bfff23a2c306b2e65a8dbf31aa8283e77d0a2cc367fe45cc94a133",
+      "pages": {
+        "libreoffice": 198,
+        "rdocx": 195,
+        "app_xml": null
+      },
+      "target_pages": 200,
+      "generator": "docx-js 9.15.0 (corpus/gen_docx.js)",
+      "producer_application": null,
+      "plan": ".cache/corpus/plans/docx-L.json",
+      "licence": "synthetic (this repository)",
+      "counts": {
+        "paragraphs": 8077,
+        "tables": 73,
+        "pictures": 51,
+        "comments": 100,
+        "revisions": 266,
+        "charts": 0,
+        "footnotes": 66,
+        "sections": 2,
+        "landscape_sections": 1,
+        "media_files": 48,
+        "media_bytes": 3778502,
+        "revisions_by_kind": {
+          "ins": 133,
+          "del": 133,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "TOC"
+        ],
+        "headers": 1,
+        "footers": 1,
+        "fonts": [
+          "Calibri",
+          "Calibri Light"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 8077\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 198,
+          "pdf": ".cache/corpus/lo_pdf/docx-L.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 195,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 1969,
+            "tables": 73,
+            "pictures": 51
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 195
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "1 warning(s) in .cache/corpus/docx/docx-L.docx:\n  1. 1 empty paragraph(s) found"
+        }
+      }
+    },
+    {
+      "id": "docx-M",
+      "origin": "synthetic",
+      "kind": "docx",
+      "size_class": "M",
+      "path": ".cache/corpus/docx/docx-M.docx",
+      "bytes": 654931,
+      "sha256": "2de10ecad10b082b90fb2d742c0025ec8a68d5192fabec67546461fc52971bb3",
+      "pages": {
+        "libreoffice": 52,
+        "rdocx": 51,
+        "app_xml": null
+      },
+      "target_pages": 50,
+      "generator": "docx-js 9.15.0 (corpus/gen_docx.js)",
+      "producer_application": null,
+      "plan": ".cache/corpus/plans/docx-M.json",
+      "licence": "synthetic (this repository)",
+      "counts": {
+        "paragraphs": 1984,
+        "tables": 18,
+        "pictures": 8,
+        "comments": 25,
+        "revisions": 66,
+        "charts": 0,
+        "footnotes": 16,
+        "sections": 2,
+        "landscape_sections": 1,
+        "media_files": 8,
+        "media_bytes": 622142,
+        "revisions_by_kind": {
+          "ins": 33,
+          "del": 33,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "TOC"
+        ],
+        "headers": 1,
+        "footers": 1,
+        "fonts": [
+          "Calibri",
+          "Calibri Light"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 1984\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 52,
+          "pdf": ".cache/corpus/lo_pdf/docx-M.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 51,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 525,
+            "tables": 18,
+            "pictures": 8
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 51
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "1 warning(s) in .cache/corpus/docx/docx-M.docx:\n  1. 1 empty paragraph(s) found"
+        }
+      }
+    },
+    {
+      "id": "docx-M-clean",
+      "origin": "synthetic",
+      "kind": "docx",
+      "size_class": "M",
+      "path": ".cache/corpus/docx/docx-M-clean.docx",
+      "bytes": 649434,
+      "sha256": "9f3851e581fe65a427be2971fd80ffd006e762e50071473321428254f1d89cce",
+      "pages": {
+        "libreoffice": 51,
+        "rdocx": 51,
+        "app_xml": null
+      },
+      "target_pages": 50,
+      "generator": "docx-js 9.15.0 (corpus/gen_docx.js)",
+      "producer_application": null,
+      "variant": "no comments, no tracked changes",
+      "plan": ".cache/corpus/plans/docx-M-clean.json",
+      "licence": "synthetic (this repository)",
+      "counts": {
+        "paragraphs": 1984,
+        "tables": 18,
+        "pictures": 8,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 0,
+        "footnotes": 16,
+        "sections": 2,
+        "landscape_sections": 1,
+        "media_files": 8,
+        "media_bytes": 622142,
+        "revisions_by_kind": {
+          "ins": 0,
+          "del": 0,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "TOC"
+        ],
+        "headers": 1,
+        "footers": 1,
+        "fonts": [
+          "Calibri",
+          "Calibri Light"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 1984\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 51,
+          "pdf": ".cache/corpus/lo_pdf/docx-M-clean.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 51,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 525,
+            "tables": 18,
+            "pictures": 8
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 51
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "1 warning(s) in .cache/corpus/docx/docx-M-clean.docx:\n  1. 1 empty paragraph(s) found"
+        }
+      }
+    },
+    {
+      "id": "docx-M-lo",
+      "origin": "synthetic",
+      "kind": "docx",
+      "size_class": "M",
+      "path": ".cache/corpus/docx/docx-M-lo.docx",
+      "bytes": 661400,
+      "sha256": "bda20cf2f9b0303c32d36d0cb30e0b2f747ae2be526deb83dd0388087331c200",
+      "pages": {
+        "libreoffice": 52,
+        "rdocx": 51,
+        "app_xml": null
+      },
+      "target_pages": 50,
+      "generator": "docx-js 9.15.0, then LibreOffice 26.2.6.3 620(Build:3) (soffice.py --convert-to docx)",
+      "producer_application": "LibreOffice/26.2.6.3$Linux_X86_64 LibreOffice_project/620$Build-3 15.0000",
+      "variant": "docx-M round-tripped through LibreOffice (soffice.py --convert-to docx)",
+      "plan": ".cache/corpus/plans/docx-M.json",
+      "licence": "synthetic (this repository)",
+      "counts": {
+        "paragraphs": 1984,
+        "tables": 18,
+        "pictures": 8,
+        "comments": 25,
+        "revisions": 66,
+        "charts": 0,
+        "footnotes": 16,
+        "sections": 2,
+        "landscape_sections": 1,
+        "media_files": 8,
+        "media_bytes": 622142,
+        "revisions_by_kind": {
+          "ins": 33,
+          "del": 33,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "TOC"
+        ],
+        "headers": 5,
+        "footers": 5,
+        "fonts": [
+          "Arial",
+          "Calibri",
+          "Calibri Light",
+          "Cambria",
+          "Liberation Sans",
+          "Liberation Serif",
+          "Symbol",
+          "Times New Roman"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 1984\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 52,
+          "pdf": ".cache/corpus/lo_pdf/docx-M-lo.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 51,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 525,
+            "tables": 18,
+            "pictures": 8
+          },
+          "diagnostics": [
+            "Unknown Symbol symbol U+F02D: original code retained"
+          ]
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 51
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "1 warning(s) in .cache/corpus/docx/docx-M-lo.docx:\n  1. 1 empty paragraph(s) found"
+        }
+      }
+    },
+    {
+      "id": "docx-S",
+      "origin": "synthetic",
+      "kind": "docx",
+      "size_class": "S",
+      "path": ".cache/corpus/docx/docx-S.docx",
+      "bytes": 46859,
+      "sha256": "399910ee28572e08a65486fe522ccd7f61f678950307869d16e072d038f1c754",
+      "pages": {
+        "libreoffice": 6,
+        "rdocx": 6,
+        "app_xml": null
+      },
+      "target_pages": 5,
+      "generator": "docx-js 9.15.0 (corpus/gen_docx.js)",
+      "producer_application": null,
+      "plan": ".cache/corpus/plans/docx-S.json",
+      "licence": "synthetic (this repository)",
+      "counts": {
+        "paragraphs": 238,
+        "tables": 2,
+        "pictures": 1,
+        "comments": 2,
+        "revisions": 6,
+        "charts": 0,
+        "footnotes": 1,
+        "sections": 2,
+        "landscape_sections": 1,
+        "media_files": 1,
+        "media_bytes": 35898,
+        "revisions_by_kind": {
+          "ins": 3,
+          "del": 3,
+          "move": 0,
+          "format": 0
+        },
+        "has_toc": true,
+        "fields": [
+          "PAGEREF",
+          "TOC"
+        ],
+        "headers": 1,
+        "footers": 1,
+        "fonts": [
+          "Calibri",
+          "Calibri Light"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Paragraphs: 238\nAll validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 6,
+          "pdf": ".cache/corpus/lo_pdf/docx-S.pdf"
+        },
+        "python_docx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rdocx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "page_count": 6,
+            "page_count_source": "deterministic-layout",
+            "paragraphs": 40,
+            "tables": 2,
+            "pictures": 1
+          }
+        },
+        "rdocx_pages": {
+          "ok": true,
+          "rc": 0,
+          "pages": 6
+        },
+        "rdocx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "1 warning(s) in .cache/corpus/docx/docx-S.docx:\n  1. 1 empty paragraph(s) found"
+        }
+      }
+    },
+    {
+      "id": "pptx-L",
+      "origin": "synthetic",
+      "kind": "pptx",
+      "size_class": "L",
+      "path": ".cache/corpus/pptx/pptx-L.pptx",
+      "bytes": 2634366,
+      "sha256": "012615dc0b124defe3e384d8a4ab521e132326c022ff181ad16828f46988c779",
+      "slides": 150,
+      "generator": "pptxgenjs 4.0.1 (corpus/gen_pptx.js) + built-in pptx scripts/apply_theme.js",
+      "producer_application": "Microsoft Office PowerPoint 16.0000",
+      "plan": ".cache/corpus/plans/pptx-L.json",
+      "licence": "synthetic (this repository)",
+      "counts": {
+        "paragraphs": 1736,
+        "tables": 27,
+        "pictures": 27,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 41,
+        "sections": 13,
+        "notes": 150,
+        "slides": 150,
+        "layouts": 8,
+        "masters": 1,
+        "media_files": 28,
+        "media_bytes": 1995299,
+        "fonts": [
+          "Calibri",
+          "Cambria"
+        ]
+      },
+      "checks_failed": [
+        "rpptx_validate"
+      ],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "All validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 150,
+          "pdf": ".cache/corpus/lo_pdf/pptx-L.pdf"
+        },
+        "python_pptx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rpptx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "slides": 150,
+            "layouts": 8
+          }
+        },
+        "rpptx_validate": {
+          "ok": false,
+          "rc": 1,
+          "output": "/ppt/presentation.xml /p:presentation: p:notesMasterIdLst follows p:sldIdLst, out of the schema's order\nslide 24: duplicate shape ID 25, shared by more than one shape\nValidation failed with 2 issue(s)"
+        }
+      }
+    },
+    {
+      "id": "pptx-M",
+      "origin": "synthetic",
+      "kind": "pptx",
+      "size_class": "M",
+      "path": ".cache/corpus/pptx/pptx-M.pptx",
+      "bytes": 996856,
+      "sha256": "0245924df7a3c31462400fd3e78cabfb5beb6c8ccfe0b4755cc57cf1d7ddbcbc",
+      "slides": 60,
+      "generator": "pptxgenjs 4.0.1 (corpus/gen_pptx.js) + built-in pptx scripts/apply_theme.js",
+      "producer_application": "Microsoft Office PowerPoint 16.0000",
+      "plan": ".cache/corpus/plans/pptx-M.json",
+      "licence": "synthetic (this repository)",
+      "counts": {
+        "paragraphs": 641,
+        "tables": 10,
+        "pictures": 11,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 16,
+        "sections": 6,
+        "notes": 60,
+        "slides": 60,
+        "layouts": 8,
+        "masters": 1,
+        "media_files": 12,
+        "media_bytes": 735680,
+        "fonts": [
+          "Calibri",
+          "Cambria"
+        ]
+      },
+      "checks_failed": [
+        "rpptx_validate"
+      ],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "All validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 60,
+          "pdf": ".cache/corpus/lo_pdf/pptx-M.pdf"
+        },
+        "python_pptx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rpptx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "slides": 60,
+            "layouts": 8
+          }
+        },
+        "rpptx_validate": {
+          "ok": false,
+          "rc": 1,
+          "output": "/ppt/presentation.xml /p:presentation: p:notesMasterIdLst follows p:sldIdLst, out of the schema's order\nslide 24: duplicate shape ID 25, shared by more than one shape\nValidation failed with 2 issue(s)"
+        }
+      }
+    },
+    {
+      "id": "pptx-M-pythonpptx",
+      "origin": "synthetic",
+      "kind": "pptx",
+      "size_class": "M",
+      "path": ".cache/corpus/pptx/pptx-M-pythonpptx.pptx",
+      "bytes": 951888,
+      "sha256": "576062e99022374013c71a414ee7f0529d131f46fc2c70d7b9a130468b331aeb",
+      "slides": 60,
+      "generator": "python-pptx 1.0.2 (corpus/gen_pptx_pythonpptx.py)",
+      "producer_application": "Microsoft Macintosh PowerPoint 14.0000",
+      "variant": "pptx-M's plan built with python-pptx on its default template",
+      "plan": ".cache/corpus/plans/pptx-M-pythonpptx.json",
+      "licence": "synthetic (this repository)",
+      "counts": {
+        "paragraphs": 582,
+        "tables": 10,
+        "pictures": 11,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 16,
+        "sections": 0,
+        "notes": 60,
+        "slides": 60,
+        "layouts": 11,
+        "masters": 1,
+        "media_files": 11,
+        "media_bytes": 735680,
+        "fonts": [
+          "Calibri"
+        ]
+      },
+      "checks_failed": [],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "All validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 60,
+          "pdf": ".cache/corpus/lo_pdf/pptx-M-pythonpptx.pdf"
+        },
+        "python_pptx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rpptx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "slides": 60,
+            "layouts": 11
+          }
+        },
+        "rpptx_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "Validation passed: .cache/corpus/pptx/pptx-M-pythonpptx.pptx"
+        }
+      }
+    },
+    {
+      "id": "pptx-S",
+      "origin": "synthetic",
+      "kind": "pptx",
+      "size_class": "S",
+      "path": ".cache/corpus/pptx/pptx-S.pptx",
+      "bytes": 149171,
+      "sha256": "b2553f904b1cbec424aec3c376d7d02a0a69d28bee7976d1d4c65e4425a880b3",
+      "slides": 15,
+      "generator": "pptxgenjs 4.0.1 (corpus/gen_pptx.js) + built-in pptx scripts/apply_theme.js",
+      "producer_application": "Microsoft Office PowerPoint 16.0000",
+      "plan": ".cache/corpus/plans/pptx-S.json",
+      "licence": "synthetic (this repository)",
+      "counts": {
+        "paragraphs": 119,
+        "tables": 2,
+        "pictures": 2,
+        "comments": 0,
+        "revisions": 0,
+        "charts": 3,
+        "sections": 3,
+        "notes": 15,
+        "slides": 15,
+        "layouts": 8,
+        "masters": 1,
+        "media_files": 3,
+        "media_bytes": 72164,
+        "fonts": [
+          "Calibri",
+          "Cambria"
+        ]
+      },
+      "checks_failed": [
+        "rpptx_validate"
+      ],
+      "checks": {
+        "builtin_validate": {
+          "ok": true,
+          "rc": 0,
+          "output": "All validations PASSED!"
+        },
+        "libreoffice_pdf": {
+          "ok": true,
+          "rc": 0,
+          "pages": 15,
+          "pdf": ".cache/corpus/lo_pdf/pptx-S.pdf"
+        },
+        "python_pptx_open": {
+          "ok": true,
+          "rc": 0
+        },
+        "rpptx_open": {
+          "ok": true,
+          "rc": 0,
+          "summary": {
+            "slides": 15,
+            "layouts": 8
+          }
+        },
+        "rpptx_validate": {
+          "ok": false,
+          "rc": 1,
+          "output": "/ppt/presentation.xml /p:presentation: p:notesMasterIdLst follows p:sldIdLst, out of the schema's order\nValidation failed with 1 issue(s)"
+        }
+      }
+    }
+  ]
+}

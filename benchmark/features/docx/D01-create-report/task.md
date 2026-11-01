@@ -1,0 +1,1 @@
+D01 create-report: build a new A4 report from scratch (title, TOC, headings on 3 levels, bold and italic runs, a bulleted and a numbered list, a 5x4 table with a shaded header row, a PNG picture, a "Page X of Y" footer); args: `picture.png OUT.docx`.

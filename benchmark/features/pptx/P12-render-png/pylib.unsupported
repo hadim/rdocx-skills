@@ -1,0 +1,1 @@
+python-pptx has no renderer. An agent without a skill would call LibreOffice and pdftoppm, which is the builtin stack's path (measured there).

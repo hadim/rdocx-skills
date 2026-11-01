@@ -1,0 +1,1 @@
+D08 chart: insert after 'Chart anchor: sales by quarter.' a native, editable (embedded workbook) clustered column chart, series 2025 = 10, 12, 14, 9 and 2026 = 11, 15, 13, 17 over Q1-Q4; args: `input.docx OUT.docx`.
