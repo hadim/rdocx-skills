@@ -100,14 +100,17 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   (performance and memory, no date), with #424, #437 and #445 open.
 - Open gaps (`tests/test_docx_gaps.py`, strict xfails): docx-compare-word-splits-characters (0.17.0 writes a changed
   paragraph's characters as one run each at word granularity: 2x the XML, 10x the compare time, a regression from
-  0.16.4), docx-move-thread-leaves-replies (replies got their own range in 0.17.0, a thread move takes the root only;
-  `docx_ops.move_thread_to_text` works around it), docx-grid-span-refuses-formatted-empty-cell (the #441 integration
-  fix, upstream kept it in `Cell.merge` only), docx-python-replace-slower-than-cli (#445 case 2) and
-  docx-font-fallback-by-entry-point (#433 case 7, closed upstream on Linux: CI decides, it skips without DejaVu Sans).
-  The first three are reported as tensorbee/rdocx#446. Edit costs: no call grows with the body or the deck from 25 to 100 paragraphs (10 to 40
-  slides) but the 127 of `ACCEPTED` in `test_docx_scaling.py` (macOS, local, on the release's own wheels).
-- Suite against `eb980e94` (local, macOS, upstream's own wheels and CLI archives): see the pin's pull request. Run
-  `tests/test_docs_snippets.py` without `-n`: its blocks chain files, and xdist spreads them over workers. The docx SKILL.md is a few bytes under its
+  0.16.4; the run granularity is 4x slower too), docx-move-thread-leaves-replies (replies got their own range in
+  0.17.0, a thread move takes the root only; `docx_ops.move_thread_to_text` works around it),
+  docx-grid-span-refuses-formatted-empty-cell (the #441 integration fix, upstream kept it in `Cell.merge` only), all
+  three reported as tensorbee/rdocx#446, and docx-python-replace-slower-than-cli (#445 case 2).
+  docx-font-fallback-by-entry-point closed (Linux CI: bundled fonts by default at every entry point). Edit costs: no
+  call grows with the body or the deck from 25 to 100 paragraphs (10 to 40 slides) but the 127 of `ACCEPTED` in
+  `test_docx_scaling.py`.
+- No plugin release on this pin until #446 is answered or fixed (the user's call, 2026-11-09): `v2026.11.1.2` stays
+  the published release.
+- Suite against `eb980e94`: CI of the pin's pull request (4 platforms). Run `tests/test_docs_snippets.py` without
+  `-n`: its blocks chain files, and xdist spreads them over workers. The docx SKILL.md is a few bytes under its
   16,000-byte budget.
 - `rdocx_env.py build` exports the source with the commit's time only over a build folder whose last build was that
   commit (`target/<platform>/built-commit`): a folder restored from another commit's cache, built after this commit was

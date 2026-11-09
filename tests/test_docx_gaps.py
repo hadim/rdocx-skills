@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import rdocx
 
-from conftest import pdf_uses_font, run
+from conftest import run
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "plugin" / "skills" / "docx" / "scripts"))
@@ -97,53 +97,6 @@ def test_grid_span_consumes_an_empty_cell_holding_paragraph_properties():
     table.cell(0, 1).paragraphs[0].alignment = rdocx.WD_ALIGN_PARAGRAPH.RIGHT
     doc.tables[0].set_cell_grid_span(0, 0, 2)
     assert [p.text for p in doc.tables[0].cell(0, 0).paragraphs] == ["Total"]
-
-
-# ---- fonts -------------------------------------------------------------------------------------------------------
-
-DEJAVU_SANS = ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-               "/usr/share/fonts/TTF/DejaVuSans.ttf", "/Library/Fonts/DejaVuSans.ttf")
-
-
-def pdf_page_count(pdf):
-    return int(re.search(rb"/Type\s*/Pages\b.*?/Count (\d+)", pdf, re.S).group(1))
-
-
-def pdf_fonts(pdf):
-    return sorted({f.decode() for f in re.findall(rb"/BaseFont\s*/(?:[A-Z]{6}\+)?([A-Za-z0-9_-]+)", pdf)})
-
-
-# upstream: tensorbee/rdocx#433 (case 7; closed in 0.17.0, to confirm on Linux)
-@pytest.mark.gap("docx-font-fallback-by-entry-point")
-@pytest.mark.parametrize("folder", ["none", "empty", "one-font"])
-def test_every_entry_point_resolves_a_font_the_same_way(folder, tmp_path, rdocx_cli, free_font):
-    """For a font the document names and rdocx does not bundle (DejaVu Sans), `rdocx convert`, to_pdf(),
-    page_count() and layout() give one font and one page count for the same font folder, and the CLI uses the font
-    or reports the substitution. The CLI substitutes a bundled font silently, to_pdf() takes the system font, and
-    page_count() / layout() follow one or the other depending on font_dir (tensorbee/rdocx#433)."""
-    if not any(Path(p).is_file() for p in DEJAVU_SANS):
-        pytest.skip("DejaVu Sans is not installed")
-    doc = rdocx.Document()
-    doc.set_style("Normal", font_name="DejaVu Sans")
-    for _ in range(60):
-        doc.add_paragraph("The committee reviews the annual budget, the schedule of works and the report of the "
-                          "auditors for the coming year. " * 3)
-    src = tmp_path / "fonts.docx"
-    doc.save(str(src))
-    fonts = tmp_path / "fonts"
-    fonts.mkdir()
-    if folder == "one-font":
-        (fonts / free_font.name).write_bytes(free_font.read_bytes())
-    kwargs, flags = ({}, []) if folder == "none" else ({"font_dir": str(fonts)}, ["--font-dir", fonts])
-    res = run([rdocx_cli, "convert", src, "--to", "pdf", "-o", tmp_path / "cli.pdf", "--force", *flags])
-    assert res.returncode == 0, res.stderr
-    cli_pdf, py_pdf = (tmp_path / "cli.pdf").read_bytes(), doc.to_pdf(**kwargs)
-    pages = {pdf_page_count(cli_pdf), pdf_page_count(py_pdf), doc.page_count(**kwargs),
-             max(f.physical_page for f in doc.layout(**kwargs))}
-    assert pdf_fonts(cli_pdf) == pdf_fonts(py_pdf)
-    assert len(pages) == 1
-    messages = [line for line in (res.stdout + res.stderr).splitlines() if not line.startswith("Written to")]
-    assert pdf_uses_font(cli_pdf, b"DejaVuSans") or any("DejaVu Sans" in m for m in messages)
 
 
 # ---- edit costs --------------------------------------------------------------------------------------------------

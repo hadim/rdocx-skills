@@ -188,8 +188,8 @@ Images from `convert`: one page goes to `OUT.png`, several to `OUT_001.png`, `OU
 multi-page file). `render` writes `NEW_DIR/<name>_page<N>.png` with N one-based; `--pages` is one-based,
 `--page` zero-based. `--font-dir DIR` (`convert` to PDF or images, `render`, `layout`) puts the fonts of a folder (`.ttf`, `.otf`, `.ttc`) before every other font, an embedded face included (a file also counts as the family its file name gives, `Aileron.ttf`), a variable font drawn at the weight a run asks for (a bold run without a bold face gets a synthetic bold); a missing folder is an error, and Markdown and HTML refuse the flag. Without it, rdocx uses its bundled
 metric-compatible families (Liberation for Arial, Times New Roman, Courier New; Carlito for Calibri; Caladea
-for Cambria) and the system fonts (for a font rdocx does not bundle, `convert` and Python's `to_pdf()` differ:
-gap docx-font-fallback-by-entry-point, `references/gaps.md`). Markdown and HTML hold the body, then text boxes,
+for Cambria), also for a font it does not bundle, the same way in `convert`, `render`, `layout` and Python;
+`--system-fonts` (Python `system_fonts=True`) looks the system fonts up instead. Markdown and HTML hold the body, then text boxes,
 headers, footers, footnotes and endnotes, one section per part, a chart as a table of its cached data, and leave
 comments out.
 An input named `.md` / `.markdown` is read as Markdown (CommonMark with GitHub tables), one named `.html` /

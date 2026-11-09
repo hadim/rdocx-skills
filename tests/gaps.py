@@ -97,7 +97,8 @@ gaps closed.
 # header paragraphs' spacing after counted, measured in Word: 58.5 pt for one line, 148.5 pt for five), not where
 # #428 put it; `rpptx validate` refuses a row whose gridSpan cell has no hMerge cell after it, which neither
 # PowerPoint nor LibreOffice 26.8 writes; the other two became gaps. docx-control-character-round-trip and
-# pptx-control-character-round-trip (open refuses the character) and docx-reply-without-range closed. New gaps of
+# pptx-control-character-round-trip (open refuses the character), docx-reply-without-range and
+# docx-font-fallback-by-entry-point (bundled fonts by default at every entry point, Linux CI) closed. New gaps of
 # 0.17.0: docx-compare-word-splits-characters, docx-move-thread-leaves-replies (replies got their own range, the move
 # takes the root only) and docx-grid-span-refuses-formatted-empty-cell (the #441 integration fix, kept by merge only).
 GAPS = {
@@ -113,7 +114,4 @@ GAPS = {
     # upstream: tensorbee/rdocx#445 (case 2)
     "docx-python-replace-slower-than-cli": "Document.open + try_replace_text + save take about twice `rdocx replace` "
                                            "on the same file, 3 to 4 times on rich reports",
-    # upstream: tensorbee/rdocx#433 (case 7)
-    "docx-font-fallback-by-entry-point": "for a font rdocx does not bundle, `rdocx convert`, to_pdf() and page_count() "
-                                         "/ layout() pick different fonts, and the substitution is not reported",
 }
