@@ -138,14 +138,33 @@ def test_comment_on_text_in_the_report_content_control(report_docx):
     assert anchored(doc.to_bytes(), cid) == "74 out of 100"
 
 
+def test_move_thread_to_text_takes_the_replies_along(tmp_path):
+    """move_thread_to_text moves the root and its replies onto the new text, each reply keeping its author, date,
+    text and resolved flag: removing the paragraph the thread left keeps the whole thread (gap
+    docx-move-thread-leaves-replies)."""
+    src, cid, rid = commented_thread(tmp_path / "c.docx")
+    doc = rdocx.Document.open(src)
+    second = doc.reply_to(rid, author="Reviewer", text="Thanks.", date="2026-11-09T12:00:00Z")
+    doc.resolve_comment(second)
+    before = {c.text: (c.author, c.date, c.resolved) for c in doc.comments}
+    ids = docx_ops.move_thread_to_text(doc, cid, "Gamma")
+    assert set(ids) == {rid, second}
+    doc.remove_content(0)
+    after = rdocx.Document.from_bytes(doc.to_bytes())
+    assert {c.text: (c.author, c.date, c.resolved) for c in after.comments} == before
+    assert {c.anchor_text for c in after.comments} == {"Gamma"}
+    assert {c.text: c.parent_id for c in after.comments} == {"Check.": None, "Done.": cid, "Thanks.": ids[rid]}
+
+
 def test_anchored_text_reads_through_google_wrappers_and_maps_no_range_to_none(tmp_path):
     """anchored_text reads the anchor through rdocx (Comment.anchor_text): through goog_rdk content controls
-    around the start mark, the anchored run and the paragraph; None for a reply, an unknown id, and a comment
-    left with its reference mark but no range (rdocx's ""). Table cells: the in_tables tests below."""
+    around the start mark, the anchored run and the paragraph; a reply's own range, over its parent's text; None
+    for an unknown id and a comment left with its reference mark but no range (rdocx's ""). Table cells: the
+    in_tables tests below."""
     src, cid, rid = commented_thread(tmp_path / "c.docx")
     g = google_wrapped(src, tmp_path / "g.docx")
     assert anchored(g, cid) == anchored(g.read_bytes(), cid) == "paragraph"
-    assert anchored(g, rid) is None and anchored(g, 99) is None
+    assert anchored(g, rid) == "paragraph" and anchored(g, 99) is None
     bare = rewrite_body(src, tmp_path / "ref.docx", lambda x: re.sub(r'<w:commentRange(Start|End) w:id="0"/>', "", x))
     assert rdocx.Document.open(bare).comments[0].anchor_text == "" and anchored(bare, cid) is None
 

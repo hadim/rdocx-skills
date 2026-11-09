@@ -269,11 +269,11 @@ $R/python "$SKILL/scripts/docx_ops.py" comment report.docx commented-cell.docx -
 ```python
 import docx_ops, rdocx
 doc = rdocx.Document.open("commented.docx")
-for c in doc.comments:                                   # a reply has no anchor of its own (None)
+for c in doc.comments:                                   # a reply reads its parent's text
     print(c.id, c.parent_id, c.author, repr(c.anchor_text), "->", c.text)
 # the bearing item is to go; its thread is about the measuring method: move it there first
 cid = next(c.id for c in doc.comments if c.parent_id is None and c.anchor_text == "about 12 mm")
-doc.move_comment_to_text(cid, "bearing positions")      # id, replies and resolved flag kept
+docx_ops.move_thread_to_text(doc, cid, "bearing positions")  # root and replies, resolved flags kept
 i = next(k for k, p in enumerate(doc.paragraphs) if p.text.startswith("the bearing at pier 2"))
 doc.remove_content(doc.find_content_index(doc.paragraphs[i]))
 docx_ops.save_atomic(doc, "reviewed.docx", "commented.docx")

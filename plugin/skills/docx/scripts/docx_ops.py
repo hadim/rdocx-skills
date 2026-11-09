@@ -280,8 +280,9 @@ def anchored_text(data, comment_id):
 
     Read through rdocx (`Comment.anchor_text`): the accepted view of tracked changes, through content controls
     (Google Docs' goog_rdk wrappers included) and in table cells, the paragraphs of a range over several joined
-    with "\n". rdocx gives "" for a comment that has a reference mark but no range: that maps to None, like a
-    reply, an unknown id or a comment with no marks at all."""
+    with "\n". A reply reads its own range, which rdocx and Word give over its parent's text. rdocx gives "" for a
+    comment that has a reference mark but no range: that maps to None, like an unknown id or a comment with no
+    marks at all."""
     doc = rdocx.Document.from_bytes(data) if isinstance(data, bytes) else rdocx.Document.open(data)
     comment = next((c for c in doc.comments if c.id == comment_id), None)
     return (comment.anchor_text or None) if comment is not None else None
@@ -373,6 +374,30 @@ def comment_on_text(doc, anchor, text, author, initials=None, occurrence=1, date
     if in_tables:
         return doc.add_comment_on_text(anchor, author=author, text=text, occurrence=k, initials=initials, date=date)
     return _comment(doc, anchor, text, author, initials, occurrence, date)
+
+
+def move_thread_to_text(doc, comment_id, anchor, occurrence=0):
+    """doc.move_comment_to_text(comment_id, anchor, occurrence=occurrence) with the thread's replies. rdocx moves
+    the root only and leaves each reply's own range on the old text (gap docx-move-thread-leaves-replies), where
+    removing that text drops the replies; so each reply is removed and added again under the moved root, with its
+    author, initials, date, text and resolved flag. `occurrence` counts from 0, as rdocx does. Returns
+    {old reply id: new reply id}: a reply's id can change."""
+    replies, parents = [], {comment_id}
+    for c in doc.comments:
+        if c.parent_id in parents:
+            replies.append(c)
+            parents.add(c.id)
+    doc.move_comment_to_text(comment_id, anchor, occurrence=occurrence)
+    for c in reversed(replies):
+        doc.remove_comment(c.id)
+    ids = {comment_id: comment_id}
+    for c in replies:
+        ids[c.id] = doc.reply_to(ids[c.parent_id], author=c.author or "", text=c.text, date=c.date,
+                                 initials=c.initials)
+        if c.resolved:
+            doc.resolve_comment(ids[c.id])
+    del ids[comment_id]
+    return ids
 
 
 def rebuild_toc(doc):

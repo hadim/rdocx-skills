@@ -84,39 +84,33 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
-## State on 31/10/2026
+## State on 09/11/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
   submitted to the Claude plugin directory, following the default branch `release`; the rdocx maintainer agreed to
   the plugin name `rdocx` (hadim/rdocx-skills#40). First release `v2026.10.15` (pin `d17e1da9`); latest
-  `v2026.11.1` (pin `b3be9b6d`, `integration/open-prs-2026-10-31`).
-- Pinned: `integration/open-prs-2026-11-01` on hadim/rdocx (`37073233`): the upstream release v0.16.4 /
-  rpptx-v0.14.4 (tensorbee/rdocx `24af95d3`, sprint S95.4) plus tensorbee/rdocx#427 (#425) and #428 (#424, #426),
-  and the fix pull requests of the 2026-10-31 findings (42 findings met comparing rdocx and rpptx with other Office
-  libraries on synthetic tasks, grouped into tensorbee/rdocx#431 to #437): #438 (`rpptx fit` on the whole deck,
-  Markdown spaces, `slides.index`, #431), #439 (stricter `validate`, a ZIP name stored twice refused, shared
-  bookmark ids open, negative shape sizes refused, #435), #440 (layout and render, #433), #441 (markup rdocx writes,
-  #432), #442 (EMF, interlaced PNG, chart formats and exports, hidden shapes, #436), #443 (cell setters in place,
-  the styles parse kept across edits, #437) and #444 (comment markup, compare over split runs, revision text,
-  `insert_document` defaults and lists, #434), with a merge fix of #444 on #443, #439 counting `gridSpan` in
-  `rpptx validate`, and #441 merging an empty cell whose paragraph carries properties. -11-01 adds to #443 the cell
-  setters of tensorbee/rdocx#445 (case 1: cell properties in place, `cell.text` without a staged reopen). Their tests are in
-  `tests/test_docx_carried.py` and `tests/test_pptx_carried.py`, each naming its pull request. Upstream does not
-  merge pull requests from here: it adapts them in a sprint and closes them, so pin its `main` or its tags again once
-  a sprint carries them, and delete those tests then.
-- Open gaps: five, strict xfails in the carried files. docx-reply-without-range (#434 case 1: a reply gets no range
-  and no reference mark), docx-control-character-round-trip and
-  pptx-control-character-round-trip (#435 case 5: a part holding U+0001 opens and is saved back; `validate` reports
-  it since #439) and docx-font-fallback-by-entry-point (#433 case 7: `rdocx convert`, `to_pdf()` and `page_count()`
-  pick different fonts for a font rdocx does not bundle; a `--font-dir` / `font_dir=` folder holding the font makes
-  them agree) and docx-python-replace-slower-than-cli (#445 case 2: `Document.open` + `try_replace_text` + `save`
-  take about twice `rdocx replace`, the binding building its owner inventory twice). Edit costs: no call grows with the body or the deck from 25 to 100 paragraphs (10 to 40 slides) but
-  the 127 of `ACCEPTED` in `test_docx_scaling.py`; the edit cost series of v0.16.4 and the form operations as on
-  28/10/2026 (the docx gap page gives the costs). #443 made cell paragraph setters and edits with a large
-  `styles.xml` flat (its cases are timed in test_docx_carried.py), but in a cell inside a content control, and the
-  cell property setters flat (#445); `cell.text` costs what `p.text` costs, linear in the body (`ACCEPTED`).
-- Suite against `37073233` on Linux (local): see the pin's pull request. Run `tests/test_docs_snippets.py`
-  without `-n`: its blocks chain files, and xdist spreads them over workers. The docx SKILL.md is a few bytes under its
+  `v2026.11.1.2` (pin `37073233`, `integration/open-prs-2026-11-01`).
+- Pinned: the upstream release v0.17.0 / rpptx-v0.15.0 (tensorbee/rdocx `eb980e94`, sprint S96), which adapted
+  every pull request the integration branches carried (#427, #428, #438 to #444, the #445 setters); integration
+  branches are retired again. The carried tests were deleted, passing on it, but for four: the body under a tall
+  header starts where Word starts it (spacing after of the header paragraphs counted, measured in Word), `rpptx
+  validate` refuses a spanned row with no `hMerge` cell (PowerPoint and LibreOffice write the `hMerge` cells), and two
+  became gaps. Upstream does not merge pull requests from here: it adapts them in a sprint and closes them, so pin its
+  `main` or its tags again once a sprint carries them, and delete those tests then. Next upstream sprint: S96.1
+  (performance and memory, no date), with #424, #437 and #445 open.
+- Open gaps (`tests/test_docx_gaps.py`, strict xfails): docx-compare-word-splits-characters (0.17.0 writes a changed
+  paragraph's characters as one run each at word granularity: 2x the XML, 10x the compare time, a regression from
+  0.16.4; the run granularity is 4x slower too), docx-move-thread-leaves-replies (replies got their own range in
+  0.17.0, a thread move takes the root only; `docx_ops.move_thread_to_text` works around it),
+  docx-grid-span-refuses-formatted-empty-cell (the #441 integration fix, upstream kept it in `Cell.merge` only), all
+  three reported as tensorbee/rdocx#446, and docx-python-replace-slower-than-cli (#445 case 2).
+  docx-font-fallback-by-entry-point closed (Linux CI: bundled fonts by default at every entry point). Edit costs: no
+  call grows with the body or the deck from 25 to 100 paragraphs (10 to 40 slides) but the 127 of `ACCEPTED` in
+  `test_docx_scaling.py`.
+- No plugin release on this pin until #446 is answered or fixed (the user's call, 2026-11-09): `v2026.11.1.2` stays
+  the published release.
+- Suite against `eb980e94`: CI of the pin's pull request (4 platforms). Run `tests/test_docs_snippets.py` without
+  `-n`: its blocks chain files, and xdist spreads them over workers. The docx SKILL.md is a few bytes under its
   16,000-byte budget.
 - `rdocx_env.py build` exports the source with the commit's time only over a build folder whose last build was that
   commit (`target/<platform>/built-commit`): a folder restored from another commit's cache, built after this commit was
@@ -128,6 +122,7 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
 
 ## Next steps
 
-1. When upstream `main` moves (S96 brings fillable PDF forms, tensorbee/rdocx#381) or tags a release: `bump <ref>` on
+1. When upstream `main` moves (S96.1 performance and memory; S97 fillable PDF forms, tensorbee/rdocx#381) or tags
+   a release: `bump <ref>` on
    a branch, `install --build` and `test` (or let ci.yml build it on the pull request), as docs/setup.md (Moving the
    pin) describes; delete the gap tests that pass; release the plugin when the maintainer asks.
