@@ -91,16 +91,25 @@ gaps closed.
 # 2026-11-01: integration/open-prs-2026-11-01 (-10-31 plus the cell setters of tensorbee/rdocx#443, issue #445 case 1)
 # made the cell property setters flat. The binding's open + replace cost (#445 case 2) became
 # docx-python-replace-slower-than-cli.
+# 2026-11-09: the pin moved to the upstream release v0.17.0 / rpptx-v0.15.0 (tensorbee/rdocx eb980e94, S96), which
+# adapted every carried pull request (#427, #428, #438 to #444): test_docx_carried.py and test_pptx_carried.py were
+# deleted, their tests passing there, but for four. The body below a tall header starts where Word starts it (the
+# header paragraphs' spacing after counted, measured in Word: 58.5 pt for one line, 148.5 pt for five), not where
+# #428 put it; `rpptx validate` refuses a row whose gridSpan cell has no hMerge cell after it, which neither
+# PowerPoint nor LibreOffice 26.8 writes; the other two became gaps. docx-control-character-round-trip and
+# pptx-control-character-round-trip (open refuses the character) and docx-reply-without-range closed. New gaps of
+# 0.17.0: docx-compare-word-splits-characters, docx-move-thread-leaves-replies (replies got their own range, the move
+# takes the root only) and docx-grid-span-refuses-formatted-empty-cell (the #441 integration fix, kept by merge only).
 GAPS = {
-    # upstream: tensorbee/rdocx#435 (case 5; #439 makes validate report it)
-    "docx-control-character-round-trip": "a part holding a control character XML 1.0 forbids (U+0001) opens, and "
-                                         "save() writes it back unchanged",
-    # upstream: tensorbee/rdocx#435 (case 5; #439 makes validate report it)
-    "pptx-control-character-round-trip": "a part holding a control character XML 1.0 forbids (U+0001) opens, and "
-                                         "save() writes it back unchanged",
-    # upstream: tensorbee/rdocx#434 (case 1; #444 adds the reply's initials)
-    "docx-reply-without-range": "a reply added by reply_to or `rdocx comment reply` gets no comment range and no "
-                                "reference mark in the body, where Word gives each reply its parent's range",
+    # upstream: tensorbee/rdocx#446 (case 1)
+    "docx-compare-word-splits-characters": "at word granularity, compare writes each character of a changed "
+                                           "paragraph as its own run and each changed letter as its own text element",
+    # upstream: tensorbee/rdocx#446 (case 2)
+    "docx-move-thread-leaves-replies": "move_comment_to_text and `rdocx comment move` move the root only: the replies "
+                                       "keep their own range on the old text and go when it is removed",
+    # upstream: tensorbee/rdocx#446 (case 3)
+    "docx-grid-span-refuses-formatted-empty-cell": "set_cell_grid_span refuses to consume an empty cell whose "
+                                                   "paragraph carries properties, which Cell.merge consumes",
     # upstream: tensorbee/rdocx#445 (case 2)
     "docx-python-replace-slower-than-cli": "Document.open + try_replace_text + save take about twice `rdocx replace` "
                                            "on the same file, 3 to 4 times on rich reports",
