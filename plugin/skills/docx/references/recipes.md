@@ -273,7 +273,7 @@ for c in doc.comments:                                   # a reply reads its par
     print(c.id, c.parent_id, c.author, repr(c.anchor_text), "->", c.text)
 # the bearing item is to go; its thread is about the measuring method: move it there first
 cid = next(c.id for c in doc.comments if c.parent_id is None and c.anchor_text == "about 12 mm")
-docx_ops.move_thread_to_text(doc, cid, "bearing positions")  # root and replies, resolved flags kept
+doc.move_comment_to_text(cid, "bearing positions")       # root and replies, ids and resolved flags kept
 i = next(k for k, p in enumerate(doc.paragraphs) if p.text.startswith("the bearing at pier 2"))
 doc.remove_content(doc.find_content_index(doc.paragraphs[i]))
 docx_ops.save_atomic(doc, "reviewed.docx", "commented.docx")
@@ -305,7 +305,19 @@ $R/rdocx convert redline.docx --to pdf --revision-view tracked --revision-style 
 The redline holds only the edit, in every story (`revision list` shows each revision's story), and
 `--granularity word` marks only the changed words (the default, `run`, deletes and re-inserts the whole
 run). In Python: `v1.compare(v2, "Reviewer", timestamp, granularity="word")`. Compare before rebuilding the
-TOC: a TOC rebuilt on the edited side adds its entries to the redline as revisions.
+TOC: a TOC rebuilt on the edited side adds its entries to the redline as revisions. Two versions generated again
+from scratch name their heading bookmarks `_Toc1`, `_Toc2`, ... in order, so a heading added before others moves
+the names and `compare` refuses (gaps.md, docx-compare-renumbered-bookmarks): compare copies without them.
+
+```python
+import docx_ops, rdocx
+for name in ("v1", "v2"):
+    docx_ops.strip_generated_bookmarks(f"{name}.docx", f"{name}-nobm.docx")  # only the _Toc bookmarks go
+v1 = rdocx.Document.open("v1-nobm.docx")
+v1.compare(rdocx.Document.open("v2-nobm.docx"), "Reviewer", "2026-09-27T12:00:00Z", granularity="word")
+v1.save("redline-nobm.docx")
+```
+
 To show the redline outside Word, render it with `--revision-view tracked` (Python
 `to_pdf(revision_view="tracked")`): deletions struck through, insertions underlined, a change bar; add
 `--revision-style legal` (`revision_style="legal"`) for the colours reviewers expect (insertions blue, deletions

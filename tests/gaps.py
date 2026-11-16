@@ -101,16 +101,18 @@ gaps closed.
 # docx-font-fallback-by-entry-point (bundled fonts by default at every entry point, Linux CI) closed. New gaps of
 # 0.17.0: docx-compare-word-splits-characters, docx-move-thread-leaves-replies (replies got their own range, the move
 # takes the root only) and docx-grid-span-refuses-formatted-empty-cell (the #441 integration fix, kept by merge only).
+# 2026-11-16: integration/open-prs-2026-11-16 (v0.17.0 plus tensorbee/rdocx#448 to #452 and #454) closed
+# docx-compare-word-splits-characters (#450), docx-move-thread-leaves-replies and
+# docx-grid-span-refuses-formatted-empty-cell (#448): their tests moved to test_docx_carried.py. New gaps:
+# docx-compare-renumbered-bookmarks (#454 keeps that refusal, docx_ops.strip_generated_bookmarks works around it) and
+# docx-compare-moved-footnote-reference (#452 refuses what 0.17.0 wrote and Word could not open).
 GAPS = {
-    # upstream: tensorbee/rdocx#446 (case 1)
-    "docx-compare-word-splits-characters": "at word granularity, compare writes each character of a changed "
-                                           "paragraph as its own run and each changed letter as its own text element",
-    # upstream: tensorbee/rdocx#446 (case 2)
-    "docx-move-thread-leaves-replies": "move_comment_to_text and `rdocx comment move` move the root only: the replies "
-                                       "keep their own range on the old text and go when it is removed",
-    # upstream: tensorbee/rdocx#446 (case 3)
-    "docx-grid-span-refuses-formatted-empty-cell": "set_cell_grid_span refuses to consume an empty cell whose "
-                                                   "paragraph carries properties, which Cell.merge consumes",
+    # upstream: tensorbee/rdocx#453
+    "docx-compare-renumbered-bookmarks": "compare refuses two versions whose generated heading bookmarks (_Toc1, "
+                                         "_Toc2, ...) were renumbered, a name moving to another heading",
+    # upstream: tensorbee/rdocx#430
+    "docx-compare-moved-footnote-reference": "compare refuses two versions where a referenced footnote's id moves to "
+                                             "another reference, a new note before an existing one included",
     # upstream: tensorbee/rdocx#445 (case 2)
     "docx-python-replace-slower-than-cli": "Document.open + try_replace_text + save take about twice `rdocx replace` "
                                            "on the same file, 3 to 4 times on rich reports",

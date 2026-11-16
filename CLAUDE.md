@@ -84,6 +84,15 @@ workflows, the docs and this file sit beside it. Keep anything the plugin does n
   Files are committed with LF, and CI sets `core.autocrlf false` before checking out on Windows.
 - Commits: Conventional Commits.
 
+## State on 16/11/2026
+
+- Pinned: `integration/open-prs-2026-11-16` on hadim/rdocx (`2543cf63`): v0.17.0 plus tensorbee/rdocx#448 to #452
+  and #454, whose tests are in `tests/test_docx_carried.py` (delete each once upstream ships it). Closed:
+  docx-compare-word-splits-characters (#450), docx-move-thread-leaves-replies and
+  docx-grid-span-refuses-formatted-empty-cell (#448). New gaps: docx-compare-renumbered-bookmarks (#453, worked around
+  by `docx_ops.strip_generated_bookmarks`) and docx-compare-moved-footnote-reference (#452 refuses it).
+  `docx_ops.move_thread_to_text` is a thin wrapper now that rdocx moves the replies.
+
 ## State on 09/11/2026
 
 - Repository: github.com/hadim/rdocx-skills, public; `main` protected (no force push, no deletion). Being
