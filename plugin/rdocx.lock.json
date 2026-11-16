@@ -1,8 +1,8 @@
 {
-  "upstream": "https://github.com/tensorbee/rdocx",
+  "upstream": "https://github.com/hadim/rdocx",
   "source": "git",
-  "commit": "eb980e94c8ae1f8b42612f918482bc627e0141a0",
-  "ref": "v0.17.0",
+  "commit": "2543cf635e3de3e5ce53dfd7ae83f65e2b6c9d23",
+  "ref": "integration/open-prs-2026-11-16",
   "release": "",
   "versions": {},
   "artifacts": {},

@@ -81,9 +81,9 @@ rdocx comment resolve F --id ID -o OUT [--json]
 rdocx comment move F ID --text TEXT [--occurrence K] -o OUT [--json]   # a thread root onto TEXT
 rdocx comment remove F --id ID -o OUT [--json]   # removes the comment and its replies
 ```
-`comment move` keeps the thread's id and resolved state but moves the root only: the replies stay on the old text
-(gap docx-move-thread-leaves-replies; `docx_ops.move_thread_to_text` moves them too). A reply id, an unknown id or a
-text not found exits 1 and writes nothing. `comment list --json` gives each thread's `anchor_text` first.
+`comment move` moves the whole thread, keeping its ids and resolved states: each reply with its own range moves
+with the root. A reply id (move its root), a reply whose anchor is incomplete, an unknown id or a text not found
+exits 1 and writes nothing. `comment list --json` gives each thread's `anchor_text` first.
 `P` and `Q` are **body indices** (`body_index` of `text --json`, counting tables); runs are zero-based run
 boundaries, half-open: `--start-run 1 --end-run 2` covers run 1. Runs are counted as `text --json` lists them,
 those inside an inline content control or a tracked insertion included. Without `--date` a comment is
@@ -106,8 +106,8 @@ Writes ORIGINAL with EDITED's differences as tracked changes by NAME at the time
 story. JSON record: `main_story_revisions`, `diagnostics`, `scope`, `output`. The default granularity is
 `run`: one changed word shows as its whole run deleted and re-inserted. Pass `--granularity word` for a
 redline a person reads: each changed stretch shows as one deletion then one insertion, short unchanged
-words inside it folded in (each character of a changed paragraph is written as its own run: gap
-docx-compare-word-splits-characters). A comment added or removed on the edited side replaces the paragraph it anchors on
+words inside it folded in, in runs of whole words. Paragraphs merged, split, added or removed, in the body, a
+table cell or a content control, show as whole paragraphs deleted or inserted, marks included. A comment added or removed on the edited side replaces the paragraph it anchors on
 (deleted and reinserted), a reply or a resolved state adds one insertion: accepting gives EDITED's comments,
 rejecting ORIGINAL's. `--ignore-comments` keeps the original's comments, drops the edited file's, and
 compares the text only. A pair whose edited side had

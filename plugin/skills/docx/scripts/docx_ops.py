@@ -377,27 +377,54 @@ def comment_on_text(doc, anchor, text, author, initials=None, occurrence=1, date
 
 
 def move_thread_to_text(doc, comment_id, anchor, occurrence=0):
-    """doc.move_comment_to_text(comment_id, anchor, occurrence=occurrence) with the thread's replies. rdocx moves
-    the root only and leaves each reply's own range on the old text (gap docx-move-thread-leaves-replies), where
-    removing that text drops the replies; so each reply is removed and added again under the moved root, with its
-    author, initials, date, text and resolved flag. `occurrence` counts from 0, as rdocx does. Returns
-    {old reply id: new reply id}: a reply's id can change."""
+    """doc.move_comment_to_text(comment_id, anchor, occurrence=occurrence), kept for older scripts: rdocx now
+    moves the replies with their root and keeps their ids. Returns {reply id: reply id} for the thread's
+    replies."""
     replies, parents = [], {comment_id}
     for c in doc.comments:
         if c.parent_id in parents:
-            replies.append(c)
+            replies.append(c.id)
             parents.add(c.id)
     doc.move_comment_to_text(comment_id, anchor, occurrence=occurrence)
-    for c in reversed(replies):
-        doc.remove_comment(c.id)
-    ids = {comment_id: comment_id}
-    for c in replies:
-        ids[c.id] = doc.reply_to(ids[c.parent_id], author=c.author or "", text=c.text, date=c.date,
-                                 initials=c.initials)
-        if c.resolved:
-            doc.resolve_comment(ids[c.id])
-    del ids[comment_id]
-    return ids
+    return {i: i for i in replies}
+
+
+_BOOKMARK_START = re.compile(r"<w:bookmarkStart\b[^>]*/>")
+
+
+def strip_generated_bookmarks(src, out, prefix="_Toc"):
+    """Copy the .docx `src` (a path, bytes or a Document) to `out` without the body bookmarks whose name starts
+    with `prefix` (start and end markers), and return how many it removed. A table of contents rebuilt from
+    scratch names its heading bookmarks `_Toc1`, `_Toc2`, ... in document order, so between two versions where a
+    heading was added or removed a name moves to another heading, and `compare` refuses the pair (gap
+    docx-compare-renumbered-bookmarks): run this on both copies first. The TOC's links then point at no bookmark in
+    the redline; rebuild the TOC on the accepted result. Refuses `out == src`."""
+    if not isinstance(src, (bytes, bytearray)) and not hasattr(src, "to_bytes") and \
+            Path(src).resolve() == Path(out).resolve():
+        raise EditError("refusing to write over the input; write to a new path")
+    removed = []
+
+    def start(match):
+        element = match.group(0)
+        name = re.search(r'\bw:name="([^"]*)"', element)
+        ident = re.search(r'\bw:id="([^"]*)"', element)
+        if name and ident and name.group(1).startswith(prefix):
+            removed.append(ident.group(1))
+            return ""
+        return element
+
+    with zipfile.ZipFile(io.BytesIO(_package(src))) as zin, zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if item.filename == "word/document.xml":
+                xml = _BOOKMARK_START.sub(start, data.decode("utf-8"))
+                ids = set(removed)
+                xml = re.sub(r"<w:bookmarkEnd\b[^>]*/>",
+                             lambda m: "" if (re.search(r'\bw:id="([^"]*)"', m.group(0)) or [None, None])[1] in ids
+                             else m.group(0), xml)
+                data = xml.encode("utf-8")
+            zout.writestr(item, data)
+    return len(removed)
 
 
 def rebuild_toc(doc):

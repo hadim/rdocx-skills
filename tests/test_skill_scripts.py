@@ -10,8 +10,8 @@ from pathlib import Path
 import pytest
 import rdocx
 
-from builders import (cell_text_docx, commented_thread, every_story_docx, google_wrapped, rewrite_body,
-                      word_textbox_docx, wrapped_run_docx, wrapped_text_docx)
+from builders import (body_docx, cell_text_docx, commented_thread, every_story_docx, google_wrapped, heading_body,
+                      resolves_both_ways, rewrite_body, word_textbox_docx, wrapped_run_docx, wrapped_text_docx)
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "plugin" / "skills" / "docx" / "scripts"))
@@ -139,9 +139,9 @@ def test_comment_on_text_in_the_report_content_control(report_docx):
 
 
 def test_move_thread_to_text_takes_the_replies_along(tmp_path):
-    """move_thread_to_text moves the root and its replies onto the new text, each reply keeping its author, date,
-    text and resolved flag: removing the paragraph the thread left keeps the whole thread (gap
-    docx-move-thread-leaves-replies)."""
+    """move_thread_to_text (kept for older scripts) moves the root and its replies onto the new text, each reply
+    keeping its id, author, date, text and resolved flag: removing the paragraph the thread left keeps the whole
+    thread."""
     src, cid, rid = commented_thread(tmp_path / "c.docx")
     doc = rdocx.Document.open(src)
     second = doc.reply_to(rid, author="Reviewer", text="Thanks.", date="2026-11-09T12:00:00Z")
@@ -154,6 +154,25 @@ def test_move_thread_to_text_takes_the_replies_along(tmp_path):
     assert {c.text: (c.author, c.date, c.resolved) for c in after.comments} == before
     assert {c.anchor_text for c in after.comments} == {"Gamma"}
     assert {c.text: c.parent_id for c in after.comments} == {"Check.": None, "Done.": cid, "Thanks.": ids[rid]}
+
+
+def test_strip_generated_bookmarks_lets_renumbered_versions_compare(tmp_path):
+    """strip_generated_bookmarks removes the _Toc bookmarks of a copy (start and end markers) and keeps the others;
+    two versions whose _Toc names were renumbered then compare and resolve both ways (gaps.md,
+    docx-compare-renumbered-bookmarks). It refuses to write over its input."""
+    kept = '<w:p><w:bookmarkStart w:id="9" w:name="keep_me"/><w:r><w:t>Kept.</w:t></w:r><w:bookmarkEnd w:id="9"/></w:p>'
+    original = body_docx(tmp_path / "a.docx", heading_body([("Alpha", 1, "_Toc1", "First body."),
+                                                            ("Beta", 2, "_Toc2", "Second body.")]) + kept)
+    edited = body_docx(tmp_path / "b.docx", heading_body([("New", 1, "_Toc1", "New body."),
+                                                          ("Alpha", 2, "_Toc2", "First body."),
+                                                          ("Beta", 3, "_Toc3", "Second body.")]) + kept)
+    assert docx_ops.strip_generated_bookmarks(original, tmp_path / "a2.docx") == 2
+    assert docx_ops.strip_generated_bookmarks(edited.read_bytes(), tmp_path / "b2.docx") == 3
+    names = [b.name for b in rdocx.Document.open(str(tmp_path / "a2.docx")).bookmarks]
+    assert names == ["keep_me"]
+    resolves_both_ways(tmp_path / "a2.docx", tmp_path / "b2.docx")
+    with pytest.raises(docx_ops.EditError):
+        docx_ops.strip_generated_bookmarks(original, original)
 
 
 def test_anchored_text_reads_through_google_wrappers_and_maps_no_range_to_none(tmp_path):
