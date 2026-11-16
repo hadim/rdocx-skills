@@ -383,3 +383,38 @@ def lean_template(path):
         for name, data in parts.items():
             z.writestr(name, data)
     return path
+
+
+# ---------------------------------------------------------------- compare
+def heading_body(headings):
+    """Body XML of Heading 1 paragraphs, each with its bookmark (id, name), then a body paragraph."""
+    out = ""
+    for text, ident, name, body in headings:
+        out += (f'<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:bookmarkStart w:id="{ident}" w:name="{name}"/>'
+                f'<w:r><w:t>{text}</w:t></w:r><w:bookmarkEnd w:id="{ident}"/></w:p>'
+                f'<w:p><w:r><w:t>{body}</w:t></w:r></w:p>')
+    return out
+
+
+def body_docx(path, body):
+    """A package holding only `body` in its main story: a new document whose document.xml body is replaced."""
+    rdocx.Document().save(str(path))
+    return rewrite_body(path, path.with_suffix(".body.docx"),
+                        lambda xml: re.sub(r"<w:body>.*</w:body>", f"<w:body>{body}<w:sectPr/></w:body>", xml,
+                                           flags=re.S))
+
+
+def resolves_both_ways(original_path, edited_path):
+    """compare(original, edited) at word granularity with fields and formatting ignored, then accept_all gives
+    the edited text and reject_all the original's, in every story."""
+    original = rdocx.Document.open(str(original_path))
+    original.compare(rdocx.Document.open(str(edited_path)), "Reviewer", STAMP, granularity="word",
+                     ignore_fields=True, ignore_formatting=True)
+    tracked = original.to_bytes()
+    accepted, rejected = rdocx.Document.from_bytes(tracked), rdocx.Document.from_bytes(tracked)
+    accepted.accept_all()
+    rejected.reject_all()
+    def texts(doc):  # every story item, table cells and notes included
+        return [(item.story.kind, item.text) for item in doc.story_items]
+    assert texts(accepted) == texts(rdocx.Document.open(str(edited_path)))
+    assert texts(rejected) == texts(rdocx.Document.open(str(original_path)))

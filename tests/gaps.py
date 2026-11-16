@@ -91,20 +91,29 @@ gaps closed.
 # 2026-11-01: integration/open-prs-2026-11-01 (-10-31 plus the cell setters of tensorbee/rdocx#443, issue #445 case 1)
 # made the cell property setters flat. The binding's open + replace cost (#445 case 2) became
 # docx-python-replace-slower-than-cli.
+# 2026-11-09: the pin moved to the upstream release v0.17.0 / rpptx-v0.15.0 (tensorbee/rdocx eb980e94, S96), which
+# adapted every carried pull request (#427, #428, #438 to #444): test_docx_carried.py and test_pptx_carried.py were
+# deleted, their tests passing there, but for four. The body below a tall header starts where Word starts it (the
+# header paragraphs' spacing after counted, measured in Word: 58.5 pt for one line, 148.5 pt for five), not where
+# #428 put it; `rpptx validate` refuses a row whose gridSpan cell has no hMerge cell after it, which neither
+# PowerPoint nor LibreOffice 26.8 writes; the other two became gaps. docx-control-character-round-trip and
+# pptx-control-character-round-trip (open refuses the character), docx-reply-without-range and
+# docx-font-fallback-by-entry-point (bundled fonts by default at every entry point, Linux CI) closed. New gaps of
+# 0.17.0: docx-compare-word-splits-characters, docx-move-thread-leaves-replies (replies got their own range, the move
+# takes the root only) and docx-grid-span-refuses-formatted-empty-cell (the #441 integration fix, kept by merge only).
+# 2026-11-16: integration/open-prs-2026-11-16 (v0.17.0 plus tensorbee/rdocx#448 to #452 and #454) closed
+# docx-compare-word-splits-characters (#450), docx-move-thread-leaves-replies and
+# docx-grid-span-refuses-formatted-empty-cell (#448): their tests moved to test_docx_carried.py. New gaps:
+# docx-compare-renumbered-bookmarks (#454 keeps that refusal, docx_ops.strip_generated_bookmarks works around it) and
+# docx-compare-moved-footnote-reference (#452 refuses what 0.17.0 wrote and Word could not open).
 GAPS = {
-    # upstream: tensorbee/rdocx#435 (case 5; #439 makes validate report it)
-    "docx-control-character-round-trip": "a part holding a control character XML 1.0 forbids (U+0001) opens, and "
-                                         "save() writes it back unchanged",
-    # upstream: tensorbee/rdocx#435 (case 5; #439 makes validate report it)
-    "pptx-control-character-round-trip": "a part holding a control character XML 1.0 forbids (U+0001) opens, and "
-                                         "save() writes it back unchanged",
-    # upstream: tensorbee/rdocx#434 (case 1; #444 adds the reply's initials)
-    "docx-reply-without-range": "a reply added by reply_to or `rdocx comment reply` gets no comment range and no "
-                                "reference mark in the body, where Word gives each reply its parent's range",
+    # upstream: tensorbee/rdocx#453
+    "docx-compare-renumbered-bookmarks": "compare refuses two versions whose generated heading bookmarks (_Toc1, "
+                                         "_Toc2, ...) were renumbered, a name moving to another heading",
+    # upstream: tensorbee/rdocx#430
+    "docx-compare-moved-footnote-reference": "compare refuses two versions where a referenced footnote's id moves to "
+                                             "another reference, a new note before an existing one included",
     # upstream: tensorbee/rdocx#445 (case 2)
     "docx-python-replace-slower-than-cli": "Document.open + try_replace_text + save take about twice `rdocx replace` "
                                            "on the same file, 3 to 4 times on rich reports",
-    # upstream: tensorbee/rdocx#433 (case 7)
-    "docx-font-fallback-by-entry-point": "for a font rdocx does not bundle, `rdocx convert`, to_pdf() and page_count() "
-                                         "/ layout() pick different fonts, and the substitution is not reported",
 }

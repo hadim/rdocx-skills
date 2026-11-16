@@ -280,8 +280,9 @@ def anchored_text(data, comment_id):
 
     Read through rdocx (`Comment.anchor_text`): the accepted view of tracked changes, through content controls
     (Google Docs' goog_rdk wrappers included) and in table cells, the paragraphs of a range over several joined
-    with "\n". rdocx gives "" for a comment that has a reference mark but no range: that maps to None, like a
-    reply, an unknown id or a comment with no marks at all."""
+    with "\n". A reply reads its own range, which rdocx and Word give over its parent's text. rdocx gives "" for a
+    comment that has a reference mark but no range: that maps to None, like an unknown id or a comment with no
+    marks at all."""
     doc = rdocx.Document.from_bytes(data) if isinstance(data, bytes) else rdocx.Document.open(data)
     comment = next((c for c in doc.comments if c.id == comment_id), None)
     return (comment.anchor_text or None) if comment is not None else None
@@ -373,6 +374,57 @@ def comment_on_text(doc, anchor, text, author, initials=None, occurrence=1, date
     if in_tables:
         return doc.add_comment_on_text(anchor, author=author, text=text, occurrence=k, initials=initials, date=date)
     return _comment(doc, anchor, text, author, initials, occurrence, date)
+
+
+def move_thread_to_text(doc, comment_id, anchor, occurrence=0):
+    """doc.move_comment_to_text(comment_id, anchor, occurrence=occurrence), kept for older scripts: rdocx now
+    moves the replies with their root and keeps their ids. Returns {reply id: reply id} for the thread's
+    replies."""
+    replies, parents = [], {comment_id}
+    for c in doc.comments:
+        if c.parent_id in parents:
+            replies.append(c.id)
+            parents.add(c.id)
+    doc.move_comment_to_text(comment_id, anchor, occurrence=occurrence)
+    return {i: i for i in replies}
+
+
+_BOOKMARK_START = re.compile(r"<w:bookmarkStart\b[^>]*/>")
+
+
+def strip_generated_bookmarks(src, out, prefix="_Toc"):
+    """Copy the .docx `src` (a path, bytes or a Document) to `out` without the body bookmarks whose name starts
+    with `prefix` (start and end markers), and return how many it removed. A table of contents rebuilt from
+    scratch names its heading bookmarks `_Toc1`, `_Toc2`, ... in document order, so between two versions where a
+    heading was added or removed a name moves to another heading, and `compare` refuses the pair (gap
+    docx-compare-renumbered-bookmarks): run this on both copies first. The TOC's links then point at no bookmark in
+    the redline; rebuild the TOC on the accepted result. Refuses `out == src`."""
+    if not isinstance(src, (bytes, bytearray)) and not hasattr(src, "to_bytes") and \
+            Path(src).resolve() == Path(out).resolve():
+        raise EditError("refusing to write over the input; write to a new path")
+    removed = []
+
+    def start(match):
+        element = match.group(0)
+        name = re.search(r'\bw:name="([^"]*)"', element)
+        ident = re.search(r'\bw:id="([^"]*)"', element)
+        if name and ident and name.group(1).startswith(prefix):
+            removed.append(ident.group(1))
+            return ""
+        return element
+
+    with zipfile.ZipFile(io.BytesIO(_package(src))) as zin, zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if item.filename == "word/document.xml":
+                xml = _BOOKMARK_START.sub(start, data.decode("utf-8"))
+                ids = set(removed)
+                xml = re.sub(r"<w:bookmarkEnd\b[^>]*/>",
+                             lambda m: "" if (re.search(r'\bw:id="([^"]*)"', m.group(0)) or [None, None])[1] in ids
+                             else m.group(0), xml)
+                data = xml.encode("utf-8")
+            zout.writestr(item, data)
+    return len(removed)
 
 
 def rebuild_toc(doc):

@@ -7,9 +7,9 @@ says so and this page is updated. "Fallback" means: do that step only with the d
 Before reaching for lxml, try the raw XML of the element (`shape.element.xml` / `element.replace_xml(xml)`, also on
 text frames, paragraphs, runs, tables, cells, slides, layouts and masters: `references/python-api.md`, "Raw XML").
 
-| Gap | What happens | Workaround / fallback |
-|---|---|---|
-| Control characters [pptx-control-character-round-trip] | A part holding a character XML 1.0 forbids (U+0001 to U+001F but tab, newline and carriage return) opens, and `save()` writes the part back unchanged, so PowerPoint refuses the file. `rpptx validate` reports it, naming the part | Run `rpptx validate` on a file from an unknown producer. When it names such a character, delete it from that part's bytes (Python's `zipfile`: copy every other entry as it is), open the cleaned file, and validate the output |
+No gap is open on this pin: the last one the suite tracked for rpptx, a part holding a control character that
+opened and was saved back unchanged, closed with rpptx 0.15.0, which refuses such a file at open
+(`references/cli.md`, validate).
 
 Every public mutating call costs the same at 5 slides and at 20 (tensorbee/rdocx#413 and #416).
 
